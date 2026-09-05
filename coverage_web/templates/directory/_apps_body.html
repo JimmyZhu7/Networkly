@@ -46,24 +46,23 @@ survives even if it was in the batch.
   hiding them made a five-stage pipeline look like a three-stage one.
   {% endcomment %}
   {% comment %}
-  A READOUT, not a nav. Every segment used to be `<a href="#stage-saved">`
-  jumping to the section holding that stage; those sections are gone, so the
-  links would now be five anchors resolving to nothing — the worst kind of
-  dead control, since it looks live and does nothing. The counts are still
-  worth the band: they are the only place the pipeline is summarised now
-  that each row carries its own stage control, and a stage holding nothing
-  still prints 0 rather than vanishing (hiding empties made a five-stage
-  pipeline look like a three-stage one).
+  Stage counts now filter the existing rows. All stages remain visible,
+  including zero counts. Without JavaScript they are disabled readouts;
+  widgets.js enables them and updates pressed, count, and empty states.
   {% endcomment %}
   <div class="apps-funnel" role="group" aria-label="Pipeline stages">
+    <button type="button" class="apps-fseg is-all" data-stage-filter="all" data-stage-label="All roles" aria-pressed="true" disabled>
+      <span class="apps-fseg-n">{{ total }}</span><span class="apps-fseg-l">All roles</span>
+    </button>
     {% for stage in stages %}
-      <span class="apps-fseg{% if not stage.count %} is-empty{% endif %}">
+      <button type="button" class="apps-fseg{% if not stage.count %} is-empty{% endif %}" data-stage-filter="{{ stage.key }}" data-stage-label="{{ stage.label }}" aria-pressed="false" disabled>
         <span class="apps-fseg-n">{{ stage.count }}</span>
         <span class="apps-fseg-l">{{ stage.label }}</span>
         <span class="apps-fseg-bar">{% if stage.count %}<i style="width: {{ stage.pct }}%"></i>{% endif %}</span>
-      </span>
+      </button>
     {% endfor %}
   </div>
+  <p class="apps-filter-status" data-apps-filter-status role="status" aria-live="polite" hidden></p>
 
   {% comment %}
   The lens band. It renders the SAME rows as the funnel below, cut by
@@ -113,9 +112,9 @@ survives even if it was in the batch.
     {% endcomment %}
     {% for lens in lenses %}
       {% if lens.items or lens.empty_state %}
-      <div class="apps-lens">
+      <div class="apps-lens" data-apps-lens>
         <h3>{{ lens.label }}
-          {% if lens.counts_live %}<span class="apps-lens-frac">{{ lens.items|length }} of {{ live_total }} live</span>{% else %}<span class="apps-lens-frac">{{ lens.items|length }}</span>{% endif %}
+          {% if lens.counts_live %}<span class="apps-lens-frac" data-apps-lens-count>{{ lens.items|length }} of {{ live_total }} live</span>{% else %}<span class="apps-lens-frac" data-apps-lens-count>{{ lens.items|length }}</span>{% endif %}
         </h3>
         {% comment %}A note only when it says something the heading cannot —
         a window, a boundary, what happens to the row next. "Deadline Passed"
@@ -134,7 +133,7 @@ survives even if it was in the batch.
               scrolling straight to "Rolling" still sees its own rows
               arrive in sequence instead of already-settled.
               {% endcomment %}
-              <li class="apps-lens-row kin-reveal u-{{ r.urgency.key }}{% if r.posting_closed %} is-shut{% endif %}" style="--i: {{ forloop.counter0 }}">
+              <li class="apps-lens-row kin-reveal u-{{ r.urgency.key }}{% if r.posting_closed %} is-shut{% endif %}" style="--i: {{ forloop.counter0 }}" data-app-stage="{{ r.stage }}">
                 <span class="lens-when{% if not r.deadline.posted and not r.posting_closed %} lens-rolling{% endif %}{% if r.posting_closed %} lens-shut{% endif %}">
                   {% if r.posting_closed %}
                     {% comment %}The firm took this posting down, so the
@@ -281,6 +280,11 @@ survives even if it was in the batch.
       </div>
       {% endif %}
     {% endfor %}
+    <div class="apps-filter-empty" data-apps-filter-empty hidden>
+      <h3>No roles in this stage</h3>
+      <p>Your other applications are still on your list.</p>
+      <button type="button" class="btn" data-stage-filter="all" data-stage-label="All roles">Show all roles</button>
+    </div>
   </section>
 
   {% comment %}

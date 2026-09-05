@@ -41,7 +41,7 @@ there: an `hx-swap-oob` element sitting in the initial document is inert noise.
       the weekly digest.
       {% endcomment %}
       <header class="firmcol-head"{% if pick_cluster.cycle_note or pick_cluster.cycle_open.text %} title="{{ pick_cluster.cycle_note }}{% if pick_cluster.cycle_note and pick_cluster.cycle_open.text %} {% endif %}{{ pick_cluster.cycle_open.text }}{% if pick_cluster.cycle_open.why %} {{ pick_cluster.cycle_open.why }}{% endif %}"{% endif %}>
-        <span class="firmcol-logo firmcol-logo--picked" aria-hidden="true">★</span>
+        <span class="firmcol-logo firmcol-logo--picked" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
         <div class="firmcol-id">
           {% comment %}h2 like the firm columns beside it: this column is a
           section too, and leaving it a span put its role cards (h3)

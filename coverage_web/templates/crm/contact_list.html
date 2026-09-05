@@ -444,7 +444,7 @@
                   card: "elements are literally squeezed together".
                   {% endcomment %}
                   <span class="cc-idblock">
-                    <span class="cc-name">{{ card.c.name|smart_person_name|smart_title }}</span>
+                    <span class="cc-name"><a href="{% url 'crm:contact_detail' card.c.id %}">{{ card.c.name|smart_person_name|smart_title }}</a></span>
                 {% comment %}
                 THE PILL ROW IS ALWAYS RENDERED, even with nothing in it.
 

@@ -80,8 +80,15 @@ walks the same URL as a plain page load.
               {% if cl.is_mine %}<span class="firmcol-tier is-mine">{% if cl.tier %}Tier {{ cl.tier }}{% else %}Untiered{% endif %}</span>{% endif %}
             </div>
           </div>
+          {% if cl.open_count > 3 %}
+          <button type="button" class="firmcol-expand" data-widget-expand
+                  aria-expanded="false" aria-controls="firm-roles-{{ cl.firm_slug }}"
+                  aria-label="Expand roles at {{ cl.firm_name }}" hidden>
+            {% include "_nav_icon.html" with name="expand" %}<span>Expand</span>
+          </button>
+          {% endif %}
         </header>
-        <div class="firmcol-scroll">
+        <div class="firmcol-scroll" id="firm-roles-{{ cl.firm_slug }}">
           {% for r in cl.roles %}
             {% comment %}A city-variant sibling renders inside its family
             head's disclosure below, not at top level — skipping it here is

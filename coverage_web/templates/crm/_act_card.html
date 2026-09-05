@@ -23,17 +23,13 @@ Every button carries an aria-label naming the contact: this page renders 30+
 buttons whose visible text is identical, which is unusable read aloud.
 {% endcomment %}
 {% comment %}
-LEDGER ROW, not poster. The queue used to render each action as a ~260px
-card, three abreast — and since one lane's people mostly share a label and a
-reason, the page said the same sentence three times at poster size while the
-only per-person facts (the name, the elapsed time) drowned in chrome. The
-"Waiting on reply" chip strip right below was already proof that density
-works here. One row per person now: identity | context | actions, priority
-as the row's left edge, every control and hx contract byte-identical.
+Task card: identity and supporting evidence precede a separate action footer.
+All actions continue to request one authoritative cockpit recomputation.
 {% endcomment %}
-<article class="act-card kin-reveal act-{{ a.priority }} panel panel--edge"
+<article class="act-card act-task kin-reveal act-{{ a.priority }} panel panel--edge"
          style="--i:{{ idx }}; view-transition-name: act-card-{{ a.contact.id }}">
   <div class="act-ident">
+  <span class="act-avatar" aria-hidden="true">{{ a.contact.name|first|upper }}</span>
   <div class="act-idtext">
     {% comment %}
     When the firm slot holds a university rather than an employer, say so —
@@ -42,8 +38,8 @@ as the row's left edge, every control and hx contract byte-identical.
     hand-added contact has no firm_id whether the free text reads "USC" or
     "HSBC", and keying on that labelled eight HSBC bankers alumni.
     {% endcomment %}
-    <span class="opp-firm{% if a.contact.school_affiliation %} is-school{% elif not a.firm_known %} is-missing{% endif %}">{{ a.firm_name|smart_title }}{% if a.contact.school_affiliation %} · alum{% endif %}</span>
     <h3 class="act-name"><a href="{% url 'crm:contact_detail' a.contact.id %}">{{ a.contact.name|smart_person_name|smart_title }}</a></h3>
+    <span class="opp-firm{% if a.contact.school_affiliation %} is-school{% elif not a.firm_known %} is-missing{% endif %}">{{ a.firm_name|smart_title }}{% if a.contact.school_affiliation %} · alum{% endif %}</span>
     {% if a.contact.role %}<p class="act-role">{{ a.contact.role|smart_title }}</p>{% endif %}
   </div>
   {% comment %}

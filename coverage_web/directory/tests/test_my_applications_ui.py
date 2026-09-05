@@ -1058,3 +1058,27 @@ def test_the_card_lost_padding_and_kept_its_people(client, db):
 
     from directory.views import APPS_PEOPLE_MAX
     assert APPS_PEOPLE_MAX == 2
+
+
+@pytest.mark.django_db
+def test_widget_stage_filters_describe_the_authoritative_rows(client, pipeline):
+    """A stage count must describe the rows its filter will actually reveal."""
+    html = client.get(reverse("my_applications")).content.decode()
+    filters = re.findall(r'<button\b([^>]*data-stage-filter[^>]*)>(.*?)</button>', html, re.S)
+    filters = [(attrs, body) for attrs, body in filters if 'apps-fseg' in attrs]
+    keys = [re.search(r'data-stage-filter="([^"]+)"', attrs)[1] for attrs, _ in filters]
+    assert keys == ["all", "saved", "submitted", "interview", "offer", "closed"]
+    rows = re.findall(r'<li\b([^>]*data-app-stage[^>]*)>(.*?)</li>', html, re.S)
+    stages = [re.search(r'data-app-stage="([^"]+)"', attrs)[1] for attrs, _ in rows]
+    assert len(rows) == len(pipeline)
+    for key, (attrs, body) in zip(keys, filters):
+        expected = len(rows) if key == "all" else stages.count(key)
+        assert int(re.search(r'class="apps-fseg-n">(\d+)', body)[1]) == expected
+        assert "disabled" in attrs, "Controls enable only when their behavior loads"
+    for opportunity, status in pipeline.values():
+        matching = [(attrs, body) for attrs, body in rows if f'action="/opportunities/{opportunity.pk}/track/"' in body]
+        assert len(matching) == 1, "Every tracked role belongs to exactly one displayed lens"
+        assert f'data-app-stage="{status}"' in matching[0][0]
+    assert not any("hidden" in attrs for attrs, _ in rows), "No JavaScript must still show all roles"
+    assert 'data-apps-filter-status role="status" aria-live="polite"' in html
+    assert re.search(r'data-apps-filter-empty[^>]*hidden', html)

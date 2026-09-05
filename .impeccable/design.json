@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-05T22:34:02.605702+00:00",
+  "generatedAt": "2026-09-05T23:23:40.186879+00:00",
   "title": "Design System: Coverage",
   "extensions": {
     "colorMeta": {
@@ -393,17 +393,51 @@
     ],
     "motion": [
       {
-        "name": "t-fast",
-        "value": "120ms ease",
-        "purpose": "Border and fill state transitions."
+        "name": "motion-press",
+        "value": "120ms",
+        "purpose": "Local widget press transition; scale(.975), suppressed for reduced motion."
       },
       {
-        "name": "t-med",
-        "value": "180ms cubic-bezier(0.2, 0.6, 0.2, 1)",
-        "purpose": "Existing component feedback; decorative workspace entrance motion is suppressed."
+        "name": "motion-state",
+        "value": "180ms",
+        "purpose": "Widget background, border, and text-color transitions."
+      },
+      {
+        "name": "motion-reveal",
+        "value": "240ms",
+        "purpose": "CSS overlay opening: opacity with translateY(8px) and scale(.985)."
+      },
+      {
+        "name": "ease-widget",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Press and CSS overlay easing."
+      },
+      {
+        "name": "disclosure-reveal",
+        "value": "200ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "JavaScript reveal: opacity .55 to 1 and translateY(5px) to zero; user-opened disclosures, firm expansion, application filters, changed controls, and server-confirmed feedback."
+      },
+      {
+        "name": "widget-working",
+        "value": "900ms ease-in-out infinite alternate",
+        "purpose": "POST-only progress mark; scaleX(.12) to 1. Reduced motion uses a static mark at .7 opacity."
+      },
+      {
+        "name": "request-error",
+        "value": "1800ms",
+        "purpose": "Duration of temporary danger outline after failed widget POST; authoritative content remains."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0ms",
+        "purpose": "Widget duration variables become zero; overlay, disclosure, press, and arrow spatial effects are suppressed."
       }
     ],
     "breakpoints": [
+      {
+        "name": "roster-and-settings-stack",
+        "value": "1200px"
+      },
       {
         "name": "navigation-collapse",
         "value": "1100px"
@@ -416,6 +450,23 @@
         "name": "phone",
         "value": "640px"
       }
+    ],
+    "focus": [
+      {
+        "name": "keyboard",
+        "value": "2px solid var(--accent); outline-offset: 3px",
+        "purpose": "Shared focus-visible outline."
+      },
+      {
+        "name": "field",
+        "value": "outline: 2px solid var(--accent); outline-offset: 0; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent)",
+        "purpose": "Native field focus."
+      },
+      {
+        "name": "request-error",
+        "value": "outline: 2px solid var(--danger); outline-offset: 2px",
+        "purpose": "Temporary failed POST state, distinct from focus."
+      }
     ]
   },
   "components": [
@@ -425,7 +476,7 @@
       "refersTo": "button-primary",
       "description": "Shared workspace action.",
       "html": "<button class=\"ds-button-primary\">Add Contact</button>",
-      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;font:600 13px/1.2 var(--font-ui);min-height:38px;padding:8px 14px;border-radius:var(--r-ctl);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:none;transition:border-color var(--t-fast),background-color var(--t-fast);background:var(--accent);border-color:var(--accent);color:var(--on-accent);}.ds-button-primary:hover{background:var(--accent-ink);border-color:var(--accent-ink);}.ds-button-primary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}.ds-button-primary:active{transform:translateY(0);box-shadow:none;}.ds-button-primary:disabled{opacity:.5;pointer-events:none;}@media(max-width:640px){.ds-button-primary{min-height:42px;}}"
+      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;font:600 13px/1.2 var(--font-ui);min-height:38px;padding:8px 14px;border-radius:var(--r-ctl);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:none;transition:background-color var(--motion-state),border-color var(--motion-state),color var(--motion-state),transform var(--motion-press) var(--ease-widget);background:var(--accent);border-color:var(--accent);color:var(--on-accent);}.ds-button-primary:hover{background:var(--accent-ink);border-color:var(--accent-ink);}.ds-button-primary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}.ds-button-primary:active{transform:scale(.975);box-shadow:none;}.ds-button-primary:disabled{opacity:.5;pointer-events:none;}@media(max-width:640px){.ds-button-primary{min-height:42px;}}@media(prefers-reduced-motion:reduce){.ds-button-primary{transition:none}.ds-button-primary:active{transform:none}}"
     },
     {
       "name": "Secondary Button",
@@ -433,7 +484,7 @@
       "refersTo": "button-secondary",
       "description": "Shared workspace action.",
       "html": "<button class=\"ds-button-secondary\">Add Contact</button>",
-      "css": ".ds-button-secondary{display:inline-flex;align-items:center;justify-content:center;font:600 13px/1.2 var(--font-ui);min-height:38px;padding:8px 14px;border-radius:var(--r-ctl);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:none;transition:border-color var(--t-fast),background-color var(--t-fast);}.ds-button-secondary:hover{border-color:var(--ink-3);}.ds-button-secondary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}.ds-button-secondary:active{transform:translateY(0);box-shadow:none;}.ds-button-secondary:disabled{opacity:.5;pointer-events:none;}@media(max-width:640px){.ds-button-secondary{min-height:42px;}}"
+      "css": ".ds-button-secondary{display:inline-flex;align-items:center;justify-content:center;font:600 13px/1.2 var(--font-ui);min-height:38px;padding:8px 14px;border-radius:var(--r-ctl);border:1px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:none;transition:background-color var(--motion-state),border-color var(--motion-state),color var(--motion-state),transform var(--motion-press) var(--ease-widget);}.ds-button-secondary:hover{border-color:var(--ink-3);}.ds-button-secondary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;}.ds-button-secondary:active{transform:scale(.975);box-shadow:none;}.ds-button-secondary:disabled{opacity:.5;pointer-events:none;}@media(max-width:640px){.ds-button-secondary{min-height:42px;}}@media(prefers-reduced-motion:reduce){.ds-button-secondary{transition:none}.ds-button-secondary:active{transform:none}}"
     },
     {
       "name": "Text Field",
@@ -441,7 +492,7 @@
       "refersTo": "input",
       "description": "Native field with a visible label and keyboard focus.",
       "html": "<label class=\"ds-field-label\" for=\"ds-contact\">Name</label><input class=\"ds-field\" id=\"ds-contact\" type=\"text\" placeholder=\"Contact name\">",
-      "css": ".ds-field-label{display:block;font:600 13px/1.4 var(--font-ui);color:var(--ink);margin-bottom:4px}.ds-field{font:400 15px/1.4 var(--font-ui);color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-ctl);padding:9px 14px;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ds-field:hover{border-color:var(--ink-3)}.ds-field:focus-visible{outline:2px solid var(--accent);outline-offset:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}"
+      "css": ".ds-field-label{display:block;font:600 12px/1.4 var(--font-ui);color:var(--ink);margin-bottom:7px}.ds-field{font:400 15px/1.4 var(--font-ui);color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-ctl);padding:9px 14px;transition:border-color var(--t-fast),box-shadow var(--t-fast)}.ds-field:hover{border-color:var(--ink-3)}.ds-field:focus-visible{outline:2px solid var(--accent);outline-offset:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}"
     },
     {
       "name": "Selected Navigation",
@@ -465,7 +516,31 @@
       "refersTo": "panel",
       "description": "Shared panel with the supporting rail inset.",
       "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">Upcoming</h2><p class=\"ds-panel-copy\">No scheduled conversations.</p></section>",
-      "css": ".ds-panel{padding:20px;border:1px solid var(--line);border-radius:var(--r-panel);background:var(--surface);color:var(--ink);box-shadow:none}.ds-panel-title{margin:0 0 16px;font:600 17px/1.4 var(--font-ui)}.ds-panel-copy{margin:0;font:400 14px/1.5 var(--font-ui);color:var(--ink-2)}"
+      "css": ".ds-panel{padding:22px;border:1px solid var(--line);border-radius:var(--r-panel);background:var(--surface);color:var(--ink);box-shadow:none}.ds-panel-title{margin:0 0 18px;font:600 15px/1.4 var(--font-ui)}.ds-panel-copy{margin:0;font:400 14px/1.5 var(--font-ui);color:var(--ink-2)}"
+    },
+    {
+      "name": "Application Count Filter",
+      "kind": "button",
+      "refersTo": "application-filter",
+      "description": "One of six native count filters; selected state uses aria-pressed. Live behavior is provided by widgets.js in the application.",
+      "html": "<button class=\"ds-filter\" type=\"button\" aria-pressed=\"true\"><span class=\"ds-filter-count\">6</span><span class=\"ds-filter-label\">Saved</span></button>",
+      "css": ".ds-filter{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px;border:1px solid var(--line);border-radius:var(--r-ctl);background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;transition:background-color var(--motion-state),border-color var(--motion-state),transform var(--motion-press) var(--ease-widget)}.ds-filter[aria-pressed=\"true\"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}.ds-filter:hover{border-color:var(--accent-line)}.ds-filter:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ds-filter:active:not(:disabled){transform:scale(.975)}.ds-filter-count{font:600 24px/1.2 var(--font-ui)}.ds-filter-label{font:500 12px/1.4 var(--font-ui)}@media(max-width:640px){.ds-filter{padding:14px}}@media(prefers-reduced-motion:reduce){.ds-filter{transition:none}.ds-filter:active:not(:disabled){transform:none}}"
+    },
+    {
+      "name": "Contact Roster Row",
+      "kind": "custom",
+      "refersTo": "contact-roster-row",
+      "description": "Identity, firm context, and visible actions in a divided roster; no individual rounded card.",
+      "html": "<article class=\"ds-roster\"><a class=\"ds-roster-person\" href=\"#contact\">Alex Chen</a><span class=\"ds-roster-firm\">Example firm \u00b7 Analyst</span><a class=\"ds-roster-action\" href=\"#interaction\">Log interaction</a></article>",
+      "css": ".ds-roster{display:grid;grid-template-columns:minmax(230px,1fr) minmax(160px,.8fr) minmax(220px,auto);align-items:center;gap:16px;min-height:88px;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:17px 22px;background:var(--surface);color:var(--ink);font:400 13px/1.5 var(--font-ui)}.ds-roster:hover{background:var(--paper)}.ds-roster-person{color:var(--ink);font-weight:600;text-decoration:none}.ds-roster-firm{color:var(--ink-2)}.ds-roster-action{color:var(--ink);padding:6px 9px;border:1px solid var(--line-strong);border-radius:var(--r-ctl);font:600 12px/1.2 var(--font-ui);text-decoration:none;display:inline-flex;align-items:center;min-height:34px}.ds-roster-action:hover{border-color:var(--ink-3)}.ds-roster a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:1200px){.ds-roster{grid-template-columns:minmax(220px,1fr) minmax(150px,.8fr)}.ds-roster-action{grid-column:1/-1;justify-self:start}}@media(max-width:640px){.ds-roster{grid-template-columns:minmax(0,1fr);padding:18px 16px;min-height:0}.ds-roster-action{min-height:40px}}"
+    },
+    {
+      "name": "Assistant Prompt List",
+      "kind": "custom",
+      "refersTo": "assistant-prompt",
+      "description": "One enclosing surface with divided, full-row starter buttons.",
+      "html": "<div class=\"ds-prompts\"><button class=\"ds-prompt\">Help me plan my next follow-up<svg class=\"ds-prompt-arrow\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button><button class=\"ds-prompt\">Review my upcoming deadlines<svg class=\"ds-prompt-arrow\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" aria-hidden=\"true\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></button></div>",
+      "css": ".ds-prompts{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-panel);overflow:hidden}.ds-prompt{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 18px;min-height:56px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--surface);color:var(--ink);font:400 13px/1.5 var(--font-ui);cursor:pointer;text-align:left}.ds-prompt:last-child{border-bottom:0}.ds-prompt:hover{background:var(--paper)}.ds-prompt:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ds-prompt:active{transform:scale(.975)}.ds-prompt-arrow{width:16px;height:16px;flex:none;color:var(--ink-3);transition:transform var(--motion-state) var(--ease-widget)}.ds-prompt:hover .ds-prompt-arrow{color:var(--accent);transform:translateX(3px)}@media(max-width:640px){.ds-prompt{padding:14px 16px}}@media(prefers-reduced-motion:reduce){.ds-prompt:active,.ds-prompt:hover .ds-prompt-arrow{transform:none}.ds-prompt-arrow{transition:none}}"
     }
   ],
   "narrative": {
@@ -477,23 +552,7 @@
       "Flat bordered surfaces with persistent row actions.",
       "Responsive navigation and both color schemes."
     ],
-    "rules": [
-      {
-        "name": "The Semantic Color Rule",
-        "body": "Use the accent for navigation, selection, and actions. Preserve the existing warmth, confidence, sponsorship, and outcome tokens for their named states.",
-        "section": "colors"
-      },
-      {
-        "name": "The Readable Label Rule",
-        "body": "Keep source labels readable. Workspace navigation uses normal case; status badges retain their existing CSS uppercase treatment. Names follow the Title Case decision; prose stays sentence case.",
-        "section": "typography"
-      },
-      {
-        "name": "The Stable Surface Rule",
-        "body": "Shared panels and the refurbished cards do not lift on hover. Use border emphasis for inspection and the raised panel treatment for floating surfaces.",
-        "section": "elevation"
-      }
-    ],
+    "rules": [],
     "dos": [
       "Do use the current CSS variables so explicit and system-selected dark themes stay paired.",
       "Do keep role and contact actions visible without hover, with the existing larger mobile targets.",

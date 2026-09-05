@@ -215,7 +215,7 @@ values.
             hx-target="#contact-live"
             hx-swap="outerHTML">
         {% csrf_token %}
-        <select name="kind" aria-label="Interaction">
+        <label class="widget-field"><span>Interaction</span><select name="kind" aria-label="Interaction">
           {% comment %}
           "manual_override" rides in `touch_kinds` (crm.utils.TOUCH_KIND_LABELS)
           so History and the activity feed get a plain label for it, but it is
@@ -231,11 +231,11 @@ values.
           something a student did and should be able to claim.
           {% endcomment %}
           {% for value, label in touch_kinds %}{% if value != "manual_override" and value != "bulk_received" %}<option value="{{ value }}"{% if value == preselect_kind %} selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}
-        </select>
-        <select name="channel" aria-label="Channel">
+        </select></label>
+        <label class="widget-field"><span>Channel</span><select name="channel" aria-label="Channel">
           {% for value, label in channels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-        </select>
-        <input type="text" name="note" placeholder="Note (optional)">
+        </select></label>
+        <label class="widget-field widget-field-wide"><span>Note <span class="widget-optional">optional</span></span><input type="text" name="note" placeholder="Note (optional)"></label>
         <button class="btn btn-primary" type="submit">Log Touch</button>
       </form>
     </div>

@@ -1183,7 +1183,7 @@ copy exactly once, and this is the once.
         <ul class="getting-started-list">
           {% for item in getting_started %}
             <li class="getting-started-row{% if item.done %} is-done{% endif %}">
-              <span class="getting-started-mark" aria-hidden="true">{% if item.done %}&#10003;{% endif %}</span>
+              <span class="getting-started-mark" aria-hidden="true">{% if item.done %}{% include "_nav_icon.html" with name="check" %}{% endif %}</span>
               {% if item.done %}
                 <span class="getting-started-label">{{ item.label }}</span>
               {% else %}
@@ -1255,8 +1255,9 @@ copy exactly once, and this is the once.
       {% endcomment %}
       <p class="pace-figure">
         <span class="pace-done">{{ pace.done }}</span><span class="pace-goal">/{{ pace.goal }}</span>
-        <span class="pace-lbl">outreach this week</span>
+        <label class="pace-lbl" for="weekly-outreach">outreach this week</label>
       </p>
+      <progress class="pace-progress" id="weekly-outreach" value="{{ pace.done }}" max="{{ pace.goal }}" aria-valuetext="{{ pace.done }} of {{ pace.goal }} outreach this week">{{ pace.done }} of {{ pace.goal }}</progress>
       <p class="pace-note">
         {% comment %}
         "touches" dropped (2026-08-31, the founder's own wording): the

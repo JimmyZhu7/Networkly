@@ -21,7 +21,7 @@ same shape as every AI chat surface a student has already used.
       <p class="as-empty-lead">Ask about your own campaign. Who to chase, where to spend the week, what closes next.</p>
       <div class="as-starters">
         {% for s in starters %}
-          <button type="button" class="as-starter panel panel--flat">{{ s }}</button>
+          <button type="button" class="as-starter panel panel--flat"><span>{{ s }}</span>{% include "_nav_icon.html" with name="arrow" %}</button>
         {% endfor %}
       </div>
     </div>

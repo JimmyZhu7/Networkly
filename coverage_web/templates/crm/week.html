@@ -8,7 +8,7 @@
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
 {% block content %}
-<div class="page page--wide">
+<div class="page page--wide today-page">
   {% comment %}
   Compact header strip, not a hero. The old hero plus four stat cards spent
   every pixel above the fold at 1440x800 on the commodity layer (deadlines)
@@ -101,11 +101,13 @@
       {% endcomment %}
       {% if dash.at_your_firms %}
         <a class="ribbon-stat kin-reveal" style="--i: 0" href="{% url 'opportunities' %}">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="opportunities" %}</span>
           <span class="ribbon-num">{{ dash.at_your_firms }}</span>
           <span class="ribbon-lbl"><span class="live-dot"></span> Open at your firms</span>
         </a>
       {% else %}
         <a class="ribbon-stat kin-reveal" style="--i: 0" href="{% url 'accounts:settings' %}#firms">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="opportunities" %}</span>
           <span class="ribbon-lbl">Pick your target firms</span>
         </a>
       {% endif %}
@@ -127,6 +129,7 @@
       works here in a way it cannot in the digest email.
       {% endcomment %}
       <a class="ribbon-stat kin-reveal{% if dash.closing_10 %} is-urgent{% endif %}" style="--i: 1" href="{% url 'opportunities' %}"{% if dash.closing_10_reported %} title="{{ dash.closing_10_reported }} of these dates were read from the posting's own text, not a field the board published"{% endif %}>
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="calendar" %}</span>
         <span class="ribbon-num">{{ dash.closing_10 }}</span>
         <span class="ribbon-lbl">Closing in 10 days{% if dash.closing_10_reported %}, {{ dash.closing_10_reported }} reported{% endif %}</span>
       </a>
@@ -153,11 +156,13 @@
       {% endcomment %}
       {% if dash.picked_unsaved %}
         <a class="ribbon-stat kin-reveal is-invite" style="--i: 2" href="{% url 'opportunities' %}">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
           <span class="ribbon-num">{{ dash.picked_unsaved }}</span>
           <span class="ribbon-lbl">Picked for you, not saved yet</span>
         </a>
       {% elif dash.has_picks %}
         <a class="ribbon-stat kin-reveal" style="--i: 2" href="{% url 'opportunities' %}">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
           <span class="ribbon-lbl">Every pick saved</span>
         </a>
       {% else %}
@@ -170,6 +175,7 @@
         and all four live in Settings.
         {% endcomment %}
         <a class="ribbon-stat kin-reveal" style="--i: 2" href="{% url 'accounts:settings' %}#profile">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
           <span class="ribbon-lbl">Fill in Settings to get picks</span>
         </a>
       {% endif %}
@@ -179,6 +185,7 @@
       {% endcomment %}
       {% if dash.funnel.submitted or dash.funnel.interview or dash.funnel.offer %}
         <span class="ribbon-stat ribbon-funnel kin-reveal" style="--i: 3">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="today" %}</span>
           {% comment %}
           THREE FIGURES AND TWO MARKS OF PUNCTUATION, drawn as such. Rendered
           as one text node the chevrons inherited the digits' size, weight and
@@ -221,6 +228,7 @@
         {% endcomment %}
         <a class="ribbon-stat ribbon-funnel is-empty kin-reveal" style="--i: 3"
            href="{% url 'opportunities' %}">
+          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="today" %}</span>
           <span class="ribbon-lbl">Nothing submitted yet. Save a role</span>
         </a>
       {% endif %}
