@@ -106,6 +106,8 @@
   {# Vendored static asset, not a CDN or Node build — see coverage_web/static/vendor/. #}
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
   {% block head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
+  <script src="{% static 'js/workspace.js' %}" defer></script>
 </head>
 {% comment %}
 body_class: empty on every page except the ones that need it — the block
@@ -133,9 +135,13 @@ select on.
     Shared shell. Plain hrefs, not reverse-url tags, so the shell renders
     before any app route is defined. Sub-navs live inside each app's pages.
   {% endcomment %}
-  <header class="site-header">
+  <header class="site-header{% if user.is_authenticated and user.onboarded_at and not hide_site_nav %} workspace-nav{% endif %}">
     <div class="site-header-inner">
-      <a class="wordmark" href="/">{% include "_logo.html" %}Coverage</a>
+      <a class="wordmark" href="{% if user.is_authenticated and user.onboarded_at %}/app/{% else %}/{% endif %}">{% include "_logo.html" %}Coverage</a>
+      {% if user.is_authenticated and user.onboarded_at and not hide_site_nav %}
+      <button class="workspace-menu" type="button" data-workspace-menu aria-controls="workspace-primary" aria-expanded="false" aria-label="Open navigation">{% include "_nav_icon.html" with name="menu" %}</button>
+      <button class="workspace-search" type="button" data-open-search aria-label="Search Coverage">{% include "_nav_icon.html" with name="search" %}<span>Search anything</span><kbd>⌘ K</kbd></button>
+      {% endif %}
       {% comment %}
         NO SITE NAV DURING THE WIZARD. /welcome/ is the Settings prefix, so
         every step of onboarding lit the SETTINGS pill: a student on step 1 of
@@ -157,7 +163,7 @@ select on.
       parentheses, and `a and b or a and c` is a thing to re-read every time
       rather than a thing to read once.{% endcomment %}
       {% if not hide_site_nav %}{% if not user.is_authenticated or user.onboarded_at %}
-      <nav class="site-nav" aria-label="Primary">
+      <nav class="site-nav" id="workspace-primary" aria-label="Primary">
         {% comment %}
           Site IA: Today, Opportunities, Network, Calendar, Talk, Settings.
 
@@ -175,12 +181,12 @@ select on.
           /app/ hosts both Today (the hub) and Network (contacts) — the
           contacts prefix must win before the bare /app/ match.
         {% endcomment %}
-        <a href="/app/"{% if request.path|slice:":4" == "/app" and request.path|slice:":13" != "/app/contacts" and request.path|slice:":13" != "/app/calendar" %} class="active"{% endif %}>Today</a>
-        <a href="/opportunities/"{% if request.path|slice:":14" == "/opportunities" %} class="active"{% endif %}>Opportunities</a>
-        <a href="/app/contacts/"{% if request.path|slice:":13" == "/app/contacts" %} class="active"{% endif %}>Network</a>
-        <a href="/app/calendar/"{% if request.path|slice:":13" == "/app/calendar" %} class="active"{% endif %}>Calendar</a>
-        <a href="/assistant/"{% if request.path|slice:":10" == "/assistant" %} class="active"{% endif %}>Talk</a>
-        <a href="/welcome/"{% if request.path|slice:":8" == "/welcome" or request.path|slice:":8" == "/capture" %} class="active"{% endif %}>Settings</a>
+        <a href="/app/"{% if request.path|slice:":4" == "/app" and request.path|slice:":13" != "/app/contacts" and request.path|slice:":13" != "/app/calendar" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="today" %}Today</a>
+        <a href="/opportunities/"{% if request.path|slice:":14" == "/opportunities" or request.path|slice:":7" == "/firms/" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="opportunities" %}Opportunities</a>
+        <a href="/app/contacts/"{% if request.path|slice:":13" == "/app/contacts" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="network" %}Network</a>
+        <a href="/app/calendar/"{% if request.path|slice:":13" == "/app/calendar" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="calendar" %}Calendar</a>
+        <a href="/assistant/"{% if request.path|slice:":10" == "/assistant" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="talk" %}Talk</a>
+        <a href="/welcome/"{% if request.path|slice:":8" == "/welcome" or request.path|slice:":8" == "/capture" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="settings" %}Settings</a>
       </nav>
       {% endif %}{% endif %}
       {% comment %}A landmark, and now a named one. axe flagged the page as
@@ -900,13 +906,17 @@ select on.
         }, 140);
       });
       input.addEventListener("keydown", function (e) {
-        if (e.key === "ArrowDown") { e.preventDefault(); if (active < items.length - 1) active++; highlight(); }
+        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); dlg.close(); }
+        else if (e.key === "ArrowDown") { e.preventDefault(); if (active < items.length - 1) active++; highlight(); }
         else if (e.key === "ArrowUp") { e.preventDefault(); if (active > 0) active--; highlight(); }
         else if (e.key === "Enter") { e.preventDefault(); go(active); }
       });
       list.addEventListener("click", function (e) {
         var li = e.target.closest(".palette-item");
         if (li) go(+li.dataset.i);
+      });
+      document.addEventListener("click", function (e) {
+        if (e.target.closest("[data-open-search]")) open();
       });
       document.addEventListener("keydown", function (e) {
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); dlg.open ? dlg.close() : open(); }

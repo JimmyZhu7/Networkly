@@ -50,8 +50,9 @@
 <div class="page db-wrap">
   <header class="pagehead">
     <div class="pagehead-text">
-      <p class="pagehead-eyebrow">Chat on {{ touch.ts|date:"N j, Y" }}</p>
+
       <h1 class="pagehead-title">Debrief</h1>
+      <p class="pagehead-sub">Chat on {{ touch.ts|date:"N j, Y" }}</p>
       {% comment %}One sentence, not two: the first question of the form
       below is literally "What did you learn?", so asking it again in the
       header was the page putting its own opening question twice.

@@ -22,6 +22,7 @@
   <header class="pagehead">
     <div class="pagehead-text">
       <h1 class="pagehead-title">Opportunities</h1>
+      <p class="pagehead-sub">Find your next role. Start with the firms that matter to you.</p>
     </div>
     {% if user.is_authenticated %}
       <div class="pagehead-actions">
@@ -409,7 +410,11 @@ else is htmx and the platform.
     var header = document.querySelector(".site-header");
     if (!bar || !sentinel || !header) return;
     var stuck = null, calibrated = false;
-    function headerBottom() { return header.getBoundingClientRect().bottom; }
+    function headerBottom() {
+      // A desktop navigation rail occupies horizontal space, not the top.
+      return getComputedStyle(header).position === "fixed" && header.classList.contains("workspace-nav")
+        ? 0 : header.getBoundingClientRect().bottom;
+    }
     function check() {
       var hb = headerBottom();
       var now = sentinel.getBoundingClientRect().top < hb;
@@ -429,7 +434,11 @@ else is htmx and the platform.
       }
     }
     window.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", function () { calibrated = false; }, { passive: true });
+    window.addEventListener("resize", function () {
+      calibrated = false;
+      bar.style.top = "";
+      check();
+    }, { passive: true });
     check();
   })();
 

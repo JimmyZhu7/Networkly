@@ -1,8 +1,6 @@
 # Design System Master File
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+> **Historical reference — superseded visually on 2026-09-05.** Use [DESIGN.md](../../DESIGN.md) and [workspace.css](../../coverage_web/static/css/workspace.css) for current shared visual decisions. The stylesheet loads after base and route styles in [base.html](../../coverage_web/templates/base.html). This file records the July generator output and its contemporary overrides; its palette values, serif display, density prescriptions, component recipes, and page-override instructions are historical, not authority over the current workspace. Preserve applicable product and functional requirements. Read current route source for page-specific structure.
 
 ---
 

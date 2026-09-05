@@ -910,7 +910,7 @@ form) is untouched by an ancestor's hx-boost; htmx only boosts elements
 that don't already declare explicit htmx behaviour.
 {% endcomment %}
 <div class="page" hx-boost="true">
-  {% include "_pagehead.html" with eyebrow="Your account" title="Settings" sub="Your profile, your targets, and how hard Coverage pushes you." %}
+  {% include "_pagehead.html" with title="Settings" sub="Manage your profile, target firms, and account." %}
   {% comment %}
   Messages render ONCE, here, not a second time on this page -- see
   base.html's own {% templatetag openblock %} if messages {% templatetag closeblock %}
@@ -936,6 +936,8 @@ that don't already declare explicit htmx behaviour.
     reader is the nav landmark below plus each section's own <h2>. They are
     display:none at ≤820px, where the rail collapses to wrapped chips.
     {% endcomment %}
+    <details class="settings-index" open>
+    <summary>Settings sections</summary>
     <nav class="settings-nav" aria-label="Settings sections">
       <p class="settings-nav-title">On This Page</p>
       <p class="settings-nav-group">You</p>
@@ -958,6 +960,7 @@ that don't already declare explicit htmx behaviour.
       <a href="#data">Your Data</a>
       <a href="#danger">Danger Zone</a>
     </nav>
+    </details>
 
     <div class="settings-main">
       {# ---- Profile ---- #}

@@ -151,6 +151,7 @@ copy exactly once, and this is the once.
 {% endcomment %}
 <div class="cockpit">
   <div class="cockpit-main">
+    <h2 class="workspace-section-title">Your next steps</h2>
 
     {% comment %}
     Chat prep. RUNG 1, and first on the page whenever it exists: a
@@ -830,6 +831,7 @@ copy exactly once, and this is the once.
       hunt. Reorder these together or not at all.
       {% endcomment %}
       <div class="empty empty--done">
+        {% include "_nav_icon.html" with name="check" %}
         <h2>Done for today.</h2>
         <p>
           {% if still_open_total %}{{ still_open_total }} {% if still_open_total == 1 %}question is{% else %}questions are{% endif %} still open below. {% endif %}

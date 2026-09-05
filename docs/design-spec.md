@@ -1,5 +1,7 @@
 # Coverage — Visual Identity & Layout System Specification
 
+> **Current visual authority — 2026-09-05:** [DESIGN.md](../DESIGN.md) records the current workspace system. [workspace.css](../coverage_web/static/css/workspace.css), loaded after base and route styles by [base.html](../coverage_web/templates/base.html), is the shared visual implementation. This document retains historical aesthetic descriptions, typeface inventory, page index, and functional contracts. Its old palette, serif workspace display, masthead, spacing, and motion prescriptions do not override the current system. Read the full cascade before applying a historical CSS example.
+
 *Section 0 was rewritten on 2026-09-01 to describe the system that ships, not
 the system the 2026-07-23 planning pass committed to. Five of its statements had
 been false for weeks, and every "spec drift" finding filed against them was the
@@ -13,6 +15,8 @@ CSS for the current class inventory; where this document and the CSS disagree,
 the CSS is what a student sees, so the CSS wins and this document is the bug.*
 
 ## 0. Design direction (as shipped, v4)
+
+*Historical v4 snapshot, superseded visually by the September 2026 workspace refurbishment; descriptive facts below refer to that snapshot unless explicitly stated otherwise. The vendored typeface inventory remains current.*
 
 **The look: a well-set financial ledger.** Green-tinted paper ground, near-black
 ink, hairline rules, one navy accent, letterspaced small-caps eyebrows,
@@ -275,11 +279,14 @@ lives inside Settings, which is why `/capture/` lights the Settings tab.
 
    Three exceptions:
 
-   a. **Nav, badges and chips are uppercased by CSS, not in the source.**
-   `.site-nav a` and `.pill, .chip, .prio` both carry `text-transform:
-   uppercase`. Source text stays ordinary Title Case ("Network", not
-   "NETWORK"), so no template types ALL CAPS and turning the transform off
-   leaves readable copy.
+   a. **The historical base theme uppercases nav, badges and chips through CSS.**
+   In `coverage.css`, `.site-nav a` and `.pill, .chip, .prio` still carry
+   `text-transform: uppercase`. The later `workspace.css` rule for
+   `.workspace-nav .site-nav a` deliberately sets `text-transform: none`
+   and removes letterspacing, so workspace destinations display normal-case
+   source labels. Status badges retain their base transform. Source text stays
+   ordinary Title Case ("Network", not "NETWORK"); CSS owns presentation.
+   This visual override does not reverse the D-15 naming decision above.
 
    b. **Data is cased by `smart_title` and never by hand.** Firm names, people's
    names and roles pass through the filter. A hand-cased firm name in a template

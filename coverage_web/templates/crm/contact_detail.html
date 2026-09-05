@@ -15,11 +15,12 @@
 
   <header class="pagehead">
     <div class="pagehead-text">
-      <p class="pagehead-eyebrow">
+
+      <h1 class="pagehead-title">{{ contact.name|smart_person_name|smart_title }}</h1>
+      <p class="pagehead-sub">
         {% if firm %}{{ firm.name|smart_title }}{% elif contact.firm_text %}{{ contact.firm_text|smart_title }}{% endif %}{% if contact.role %} · {{ contact.role }}{% endif %}
         {% if contact.school_affiliation %} · alum{% endif %}
       </p>
-      <h1 class="pagehead-title">{{ contact.name|smart_person_name|smart_title }}</h1>
     </div>
     <div class="pagehead-actions">
       <a class="btn" href="{% url 'crm:contact_edit' contact.pk %}">Edit</a>

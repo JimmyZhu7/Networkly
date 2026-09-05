@@ -131,12 +131,17 @@ def test_the_case_rule_names_its_three_exceptions():
     assert "sentence case" in section, "(c) prose stays prose"
 
 
-def test_nav_badges_and_chips_are_uppercased_by_css_not_in_the_source():
-    """Exception (a), both halves. The transform is what shouts; the source
-    text stays readable, so turning the transform off leaves ordinary copy
-    rather than a page of ALL CAPS."""
+def test_nav_badges_and_chips_keep_readable_source_labels():
+    """The base theme owns uppercase; the workspace deliberately turns it off.
+
+    Icon includes may precede a nav label. Neither theme needs uppercase
+    source text to achieve its presentation.
+    """
     assert "text-transform: uppercase" in _css_block(".site-nav a")
     assert "text-transform: uppercase" in _css_block(".pill, .chip, .prio")
+    workspace = (CSS.parent / "workspace.css").read_text(encoding="utf-8")
+    nav_style = re.search(r"\.workspace-nav \.site-nav a\s*\{(.*?)\}", workspace, re.S)
+    assert nav_style and "text-transform: none" in nav_style.group(1)
 
     nav = re.search(
         r'<nav class="site-nav".*?</nav>',
@@ -144,7 +149,8 @@ def test_nav_badges_and_chips_are_uppercased_by_css_not_in_the_source():
         re.DOTALL,
     )
     assert nav, "base.html no longer renders a .site-nav"
-    labels = re.findall(r">([A-Za-z][A-Za-z ]*)</a>", nav.group(0))
+    nav_source = re.sub(r"{%.*?%}", "", nav.group(0), flags=re.S)
+    labels = re.findall(r">([A-Za-z][A-Za-z ]*)</a>", nav_source)
     assert len(labels) >= 5, labels
     for label in labels:
         assert label != label.upper(), f"nav types {label!r} in caps; CSS does that"

@@ -97,3 +97,6 @@ docs/liam-safe-draft-*.md
 region_enrich_plan_*.json
 region_enrich_undo_*.json
 region_backfill_undo_*.json
+
+# Local UI review captures may contain tenant records. Never publish them.
+.impeccable/review/

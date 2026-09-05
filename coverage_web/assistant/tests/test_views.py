@@ -8,6 +8,7 @@ a traceback. Same posture as `crm.views.contact_ai_brief`.
 
 from __future__ import annotations
 
+import re
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -15,6 +16,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from analytics.models import ProductEvent
 from assistant.models import AdvisorMemory, ChatConversation, ChatFolder, ChatMessage
@@ -242,8 +244,12 @@ def test_the_nav_offers_the_page_on_every_signed_in_screen(signed_in, user):
 
     body = signed_in.get(reverse("crm:week")).content.decode()
 
-    assert 'href="/assistant/"' in body
-    assert ">Talk<" in body
+    nav = re.search(r'<nav class="site-nav".*?</nav>', body, re.S)
+    assert nav, "Working screens must expose the primary navigation"
+    talk = re.search(r'<a href="/assistant/"[^>]*>(.*?)</a>', nav.group(), re.S)
+    assert talk, "Talk must be linked from the primary navigation"
+    # Inline icons and template whitespace do not change the visible label.
+    assert strip_tags(talk.group(1)).strip() == "Talk"
 
 
 def test_opening_a_specific_conversation_by_id_shows_its_own_thread(signed_in, user):

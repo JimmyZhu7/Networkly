@@ -23,6 +23,7 @@
   <header class="pagehead">
     <div class="pagehead-text">
       <h1 class="pagehead-title">Today</h1>
+      <p class="pagehead-sub">Your next steps, all in one place.</p>
     </div>
     {% comment %}
     Quick add. Something worth recording — a person you just met, a chat that
@@ -31,6 +32,7 @@
     than a modal: no JS, no focus trap to get wrong, and Escape already works.
     {% endcomment %}
     <div class="pagehead-actions">
+      <span class="workspace-date">{% now "l, j F" %}</span>
       <details class="quickadd">
         <summary class="btn btn-primary">＋ Quick add</summary>
         <div class="quickadd-menu panel panel--raised">

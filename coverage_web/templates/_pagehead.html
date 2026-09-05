@@ -7,9 +7,8 @@ Usage:
 
   {% include "_pagehead.html" with title="Network" %}
 
-Only `title` renders; it is required. `eyebrow` and `sub` may still be passed
-by call sites but are ignored — the eyebrow and subtitle were dropped from
-every hero. For an action button on the right, pass `action_url` +
+`title` is required. `sub` is an optional one-sentence description of the
+page task. `eyebrow` is intentionally ignored. For an action button on the right, pass `action_url` +
 `action_label`:
 
   {% include "_pagehead.html" with title="Network" action_url=… action_label="Add contact" %}
@@ -22,6 +21,7 @@ this include a parameter per case — the CSS is what enforces consistency, and
 <header class="pagehead">
   <div class="pagehead-text">
     <h1 class="pagehead-title">{{ title }}</h1>
+    {% if sub %}<p class="pagehead-sub">{{ sub }}</p>{% endif %}
   </div>
   {% if action_url %}
     <div class="pagehead-actions">

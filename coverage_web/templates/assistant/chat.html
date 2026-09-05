@@ -993,7 +993,8 @@ element by the next turn.
     // most. The CSS fallback (70px) covers the one frame before this runs.
     var header = document.querySelector(".site-header");
     function setHeaderHeight() {
-      document.documentElement.style.setProperty("--as-header-h", header.offsetHeight + "px");
+      var isRail = header && header.classList.contains("workspace-nav") && getComputedStyle(header).position === "fixed";
+      document.documentElement.style.setProperty("--as-header-h", (isRail ? 0 : header.offsetHeight) + "px");
     }
     setHeaderHeight();
     if (header && window.ResizeObserver) {
