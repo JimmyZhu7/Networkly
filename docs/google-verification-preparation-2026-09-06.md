@@ -103,6 +103,25 @@ Remove any `AAAA` record for the domain while configuring; Render's docs say IPv
 
 The existing policy template is a draft with unresolved owner fields. This document neither fills those fields nor authorizes statements that the service is verified, certified, legally reviewed, or approved for unrestricted public onboarding.
 
+### What each remaining step actually depends on
+
+Classified on 6 September. A = needs payment or a service to be resumed; B = owner account action or factual decision; C = third-party approval; D = doable now without payment.
+
+| Step | Class | Real dependency | Who |
+|---|---|---|---|
+| Public HTTPS origin and Search Console ownership | A then B | A domain must be bought, attached to Render (hosting resumed) and verified in Search Console | Owner |
+| Legal operator, address, contact, jurisdiction, retention | B | Facts only the founder can supply; adviser review is his call | Owner |
+| Publish final policy and home page on the domain | A | Deployed site on the final origin | Owner deploys; pages are ready in the tree |
+| Read current Console state (audience, clients, scopes, cap) | B | Console session; this environment has none | Owner |
+| Calendar scope minimisation | B then D | Founder decision (see source check above); if yes, code change plus one live consent pass | Decision: owner; change: engineering |
+| Deployed data-flow, retention and Limited Use confirmation | A | Running production with real connections | Owner with engineering |
+| Real Gmail and Calendar connect, scan, disconnect, reconnect checks | A | Deployed app and a designated test Google account | Owner |
+| Demonstration video on the submitted environment | A | Deployed app with a synthetic mailbox and calendar | Owner records; storyboard is written |
+| Reviewer access route through the invitation gate | D then A | A reserved reviewer email via `beta_invite` (free, local now) and the deployed origin | Engineering reserves; owner supplies to Google |
+| Submit the verification form | B then C | All of the above, then Google's review and any security assessment | Owner submits; Google approves |
+
+Nothing in class D remains for this dossier except reserving the reviewer seat, which needs the reviewer address Google assigns after submission begins.
+
 ## Source-review record
 
 Inspected `coverage_web/coverage_web/settings/base.py`, `coverage_web/coverage_web/urls.py`, `coverage_web/capture/urls.py`, `coverage_web/capture/gmail_live.py`, `coverage_web/capture/gmail_residue.py`, `coverage_web/capture/gcal_live.py`, `coverage_web/accounts/urls.py`, and `coverage_web/templates/legal/privacy.html`; cross-checked `docs/gmail-live-setup.md`. This is a bounded source/document review. No credentials were read, external submissions made, live database tests run, or legal-page files edited by this work.
