@@ -297,6 +297,52 @@ now configure the live client themselves, and the two Stripe preflight tests
 pin the beta off. The CI test job (a clean runner with no `.env`) is the
 independent check that no further machine-dependence remains.
 
+## Unfinished Items by Class
+
+Classified at the end of the second pass. A = needs payment or a service
+resumed; B = owner account action or factual decision; C = third-party
+approval; D = still doable without payment.
+
+| Item | Class | Exact dependency | Next action | Who |
+|---|---|---|---|---|
+| Calendar reschedule and cancel as user actions | D | Nothing; in progress on its own branch | Merge, run the integrated suite, record here | Engineering |
+| Final integrated suite green locally and on the clean CI runner | D | The calendar merge | Run once on the final tree; push; read CI | Engineering |
+| Resume hosting: web, database, worker, crons (12 services in the Blueprint) | A | Render billing | Follow "After Payment" below | Owner resumes; engineering runs the gates |
+| Domain, DNS, HTTPS, Google callbacks, Resend sender, `EMAIL_URL` | A | A bought domain | Dossier section "Domain, DNS and console changes" | Owner buys and publishes DNS; engineering sets config |
+| AI features live (assistant, Scan Now, Autopilot, region enrichment) | A | Anthropic credit balance (empty as of 4 September) | Top up; keep existing spend limits | Owner |
+| Gmail and Calendar end-to-end acceptance, job execution evidence, Healthchecks pings, Sentry job alerts, shared-Redis limits, avatar durability across redeploy | A | Resumed hosting | Acceptance steps 1–10 on the deployed app | Owner with engineering |
+| Off-host backup cron running | A | Resumed hosting | Set `BACKUP_S3_BUCKET=networkly-backups` on `coverage-db-backup`, run once by hand, resume the cron, add it to `EXPECTED_INTERVALS` | Owner resumes; engineering verifies |
+| Sentry owner notification actually delivered | B | The Sentry account's notification address | Confirm the address in Sentry account settings, re-fire the test, check that inbox | Owner |
+| Healthchecks: apply the 11 windows, run the synthetic missed-job test, start checks after resume | B | Dashboard or API key | Monitoring Plan above; keep real checks unstarted until resume | Owner |
+| `coverage-db` PostgreSQL major version | B | Render dashboard | Read it; if not 18, pin `postgresMajorVersion` before applying the Blueprint | Owner reads; engineering pins |
+| Encryption-key recovery record | B | A password manager or sealed record | Store `GMAIL_LIVE_TOKEN_KEY` (ring, newest first) and `DJANGO_SECRET_KEY` with the date | Owner |
+| Legal identity, address, privacy contact, jurisdiction, backup retention | B | Facts only the founder holds; adviser review is his call | Replace the six placeholders on the privacy and terms pages | Owner |
+| Calendar scope minimisation | B then D | Founder decision; one live consent pass after | Decide; if yes, engineering switches to the narrower pair and retests connect, sync, disconnect, reconnect | Owner decides |
+| "Who to Find" | B | Founder decision | Choose a contextual firm-page entry or retire it; unchanged until then | Owner |
+| Push delivery, denial and unsubscribe in a real browser | B | A browser session on the owner's machine | Subscribe in Safari and Chrome on the deployed app, run the daily push job once, deny and unsubscribe | Owner |
+| Local poller running pre-fix code | B | The founder's own launchd agent | `launchctl kickstart -k gui/$(id -u)/com.coverage.gmailpoll` so it loads the merged calendar-ownership and heartbeat fixes | Owner |
+| Outside edits to four static CSS files and an untracked Figma notes file in the main checkout | B | Made by another session while this pass ran | Review and commit or discard; nothing here touched them | Owner |
+| Repository visibility | B | GitHub settings | The repo is public; decide whether it stays so before inviting testers | Owner |
+| Google OAuth verification (restricted Gmail scope, assessment) | C after A and B | Deployed origin, domain ownership, legal pages, demo video | Dossier "Submission gates" | Owner submits; Google approves |
+| Real avatar migration into the private bucket | A then B | Deployed storage; a `--rekey` preview reviewed by the owner | Preview, review partial results, apply | Owner authorises |
+
+## After Payment: Ordered Execution Checklist
+
+1. Top up the Anthropic balance; leave the existing daily limits and credit plans as they are.
+2. In the Render dashboard read `coverage-db`'s PostgreSQL major version. If it is not 18, add `postgresMajorVersion: "<n>"` under the database in `render.yaml` and commit before anything else.
+3. Store `GMAIL_LIVE_TOKEN_KEY` and `DJANGO_SECRET_KEY` in a password manager with today's date.
+4. Apply the Blueprint (12 services). Confirm every `sync: false` value on `coverage-web` is still present; the new `coverage-gcal-sync`, `coverage-assistant-reconcile` and `coverage-db-backup` inherit from it. Set `BACKUP_S3_BUCKET=networkly-backups` on `coverage-db-backup` only.
+5. Resume the database and `coverage-web` only. Migrations run as the pre-deploy step. On the web shell run the three gate commands from the runbook: `check --deploy --fail-level WARNING`, `migrate --check`, `deploy_preflight --launch`. All three must exit zero.
+6. Open `/healthz`, then sign in with the founder's Google account and load Today, Opportunities, Network, Calendar, Settings.
+7. Run `backup_db --require-s3 --dest /tmp/coverage-backup --keep 14` once by hand from the web shell; confirm one object in `networkly-backups/db/`. Then resume `coverage-db-backup`.
+8. Resume the worker and crons in this order: `coverage-gmail-live`, `coverage-gmail-backfill`, `coverage-autopilot`, `coverage-gcal-sync`, `coverage-assistant-reconcile`, `coverage-scrape`, `coverage-push-alerts`, `coverage-weekly-digest`, `coverage-pro-trial-expire`, `coverage-gmail-watch-renew`. Start each Healthchecks check as its service resumes, with the windows from the Monitoring Plan; add `db-backup` to `EXPECTED_INTERVALS` in the same change.
+9. Within a day, confirm a success `JobRun` for every required job on `/ops/health/cron/` and a green row for every check.
+10. Confirm the Sentry address and inbox; run the Healthchecks synthetic missed-job test and delete it.
+11. Buy the domain. Publish the DNS records from the dossier, wait for Render's certificate, set `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` and `SITE_URL`, redeploy. Add the three domain callbacks and the consent-screen links in Google Cloud. Add the domain to Resend, publish its records, then set `EMAIL_URL` and `DEFAULT_FROM_EMAIL` on `coverage-web`. Send a verification, a reset and one digest to the founder's inbox and check every link.
+12. Run the ten acceptance steps with two synthetic accounts on the deployed app, including Gmail and Calendar connect on a designated test Google account, and push subscribe, deny and unsubscribe in Safari and Chrome.
+13. Fill the six legal placeholders. Record the demo video from the storyboard. Submit Google verification. Reserve a reviewer seat with `beta_invite` when Google supplies the address.
+14. Invite 5 to 10 testers with `beta_invite` and watch onboarding, the first saved role and contact, and sync failures for a week before the next batch.
+
 ## Founder Decisions and Evidence Limits
 
 - **Who to Find remains a decision gate.** Choose a contextual firm-page entry or

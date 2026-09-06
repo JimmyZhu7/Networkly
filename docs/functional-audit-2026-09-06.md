@@ -121,6 +121,49 @@ Tests use mocked provider responses and isolated PostgreSQL databases. They
 do not establish live Gmail, Calendar, AI, email or Stripe operation. The
 main suite runs serially to avoid shared-database interference.
 
+## Second Pass, 6 September Afternoon
+
+The handoff above was committed as revision `38b38c6` and taken over by a
+release-owner pass that ran four parallel workstreams (release and
+configuration, local user journeys, algorithms and data integrity, security
+and privacy) on isolated worktrees with exclusive file ownership, merged each
+behind focused tests, and closed the review findings in files nobody owned.
+The current checklist, [product readiness](product-readiness-2026-09-06.md),
+carries the results, the evidence, the classified unfinished items and the
+after-payment order of operations; this section records only what changes
+the statements made earlier in this document.
+
+- **Follow-up 1 (Calendar reconciliation)** shipped in the handoff and was
+  probed again: absence after cursor expiry does not imply cancellation, and
+  mail can no longer take over or move a Google-owned meeting when the
+  calendar side arrives first.
+- **Follow-up 2 (AI crash accounting)**: `assistant_reconcile --apply` exists
+  and is scheduled; hard-kill, mid-stream disconnect, refund-exactly-once and
+  two-worker cases are covered by the durable-turn tests and were re-probed
+  without finding a gap.
+- **Follow-up 3 (conversation concurrency)**: a second turn in the same
+  conversation is rejected before provider, history or credit work; covered.
+- **New defects fixed in the second pass**: a repair command that wrote a
+  heuristic graduation year over a stated window; the credit burst guard's
+  day boundary belonging to UTC from a cron tick; two Today counts that
+  accepted future-dated touches; `Firm.logo_url` raising on the public feed
+  for 11 firms; a heartbeat failure logging the ping credential; the Stripe
+  webhook echoing provider text; deletion leaving other devices signed in;
+  the delete page understating what deletion removes; keyboard-unreachable
+  assistant regions on a phone; the public university search unthrottled;
+  and the privacy page's claim that AI classification happens only on Scan
+  Now, when ordinary sync already sends subjects and snippets.
+- **The suite's verdict no longer depends on the machine.** Beta flag, VAPID
+  keys and the Gmail live client are now defaults set by the root conftest
+  and the tests that need them; the CI test job on a runner with no `.env`
+  is the independent check.
+- **The Verification table above is historical.** The integrated suite on the
+  final tree is recorded in the readiness checklist's test evidence with its
+  exact count, together with the clean-runner CI result on the pushed head.
+- **Still open**: reschedule and cancel as user actions on the calendar (in
+  progress), and everything the readiness checklist classifies as needing
+  payment, an owner decision or Google's approval.
+
 ## Remaining Engineering Follow-Ups
 
 1. **Calendar reconciliation:** handle missing events after an expired sync
