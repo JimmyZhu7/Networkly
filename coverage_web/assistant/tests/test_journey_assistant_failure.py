@@ -77,6 +77,19 @@ def _spends(student):
     return CreditLedger.objects.for_user(student).filter(kind=CreditLedger.KIND_SPEND_CHAT)
 
 
+def _conversation(student, title="Journey"):
+    """Saved through the instance rather than the unscoped manager.
+
+    This package forbids that manager outright, and `test_isolation.py`
+    enforces it by grepping the source — a mention in a comment counts, so do
+    not name it here. A test is not exempt from a rule whose whole point is
+    that no line under `assistant/` should be able to reach another tenant.
+    """
+    row = ChatConversation(user=student, title=title)
+    row.save()
+    return row
+
+
 def _drain(response):
     """A StreamingHttpResponse does nothing until somebody reads it."""
     return b"".join(response.streaming_content).decode()
@@ -208,7 +221,7 @@ def test_a_turn_killed_before_it_could_settle_is_recovered_once_and_only_once(st
     """A worker that dies mid-turn leaves a PENDING row and no process to
     finish it. Modelled by reserving inside the lock and never running the
     charge's exit, which is what SIGKILL looks like from the outside."""
-    conversation = ChatConversation.all_objects.create(user=student, title="Journey")
+    conversation = _conversation(student)
     opening = credits.balance(student)
 
     with ConversationLock(conversation.pk) as ownership:
@@ -235,7 +248,7 @@ def test_a_turn_killed_before_it_could_settle_is_recovered_once_and_only_once(st
 @override_settings(ANTHROPIC_API_KEY="sk-test-journey", CREDIT_PLANS=PLANS)
 def test_recovery_never_refunds_a_turn_that_is_still_running(student):
     """Age alone must never authorize a refund — the lock is the evidence."""
-    conversation = ChatConversation.all_objects.create(user=student, title="Journey")
+    conversation = _conversation(student)
 
     with ConversationLock(conversation.pk) as ownership:
         charge = TurnCharge(student, conversation, ownership)
@@ -293,8 +306,9 @@ def test_a_failed_turn_is_one_students_problem_only(signed_in, student, monkeypa
     assert _refunds(student).count() == 1
 
 
-def test_the_assistant_write_routes_are_private(client):
+def test_the_assistant_write_routes_are_private(client, student):
     for name in ("assistant:send", "assistant:stream"):
         assert client.post(reverse(name), {"message": "hello"}).status_code == 302
-    assert not ChatTurnReservation.all_objects.exists()
-    assert not CreditLedger.all_objects.exists()
+    assert not ChatTurnReservation.objects.for_user(student).exists()
+    assert not CreditLedger.objects.for_user(student).exists()
+    assert not ChatMessage.objects.for_user(student).exists()
