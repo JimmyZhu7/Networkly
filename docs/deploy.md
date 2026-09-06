@@ -92,6 +92,7 @@ The daily 05:00 block runs in this order, and the order is load-bearing:
 
 | UTC | Service | Why here |
 |---|---|---|
+| 04:15 | `coverage-db-backup` | The last quiet moment before the day's plan flips. Inert until a bucket is named — see section 9. |
 | 05:00 | `coverage-pro-trial-expire` | Decides who is Pro. Also sends the trial-ended email and unlocks the student's Free "Scan Now". |
 | 05:30 | `coverage-gmail-watch-renew` | Acts on who is Pro. Renews only `plan="pro"` watches. |
 
@@ -212,6 +213,31 @@ public `SITE_URL` on the web service; both email jobs inherit it:
 - `DEFAULT_FROM_EMAIL` = `Networkly <no-reply@yourdomain>`
 - `SITE_URL` = `https://<your-public-host>`
 
+**How much mail a day this costs, which is the part that nearly broke.**
+Resend's free tier allows **100 emails a day, 3,000 a month, 3 domains, 30
+days of retention** (verified 2026-09-06). The digest cron used to run
+`0 13 * * 1` and mail every eligible account inside one minute: at the
+beta's cap of 100 students, that is the whole day's allowance spent on the
+digest, and the mail somebody is actually waiting on — the confirmation, the
+reset, the invitation — is refused. Nobody sees an error, because those sends
+fail at the provider after the app has already said "check your inbox".
+
+Two mechanisms now stand between the digest and that day:
+
+- `coverage-weekly-digest` runs **daily** and passes `--spread`, which mails
+  only the seventh of the roster whose `pk % 7` matches the run's UTC
+  weekday. Every student still gets exactly one digest a week, on the same
+  weekday every week. A 100-student roster costs about 14 sends a day
+  instead of 100 in one.
+- `DIGEST_DAILY_SEND_CAP` (default 60, `settings/base.py`) is the hard
+  ceiling, and it applies with or without `--spread` — including to a
+  founder running the command by hand. Recipients past it are deferred, in a
+  stable order, and the count is printed.
+
+Nothing about the email changes: "closing this week" is a rolling window from
+the recipient's own today, not a calendar week, so a Thursday student's
+digest reads exactly as a Monday student's does.
+
 ### 4d. Google Calendar
 
 Google Calendar is optional and separately consented. Add
@@ -246,6 +272,15 @@ the `preload` token is a claim that the origin meets hstspreload.org's bar
 (max-age of at least a year, plus subdomains, plus an HTTP redirect). A
 seven-day header carrying `preload` advertises a qualification it does not
 have, which is what it did until 2026-09-01.
+
+Because preload is off permanently, `production.py` carries
+`SILENCED_SYSTEM_CHECKS = ["security.W021"]`. Django raises W021 whenever
+`SECURE_HSTS_PRELOAD` is False, so without the silence the runbook's own gate
+— `manage.py check --deploy --fail-level WARNING`, which must exit zero —
+could never pass on a correctly configured deploy, and the one command meant
+to catch a real misconfiguration becomes a line everybody learns to skip. The
+silence is scoped to that single check id; every other security warning still
+fails the gate. Flipping preload on makes the entry inert rather than wrong.
 
 Turning it on is your call, not a default, because getting off the preload
 list takes months and ships with a browser release. When you want it, in
@@ -291,6 +326,49 @@ is no subscription, no customer portal, and no paid-Pro representation at all
    Both are already declared in `render.yaml` as `sync: false`, so they
    survive a Blueprint re-apply.
 
+## 9. Database backups (defined, off until you pay for a bucket)
+
+`render.yaml` declares `coverage-db-backup`, a daily 04:15 UTC cron running
+`backup_db --require-s3`. It is deliberately inert on a fresh apply, and it
+takes two things to arm it. Neither happens by accident:
+
+1. The service is suspended in the dashboard, like every other service in
+   this deploy. Render's Blueprint schema has no `suspended:` key, so a cron
+   cannot be declared dormant in the file itself.
+2. `BACKUP_S3_BUCKET` is blank. With `--require-s3` and no bucket the command
+   does nothing at all — no `pg_dump`, no connection to the database, no
+   file — prints why, and exits zero. A dump written inside a Render
+   container is not a backup: the filesystem goes away with the container.
+
+To turn it on, once object storage is paid for:
+
+- Create a bucket **separate from the avatar bucket**, in the same account.
+  One object here is every row in the app; it does not belong in the same
+  listing as media a request path can reach.
+- Set `BACKUP_S3_BUCKET` on `coverage-db-backup` (and `BACKUP_S3_PREFIX` if
+  you want something other than `db/`). The endpoint, region and credentials
+  are inherited from the web service's `MEDIA_S3_*` values.
+- Resume the service. `--keep 14` holds a fourteen-snapshot ring in the
+  bucket, pruned oldest-first by key name.
+- Add `"db-backup"` to `ops.tracking.EXPECTED_INTERVALS` and a
+  `HEALTHCHECK_URL_DB_BACKUP` slot in the same change, so
+  `/ops/health/cron/` starts watching it. It is deliberately untracked while
+  dormant: a tracked job that is never meant to run reads as a dead job
+  forever.
+
+The image can do this now and could not before: `pg_dump` was not installed
+in it at all, so `backup_db` only ever ran from a laptop. The Dockerfile
+installs `postgresql-client-18` from the PGDG repository, and CI runs
+`pg_dump --version` inside the built image so the binary cannot silently go
+missing again. **Major version 18 matters**: `pg_dump` refuses a server newer
+than itself, and that is a non-zero exit, not a warning. Read the real
+"PostgreSQL version" off the `coverage-db` page in the dashboard — if it is
+ever above 18, the Dockerfile has to move with it.
+
+Restore is unchanged and is documented in `backup_db`'s own docstring and in
+the [beta release runbook](beta-release-runbook.md). Restore beside the live
+database, never over it.
+
 ## Dependency scanning
 
 No CVE scan had ever been run against this tree (`audit-security.md §9`), and
@@ -311,12 +389,27 @@ Run it before a deploy and after any dependency change. A finding is either
 fixed by taking the release that closes it, or written down here with the
 reason it is being accepted — never left unread.
 
-**Not yet run.** The scan needs network access and the executor that added this
-section had none. Outstanding with it, from the same audit section: the point
-releases for django-allauth (65.18.0 to 65.19.2), cryptography (49.0.0 to
-50.0.1), google-auth, stripe, psycopg, gunicorn and playwright, each one point
-behind. Take them in ONE commit with the full suite as the gate, and state the
-before and after versions in the commit body.
+`uv run pip-audit --strict` on its own reports an error rather than a finding:
+`--strict` refuses to skip a package it cannot resolve, and this workspace's
+own three packages (coverage-web, coverage-domain, coverage-connectors) are
+editable installs with no PyPI entry to resolve against. Export first, then
+audit the export — which is exactly what `.github/workflows/pip-audit.yml`
+already does on every push, on every pull request, and every Monday:
+
+```bash
+uv export --all-packages --locked --no-emit-workspace \
+  --format requirements.txt -o requirements-audit.txt
+uv run pip-audit --strict -r requirements-audit.txt
+```
+
+**Run 2026-09-06 against the current lockfile: "No known vulnerabilities
+found."** 126 packages resolved, nothing outstanding, so no version was moved
+in that release pass. The earlier note here listing point releases for
+django-allauth, cryptography, google-auth, stripe, psycopg, gunicorn and
+playwright as outstanding is settled: the lockfile has since moved past every
+one of them, and none of the current pins carries an advisory. Being a point
+release behind is not by itself a reason to bump — a bump with no advisory
+behind it is churn with a regression risk and no security win.
 
 **The anthropic pin does not move with them.** 0.122.0 against 1.3.0 is a major
 version, and `assistant/`'s agent loop depends on the streaming and tool APIs
@@ -333,6 +426,7 @@ is LTS to 2028.
   institutional plan does not. `User.plan` is an admin flip with no expiry
   for anything but a trial. `docs/plans/b2b2c-sketch.md` is the shape that
   would fix it, unbuilt.
-- Database backups beyond the Render plan's own. `manage.py backup_db`
-  exists and is not in `render.yaml`; check the `coverage-db` plan's
-  retention in the dashboard.
+- Database backups beyond the Render plan's own are *defined* but not *on*.
+  `coverage-db-backup` is in `render.yaml` and does nothing until somebody
+  names a bucket; see section 9. Check the `coverage-db` plan's own retention
+  in the dashboard as well — the two are different guarantees.
