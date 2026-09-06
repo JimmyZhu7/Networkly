@@ -1316,6 +1316,13 @@ def _universities() -> list:
 def university_search(request) -> HttpResponse:
     """Prefix/contains match on the university list; returns <option> rows for
     the School field's <datalist>. Prefix matches rank above contains."""
+    # Anonymous by design (the sign-up form uses it) and static data, but the
+    # same per-IP window the other search endpoints use: an unauthenticated
+    # O(n) scan with no ceiling is a free CPU sink. Imported here rather than
+    # at module top to keep accounts.views independent of core.views' imports.
+    from core.views import _search_throttled
+    if _search_throttled(request):
+        return HttpResponse(status=429)
     q = (request.GET.get("school") or request.GET.get("q") or "").strip().lower()
     options: list[str] = []
     if len(q) >= 2:
