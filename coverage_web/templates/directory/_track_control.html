@@ -92,6 +92,6 @@ in document order.
     </button>
   {% else %}
     <a class="track-chip track-{{ r.track_status }}" href="{% url 'my_applications' %}"
-       title="Manage on My Applications">{% if r.track_status == "submitted" %}Applied{% elif r.track_status == "interview" %}Interviewing{% elif r.track_status == "offer" %}Offer{% else %}Done{% endif %}</a>
+       title="Manage on My applications">{% if r.track_status == "submitted" %}Applied{% elif r.track_status == "interview" %}Interviewing{% elif r.track_status == "offer" %}Offer{% else %}Finished{% endif %}</a>
   {% endif %}
 </span>

@@ -269,7 +269,7 @@ def onboarding(request):
                 request.user.onboarded_at = timezone.now()
                 request.user.save(update_fields=["onboarded_at"])
                 record_event("onboarded", user=request.user)
-            messages.success(request, "You're all set. Welcome to Coverage.")
+            messages.success(request, "Your profile is ready.")
             # Land on Today — the working surface — not back in Settings.
             return redirect("/app/")
 

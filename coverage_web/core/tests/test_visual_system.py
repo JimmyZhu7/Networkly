@@ -238,7 +238,7 @@ def test_the_undated_cell_carries_no_em_dash_and_speaks():
     card = TEMPLATES / "directory" / "_rolecard.html"
     text = card.read_text(encoding="utf-8")
     assert "—" not in text and "&mdash;" not in text
-    assert '<span class="rr-due-n rr-due-none"><span class="vh">No date posted</span></span>' in text
+    assert '<span class="rr-due-n rr-due-none"><span class="vh">Deadline not listed</span></span>' in text
     # The mark itself is drawn, so it is never announced.
     styles = (TEMPLATES / "directory" / "_styles.html").read_text(encoding="utf-8")
     assert ".rr-due-none::before" in styles
@@ -256,7 +256,7 @@ def test_an_undated_row_renders_the_spoken_cell(client):
     body = client.get(reverse("opportunities")).content.decode()
     body = re.sub(r"<style.*?</style>", "", body, flags=re.S)
     assert "rr-due-none" in body
-    assert '<span class="vh">No date posted</span>' in body
+    assert '<span class="vh">Deadline not listed</span>' in body
     assert "&mdash;" not in body
 
 

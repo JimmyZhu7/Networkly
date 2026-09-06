@@ -47,7 +47,7 @@ def test_firm_date_labels_is_sentence_case_not_title_case():
     assert FIRM_DATE_LABELS["app_deadline"] == "Application deadline"
     # Same casing shape as the CRM's own action vocabulary: capitalized
     # first word, lowercase the rest.
-    assert ACTION_LABELS["maintain"] == "Keep warm"
+    assert ACTION_LABELS["maintain"] == "Check in"
 
 
 def test_firm_date_labels_still_reads_as_one_word_for_a_single_word_kind():

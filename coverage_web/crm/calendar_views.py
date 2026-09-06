@@ -731,7 +731,7 @@ def calendar_token_reset(request: HttpRequest) -> HttpResponse:
         "New calendar link: webcal://"
         + request.get_host()
         + reverse("crm:calendar_ics", args=[request.user.calendar_token])
-        + ". The old link is dead. Subscribe again in your calendar app.",
+        + ". The old link no longer works. Subscribe with this new link in your calendar app.",
     )
     return redirect(f"{reverse('accounts:settings')}#security")
 

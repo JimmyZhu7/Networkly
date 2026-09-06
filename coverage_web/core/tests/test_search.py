@@ -92,7 +92,7 @@ def test_the_palette_never_ships_a_raw_name_or_warmth_slug(client):
     assert person["name"] == "Jude Yoon"
     assert Contact.all_objects.get(email="jude.yoon@palette.example").name == "jude.yoon"
     # The warmth slug becomes the words every other surface already uses.
-    assert person["warmth"] == "Chatted"
+    assert person["warmth"] == "Had a chat"
     assert person["warmth"] != "chatted"
     # A shouting firm name is tidied like it is everywhere else.
     assert person["firm"] == "Palette Capital"

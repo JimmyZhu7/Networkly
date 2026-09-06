@@ -458,7 +458,7 @@ def test_the_view_says_nothing_written_when_the_api_is_dark(client, user, contac
     resp = client.post(reverse("crm:contact_ai_summary", args=[contact.pk]))
 
     assert resp.status_code == 200
-    assert b"Nothing written." in resp.content
+    assert b"Summary unchanged." in resp.content
     assert Contact.all_objects.get(pk=contact.pk).ai_summary == ""
 
 

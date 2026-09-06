@@ -408,7 +408,7 @@ def test_a_queue_row_keeps_its_three_zones(client):
 
 
 def test_a_contact_with_no_touches_says_so_rather_than_guessing(client):
-    """REWRITTEN 2026-09-02: "No touches on record" became "No touches yet".
+    """REWRITTEN 2026-09-02: "No interactions on record" became "No interactions yet".
 
     "on record" is provenance — it says where the absence was checked — and
     the row is the record. The FACT is unchanged and load-bearing in a new
@@ -420,7 +420,7 @@ def test_a_contact_with_no_touches_says_so_rather_than_guessing(client):
     _contact(user=user, name="Brand New")
     client.force_login(user)
     body = client.get(reverse("crm:week")).content.decode()
-    assert "No touches yet" in body
+    assert "No interactions yet" in body
 
 
 def test_an_audit_row_is_not_shown_as_a_touch(client):
@@ -450,9 +450,9 @@ def test_the_log_button_does_not_claim_to_have_sent_anything(client):
 
     client.force_login(user)
     body = client.get(reverse("crm:week")).content.decode()
-    assert ">Done<" in body
+    assert ">Log sent<" in body
     assert ">Sent<" not in body
-    assert ">They replied<" in body
+    assert ">Log reply<" in body
     assert ">Reply<" not in body
 
 
@@ -617,15 +617,15 @@ def test_a_reping_card_offers_no_skip_because_skip_would_lie(client):
     import re
     card = re.search(r"Reping Target.*?</article>", body, re.S).group(0)
     assert "Skip" not in card and "Snooze" not in card
-    # Park it is the SAME exemption for a stronger reason: parking silences
+    # Pause outreach is the SAME exemption for a stronger reason: parking silences
     # every future reminder about this person, not just today's, and the
     # one card that exists because a confirmed deadline is imminent is
     # exactly the one card that must never be permanently dismissable.
-    assert "Park it" not in card
+    assert "Pause outreach" not in card
 
 
 # ---------------------------------------------------------------------------
-# The manual "never see this again" — Park it as a ghost button on an
+# The manual "never see this again" — Pause outreach as a ghost button on an
 # ordinary (non-quiet) card, alongside Snooze/Skip rather than gated behind
 # the engine already deciding the contact has gone stale.
 # ---------------------------------------------------------------------------
@@ -646,12 +646,12 @@ def test_an_ordinary_card_offers_park_it_next_to_snooze_and_skip(client):
     import re
     card = re.search(r"Shelby Dibs.*?</article>", body, re.S).group(0)
     assert "Snooze" in card and "Skip" in card
-    assert "Park it" in card
+    assert "Pause outreach" in card
     assert f'{reverse("crm:today_act", args=[c.id, "park"])}' in card
 
 
 def test_the_ghost_park_it_button_actually_parks(client):
-    """Not just markup — the button has to do what the primary Park it
+    """Not just markup — the button has to do what the primary Pause outreach
     button does: the audited override, one manual_override touch, contact
     stays on the board."""
     user = _user(weekly_touch_goal=14)
@@ -680,7 +680,7 @@ def test_the_ghost_park_it_button_actually_parks(client):
 
 
 def test_the_gone_quiet_lane_does_not_get_a_second_park_button(client):
-    """`a.action == "park"` already renders Park it as the PRIMARY button.
+    """`a.action == "park"` already renders Pause outreach as the PRIMARY button.
     The new ghost version is gated on `a.action != "park"` specifically so
     that card doesn't show the same verb twice."""
     user = _user(weekly_touch_goal=14)
@@ -694,7 +694,7 @@ def test_the_gone_quiet_lane_does_not_get_a_second_park_button(client):
     body = client.get(reverse("crm:week")).content.decode()
     import re
     card = re.search(r"Gone Quiet Guy.*?</article>", body, re.S).group(0)
-    assert card.count("Park it") == 1
+    assert card.count("Pause outreach") == 1
 
 
 # ---------------------------------------------------------------------------
@@ -982,7 +982,7 @@ def test_the_today_stats_are_not_count_animated(client):
 # dated open campus roles are the second kind — so a bare urgent number on the
 # busiest page was presenting our reading as the market's calendar, the exact
 # claim `views.deadline_provenance`, the .ics SUMMARY, the feed card, the
-# drawer and both My Applications lenses each refuse to make.
+# drawer and both My applications lenses each refuse to make.
 # ---------------------------------------------------------------------------
 def _campus_role(n, *, days, confidence):
     from directory.models import Opportunity
@@ -1084,7 +1084,7 @@ def test_the_funnel_label_uses_the_products_stage_names(client):
 
 def test_the_funnel_label_is_read_from_the_one_stage_vocabulary(client):
     """Not merely re-spelled: the label is BUILT from `_STAGE_LABELS`, the
-    same map My Applications' stage tiles and the feed's track pill read, so
+    same map My applications' stage tiles and the feed's track pill read, so
     renaming a stage there renames it here and the two cannot drift apart."""
     from directory.views import _FUNNEL_STATES, _STAGE_LABELS
 
@@ -1115,7 +1115,7 @@ def _funnel_figure(html):
 
 def test_the_funnel_counts_still_match_the_stage_the_label_names(client):
     """The wording changed; the arithmetic must not. Two submitted rows have
-    to reach the ribbon as 2, the number My Applications' Applied tile shows
+    to reach the ribbon as 2, the number My applications' Applied tile shows
     for the same user."""
     user = _user(weekly_touch_goal=14)
     _tracked(user, "submitted")

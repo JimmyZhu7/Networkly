@@ -153,7 +153,7 @@ def test_park_all_hands_back_an_undo_offer_naming_the_ids_it_parked(client):
     client.force_login(user)
     resp = client.post(reverse("crm:today_park_all"))
     body = resp.content.decode()
-    assert "Parked 8 contacts." in body
+    assert "Paused 8 contacts." in body
     assert reverse("crm:contacts_park_undo") in body
     # EXACT ids, not "the newest cohort": undo is for the tap that just
     # happened, and must not sweep up a deliberate park from the same minute.
@@ -184,7 +184,7 @@ def test_undo_restores_each_contact_to_the_state_their_warmth_implies(client):
     must not hand them back as a cold no-reply."""
     user = _user()
     cold = _contact(user, "Cold", warmth="cold")
-    chatted = _contact(user, "Chatted", warmth="chatted")
+    chatted = _contact(user, "Had a chat", warmth="chatted")
     advocate = _contact(user, "Advocate", warmth="advocate")
     client.force_login(user)
     _bulk(client, [cold.id, chatted.id, advocate.id], "park")
@@ -331,7 +331,7 @@ def test_unarchiving_an_unparked_contact_says_what_it_always_said(client):
 # ---------------------------------------------------------------------------
 # L8. The board card carries the state.
 #
-# 158 of 265 cards are parked and none of them said so: "Emailed, No Reply"
+# 158 of 265 cards are parked and none of them said so: "Awaiting reply"
 # mixed 92 active with 129 parked, "Advocate" showed 2 parked people as the
 # whole advocate bench.
 # ---------------------------------------------------------------------------

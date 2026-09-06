@@ -58,7 +58,7 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
 {% block content %}
 <div class="page page--narrow legal">
   <h1>Terms</h1>
-  <p class="lede">The short, honest version. It is longer than it used to be, because some of this has to be said properly.</p>
+  <p class="lede">The terms for using Coverage.</p>
 
   <p class="muted">Last updated 19 August 2026. These terms are an agreement between you and [LEGAL ENTITY NAME], [REGISTERED ADDRESS], which operates Coverage. Using Coverage means you accept them.</p>
 
@@ -74,13 +74,13 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
   <p>Give us a real email address and keep it current. It is how we reach you about your account, and it is how you get back in if you lose your password.</p>
 
   <h2>What you may not do</h2>
-  <p>Specifically, and not as a general vibe:</p>
+  <p>The following uses are prohibited:</p>
   <ul>
     <li>Do not upload personal data about other people that you have no right to hold. Your own outreach and the replies to it are fine. A scraped list of somebody's alumni database is not.</li>
     <li>Do not use Coverage to send, organise, or track harassment, spam, bulk unsolicited mail, or anything unlawful.</li>
     <li>Do not scrape, crawl, or bulk-extract the opportunity feed, or use automated means to pull data out of Coverage. One student's own export is not bulk extraction. A script walking the board is.</li>
     <li>Do not resell, redistribute, or republish the opportunity data as a product of your own.</li>
-    <li>Do not try to reach another user's data, probe for vulnerabilities, or work around rate limits, plan limits, or access controls. If you find a security hole, tell us at [CONTACT EMAIL] and we will thank you properly.</li>
+    <li>Do not try to reach another user's data, probe for vulnerabilities, or work around rate limits, plan limits, or access controls. If you find a security hole, tell us at [CONTACT EMAIL].</li>
     <li>Do not impersonate anyone, including us, and do not misrepresent who you are to a contact you found through Coverage.</li>
     <li>Do not reverse engineer the software, or use it to build a competing product.</li>
     <li>Do not upload malware, or content that infringes someone else's rights.</li>
@@ -88,7 +88,7 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
   <p>If you break these rules we may suspend or close your account. For anything that puts other users or the service at risk, we may do it without warning.</p>
 
   <h2>Mail capture</h2>
-  <p>Coverage logs mail only through a path you switch on. Connecting a Gmail account lets Coverage read that mailbox to log touches automatically, under a separate consent you can revoke at any time in your Google account.</p>
+  <p>Coverage logs mail only through a path you switch on. Connecting a Gmail account lets Coverage read that mailbox to log interactions automatically, under a separate consent you can revoke at any time in your Google account.</p>
   <p>Only connect a mailbox you are entitled to connect: your own outreach and the replies to it. The <a href="{% url 'accounts:privacy' %}">Privacy page</a> sets out exactly what we do with what we read.</p>
 
   <h2>Who owns what</h2>
@@ -98,8 +98,8 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
   <p><strong>Feedback.</strong> If you send us an idea for the product, we can use it without owing you anything. Do not send us anything confidential as feedback.</p>
 
   <h2>AI features</h2>
-  <p>Talk to Coverage, coffee-chat briefs, and contact summaries are drafted by a language model. Treat them as a first draft written by something that does not know your situation as well as you do. They can be confidently wrong about a date, a firm, a person, or a next step. Check anything that matters before you act on it.</p>
-  <p>The advisor can also change your CRM when you ask it to, for example logging a touch or adding a contact. Those writes are labelled as coming from the advisor so you can always tell them apart from your own. You are still responsible for what your CRM says.</p>
+  <p>Assistant responses, coffee-chat briefs, and contact summaries are drafted by a language model. Treat them as a first draft written by something that does not know your situation as well as you do. They can be confidently wrong about a date, a firm, a person, or a next step. Check anything that matters before you act on it.</p>
+  <p>The advisor can also change your recruiting data when you ask it to, for example logging an interaction or adding a contact. Those writes are labelled as coming from the advisor so you can always tell them apart from your own. You are still responsible for what your recruiting data says.</p>
   <p>Nothing Coverage produces is career, legal, immigration, visa, or financial advice. Work authorization in particular is a question for your university's international office or a qualified lawyer, not for us.</p>
 
   <h2>Plans and payment</h2>
@@ -124,8 +124,8 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
   <h2>Indemnity</h2>
   <p>You agree to indemnify and hold harmless [LEGAL ENTITY NAME] and the people who work on it against claims, damages, losses, and reasonable legal costs arising from your breach of these terms, your misuse of Coverage, data you uploaded that you had no right to hold, or your infringement of somebody else's rights. We will tell you promptly about any such claim and you get to control the defence, provided you do not settle in a way that admits fault on our behalf or imposes an obligation on us without our agreement.</p>
 
-  <h2>Ending it</h2>
-  <p><strong>You can leave whenever you like.</strong> <a href="{% url 'accounts:export' %}">Export everything</a> first if you want it, then <a href="{% url 'accounts:delete' %}">delete your account and everything in it</a> yourself, immediately. Deletion is a hard delete of your private data, not a flag on a row we keep. We do not hold your data hostage and there is no retention period you have to sit through.</p>
+  <h2>Closing your account</h2>
+  <p><strong>You can leave whenever you like.</strong> <a href="{% url 'accounts:export' %}">Export everything</a> first if you want it, then <a href="{% url 'accounts:delete' %}">delete your account and everything in it</a> yourself, immediately. Deletion is a hard delete of your private data, not a flag on a row we keep. There is no waiting period for deletion.</p>
   <p><strong>We can close an account too.</strong> We may suspend or terminate your access if you break these terms, if we are required to by law, or if keeping the account open puts other users or the service at risk. Where we reasonably can, we will tell you first and give you a chance to export. Where the reason is serious abuse or a legal requirement, we may act immediately.</p>
   <p>If we close your account for a reason other than serious abuse, you get at least 30 days to export before your data is deleted. If we close it for serious abuse, we may delete immediately. Either way, we do not keep and use the data of an account we closed. Backups roll off on their normal cycle.</p>
   <p>Sections that by their nature should survive the end of this agreement do: ownership, no warranty, limitation of liability, indemnity, and governing law.</p>
@@ -136,7 +136,7 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
   <h2>Governing law and disputes</h2>
   <p>These terms are governed by [Governing law / jurisdiction -- TODO: confirm with counsel], without regard to conflict-of-laws rules. Any dispute will be brought in [ARBITRATION VENUE / FORUM -- TODO: confirm with counsel], and you and we each submit to that forum.</p>
   <p>If you are a consumer, nothing here takes away the protection of the mandatory consumer law of the country you live in, or your right to bring a claim in your local courts where that law gives you one.</p>
-  <p>Before either of us files anything, write to [CONTACT EMAIL] and describe the problem. Most things that look like a dispute are a bug or a misunderstanding, and we would rather fix it than argue about it.</p>
+  <p>Before either of us files anything, write to [CONTACT EMAIL] and describe the problem. We will try to resolve the issue with you.</p>
 
   <h2>The rest</h2>
   <ul>

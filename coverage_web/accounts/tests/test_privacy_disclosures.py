@@ -83,7 +83,7 @@ def test_the_ai_sharing_section_counts_scan_now_among_the_triggers(page):
     section = page.split("Who we share data with", 1)[1]
     section = section.split("Cookies and sessions", 1)[0]
     for trigger in (
-        "Talk to Coverage",
+        "the assistant",
         "coffee-chat brief",
         "relationship summary",
         "Scan Now",
@@ -113,7 +113,7 @@ def test_the_policy_admits_the_whole_message_is_read(page):
     than what runs. A student who reads this has to be able to tell that
     Coverage sees the body, even though it does not keep it.
     """
-    section = page.split("Where mail comes in", 1)[1]
+    section = page.split("Optional mail access", 1)[1]
     section = section.split("Google API Limited Use", 1)[0]
     assert "reads the whole message" in section
     assert "in memory" in section
@@ -126,7 +126,7 @@ def test_the_policy_admits_one_sentence_of_body_text_is_stored(page):
     read as "no body text at all". Naming it is also the honest thing: the
     quote exists so the student can audit an automated action, and a
     justification nobody is told about cannot do that job."""
-    section = page.split("Where mail comes in", 1)[1]
+    section = page.split("Optional mail access", 1)[1]
     section = section.split("Google API Limited Use", 1)[0]
     assert "one verbatim sentence" in section
     assert "500 characters" in section

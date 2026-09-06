@@ -371,11 +371,11 @@ def test_the_everything_segment_states_its_own_count_honestly(client, bar):
 
 _SET_CASES = [
     ("q", "analyst", "Search"),
-    ("year", "2027", "Programme Year"),
+    ("year", "2027", "Programme year"),
     ("region", "hk", "Region"),
     ("track", "ib", "Track"),
     ("sponsorship", "yes", "Sponsorship"),
-    ("firm", "evercore", "Companies"),
+    ("firm", "evercore", "Firms"),
 ]
 
 
@@ -463,7 +463,7 @@ def test_the_engaged_state_has_a_script_because_the_swap_cannot_reach_it(
     assert page.count('htmx:afterSettle') >= 2, (
         "the re-settle handler and the is-set sync both hang off it")
     # And it reads the FILTER's value, not any input that happens to sit in
-    # the label. Programme Year has 13 options against base.html's
+    # the label. Programme year has 13 options against base.html's
     # SEARCH_THRESHOLD of 12, so `.csel` builds a type-to-filter box inside
     # that label; counting it would light Year up for typing "2027" into a
     # dropdown the student then closed without choosing anything.
@@ -619,14 +619,14 @@ def test_the_scope_toggle_lives_in_the_page_header(client, bar, django_user_mode
     the header it cost 42px plus a 24px gap for two links, on the page with
     the most chrome before its first result.
 
-    Signed in, because My Applications needs an account: a signed-out
+    Signed in, because My applications needs an account: a signed-out
     visitor correctly gets no toggle at all."""
     user = django_user_model.objects.create_user(email="tabs@x.com", password="x")
     client.force_login(user)
     body = _get(client).content.decode()
     head = body[body.index("<header class=\"pagehead\""):]
     head = head[:head.index("</header>")]
-    assert "Browse Openings" in head and "My Applications" in head
+    assert "Browse roles" in head and "My applications" in head
     assert 'aria-current="page"' in head, "the active view still says so"
 
 

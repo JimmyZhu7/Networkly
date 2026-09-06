@@ -101,7 +101,7 @@ def test_the_email_page_offers_a_resend_for_an_unverified_signup_address():
 
     body = client.get(reverse("account_email")).content.decode()
 
-    assert "Re-send Verification" in body
+    assert "Resend verification" in body
     assert "pending@example.com" in body
 
 

@@ -408,7 +408,7 @@ def test_the_card_carries_every_fact_the_feed_promises(client, two_roles):
     # NOT "Rolling": that word is now reserved for postings whose own text
     # states rolling review. A role with no deadline in the data says the
     # true thing instead, because nobody posted a date.
-    assert "No date posted" in html, "the undated role says what is known"
+    assert "Deadline not listed" in html, "the undated role says what is known"
     # The countdown figure belongs to the dated role only.
     assert html.count("rr-due-n meta-") == 1
 
@@ -688,7 +688,7 @@ def test_the_feed_row_has_exactly_one_truncation_point():
     It used to be `.rr-meta > *:last-child`, and "last" turned out to mean
     "whatever `_rolecard.html` happened to render last for this row" rather
     than "the least decisive fact". On an undated row that is `.rr-undated`
-    — "No date posted, first seen 39d ago", the words the deliberately mute
+    — "Deadline not listed, first seen 39d ago", the words the deliberately mute
     dash in `.rr-due` does not say. Measured live in dark on the founder's
     own board at 1512px, over all 790 rendered rows: 441 (55.8%) cut their
     last meta item mid-word, 150 (19.0%) cut it under 24px, and 129 (16.3%)
@@ -755,7 +755,7 @@ def test_the_feed_row_has_exactly_one_truncation_point():
     # the same trap `_STYLE_RE` exists for in the honesty tests, and this
     # assertion walked straight into it on the first run.
     assert not any(sel == ".rr-meta > *:last-child" for sel, _ in _rules(css)), (
-        "positional truncation is what cut 'No date posted' to 5px; the cut "
+        "positional truncation is what cut 'Deadline not listed' to 5px; the cut "
         "point is named now")
 
 

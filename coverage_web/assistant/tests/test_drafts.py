@@ -221,7 +221,7 @@ def test_a_drafted_email_renders_as_a_card_not_a_paragraph(signed_in, user, conv
 
     assert 'class="as-draft"' in body
     assert "Catching up" in body
-    assert "Log touch · Yumna Rahman · Email" in body
+    assert "Log sent email · Yumna Rahman · Email" in body
     assert "as-draft-copy" in body
     # The prose around it is untouched, still in an ordinary body div.
     assert '<div class="as-body">Here it is.</div>' in body
@@ -318,7 +318,7 @@ def test_a_reload_shows_logged_without_re_offering_the_button(signed_in, user, c
     body = _markup(signed_in.get(reverse("assistant:chat_conversation", args=[conversation.id])))
 
     assert "Logged" in body
-    assert "Log touch ·" not in body
+    assert "Log sent email ·" not in body
 
 
 def test_an_unlogged_draft_still_offers_the_button(signed_in, user, conversation, contact):
@@ -330,7 +330,7 @@ def test_an_unlogged_draft_still_offers_the_button(signed_in, user, conversation
 
     body = _markup(signed_in.get(reverse("assistant:chat_conversation", args=[conversation.id])))
 
-    assert "Log touch · Yumna Rahman · Email" in body
+    assert "Log sent email · Yumna Rahman · Email" in body
     assert ">\n    Logged" not in body
 
 
@@ -355,7 +355,7 @@ def test_a_touch_from_another_draft_never_marks_this_one_logged(
     body = _markup(signed_in.get(reverse("assistant:chat_conversation", args=[conversation.id])))
 
     assert "Logged" in body
-    assert "Log touch · Yumna Rahman · Email" in body
+    assert "Log sent email · Yumna Rahman · Email" in body
 
 
 def test_the_logged_lookup_is_batched_not_one_query_per_message(
@@ -449,8 +449,8 @@ def test_two_drafts_to_different_people_in_one_reply_are_logged_separately(
 
     assert "Logged" in body
     # Sam's draft is untouched and still offers its own button.
-    assert "Log touch · Sam Okafor · Email" in body
-    assert "Log touch · Yumna Rahman · Email" not in body
+    assert "Log sent email · Sam Okafor · Email" in body
+    assert "Log sent email · Yumna Rahman · Email" not in body
 
 
 # ---------------------------------------------------------------------------

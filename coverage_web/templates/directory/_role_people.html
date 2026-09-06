@@ -54,7 +54,7 @@ block stands alone, with no card around it naming the firm.
           one number that changes daily.{% endcomment %}
           <span class="vh">{{ p.warmth_label }}.</span>
           <span class="rp-when">
-            {% if p.days_since is not None %}{{ p.days_since }}d<span class="vh"> since your last touch</span>{% else %}never<span class="vh"> touched</span>{% endif %}
+            {% if p.days_since is not None %}{{ p.days_since }}d<span class="vh"> since your last interaction</span>{% else %}never<span class="vh"> touched</span>{% endif %}
           </span>
         </a>
       {% endfor %}
@@ -82,7 +82,7 @@ block stands alone, with no card around it naming the firm.
     name is still on the hover, and the link still pre-fills the firm.
     {% endcomment %}
     {% if compact %}
-      <p class="rp-none" title="At {{ net.firm_name|smart_title }}">Nobody here yet.
+      <p class="rp-none" title="At {{ net.firm_name|smart_title }}">No contacts here yet.
         <a href="{% url 'crm:contact_new' %}?firm={{ net.firm_slug }}">Add someone</a>.</p>
     {% else %}
       <p class="rp-none">Nobody at {{ net.firm_name|smart_title }} yet.

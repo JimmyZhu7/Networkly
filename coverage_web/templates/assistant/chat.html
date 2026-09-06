@@ -838,7 +838,7 @@ materials.
         </form>
         <div class="as-sidebar-more">
           <button type="button" class="as-new-folder-btn" data-menu-toggle
-                  aria-haspopup="true" aria-expanded="false" aria-label="More chat options" title="More">
+                  aria-haspopup="true" aria-expanded="false" aria-label="More chat options" title="More details">
             <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <circle cx="8" cy="3" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="8" cy="13" r="1.3"/>
             </svg>
@@ -925,7 +925,7 @@ materials.
       </header>
 
       {% if not configured %}
-        <p class="as-off">This page needs an Anthropic API key on the server. Nothing else in Coverage is affected.</p>
+        <p class="as-off">The assistant is not enabled yet. You can still use your contacts, opportunities, and calendar.</p>
       {% endif %}
 
       {% comment %}
@@ -971,7 +971,7 @@ swaps #as-memory-panel, same shape as every other list on this page.
       </svg>
     </button>
   </div>
-  <p class="as-memory-sub">Facts it's picked up across your chats, plus anything you add. Not your CRM data.</p>
+  <p class="as-memory-sub">Facts it's picked up across your chats, plus anything you add. Not your recruiting data data.</p>
   {% include "assistant/_memories.html" %}
 </dialog>
 
@@ -1733,7 +1733,7 @@ element by the next turn.
           '<input type="hidden" name="contact" value="' + Number(meta.contact_id) + '">' +
           '<input type="hidden" name="channel" value="' + escapeHtml(meta.channel) + '">' +
           '<input type="hidden" name="kind" value="' + escapeHtml(meta.kind) + '">' +
-          '<button type="submit" class="as-draft-chip">' + PLUS_ICON + " Log touch · " +
+          '<button type="submit" class="as-draft-chip">' + PLUS_ICON + " Log sent email · " +
           escapeHtml(meta.contact_name) + " · " + escapeHtml(meta.channel_label) +
           "</button></form>"
         );
@@ -2167,7 +2167,7 @@ element by the next turn.
           // generic apology — the student can see exactly where it cut off.
           if (assistantTurn) return;
           var failTurn = buildTurn("assistant", true);
-          failTurn.body.innerHTML = chatFormat("I couldn't reach the model just then. Try that again in a moment.");
+          failTurn.body.innerHTML = chatFormat("The assistant could not respond. Try again in a moment.");
           log.appendChild(failTurn.el);
         }
 

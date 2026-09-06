@@ -261,7 +261,7 @@
         <input type="hidden" name="where" value="network">
         <span class="park-undo-said">
           {% if park_undo.who %}Stopped following up with {{ park_undo.who }}.{% else %}Stopped following up with {{ park_undo.count }} contacts.{% endif %}
-          <span class="park-undo-note">They keep every touch. A reply puts anyone back; the whole group is on <a href="{% url 'crm:contact_parked' %}">Parked contacts</a>.</span>
+          <span class="park-undo-note">They keep every interaction. A reply puts anyone back; the whole group is on <a href="{% url 'crm:contact_parked' %}">Paused contacts</a>.</span>
         </span>
         <button type="submit" class="btn park-undo-btn">Undo</button>
       </form>
@@ -466,7 +466,7 @@
                 either order.
                 {% endcomment %}
                 <span class="cc-tags">
-                  {% if card.parked or card.thread_state == "parked" or card.c.thread_state == "parked" %}<span class="pill cc-pill cc-parked" title="You stopped following up on this thread. Nothing is scheduled against it.">Parked</span>{% endif %}
+                  {% if card.parked or card.thread_state == "parked" or card.c.thread_state == "parked" %}<span class="pill cc-pill cc-parked" title="You stopped following up on this thread. Nothing is scheduled against it.">Paused</span>{% endif %}
                   {% if card.gender %}<span class="pill cc-pill">{{ card.gender }}</span>{% endif %}
                   {% if card.tier %}<span class="pill cc-pill">T{{ card.tier }}</span>{% endif %}
                   {% if card.region %}<span class="pill cc-pill">{{ card.region }}</span>{% endif %}
@@ -566,7 +566,7 @@
                   rest, an outline on hover, navy reserved for the page.
                   {% endcomment %}
                   <span class="cc-btns">
-                    <a class="btn act-ghost cc-log" href="{% url 'crm:contact_detail' card.c.id %}">Log Touch</a>
+                    <a class="btn act-ghost cc-log" href="{% url 'crm:contact_detail' card.c.id %}">Log interaction</a>
                     <a class="btn" href="{% url 'crm:contact_edit' card.c.id %}">Edit</a>
                   </span>
                 </div>
@@ -665,7 +665,7 @@
           — that was a computed stat nobody asked for; this is the same
           single number `scrub-count` already shows everywhere else.
           {% endcomment %}
-          <div class="tier-label" title="Tier drives your action priorities: the queue works Tier 1 firms first. Drag a card here to change its tier (or use Settings > Target Firms on mobile).">
+          <div class="tier-label" title="Tier drives your action priorities: the queue works Tier 1 firms first. Drag a card here to change its tier (or use Settings > Target firms on mobile).">
             <span>{{ section.label }}</span>
           </div>
           <div class="tier-grid">
@@ -690,7 +690,7 @@
               {% endcomment %}
               <div class="firm-card kin-reveal panel panel--inset" draggable="true" data-firm="{{ fc.firm.id }}"
                    style="--i:{{ forloop.counter0 }}; view-transition-name: firm-card-{{ fc.firm.id }}"
-                   title="Tier drives your action priorities. Drag this card to another lane to change its tier (or use Settings > Target Firms on mobile).">
+                   title="Tier drives your action priorities. Drag this card to another lane to change its tier (or use Settings > Target firms on mobile).">
                 {% comment %}
                 The COUNT badges are gone. Asked for directly: take the
                 counts off these cards and leave the progress bar and the
@@ -1002,7 +1002,7 @@
       var opts = null;
       if (verb === "archive") {
         question = "Archive " + n + " contact" + (n === 1 ? "" : "s") +
-                   "? They keep every touch and come back in one click.";
+                   "? Their history is kept. Restore them from Archived contacts.";
         // The one verb here that takes people off the board gets the
         // destructive weighting; park below is reversible and keeps the
         // accent primary.
@@ -1016,6 +1016,7 @@
         question = "Stop following up with " + n + " contact" +
                    (n === 1 ? "" : "s") + "? A reply puts anyone back, and " +
                    "you can undo this straight after.";
+        opts = { ok: "Pause outreach" };
       }
       if (!question) return;
       e.preventDefault();

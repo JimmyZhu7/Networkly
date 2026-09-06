@@ -68,7 +68,7 @@ def test_no_parked_contacts_is_a_clean_empty_state(client):
     _contact(user=user, name="Active Annie", warmth="cold", thread_state="no_reply")
     client.force_login(user)
     body = client.get(reverse("crm:contact_parked")).content.decode()
-    assert "Nobody is parked" in body
+    assert "No paused contacts" in body
 
 
 # ---------------------------------------------------------------------------

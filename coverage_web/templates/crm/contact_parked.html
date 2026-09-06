@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load textstyle %}{% load csp %}
 
-{% block title %}Parked Contacts · Coverage{% endblock %}
+{% block title %}Paused contacts · Coverage{% endblock %}
 
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
@@ -13,13 +13,13 @@
 
   <header class="pagehead">
     <div class="pagehead-text">
-      <h1 class="pagehead-title">Parked Contacts</h1>
+      <h1 class="pagehead-title">Paused contacts</h1>
     </div>
   </header>
 
   {% if not cohorts %}
     <div class="empty">
-      <p>Nobody is parked.</p>
+      <p>No paused contacts.</p>
       <p><a href="{% url 'crm:contact_list' %}">Back to Network</a></p>
     </div>
   {% else %}
@@ -33,7 +33,7 @@
     its own cohort rather than shuffling people between bulk-unpark forms.
     {% endcomment %}
     <div id="parked-contacts">
-      <p class="sec-label">{{ parked_total }} parked</p>
+      <p class="sec-label">{{ parked_total }} paused</p>
       {% include "crm/_contact_search.html" with target="parked-contacts" %}
       {% for cohort in cohorts %}
         <div class="panel panel--page" data-group>
@@ -48,7 +48,7 @@
                 </p>
                 <p class="cohort-warmth">
                   {{ cohort.count }} contact{{ cohort.count|pluralize }}
-                  {% for w in cohort.warmth_counts %}{% if w.n %} · {{ w.n }} {{ w.key }}{% endif %}{% endfor %}
+                  {% for w in cohort.warmth_counts %}{% if w.n %} · {{ w.n }} {{ w.key|relationship_label }}{% endif %}{% endfor %}
                 </p>
               </div>
               {% comment %}
@@ -60,10 +60,10 @@
               value for everybody. Always the WHOLE cohort, so this count
               never follows the search box above.
               {% endcomment %}
-              <button type="submit" class="btn btn-primary">Bring these {{ cohort.count }} back</button>
+              <button type="submit" class="btn btn-primary">Resume {{ cohort.count }} contact{{ cohort.count|pluralize }}</button>
             </div>
           </form>
-          <p class="cd-none" data-group-empty hidden>No matches in this cohort.</p>
+          <p class="cd-none" data-group-empty hidden>No matches in this group.</p>
           <div class="arch-list">
             {% for c in cohort.contacts %}
               <div class="arch-row" data-searchable data-order="{{ forloop.counter0 }}"
@@ -75,12 +75,12 @@
                   <a href="{% url 'crm:contact_detail' c.pk %}">{{ c.name|smart_person_name|smart_title }}</a>
                   <span class="arch-meta">{% if c.firm %}{{ c.firm.name|smart_title }}{% elif c.firm_text %}{{ c.firm_text|smart_title }}{% endif %}{% if c.role %} · {{ c.role }}{% endif %}</span>
                 </div>
-                <span class="chip warmth-{{ c.warmth }}">{{ c.warmth }}</span>
+                <span class="chip warmth-{{ c.warmth }}">{{ c.warmth|relationship_label }}</span>
                 <form method="post" action="{% url 'crm:contact_parked_unpark' %}"
                       data-unpark-form data-count="1" data-cold="{% if c.warmth == 'cold' %}1{% else %}0{% endif %}">
                   {% csrf_token %}
                   <input type="hidden" name="ids" value="{{ c.id }}">
-                  <button type="submit" class="btn">Bring back</button>
+                  <button type="submit" class="btn">Resume outreach</button>
                 </form>
               </div>
             {% endfor %}

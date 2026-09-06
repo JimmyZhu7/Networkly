@@ -706,7 +706,7 @@ class ProfileForm(forms.Form):
             return value
         if value and value not in known_timezones():
             raise forms.ValidationError(
-                "That isn't a timezone we recognise. Pick one from the list."
+                "Choose a timezone from the list."
             )
         return value
 
@@ -886,12 +886,12 @@ class WorkAuthorizationForm(SectionForm):
 # via the diagram's own sentence, which sits earlier in the same page.
 CADENCE_LABELS: dict[str, tuple[str, str, str]] = {
     "followup_after_business_days": (
-        "First Follow-Up",
+        "First follow-up",
         "business days",
         "Silence before the first follow-up.",
     ),
     "park_after_business_days": (
-        "Park After",
+        "Pause after",
         "business days",
         "Silence before Coverage parks them.",
     ),
@@ -902,7 +902,7 @@ CADENCE_LABELS: dict[str, tuple[str, str, str]] = {
     # the error messages built below still name it, on the one path that can
     # still produce one: a hand-crafted POST.
     "max_cold_touches": (
-        "Cold Outreach",
+        "New-contact outreach",
         "touches",
         "How many times to nudge them.",
     ),
@@ -911,24 +911,24 @@ CADENCE_LABELS: dict[str, tuple[str, str, str]] = {
     # together. Rendered as a plain spinner (not in CADENCE_SEGMENTS), so it
     # gets the default via placeholder like the other windows.
     "followup_expires_after_business_days": (
-        "Follow-Up Expiry",
+        "Follow-up expiry",
         "business days",
         "Silence before a cold thread is parked instead of chased.",
     ),
     "advocate_touch_min_weeks": (
-        "Advocate Check-In",
+        "Advocate check-in",
         "weeks",
         "How often to check on advocates.",
     ),
     # Paired with crm.views.TUNABLE_CADENCE_PARAMS — this dict is looked up by
     # key with no fallback, so the two must be added and removed together.
     "chatted_touch_min_weeks": (
-        "Keep-Warm Check-In",
+        "Contact check-in",
         "weeks",
         "Silence after a coffee chat.",
     ),
     "pre_deadline_reping_days": (
-        "Pre-Deadline Re-Ping",
+        "Before a deadline",
         "days",
         "Days before a deadline.",
     ),
@@ -1028,7 +1028,7 @@ class CadenceForm(SectionForm):
         super().__init__(*args, **kwargs)
         low, high = self.ADVOCATE_TARGET_RANGE
         self.fields["advocate_target"] = forms.IntegerField(
-            label="Advocate Target",
+            label="Advocate target",
             required=False,
             min_value=low,
             max_value=high,
@@ -1039,9 +1039,9 @@ class CadenceForm(SectionForm):
                            "id_advocate_target-desc id_advocate_target-err"},
             ),
             error_messages={
-                "min_value": f"Advocate Target must be between {low} and {high} advocates.",
-                "max_value": f"Advocate Target must be between {low} and {high} advocates.",
-                "invalid": "Advocate Target must be a whole number of advocates.",
+                "min_value": f"Advocate target must be between {low} and {high} advocates.",
+                "max_value": f"Advocate target must be between {low} and {high} advocates.",
+                "invalid": "Advocate target must be a whole number of advocates.",
             },
         )
         for key, (low, high) in TUNABLE_CADENCE_PARAMS.items():
@@ -1202,9 +1202,9 @@ class WeeklyPaceForm(SectionForm):
                        "id_weekly_touch_goal-desc id_weekly_touch_goal-err"}
         ),
         error_messages={
-            "min_value": f"Pick a goal between 1 and {MAX_GOAL} touches a week.",
-            "max_value": f"Pick a goal between 1 and {MAX_GOAL} touches a week.",
-            "invalid": "Your weekly goal must be a whole number of touches.",
+            "min_value": f"Pick a goal between 1 and {MAX_GOAL} outreach messages a week.",
+            "max_value": f"Pick a goal between 1 and {MAX_GOAL} outreach messages a week.",
+            "invalid": "Enter a whole number for your weekly outreach goal.",
         },
     )
 

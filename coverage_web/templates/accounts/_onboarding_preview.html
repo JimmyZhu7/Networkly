@@ -74,7 +74,7 @@ the branch that runs is an empty state that says nothing matched.
 {% elif preview.kind == "work" %}
   <p class="ob-pv-metric">
     <strong class="ob-pv-num">{{ preview.answered }}</strong>
-    <span class="ob-pv-unit">of {{ preview.count }} answer the visa question</span>
+    <span class="ob-pv-unit">of {{ preview.count }} state their sponsorship policy</span>
   </p>
 
   {% if preview.count %}
@@ -89,12 +89,12 @@ the branch that runs is an empty state that says nothing matched.
     {% endcomment %}
     <ul class="ob-pv-bars">
       <li style="--i: 0;">
-        <span class="ob-pv-bar-lab">Posting says yes</span>
+        <span class="ob-pv-bar-lab">Sponsorship offered</span>
         <span class="ob-pv-bar"><span class="ob-pv-bar-fill is-yes" style="--w: {{ preview.yes_pct }}%;"></span></span>
         <span class="ob-pv-bar-n">{{ preview.yes }}</span>
       </li>
       <li style="--i: 1;">
-        <span class="ob-pv-bar-lab">Posting says no</span>
+        <span class="ob-pv-bar-lab">No sponsorship</span>
         <span class="ob-pv-bar"><span class="ob-pv-bar-fill is-no" style="--w: {{ preview.no_pct }}%;"></span></span>
         <span class="ob-pv-bar-n">{{ preview.no }}</span>
       </li>
@@ -121,12 +121,12 @@ the branch that runs is an empty state that says nothing matched.
           <strong>{{ preview.blocked }}</strong> of these are ruled out for you:
           they say no sponsorship in {{ preview.needs_labels }}, where you said you need it.
         {% else %}
-          None of these say no sponsorship in {{ preview.needs_labels }}. Nothing is ruled out on visa.
+          None of these say no sponsorship in {{ preview.needs_labels }}. No roles excluded by sponsorship requirements.
         {% endif %}
       </p>
     {% endif %}
   {% else %}
-    <p class="ob-pv-empty">No live roles match your profile yet, so there is nothing to answer for.</p>
+    <p class="ob-pv-empty">No matching roles to assess yet.</p>
   {% endif %}
 
   <p class="ob-pv-foot">Most postings never say. Coverage shows you the ones
@@ -154,7 +154,7 @@ the branch that runs is an empty state that says nothing matched.
       <p class="ob-pv-cap">+ {{ preview.more }} more picked, not shown</p>
     {% endif %}
   {% else %}
-    <p class="ob-pv-empty">No firms picked yet. Tick one and it lands here.</p>
+    <p class="ob-pv-empty">Select a firm to preview its open roles.</p>
   {% endif %}
 
   <p class="ob-pv-foot">Open campus roles at each firm today. A firm with none
@@ -188,7 +188,7 @@ the branch that runs is an empty state that says nothing matched.
       {% if preview.contacts %}Contacts you import join them under their firm.
       {% else %}Contacts you import land under their firm.{% endif %}
     {% else %}
-      Nothing on it yet. Firms you pick and contacts you import both land here.
+      Add target firms or import contacts to build your network.
     {% endif %}
   </p>
 

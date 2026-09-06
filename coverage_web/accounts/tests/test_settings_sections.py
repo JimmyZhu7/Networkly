@@ -1,5 +1,5 @@
 """Tests for the four independently-saving settings sections — Outreach
-Assets, Work Authorization, Cadence, Weekly Pace — and the two onboarding
+Assets, Work authorization, Cadence, Weekly Pace — and the two onboarding
 steps that reuse two of them.
 
 The through-line of almost every case here is the same product rule: a blank
@@ -71,7 +71,8 @@ def test_the_weekly_pace_control_moved_into_the_cadence_card(client, logged_in):
     assert 'name="section" value="pace"' in cadence
     assert 'name="section" value="cadence"' in cadence
     assert 'id="id_weekly_touch_goal"' in cadence
-    assert 'id="pace-ring"' in cadence  # the ring came with it
+    assert 'id="pace-read"' in cadence  # readable goal preview
+    assert 'id="pace-ring"' not in cadence
 
 
 def test_cadence_section_shows_each_default_inline(client, logged_in):
@@ -185,7 +186,7 @@ def test_stored_angles_survive_the_feature_removal(client, logged_in):
 
 
 # ---------------------------------------------------------------------------
-# Work Authorization  (User.work_authorization)
+# Work authorization  (User.work_authorization)
 # ---------------------------------------------------------------------------
 def test_work_auth_saves_per_region(client, logged_in):
     resp = _post(client, section="work_auth", work_auth_us="citizen",
@@ -371,7 +372,7 @@ def test_cadence_error_leaves_the_other_sections_intact(client, logged_in):
 
     resp = _post(client, **_cadence_post(max_cold_touches=99))
     body = resp.content.decode()
-    # Work Authorization still shows the saved value. It is a radio matrix
+    # Work authorization still shows the saved value. It is a radio matrix
     # now rather than six selects, so the saved state reads as a checked
     # radio — the behaviour under test (an error in ONE section must not
     # blank another) is unchanged. Matched on the ONE input that must carry

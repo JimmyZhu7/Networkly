@@ -51,13 +51,13 @@ def gmail_callback(request):
 
     expected_state = request.session.pop(_STATE_SESSION_KEY, None)
     if not expected_state or request.GET.get("state") != expected_state:
-        messages.error(request, "Gmail connect request expired — try again.")
+        messages.error(request, "Gmail connection expired. Connect again.")
         return redirect(f"{reverse('accounts:settings')}#gmail-live")
 
     if request.GET.get("error"):
         # The user hit "Cancel" on Google's consent screen, or Google itself
         # errored. Either way there is nothing to exchange.
-        messages.error(request, "Gmail connect was cancelled.")
+        messages.error(request, "Gmail connection cancelled.")
         return redirect(f"{reverse('accounts:settings')}#gmail-live")
 
     code = request.GET.get("code", "")
@@ -218,11 +218,11 @@ def gcal_callback(request):
 
     expected_state = request.session.pop(_GCAL_STATE_SESSION_KEY, None)
     if not expected_state or request.GET.get("state") != expected_state:
-        messages.error(request, "Calendar connect request expired — try again.")
+        messages.error(request, "Calendar connection expired. Connect again.")
         return redirect(f"{reverse('accounts:settings')}#google-calendar")
 
     if request.GET.get("error"):
-        messages.error(request, "Calendar connect was cancelled.")
+        messages.error(request, "Calendar connection cancelled.")
         return redirect(f"{reverse('accounts:settings')}#google-calendar")
 
     code = request.GET.get("code", "")

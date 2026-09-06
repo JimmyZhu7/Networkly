@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load textstyle %}
 
-{% block title %}{% if firm %}Archived at {{ firm.name }} · Coverage{% else %}Archived Contacts · Coverage{% endif %}{% endblock %}
+{% block title %}{% if firm %}Archived at {{ firm.name }} · Coverage{% else %}Archived contacts · Coverage{% endif %}{% endblock %}
 
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
@@ -19,7 +19,7 @@
       {% if firm %}
         <h1 class="pagehead-title">Archived at {{ firm.name|smart_title }}</h1>
       {% else %}
-        <h1 class="pagehead-title">Archived Contacts</h1>
+        <h1 class="pagehead-title">Archived contacts</h1>
       {% endif %}
     </div>
   </header>
@@ -62,8 +62,8 @@
             {% endcomment %}
             <span class="arch-when">
               {% if c.archived_at %}Archived {{ c.archived_at|date:"M j, Y" }}
-              {% elif c.last_touch_ts %}Last touch {{ c.last_touch_ts|date:"M j, Y" }}
-              {% else %}No touches{% endif %}
+              {% elif c.last_touch_ts %}Last interaction {{ c.last_touch_ts|date:"M j, Y" }}
+              {% else %}No interactions{% endif %}
             </span>
             <form method="post" action="{% url 'crm:contact_unarchive' c.pk %}">
               {% csrf_token %}

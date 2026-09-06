@@ -153,19 +153,19 @@ about the fact most able to end the decision.
         {% for block in blocks %}<p>{{ block|linebreaksbr }}</p>{% endfor %}
       </div>
       <details class="drawer-fold">
-        <summary><span class="df-more">Read all</span><span class="df-less">Show less</span></summary>
+        <summary><span class="df-more">Read full description</span><span class="df-less">Show less</span></summary>
       </details>
     {% else %}
       {% for block in blocks %}<p>{{ block|linebreaksbr }}</p>{% endfor %}
     {% endif %}
-    <p class="drawer-note">Read from the posting{% if checked_ago %} {{ checked_ago }} ago{% endif %}. The firm's page is the record.</p>
+    <p class="drawer-note">Read from the posting{% if checked_ago %} {{ checked_ago }} ago{% endif %}. Check the firm’s page for the latest details.</p>
   </div>
 {% else %}
   {% comment %}Never an empty drawer. Not every posting has been fetched (854
   of 4,321 open roles), and a blank panel reads as breakage rather than as an
   honest "we don't hold this one".{% endcomment %}
   <div class="drawer-body drawer-empty">
-    <p>We haven't fetched this posting's text yet. The firm's page has it.</p>
+    <p>The description is not available here yet. View it on the firm’s page.</p>
   </div>
 {% endif %}
 

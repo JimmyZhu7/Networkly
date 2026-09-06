@@ -193,7 +193,7 @@ def test_the_confirm_page_states_what_happens_before_anything_does(client, logge
 
     resp = client.get(reverse("accounts:signout_all"))
     assert resp.status_code == 200
-    assert "This device stays signed in" in resp.content.decode()
+    assert "This session, your data, and your password stay unchanged" in resp.content.decode()
     assert Session.objects.count() == before
 
 

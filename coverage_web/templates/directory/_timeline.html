@@ -73,7 +73,7 @@ is neither — it says so instead of picking a winner.
           source, not by when we found it.
           {% endcomment %}
           {% if row.found_on %}
-            <span class="pill" title="The day this estimate was written down. Nothing has re-checked it since.">guessed {{ row.found_on|date:"M j, Y" }}</span>
+            <span class="pill" title="The day this estimate was written down. Nothing has re-checked it since.">estimated {{ row.found_on|date:"M j, Y" }}</span>
           {% endif %}
         </span>
         {% comment %}
@@ -86,12 +86,12 @@ is neither — it says so instead of picking a winner.
         {% endcomment %}
         {% if row.superseded %}
           <span class="tl-observed">
-            Observed opening {{ row.superseded.observed }} across {{ row.superseded.observed_count }} postings, watched by Coverage. The estimate above is from the seed file.
+            Observed opening {{ row.superseded.observed }} across {{ row.superseded.observed_count }} postings, watched by Coverage. The estimate above comes from an earlier source.
           </span>
         {% endif %}
         {% if row.contradicted %}
           <span class="tl-observed clash">
-            Coverage watched this board and disagrees. It {{ row.contradicted }}.
+            Later observations contradict this estimate. The board {{ row.contradicted }}.
           </span>
         {% endif %}
       </li>

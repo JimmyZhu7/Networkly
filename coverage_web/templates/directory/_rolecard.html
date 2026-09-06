@@ -120,7 +120,7 @@ only reintroduce the clipping bug this file's history is full of.
       place for a mark that means nothing on its own), and the `.vh` span
       gives the cell the accessible name the sighted column already has.
       {% endcomment %}
-      <span class="rr-due-n rr-due-none"><span class="vh">No date posted</span></span>
+      <span class="rr-due-n rr-due-none"><span class="vh">Deadline not listed</span></span>
     {% endif %}
     {% comment %}
     THE AGE, IN WORDS, on the rows where it changes the answer. The condition
@@ -294,7 +294,7 @@ only reintroduce the clipping bug this file's history is full of.
       distinction, which is why the wording is pinned by a test.
       {% endcomment %}
       {% if not r.dated %}
-        <span class="rr-undated">{% if r.rolling_stated %}Rolling{% else %}No date posted{% endif %}{% if r.seen_days is not None %}, first seen {% if r.seen_days == 0 %}today{% elif r.seen_days == 1 %}1d ago{% else %}{{ r.seen_days }}d ago{% endif %}{% endif %}</span>
+        <span class="rr-undated">{% if r.rolling_stated %}Rolling{% else %}Deadline not listed{% endif %}{% if r.seen_days is not None %}, first seen {% if r.seen_days == 0 %}today{% elif r.seen_days == 1 %}1d ago{% else %}{{ r.seen_days }}d ago{% endif %}{% endif %}</span>
       {% endif %}
       </div>
       {% comment %}
@@ -310,7 +310,7 @@ only reintroduce the clipping bug this file's history is full of.
         {% if r.has_text %}
           <button type="button" class="meta-read" data-role-read data-role-id="{{ r.id }}"
                   hx-get="{% url 'role_description' r.id %}"
-                  hx-target="#role-drawer-body" hx-swap="innerHTML">Read</button>
+                  hx-target="#role-drawer-body" hx-swap="innerHTML">View role</button>
         {% endif %}
       </div>
     </div>

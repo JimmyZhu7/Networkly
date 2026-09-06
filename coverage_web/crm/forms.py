@@ -30,7 +30,7 @@ class ContactForm(forms.ModelForm):
     # than a wrong guess. `Contact.save()` fills this in from the firm when the
     # firm names exactly one region.
     region = forms.ChoiceField(
-        choices=[("", "Unknown / set from firm"), *Contact.REGION_CHOICES],
+        choices=[("", "Infer from firm if possible"), *Contact.REGION_CHOICES],
         required=False,
     )
 
@@ -41,12 +41,12 @@ class ContactForm(forms.ModelForm):
     # imported and quietly turn a guess into a stored fact.
     recruiting_contact = forms.ChoiceField(
         choices=[
-            ("", "Work it out from their role"),
-            ("yes", "Yes, recruiting contact"),
-            ("no", "No, a normal networking contact"),
+            ("", "Infer from role"),
+            ("yes", "Yes, a recruiter"),
+            ("no", "No, a networking contact"),
         ],
         required=False,
-        label="Recruiting contact?",
+        label="Is this person a recruiter?",
         help_text="Recruiters never get a coffee-chat prompt. You can still "
                   "reply to them and track their deadlines.",
     )
@@ -61,14 +61,14 @@ class ContactForm(forms.ModelForm):
     # one column, and no automated path ever does.
     recruitment_related = forms.ChoiceField(
         choices=[
-            ("", "Work it out from their role and firm"),
+            ("", "Infer from role and firm"),
             ("yes", "Yes, part of my recruiting"),
-            ("no", "No — hide from my board and queue"),
+            ("no", "No, hide from Network and Today"),
         ],
         required=False,
         label="Related to your recruiting?",
         help_text="Hidden contacts keep their page, history, search and "
-                  "exports. Your answer here beats the rule permanently.",
+                  "exports. Your choice overrides automatic classification.",
     )
 
     # The per-contact escape hatch from a campaign answer. A plain checkbox and
@@ -78,8 +78,8 @@ class ContactForm(forms.ModelForm):
     # unanswered mean the same thing. See `Contact.campaign_exempt`.
     campaign_exempt = forms.BooleanField(
         required=False,
-        label="Always keep in my daily queue",
-        help_text="Use this when one person from a bulk send is genuinely part "
+        label="Keep visible for recruiting",
+        help_text="Keep this contact visible when their bulk email campaign is not part "
                   "of your job search.",
     )
 
@@ -97,7 +97,7 @@ class ContactForm(forms.ModelForm):
         }
         labels = {
             "firm_text": "Firm (if not listed)",
-            "angle": "Angle (private)",
+            "angle": "Outreach context (private)",
             "opener": "Opener",
             "linkedin": "LinkedIn URL",
         }

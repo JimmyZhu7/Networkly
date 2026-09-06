@@ -1,4 +1,4 @@
-"""My Applications' funnel rail, urgency bands, and overlap affordances.
+"""My applications' funnel rail, urgency bands, and overlap affordances.
 
 The page shows a role twice on purpose: the five funnel stages partition the
 tracked rows, and the two deadline lenses are cross-sections of those same rows.
@@ -136,7 +136,7 @@ def test_the_view_toggle_sits_in_the_same_slot_opportunities_uses(client, pipeli
         "the old standalone band is back — it centred where Opportunities "
         "right-aligns, and cost the page an extra 42px above the toggle"
     )
-    assert 'aria-current="page">My Applications<' in header.group(0)
+    assert 'aria-current="page">My applications<' in header.group(0)
 
 
 @pytest.mark.django_db
@@ -244,7 +244,7 @@ def test_the_residue_lenses_stay_off_the_page_when_they_hold_nothing(client, pip
     appears when it has rows to show."""
     body = client.get(reverse("my_applications")).content.decode()
 
-    assert "Closing Soon" in body
+    assert "Closing soon" in body
     assert "Further Out" not in body
     assert "Deadline Passed" not in body
 
@@ -254,10 +254,10 @@ def test_rolling_lens_only_claims_reviewed_as_they_arrive_where_stated(client, d
     """The feed retracted "Rolling ... reviewed as they arrive" as a blanket
     claim about every undated role (see test_feed_honesty.py's matching
     test) — most of the ~600 undated roles never say anything about how
-    they're reviewed. My Applications' Rolling lens used to make that exact
+    they're reviewed. My applications' Rolling lens used to make that exact
     claim about its whole bucket regardless of what any individual posting
     said. It must now say "Rolling" (with the posting's own evidence) only
-    for the row that stated it, and the neutral "No date posted" for the row
+    for the row that stated it, and the neutral "Deadline not listed" for the row
     that did not."""
     firm = Firm.objects.create(name="Evercore", slug="evercore")
     silent = Opportunity.objects.create(
@@ -285,7 +285,7 @@ def test_rolling_lens_only_claims_reviewed_as_they_arrive_where_stated(client, d
 
     body = resp.content.decode()
     assert "reviewed on a rolling basis" in body
-    assert "No date posted" in body
+    assert "Deadline not listed" in body
     assert "Reviewed as they arrive" not in body, (
         "the retracted blanket claim must not survive on this surface either")
 
@@ -350,7 +350,7 @@ def test_a_done_row_states_that_it_is_done(client, pipeline):
 
 # ---------------------------------------------------------------------------
 # Identity-duplicate folding — my_applications() must fold the same way
-# Browse Openings does, without the trap that made a naive wiring collapse a
+# Browse roles does, without the trap that made a naive wiring collapse a
 # real 13-row pipeline down to 1 (see directory/dupes.py's fold_duplicates
 # and the round-8 dedup finding).
 # ---------------------------------------------------------------------------
@@ -878,7 +878,7 @@ def test_the_undated_lens_stops_claiming_rolling_about_every_row(client, db):
     earns it.
 
     It also settles what the founder read: under a heading that said
-    "Rolling", one row saying "Rolling" and three saying "No date posted"
+    "Rolling", one row saying "Rolling" and three saying "Deadline not listed"
     looked like two spellings of the heading rather than two different
     facts."""
     firm = Firm.objects.create(name="Evercore", slug="evercore")
@@ -902,13 +902,13 @@ def test_the_undated_lens_stops_claiming_rolling_about_every_row(client, db):
     by_key = {lens["key"]: lens for lens in resp.context["lenses"]}
 
     assert by_key["rolling"]["key"] == "rolling", "the key is a call site, not copy"
-    assert by_key["rolling"]["label"] == "No Deadline"
+    assert by_key["rolling"]["label"] == "Deadline not listed"
 
     body = resp.content.decode()
-    assert "No Deadline" in body
+    assert "Deadline not listed" in body
     # The earned claim and the honest silence both survive, on their own rows.
     assert "reviewed on a rolling basis" in body
-    assert "No date posted" in body
+    assert "Deadline not listed" in body
 
 
 @pytest.mark.django_db
@@ -1021,7 +1021,7 @@ def test_the_empty_people_block_occupies_the_space_the_row_gives_it(client, db):
     # What still has to be true is that the block renders at all on a row
     # whose firm the student knows nobody at — that is the prompt to go add
     # someone, and it is the whole reason this page sits beside a CRM.
-    assert "Nobody here yet" in body
+    assert "No contacts here yet" in body
     row = body[body.index('class="apps-lens-row'):]
     assert "rp-empty" in row[:row.index("</li>")], (
         "the empty people block does not reach the row it belongs to")

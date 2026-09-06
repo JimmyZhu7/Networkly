@@ -47,7 +47,7 @@ def test_the_key_has_its_paired_label():
     """A key in TUNABLE_CADENCE_PARAMS without a CADENCE_LABELS entry is a
     500 on Settings — the pairing is the whole reason both dicts say so."""
     label, unit, desc = CADENCE_LABELS[KEY]
-    assert label == "Follow-Up Expiry"
+    assert label == "Follow-up expiry"
     assert unit == "business days"
     assert desc
     assert KEY not in CADENCE_SEGMENTS, "a 5-60 window is a spinner, not a two-option segment"
@@ -86,7 +86,7 @@ def test_the_settings_page_renders_the_knob_with_its_default(client):
     body = client.get(reverse("accounts:settings")).content.decode()
     assert re.search(rf'name="{KEY}"[^>]*placeholder="15"', body) or \
         re.search(rf'placeholder="15"[^>]*name="{KEY}"', body)
-    assert "Follow-Up Expiry" in body
+    assert "Follow-up expiry" in body
 
 
 @pytest.mark.django_db

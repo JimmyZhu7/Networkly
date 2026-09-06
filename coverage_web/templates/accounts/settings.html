@@ -160,7 +160,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
   .set-form .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--s4); }
 
   /* Section-level save button, right-aligned under a card's rows. `gap`
-     matters now that Cadence puts two buttons here (Reset All, Save
+     matters now that Cadence puts two buttons here (Reset defaults, Save
      Cadence) — without it they sat flush against each other. */
   .set-save { display: flex; justify-content: flex-end; gap: var(--s2);
     padding-top: var(--s4); border-top: 1px solid var(--line); margin-top: var(--s2); }
@@ -939,26 +939,26 @@ that don't already declare explicit htmx behaviour.
     <details class="settings-index" open>
     <summary>Settings sections</summary>
     <nav class="settings-nav" aria-label="Settings sections">
-      <p class="settings-nav-title">On This Page</p>
+      <p class="settings-nav-title">Sections</p>
       <p class="settings-nav-group">You</p>
       <a href="#profile" class="is-active" aria-current="true">Profile</a>
-      <a href="#work-auth">Work Authorization</a>
+      <a href="#work-auth">Work authorization</a>
       <a href="#preferences">Preferences</a>
-      <p class="settings-nav-group">Your Firms</p>
-      <a href="#firms">Target Firms</a>
-      <p class="settings-nav-group">How Coverage Paces You</p>
-      <a href="#cadence">Pace &amp; Cadence</a>
+      <p class="settings-nav-group">Your firms</p>
+      <a href="#firms">Target firms</a>
+      <p class="settings-nav-group">Outreach</p>
+      <a href="#cadence">Outreach schedule</a>
       {% if campaigns or dismissed_proposals or merge_suggestions or recent_merges %}
         <a href="#decisions">Decisions</a>
       {% endif %}
-      <p class="settings-nav-group">Plan &amp; Credits</p>
+      <p class="settings-nav-group">Plan &amp; credits</p>
       <a href="#credits">Credits</a>
       {% if gmail_live.available %}<a href="#gmail-live">Gmail Live</a>{% endif %}
       {% if google_calendar.available %}<a href="#google-calendar">Google Calendar</a>{% endif %}
       <p class="settings-nav-group">Account</p>
-      <a href="#security">Sign-In &amp; Security</a>
-      <a href="#data">Your Data</a>
-      <a href="#danger">Danger Zone</a>
+      <a href="#security">Sign-in &amp; security</a>
+      <a href="#data">Your data</a>
+      <a href="#danger">Delete account</a>
     </nav>
     </details>
 
@@ -985,7 +985,7 @@ that don't already declare explicit htmx behaviour.
             {% endcomment %}
             <input type="hidden" name="section" value="profile">
             <div id="profile-fields">{% include "accounts/_profile_form.html" %}</div>
-            <div class="actions"><button type="submit" class="btn btn-primary">Save Profile</button></div>
+            <div class="actions"><button type="submit" class="btn btn-primary">Save profile</button></div>
           </form>
         </div>
       </section>
@@ -1000,7 +1000,7 @@ that don't already declare explicit htmx behaviour.
       <section class="set-card kin-reveal panel" id="work-auth" style="--i:1"
                aria-labelledby="work-auth-h">
         <div class="set-head">
-          <h2 id="work-auth-h">Work Authorization</h2>
+          <h2 id="work-auth-h">Work authorization</h2>
         </div>
         <div class="set-body">
           <form method="post" action="{% url 'accounts:settings' %}">
@@ -1017,7 +1017,7 @@ that don't already declare explicit htmx behaviour.
             {% endcomment %}
             {% include "accounts/_work_auth_matrix.html" with form=work_auth_form %}
 
-            <div class="set-save"><button type="submit" class="btn btn-primary">Save Work Authorization</button></div>
+            <div class="set-save"><button type="submit" class="btn btn-primary">Save work authorization</button></div>
           </form>
         </div>
       </section>
@@ -1072,7 +1072,7 @@ that don't already declare explicit htmx behaviour.
                data-unsubscribe-url="{% url 'accounts:push_unsubscribe' %}"
                data-csrf="{{ csrf_token }}">
             <div class="set-row-main">
-              <label class="set-row-label" for="push-alerts-toggle">Deadline Alerts, On This Device</label>
+              <label class="set-row-label" for="push-alerts-toggle">Deadline alerts on this device</label>
               <div class="set-row-desc" data-push-status>
                 {% if push_subscribed %}
                   On. You'll get an alert when a tracked role is closing soon.
@@ -1105,7 +1105,7 @@ that don't already declare explicit htmx behaviour.
             {% csrf_token %}
             <input type="hidden" name="section" value="notifications">
             <div class="set-row-main">
-              <label class="set-row-label" for="{{ notifications_form.weekly_digest_enabled.id_for_label }}">Weekly Email Digest</label>
+              <label class="set-row-label" for="{{ notifications_form.weekly_digest_enabled.id_for_label }}">Weekly email digest</label>
             </div>
             <div class="set-row-control">
               {{ notifications_form.weekly_digest_enabled }}
@@ -1127,7 +1127,7 @@ that don't already declare explicit htmx behaviour.
       <section class="set-card kin-reveal panel" id="firms" style="--i:3"
                aria-labelledby="firms-h">
         <div class="set-head">
-          <h2 id="firms-h">Target Firms</h2>
+          <h2 id="firms-h">Target firms</h2>
         </div>
         <div class="set-body">
           {% comment %}
@@ -1196,7 +1196,7 @@ that don't already declare explicit htmx behaviour.
             {% endfor %}
           </div>
 
-          <label for="tf-search">Add a Firm</label>
+          <label for="tf-search">Add firm</label>
           <input type="text" id="tf-search" placeholder="Search firms…" autocomplete="off">
           {% comment %}
           Same regroup as onboarding's Firms step
@@ -1465,7 +1465,7 @@ that don't already declare explicit htmx behaviour.
       <section class="set-card kin-reveal panel" id="cadence" style="--i:4"
                aria-labelledby="cadence-h">
         <div class="set-head">
-          <h2 id="cadence-h">Pace &amp; Cadence</h2>
+          <h2 id="cadence-h">Outreach schedule</h2>
         </div>
         <div class="set-body">
           {% comment %}
@@ -1480,20 +1480,13 @@ that don't already declare explicit htmx behaviour.
             {% csrf_token %}
             <input type="hidden" name="section" value="pace">
             <div class="pace-set">
-              <div class="pace-ring-widget" id="pace-ring" aria-hidden="true">
-                <svg viewBox="0 0 120 120">
-                  <circle class="pr-track" cx="60" cy="60" r="54"/>
-                  <circle class="pr-fill" cx="60" cy="60" r="54"/>
-                </svg>
-                <div class="pr-val"><b id="pace-ring-n">–</b><span>a week</span></div>
-              </div>
               <div class="pace-main">
-                <label class="set-row-label" for="{{ pace_form.weekly_touch_goal.id_for_label }}">Weekly Touch Goal</label>
+                <label class="set-row-label" for="{{ pace_form.weekly_touch_goal.id_for_label }}">Weekly outreach goal</label>
                 {% comment %}
                 The ring IS the explanation now — see the cadence rows' own
                 comment on why the sentence moved to .set-sr.
                 {% endcomment %}
-                <span class="set-sr" id="{{ pace_form.weekly_touch_goal.auto_id }}-desc">What the pace ring on Today measures you against.</span>
+                <span class="set-sr" id="{{ pace_form.weekly_touch_goal.auto_id }}-desc">The weekly outreach target shown on Today.</span>
                 {% if pace_form.weekly_touch_goal.errors %}
                   <div class="set-row-err" id="{{ pace_form.weekly_touch_goal.auto_id }}-err">{{ pace_form.weekly_touch_goal.errors }}</div>
                 {% endif %}
@@ -1502,11 +1495,11 @@ that don't already declare explicit htmx behaviour.
                 full-width bar under the card. Two forms share this card now,
                 and two right-aligned save bars one above the other read as
                 one form that cannot make up its mind about where it ends.
-                The bar is reserved for the card's last form (Save Cadence).
+                The bar is reserved for the card's last form (Save schedule).
                 {% endcomment %}
                 <div class="pace-inline">
-                  {# No reset chip here (2026-08-29) — Reset All below covers this field too, see the script. #}
-                  <span class="set-num">{{ pace_form.weekly_touch_goal }}<span class="set-unit">A Week</span></span>
+                  {# No reset chip here (2026-08-29) — Reset defaults below covers this field too, see the script. #}
+                  <span class="set-num">{{ pace_form.weekly_touch_goal }}<span class="set-unit">per week</span></span>
                   <button type="submit" class="btn">Save</button>
                 </div>
                 <p class="pace-read" id="pace-read"></p>
@@ -1527,17 +1520,17 @@ that don't already declare explicit htmx behaviour.
           {% endcomment %}
           <div class="cad-viz panel panel--inset panel--flat" id="cad-viz">
             <div class="cad-rail-wrap">
-              <p class="cad-rail-title">A cold contact's life</p>
+              <p class="cad-rail-title">New contacts</p>
               <div class="cad-rail" aria-hidden="true">
                 <span class="cad-fill"></span>
                 <span class="cad-mark cad-mark-note" style="--x: 0%"><span class="cad-lab"><b>Note</b><u>Day 0</u></span></span>
                 <span class="cad-mark cad-mark-followup"><span class="cad-lab"><b>Follow-up</b><u></u></span></span>
-                <span class="cad-mark cad-mark-park"><span class="cad-lab"><b>Park</b><u></u></span></span>
+                <span class="cad-mark cad-mark-park"><span class="cad-lab"><b>Pause</b><u></u></span></span>
               </div>
               <p class="cad-sentence" id="cad-cold-sentence" aria-live="off"></p>
             </div>
             <div class="cad-rail-wrap">
-              <p class="cad-rail-title">Keeping warm people warm</p>
+              <p class="cad-rail-title">Existing relationships</p>
               <div class="cad-rail cad-rail-weeks" aria-hidden="true">
                 <span class="cad-fill"></span>
                 {% comment %}
@@ -1548,7 +1541,7 @@ that don't already declare explicit htmx behaviour.
                 exactly where .cad-fill already started before this marker
                 existed to say so.
                 {% endcomment %}
-                <span class="cad-mark cad-mark-touch" style="--x: 0%"><span class="cad-lab"><b>Touch</b><u>Day 0</u></span></span>
+                <span class="cad-mark cad-mark-touch" style="--x: 0%"><span class="cad-lab"><b>Interaction</b><u>Day 0</u></span></span>
                 <span class="cad-mark cad-mark-chatted"><span class="cad-lab"><b>Chatted</b><u></u></span></span>
                 <span class="cad-mark cad-mark-advocate"><span class="cad-lab"><b>Advocate</b><u></u></span></span>
               </div>
@@ -1558,7 +1551,7 @@ that don't already declare explicit htmx behaviour.
               <p class="cad-rail-title">Before a deadline closes</p>
               <div class="cad-rail cad-rail-deadline" aria-hidden="true">
                 <span class="cad-fill"></span>
-                <span class="cad-mark cad-mark-reping"><span class="cad-lab"><b>Re-ping</b><u></u></span></span>
+                <span class="cad-mark cad-mark-reping"><span class="cad-lab"><b>Follow up</b><u></u></span></span>
                 <span class="cad-mark cad-mark-close" style="--x: 100%"><span class="cad-lab"><b>Closes</b><u>Day 0</u></span></span>
               </div>
               <p class="cad-sentence" id="cad-deadline-sentence" aria-live="off"></p>
@@ -1648,17 +1641,17 @@ that don't already declare explicit htmx behaviour.
             anyway: blank the field (or, for Cold Outreach, check the radio
             DefaultingRadioSelect already treats as the default — see
             accounts.forms.CADENCE_SEGMENTS, the `("", ...)` entry) so
-            `apply_to` pops the override. Reset All is that same action, run
+            `apply_to` pops the override. Reset defaults is that same action, run
             once per field instead of once per chip; see the script below for
-            how it finds them. Nothing about SAVING changed — Reset All only
+            how it finds them. Nothing about SAVING changed — Reset defaults only
             clears the boxes, the same as deleting their contents by hand
-            would. Cadence's seven fields still need Save Cadence beside it
+            would. Cadence's seven fields still need Save schedule beside it
             to post; Weekly Touch Goal is a separate form with its own inline
             Save further up the card, unaffected by this one.
             {% endcomment %}
             <div class="set-save">
-              <button type="button" class="btn" data-reset-cadence>Reset All</button>
-              <button type="submit" class="btn btn-primary">Save Cadence</button>
+              <button type="button" class="btn" data-reset-cadence>Reset defaults</button>
+              <button type="submit" class="btn btn-primary">Save schedule</button>
             </div>
           </form>
         </div>
@@ -1794,7 +1787,7 @@ that don't already declare explicit htmx behaviour.
               <summary>Dismissed ({{ dismissed_proposals|length }})</summary>
               <p class="set-note">
                 Never proposed again until you restore them here, back on
-                Today waiting for your tap. Nothing was written to your
+                Today ready for your review. Nothing was written to your
                 network either way.
               </p>
               {% for p in dismissed_proposals %}
@@ -2371,7 +2364,7 @@ that don't already declare explicit htmx behaviour.
       <section class="set-card kin-reveal panel" id="security" style="--i:9"
                aria-labelledby="security-h">
         <div class="set-head">
-          <h2 id="security-h">Sign-In &amp; Security</h2>
+          <h2 id="security-h">Sign-in &amp; security</h2>
         </div>
         <div class="set-body">
           {% comment %}
@@ -2469,7 +2462,7 @@ that don't already declare explicit htmx behaviour.
           {% if social_providers_configured or connected_accounts %}
             <div class="set-row">
               <div class="set-row-main">
-                <span class="set-row-label">Connected Accounts</span>
+                <span class="set-row-label">Connected accounts</span>
                 <div class="set-row-desc">
                   {% if connected_accounts %}
                     {{ connected_accounts }} account{{ connected_accounts|pluralize }} connected.
@@ -2505,7 +2498,7 @@ that don't already declare explicit htmx behaviour.
             </div>
             <div class="set-row-control">
               <a class="btn" href="{% url 'accounts:signout_all' %}"
-                 aria-label="Sign out on all other devices">Sign Out</a>
+                 aria-label="Sign out on all other devices">Sign out</a>
             </div>
           </div>
 
@@ -2554,7 +2547,7 @@ that don't already declare explicit htmx behaviour.
       <section class="set-card kin-reveal panel" id="data" style="--i:10"
                aria-labelledby="data-h">
         <div class="set-head">
-          <h2 id="data-h">Your Data</h2>
+          <h2 id="data-h">Your data</h2>
         </div>
         <div class="set-body">
           {% comment %}
@@ -2592,7 +2585,7 @@ that don't already declare explicit htmx behaviour.
               {% if archived_count or parked_count or campaign_hidden_count or unrelated_count %}
               <div class="set-row-desc">
                   Off the board:
-                  {% if archived_count %}<a href="{% url 'crm:contact_archived' %}">{{ archived_count }} archived</a>{% endif %}{% if archived_count and parked_count %}, {% endif %}{% if parked_count %}<a href="{% url 'crm:contact_parked' %}">{{ parked_count }} parked</a>{% endif %}{% if campaign_hidden_count and archived_count or campaign_hidden_count and parked_count %}, {% endif %}{% if campaign_hidden_count %}<a href="{% url 'crm:contact_campaign_hidden' %}">{{ campaign_hidden_count }} not recruiting</a>{% endif %}{% if unrelated_count and archived_count or unrelated_count and parked_count or unrelated_count and campaign_hidden_count %}, {% endif %}{% if unrelated_count %}<a href="{% url 'crm:contact_unrelated' %}">{{ unrelated_count }} not recruitment</a>{% endif %}.
+                  {% if archived_count %}<a href="{% url 'crm:contact_archived' %}">{{ archived_count }} archived</a>{% endif %}{% if archived_count and parked_count %}, {% endif %}{% if parked_count %}<a href="{% url 'crm:contact_parked' %}">{{ parked_count }} paused</a>{% endif %}{% if campaign_hidden_count and archived_count or campaign_hidden_count and parked_count %}, {% endif %}{% if campaign_hidden_count %}<a href="{% url 'crm:contact_campaign_hidden' %}">{{ campaign_hidden_count }} not recruiting</a>{% endif %}{% if unrelated_count and archived_count or unrelated_count and parked_count or unrelated_count and campaign_hidden_count %}, {% endif %}{% if unrelated_count %}<a href="{% url 'crm:contact_unrelated' %}">{{ unrelated_count }} not recruitment</a>{% endif %}.
               </div>
               {% endif %}
             </div>
@@ -2646,7 +2639,7 @@ that don't already declare explicit htmx behaviour.
       <section class="set-card is-danger kin-reveal panel" id="danger" style="--i:11"
                aria-labelledby="danger-h">
         <div class="set-head">
-          <h2 id="danger-h">Danger Zone</h2>
+          <h2 id="danger-h">Delete account</h2>
         </div>
         <div class="set-body">
           <div class="set-row">
@@ -2849,9 +2842,9 @@ that don't already declare explicit htmx behaviour.
       document.getElementById("cad-cold-sentence").textContent =
         touches > 1
           ? "Send the note. No reply after " + f + " business days: one follow-up. " +
-            "Still nothing " + park + " later: parked, day " + end + "."
+            "Still no reply " + park + " business days later: suggest pausing."
           : "Send the note. No follow-up at all. No reply after " + park +
-            " business days: parked.";
+            " business days: suggest pausing.";
 
       // Warm rail: two clocks on a shared weeks scale.
       var wScale = Math.max(chat, adv) * 1.25 || 1;
@@ -2859,8 +2852,8 @@ that don't already declare explicit htmx behaviour.
       setMark(".cad-mark-advocate", Math.round(100 * adv / wScale), adv + "w");
       setFill(".cad-rail-weeks", 0, Math.round(100 * Math.min(chat, adv) / wScale));
       document.getElementById("cad-warm-sentence").textContent =
-        "Someone you've chatted with goes quiet for " + chat +
-        " weeks: circle back. An advocate: every " + adv + " weeks.";
+        "Someone you've chatted with has no interaction for " + chat +
+        " weeks: follow up. An advocate: every " + adv + " weeks.";
 
       // Deadline rail: the rail IS the re-ping window — Re-ping pinned to the
       // left edge, Closes to the right, the whole track filled.
@@ -2877,7 +2870,7 @@ that don't already declare explicit htmx behaviour.
       setMark(".cad-mark-reping", 0, "−" + reping + "d");
       setFill(".cad-rail-deadline", 0, 100);
       document.getElementById("cad-deadline-sentence").textContent =
-        "Warm contacts at a firm get re-pinged " + reping +
+        "Follow up with warm contacts at a firm " + reping +
         " days before its confirmed deadline.";
 
       // Last, so it measures the labels this draw just wrote.
@@ -2940,7 +2933,7 @@ that don't already declare explicit htmx behaviour.
       form.addEventListener("change", function () { form.submit(); });
     });
 
-    // ---- Reset All: blank every field in one tap, Cadence AND Weekly ------
+    // ---- Reset defaults: blank every field in one tap, Cadence AND Weekly ------
     // ---- Touch Goal.
     // One button for both cards' numbers, replacing what used to be a
     // "Default N" / "Reset to N" chip under each field individually (Weekly
@@ -2989,53 +2982,18 @@ that don't already declare explicit htmx behaviour.
       });
     });
 
-    // ---- The pace ring: two-way bound to the weekly-goal input. ----------
-    var ring = document.getElementById("pace-ring");
+    // The preview describes the chosen goal; only the number field changes it.
     var goalInput = document.querySelector('[name="weekly_touch_goal"]');
-    if (ring && goalInput) {
-      var RING_MAX = 30;
-      var fallback = parseInt(goalInput.placeholder, 10) || 10;
-      function goal() {
-        var v = parseInt(goalInput.value, 10);
-        return isNaN(v) ? fallback : v;
+    var goalRead = document.getElementById("pace-read");
+    if (goalInput && goalRead) {
+      function describeGoal() {
+        var value = goalInput.value === "" ? Number(goalInput.placeholder) : Number(goalInput.value);
+        goalRead.textContent = Number.isFinite(value) && value > 0
+          ? "About " + Math.round(value / 5 * 10) / 10 + " outreach messages per weekday." + (goalInput.value === "" ? " Using the default goal." : "")
+          : "Enter a weekly goal to see the daily average.";
       }
-      function drawRing() {
-        var g = goal();
-        ring.style.setProperty("--p", Math.min(g / RING_MAX, 1));
-        document.getElementById("pace-ring-n").textContent = g;
-        document.getElementById("pace-read").innerHTML =
-          "That's about <b>" + Math.round(g / 5 * 10) / 10 +
-          " a weekday</b>." + (goalInput.value ? "" :
-          " Using the default — drag the ring or type a number to set your own.");
-      }
-      function setFromPointer(e) {
-        var r = ring.getBoundingClientRect();
-        var dx = e.clientX - (r.left + r.width / 2);
-        var dy = e.clientY - (r.top + r.height / 2);
-        // atan2 with the ring's -90° rotation undone: 12 o'clock is 0.
-        var frac = (Math.atan2(dy, dx) + Math.PI / 2 + 2 * Math.PI) %
-                   (2 * Math.PI) / (2 * Math.PI);
-        var v = Math.max(1, Math.round(frac * RING_MAX));
-        goalInput.value = v;
-        // The form and any other listener should see a real input event.
-        goalInput.dispatchEvent(new Event("input", { bubbles: true }));
-        drawRing();
-      }
-      ring.addEventListener("pointerdown", function (e) {
-        setFromPointer(e);
-        // Capture AFTER the first set, and tolerantly: a pointer that cannot
-        // be captured (synthetic events, some pens) should still click.
-        try { ring.setPointerCapture(e.pointerId); } catch (err) {}
-        function move(ev) { setFromPointer(ev); }
-        function up() {
-          ring.removeEventListener("pointermove", move);
-          ring.removeEventListener("pointerup", up);
-        }
-        ring.addEventListener("pointermove", move);
-        ring.addEventListener("pointerup", up);
-      });
-      goalInput.addEventListener("input", drawRing);
-      drawRing();
+      goalInput.addEventListener("input", describeGoal);
+      describeGoal();
     }
 
     // Scroll-spy: light up the rail item whose section is in view.

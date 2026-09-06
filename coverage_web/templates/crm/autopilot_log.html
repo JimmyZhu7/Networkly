@@ -19,7 +19,7 @@
 
   {% if not runs %}
     <div class="empty">
-      <p>No runs yet. Autopilot reviews new cards after a mailbox scan.</p>
+      <p>No reviews yet. Run Autopilot on Today to review suggestions from your inbox.</p>
       <p><a href="{% url 'crm:week' %}">Back to Today</a></p>
     </div>
   {% else %}
@@ -27,7 +27,7 @@
       <div class="panel panel--page">
         <p class="sec-label">
           {{ run.created|date:"M d, Y · H:i" }} —
-          {% if run.status == "reviewed" %}reviewed, waiting for your tap on Today{% elif run.status == "applied" %}applied on your tap{% else %}{{ run.get_status_display|lower }}{% endif %}
+          {% if run.status == "reviewed" %}reviewed; ready for approval on Today{% elif run.status == "applied" %}applied with your approval{% else %}{{ run.get_status_display|lower }}{% endif %}
           · {{ run.accepts }} to add, {{ run.escalations }} for you{% if run.skips %}, {{ run.skips }} skipped{% endif %}{% if run.deferred %}, {{ run.deferred }} deferred{% endif %}
           {% if run.credits_spent %} · {{ run.credits_spent }} credit{{ run.credits_spent|pluralize }}{% endif %}
           {% if run.source_label %} · from {{ run.source_label }}{% endif %}
@@ -58,9 +58,9 @@
                   <span class="arch-meta">{{ d.app_event.get_event_type_display }}</span>
                 {% endif %}
                 <span class="arch-meta">
-                  {% if d.decision == "accept" %}{% if d.status == "applied" %}Added{% elif d.status == "undone" %}Added, then undone by you{% else %}Would add{% endif %}{% else %}Left for you{% endif %}
+                  {% if d.decision == "accept" %}{% if d.status == "applied" %}Added{% elif d.status == "undone" %}Added, then undone by you{% else %}Suggested addition{% endif %}{% else %}Needs your review{% endif %}
                   {% if d.detected_by == "ai" %} · confidence {{ d.confidence|floatformat:2 }}{% endif %}
-                  {% if d.overridden %} · your override, never re-decided{% endif %}
+                  {% if d.overridden %} · your decision is preserved{% endif %}
                 </span>
               </div>
               <span class="arch-when">

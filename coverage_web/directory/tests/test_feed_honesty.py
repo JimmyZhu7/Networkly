@@ -214,7 +214,7 @@ def test_rolling_card_renders_the_observed_footer_not_the_fuse(client):
 
     # The undated row: no date posted, elapsed time stated in words, and its
     # due column carries the honest dash — never a countdown figure.
-    assert "No date posted, first seen 15d ago" in body
+    assert "Deadline not listed, first seen 15d ago" in body
     assert "rr-due-none" in body
     # The dated row: a real countdown figure, coloured by its urgency level
     # (10 days out is "upcoming" — see `_urgency_item`'s level bands).
@@ -261,16 +261,16 @@ def test_feed_and_firm_page_agree_a_passed_deadline_has_passed(client):
 def test_feed_and_firm_page_agree_on_no_date_posted_wording(client):
     """Cross-surface consistency audit, finding F: three wordings for the
     identical "this role has no deadline" fact — the feed's considered
-    "No date posted, first seen Nd ago" (test-pinned:
+    "Deadline not listed, first seen Nd ago" (test-pinned:
     `test_feed_badge_reads_first_seen_not_new` above), the firm page's old
-    "No deadline posted" (`views.deadline_marker`), and My Applications'
-    bare "No date posted" (`_apps_body.html`). Standardized on the feed's
-    base phrase, "No date posted" — `deadline_marker` is the one function
+    "No deadline posted" (`views.deadline_marker`), and My applications'
+    bare "Deadline not listed" (`_apps_body.html`). Standardized on the feed's
+    base phrase, "Deadline not listed" — `deadline_marker` is the one function
     all three read from (directly, or via `_lens_item`/`_stage_card` for My
     Applications), so fixing it there fixes the firm page and keeps My
     Applications' existing wording exactly as it was.
 
-    JUDGMENT CALL: the firm page and My Applications do NOT also gain the
+    JUDGMENT CALL: the firm page and My applications do NOT also gain the
     feed's "first seen Nd ago" clause. `deadline_marker` has no `first_seen`
     in scope, and both callers already carry a DIFFERENT elapsed-time fact
     where the feed has none (the role drawer's `checked_ago`, and both the
@@ -282,7 +282,7 @@ def test_feed_and_firm_page_agree_on_no_date_posted_wording(client):
     firm_body = client.get(
         reverse("directory:firm_detail", args=[firm.slug])
     ).content.decode()
-    assert "No date posted" in firm_body
+    assert "Deadline not listed" in firm_body
     assert "No deadline posted" not in firm_body
 
 
@@ -490,7 +490,7 @@ def test_a_provider_stated_deadline_carries_no_mark(client):
 
 
 # ---------------------------------------------------------------------------
-# FACT CHIPS. Same component on the feed, the firm page and My Applications:
+# FACT CHIPS. Same component on the feed, the firm page and My applications:
 # what the posting states about applying. The firm page spent a release
 # showing strictly less about a role than the feed showed about the same row.
 # ---------------------------------------------------------------------------
@@ -552,7 +552,7 @@ def test_an_undated_role_says_no_date_unless_it_claimed_rolling(client):
                                    "phrase": "reviewed on a rolling basis"}}})
 
     body = client.get("/opportunities/").content.decode()
-    assert "No date posted" in body
+    assert "Deadline not listed" in body
     assert "reviewed on a rolling basis" in body
 
 
@@ -1261,14 +1261,14 @@ from directory.views import deadline_marker  # noqa: E402
 def test_a_null_deadline_says_no_date_posted():
     """Cross-surface consistency audit, finding F: `deadline_marker` said
     "No deadline posted" here until 2026-09-01, a third wording for the same
-    fact the feed states as "No date posted, first seen Nd ago" and My
-    Applications states as bare "No date posted". Standardized on the base
+    fact the feed states as "Deadline not listed, first seen Nd ago" and My
+    Applications states as bare "Deadline not listed". Standardized on the base
     phrase both of those already used — see the module-level
     `test_feed_and_firm_page_agree_on_no_date_posted_wording` for the
     firm-page rendering and the judgment call on why the "first seen" clause
     does not also move here."""
     m = deadline_marker(None, "")
-    assert m["label"] == "No date posted"
+    assert m["label"] == "Deadline not listed"
     assert m["posted"] is False
 
 

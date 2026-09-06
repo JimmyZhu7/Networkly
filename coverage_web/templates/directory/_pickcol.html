@@ -72,7 +72,7 @@ there: an `hx-swap-oob` element sitting in the initial document is inert noise.
           ellipsised by that. "On the board" and "for you" were the words
           adding no lever; the sentence one line below still names both.
           {% endcomment %}
-          <span class="firmcol-meta">{% if pick_cluster.roles %}{{ pick_cluster.open_count }} role{{ pick_cluster.open_count|pluralize }} · {{ pick_cluster.firm_count }} firm{{ pick_cluster.firm_count|pluralize }}{% elif pick_cluster.nothing_scored %}Nothing scores high enough yet{% else %}None match this filter{% endif %}</span>
+          <span class="firmcol-meta">{% if pick_cluster.roles %}{{ pick_cluster.open_count }} role{{ pick_cluster.open_count|pluralize }} · {{ pick_cluster.firm_count }} firm{{ pick_cluster.firm_count|pluralize }}{% elif pick_cluster.nothing_scored %}No matching roles yet{% else %}No matches for this filter{% endif %}</span>
           {% comment %}
           The shared "why", as ONE text line in the firm columns' own meta
           voice ("Tier 1"), not a row of pills. Pills wrapped

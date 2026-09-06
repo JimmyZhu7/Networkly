@@ -876,12 +876,6 @@ main { flex: 1 0 auto; }
   grid-template-columns: minmax(110px, 1fr) repeat(3, minmax(88px, 132px)); }
 .wa-head { background: var(--paper); border-bottom: 1px solid var(--line-strong);
   padding: var(--s2) 0; }
-.wa-col { font-family: var(--font-mono); font-size: var(--fs-micro);
-  text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--w-med);
-  text-align: center; padding: 0 var(--s1); line-height: 1.3; }
-.wa-col-yes  { color: var(--ok); }
-.wa-col-need { color: var(--stale-t); }
-.wa-col-unk  { color: var(--ink-3); }
 .wa-row { padding: 2px 0; }
 .wa-row + .wa-row { border-top: 1px solid var(--line); }
 .wa-region { padding: var(--s3) var(--s4); font-weight: var(--w-med);
@@ -943,7 +937,6 @@ main { flex: 1 0 auto; }
    Declared BEFORE the media query on purpose — both rules are specificity
    (0,1,0), so a default written AFTER the query would win at every width and
    the short form would never appear (it didn't, until this was reordered). */
-.wa-col-short { display: none; }
 
 @media (max-width: 560px) {
   .wa-head, .wa-row {
@@ -955,10 +948,7 @@ main { flex: 1 0 auto; }
      (rather than hiding the overflow) keeps every column readable; the
      header is aria-hidden either way, and each radio's own label carries the
      accessible name, so nothing announced changes with the viewport. */
-  .wa-col { font-size: 10px; letter-spacing: 0.02em; word-break: break-word; }
-  .wa-col-full { display: none; }
-  .wa-col-short { display: inline; }
-}
+      }
 
 /* The v2 `.stats`/`.stat` strip is gone: zero uses in any template. Today's
    figures are `.ribbon-stat` (crm/_styles.html), the feed's are `.stat-strip`
@@ -1716,49 +1706,7 @@ a.pill:hover { text-decoration: underline; }
 .axis .meta { grid-column: 1 / -1; color: var(--ink-3); font-size: var(--fs-xs);
   margin-top: -1px; }
 
-/* ---- 10. Warmth meter (animation contract: inline --from/--to) ------------ */
-.meter { margin: var(--s2) 0 var(--s1); }
-.meter-track {
-  position: relative; height: 10px; border-radius: var(--r-badge);
-  background: var(--band-cold-s); overflow: hidden; border: 1px solid var(--line);
-}
-/* The ramp belongs to the TRACK, not to the fill. Painted on a box that is
-   only var(--to) wide, the whole cold→advocate gradient gets squeezed into
-   whatever slice is filled, so EVERY level's bar ends in the advocate red —
-   a cold contact got a crimson tip two lines under the words "No reply yet".
-   So the fill is always full width and the reveal is a clip: the gradient's
-   positioning area stays the whole track at every level and right through
-   the animation. Stops sit on the same quartiles as the fill (utils.py
-   _warmth_pct), so a bar ends in exactly its own warmth colour instead of
-   on a third scale that agrees with neither the fill nor the labels.
-   --from/--to are still the animation contract; only the property changed. */
-.meter-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--w-cold-bar) 25%, var(--w-replied-bar) 50%,
-              var(--w-chatted-bar) 75%, var(--w-advocate-bar) 100%);
-  width: 100%;
-  clip-path: inset(0 calc(100% - var(--to)) 0 0);
-  animation: warmthgrow 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes warmthgrow {
-  from { clip-path: inset(0 calc(100% - var(--from)) 0 0); }
-  to   { clip-path: inset(0 calc(100% - var(--to)) 0 0); }
-}
-/* One axis, one coordinate system. `space-between` positioned these four
-   words by their own text widths while the fill above them is a quartile of
-   the track, so the two never agreed: a REPLIED contact's bar tip landed
-   nearer the word CHATTED (83px) than the bolded REPLIED (121px), pointing
-   at a rung the contact has not reached. Equal columns put each word over
-   the quarter-segment its own fill level covers, at every width — at 375px
-   the old row left the tip 2.9px from CHATTED's first letter. minmax(0, 1fr)
-   rather than 1fr so a long word cannot widen its own column and reopen the
-   gap; grid-auto-flow keeps this true if WARMTH_ORDER ever changes length. */
-.meter-scale { display: grid; grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr); text-align: center;
-  font-size: var(--fs-micro); color: var(--ink-3); margin-top: var(--s1);
-  text-transform: uppercase; letter-spacing: 0.05em; }
-.meter-scale span.on { color: var(--ink); font-weight: var(--w-med); }
-
+/* Relationship stages are defined in elements.css. */
 .moved-flag {
   margin: var(--s3) 0 0; padding: var(--s2) var(--s3); border-radius: var(--r-ctl);
   background: var(--ok-soft); border: 1px solid var(--ok-line);
@@ -2325,11 +2273,6 @@ select:focus-visible, input:focus-visible {
   62%, 100% { background-position: -50% 0; }
 }
 @media (prefers-reduced-motion: reduce) { .kin-hero::after { animation: none; } }
-.kin-hero-eyebrow {
-  font-family: var(--font-mono); font-size: var(--fs-micro);
-  text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--accent); margin: 0 0 var(--s3);
-}
 .kin-hero h1, .kin-hero-title {
   font: var(--w-black) clamp(var(--fs-display-2), 4.4vw, var(--fs-display-1))/1.06 var(--font-display);
   letter-spacing: -0.012em; margin: 0; color: var(--ink); max-width: 22ch;
@@ -2693,8 +2636,7 @@ select:focus-visible, input:focus-visible {
 
 /* ---- 17. Reduced motion ---------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
-  .meter-fill { animation: none; clip-path: inset(0 calc(100% - var(--to)) 0 0); }
-  .moved-flag { animation: none; }
+    .moved-flag { animation: none; }
   *, *::before, *::after { animation-duration: 0.01ms !important;
     animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
   *:active { transform: none !important; }

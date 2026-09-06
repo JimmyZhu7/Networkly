@@ -62,7 +62,7 @@ def test_landing_mock_draws_only_live_product_verbs(client):
 def test_landing_mock_uses_the_act_cards_own_verbs(client):
     labels = _control_labels(client.get("/").content.decode())
 
-    for live in ("Done", "They replied"):
+    for live in ("Log sent", "Log reply"):
         assert live in labels, (
             f"{live!r} is what crm/_act_card.html draws; the mock should "
             f"show the same word. Found: {labels}"
@@ -92,6 +92,6 @@ def test_landing_feature_list_does_not_advertise_the_retired_one_click_verbs(cli
     joined = " ".join(points)
 
     assert "One-click Sent, Reply" not in joined
-    assert "Done, They replied" in joined, (
+    assert "Log sent emails and replies" in joined, (
         "the Today feature bullet should name the buttons the app draws"
     )

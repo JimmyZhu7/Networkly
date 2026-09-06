@@ -146,8 +146,8 @@ TOUCH_KIND_LABELS: list[tuple[str, str]] = [
     ("chat_scheduled", "Chat scheduled"),
     ("chat", "Chat happened"),
     ("thank_you", "Sent thank-you"),
-    ("reping", "Re-pinged"),
-    ("maintain", "Kept warm"),
+    ("reping", "Followed up before a deadline"),
+    ("maintain", "Checked in"),
     # The advocate as an event (`pipeline.REFERRAL_KIND`). Written by
     # `crm.debrief` when the student takes the promotion a debrief offered,
     # and dated at the CHAT it was learned in rather than at the click, so
@@ -197,19 +197,19 @@ CHANNEL_LABELS: list[tuple[str, str]] = [
 ACTION_LABELS: dict[str, str] = {
     "thank_you": "Send thank-you",
     "confirm_chat": "Confirm the chat",
-    "reping": "Re-ping",
-    "maintain": "Keep warm",
+    "reping": "Follow up before deadline",
+    "maintain": "Check in",
     # cadence branch 5b. Shares the advocate branch's verb because it IS the
     # same ask (a real touch on a keep-in-touch clock); the two differ only in
     # who they're aimed at and how fast the clock runs.
-    "keep_warm": "Keep warm",
+    "keep_warm": "Check in",
     # cadence branch 5a. Not "Follow up": the card is about a specific thing
     # this person said they would do, and the verb has to name that rather
     # than borrow the cold-thread verb sitting two rows down.
-    "promised_followup": "Chase the offer",
+    "promised_followup": "Follow up on their offer",
     "first_outreach": "First outreach",
     "follow_up": "Follow up",
-    "park": "Park it",
+    "park": "Pause outreach",
     "advance": "Propose a chat",
 }
 

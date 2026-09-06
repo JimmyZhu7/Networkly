@@ -191,8 +191,8 @@ def test_work_step_counts_the_sponsorship_answers_honestly(client, user, world):
     body = _get(client, "work_auth", live="1", work_auth_us="sponsorship").content.decode()
     # 3 us/ib roles: one yes, one no, one silent. Neither firm in the fixture
     # carries a `sponsors` policy, so the new "firm policy known" bar is 0.
-    assert _num(body) == 2  # "2 of 3 answer the visa question"
-    assert "of 3 answer the visa question" in body
+    assert _num(body) == 2  # "2 of 3 state their sponsorship policy"
+    assert "of 3 state their sponsorship policy" in body
     nums = [int(n) for n in re.findall(r'ob-pv-bar-n">(\d+)<', body)]
     assert nums == [1, 1, 0, 1]  # posting-yes / posting-no / firm-known / not-stated
     # The one blocking verdict: a us role saying "no" while the student says
@@ -235,8 +235,8 @@ def test_work_step_names_the_four_states_honestly(client, user, world):
     client.force_login(user)
 
     body = _get(client, "work_auth", live="1", work_auth_us="sponsorship").content.decode()
-    assert "Posting says yes" in body
-    assert "Posting says no" in body
+    assert "Sponsorship offered" in body
+    assert "No sponsorship" in body
     assert "Firm policy known" in body
     assert "Not stated" in body
     assert ("Most postings never say. Coverage shows you the ones that do, "
@@ -257,7 +257,7 @@ def test_work_step_reads_the_saved_profile_not_an_empty_one(client, user, world)
     body = _get(client, "work_auth", live="1",
                 work_auth_hk="sponsorship").content.decode()
     # Only the single HK role, not all five.
-    assert "of 1 answer the visa question" in body
+    assert "of 1 state their sponsorship policy" in body
 
 
 def test_work_step_reports_nothing_blocked_rather_than_a_zero(client, user, world):
@@ -268,7 +268,7 @@ def test_work_step_reports_nothing_blocked_rather_than_a_zero(client, user, worl
     client.force_login(user)
     body = _get(client, "work_auth", live="1",
                 work_auth_hk="sponsorship").content.decode()
-    assert "Nothing is ruled out on visa." in body
+    assert "No roles excluded by sponsorship requirements." in body
 
     # Nothing claimed at all: no verdict line either way.
     silent = _get(client, "work_auth", live="1").content.decode()
@@ -291,7 +291,7 @@ def test_firms_step_counts_live_roles_per_picked_firm(client, user, world):
 def test_firms_step_empty_until_something_is_picked(client, user, world):
     client.force_login(user)
     body = _get(client, "firms", live="1").content.decode()
-    assert "No firms picked yet" in body
+    assert "Select a firm to preview its open roles" in body
     assert "Goldman" not in body
 
 
@@ -310,7 +310,7 @@ def test_import_step_shows_the_real_board_state(client, user, world):
     client.force_login(user)
     body = _get(client, "import").content.decode()
     assert _num(body) == 0
-    assert "Nothing on it yet" in body
+    assert "Add target firms or import contacts to build your network" in body
 
     UserFirm.all_objects.create(user=user, firm=world["gs"], tier=2, status="target")
     Contact.all_objects.create(user=user, name="Jane Banker")
@@ -334,7 +334,7 @@ def test_one_students_board_never_appears_on_anothers(client, user, other_user, 
     client.force_login(user)
     body = _get(client, "import").content.decode()
     assert _num(body) == 0
-    assert "Nothing on it yet" in body
+    assert "Add target firms or import contacts to build your network" in body
 
     firms_body = _get(client, "firms").content.decode()
     assert "Goldman" not in firms_body

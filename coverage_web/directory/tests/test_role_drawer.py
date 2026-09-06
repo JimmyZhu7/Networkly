@@ -92,7 +92,7 @@ def test_a_posting_we_never_fetched_says_so(client, role):
     role.raw = {}
     role.save(update_fields=["raw"])
     html = client.get(reverse("role_description", args=[role.id])).content.decode()
-    assert "haven&#x27;t fetched" in html or "haven't fetched" in html
+    assert "The description is not available here yet" in html
     assert role.url in html, "the link out is the answer when we hold nothing"
 
 
@@ -129,7 +129,7 @@ def test_a_missing_role_is_a_404(client, db):
 # closed_at set, re-verified closed against the firm's own site — yet the
 # drawer rendered "It still shows as open because we also can't confirm it
 # closed" and an active "Open the application" link. The drawer is reachable
-# for a closed row from My Applications ('Read the posting' on any tracked
+# for a closed row from My applications ('Read the posting' on any tracked
 # stage, regardless of the posting's own status), not just the feed (which
 # only lists status='open' rows and so never surfaces this path itself).
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ def test_the_closed_postings_confirmation_time_is_a_single_unit(client):
     """Cross-surface consistency audit, finding C: `timesince` defaults to
     `depth=2` and this line rendered "confirmed 5 days, 13 hours ago" —
     noise for a caution meant to be read at a glance, and inconsistent with
-    `directory.views._posting_closed_note`'s identical My Applications
+    `directory.views._posting_closed_note`'s identical My applications
     sentence, which already called `timesince(..., depth=1)` directly. Both
     now go through the same one-unit convention — the drawer via
     `core.templatetags.textstyle.timesince1`, the Python site via its own

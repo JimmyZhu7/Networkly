@@ -107,7 +107,7 @@ def test_comparison_table_renders_every_row_in_both_columns(client):
     assert table, "the side-by-side table should render inside the Individual panel"
     table = table.group(0)
 
-    for group in ("The board", "The CRM", "The advisor", "Your data"):
+    for group in ("The board", "Your workspace", "The advisor", "Your data"):
         assert f'<td class="cmp-group" colspan="3">{group}</td>' in table
 
     rows = re.findall(r"<tr>(.*?)</tr>", table, re.S)
@@ -216,10 +216,10 @@ def test_supporting_copy_agrees_with_the_rebalanced_story(client):
 
     # 2026-08-20 lead sentence (founder-decisions-2026-08-20.md §2d): Pro's
     # anchor is the sync, not a vague "engine".
-    assert "The board is free. The sync is Pro." in body
+    assert "Find the plan for your recruiting search." in body
     assert "The board is free. The engine is Pro." not in body
     assert "Free while we earn the right to charge." not in body
-    assert "The whole board. No card, no trial clock." in body
+    assert "Browse roles and manage your recruiting. No payment card required." in body
 
     # FAQ 1 dropped its Gmail Live mention; FAQ 2's promise resets to the new
     # list, which is only honest because the page has never shipped to a user.
@@ -234,14 +234,14 @@ def test_pro_card_gmail_live_first_with_new_tagline(client):
     card now, and the tagline names the moment Pro is for."""
     body = client.get("/pricing/").content.decode()
 
-    assert "For when the replies start coming in." in body
+    assert "More sync and AI capacity for active outreach." in body
     assert "For the heaviest recruiting seasons." not in body
 
     pro_card = re.search(
         r'<article class="price-card preview.*?</article>', body, re.S
     ).group(0)
     gmail_idx = pro_card.index("Gmail Live: real-time sync")
-    advisor_idx = pro_card.index("Talk to Coverage on a stronger model")
+    advisor_idx = pro_card.index("Assistant on a stronger model")
     assert gmail_idx < advisor_idx, "Gmail Live must be the first Pro bullet"
 
 

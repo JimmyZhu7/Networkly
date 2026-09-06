@@ -86,7 +86,7 @@ def test_pro_feature_list_sells_the_three_gates_that_exist(client):
 
     assert "Gmail Live: real-time sync that logs itself." in features
     assert "Scan your inbox any time" in features
-    assert "Talk to Coverage on a stronger model" in features
+    assert "Assistant on a stronger model" in features
 
 
 @pytest.mark.django_db

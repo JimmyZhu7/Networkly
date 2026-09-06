@@ -20,7 +20,7 @@ person needs to know after unsubscribing from anything.
     {% if done %}
       <h1 class="auth-title">Unsubscribed.</h1>
       <p class="auth-sub">No more weekly digests to {{ email }}. Turn it back on in Settings.</p>
-      <a class="btn btn-primary auth-submit" href="{% url 'accounts:settings' %}#preferences">Open Settings</a>
+      <a class="btn btn-primary auth-submit" href="{% url 'accounts:settings' %}#preferences">Open settings</a>
     {% else %}
       <h1 class="auth-title">Stop the weekly digest?</h1>
       <p class="auth-sub">Coverage sends {{ email }} one email a week, and only in a week your board has something due.</p>

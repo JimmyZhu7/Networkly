@@ -87,7 +87,7 @@ _welcome_head.html §2); nothing here hardcodes the step count.
   {% if step == "profile" %}
     <header class="ob-head">
       <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
-      <h1>Tell Us About Your Search</h1>
+      <h1>Tell us about your search</h1>
       {% comment %}Names the surfaces that exist NOW. This line said "the
       weekly list" months after that page was retired for Today — the first
       sentence a new user reads was describing a product that no longer
@@ -101,8 +101,7 @@ _welcome_head.html §2); nothing here hardcodes the step count.
       to know it. The Skip link below is the other half of the fix and does
       most of the work, but a student decides whether to start filling this
       in before they have scrolled far enough to find it.{% endcomment %}
-      <p class="ob-lede">Shapes your feed and your Today queue. Class year is what
-        the eligibility checks run on. All optional.</p>
+      <p class="ob-lede">Personalize your roles and daily outreach. Your class year helps check eligibility. All fields are optional.</p>
     </header>
     <form method="post" id="ob-form" action="{% url 'accounts:onboarding' %}?step=profile" enctype="multipart/form-data">
       {% csrf_token %}
@@ -131,13 +130,12 @@ _welcome_head.html §2); nothing here hardcodes the step count.
   {% elif step == "work_auth" %}
     <header class="ob-head">
       <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
-      <h1>Where Can You Work?</h1>
+      <h1>Where can you work?</h1>
       {% comment %}Two sentences, not three. The cut one ("Coverage scores
       unknown as neutral, never as a guess") is said again, verbatim in
       substance, by the matrix's own footnote eight lines below — the student
       read the same reassurance twice before answering anything.{% endcomment %}
-      <p class="ob-lede">The one structural fact that moves your firm-fit score.
-        Leave a region blank if you're not sure.</p>
+      <p class="ob-lede">Help match roles to your work authorization. Leave a region blank if you’re unsure.</p>
     </header>
     <form method="post" id="ob-form" action="{% url 'accounts:onboarding' %}?step=work_auth">
       {% csrf_token %}
@@ -164,12 +162,11 @@ _welcome_head.html §2); nothing here hardcodes the step count.
   {% elif step == "firms" %}
     <header class="ob-head">
       <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
-      <h1>Pick Your Target Firms</h1>
+      <h1>Choose your target firms</h1>
       {% comment %}The opening "Choose the firms you're recruiting for" was
       the h1 again in a longer sentence. Dropped; the lede now only says what
       the h1 cannot.{% endcomment %}
-      <p class="ob-lede">They float to the top of your feed and fill the Picked
-        column. Add or remove any time.</p>
+      <p class="ob-lede">Prioritize these firms in your opportunities and network. You can change your choices later.</p>
     </header>
     <form method="post" id="ob-form" action="{% url 'accounts:onboarding' %}?step=firms">
       {% csrf_token %}
@@ -279,7 +276,7 @@ _welcome_head.html §2); nothing here hardcodes the step count.
         HAS the history it fills the board in one click.
         {% endcomment %}
         <a class="btn" href="{% url 'crm:contact_new' %}?from=welcome">Add One by Hand</a>
-        <a class="btn" href="{% url 'accounts:import_template' %}">Download Template</a>
+        <a class="btn" href="{% url 'accounts:import_template' %}">Download template</a>
       </div>
       {% comment %}Said in plain text rather than left to the flow diagram
       above: this is the Limited Use posture, and it is also the only
@@ -303,9 +300,9 @@ _welcome_head.html §2); nothing here hardcodes the step count.
   </div>{# /.ob-main #}
 
   <aside class="ob-side">
-    <div class="ob-pv panel panel--inset panel--flat" aria-label="Live preview of what your answers feed">
+    <div class="ob-pv panel panel--inset panel--flat" aria-label="Preview based on your answers">
       <p class="ob-pv-head">
-        <span class="ob-pv-eyebrow">{% if step == "firms" %}Your picked firms{% elif step == "work_auth" %}Sponsorship, answered{% elif step == "import" %}Your Network board{% else %}Your Opportunities feed{% endif %}</span>
+        <span class="ob-pv-eyebrow">{% if step == "firms" %}Your target firms{% elif step == "work_auth" %}Sponsorship policies{% elif step == "import" %}Your network{% else %}Matching roles{% endif %}</span>
         <span class="ob-pv-dot" aria-hidden="true"></span>
       </p>
       {% comment %}

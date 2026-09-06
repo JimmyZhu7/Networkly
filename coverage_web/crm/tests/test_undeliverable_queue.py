@@ -359,7 +359,7 @@ def test_contact_page_says_the_address_is_dead(client):
     assert "lidia@wellsfargo.example" in body
     # The old line, which read as the student's own omission, is gone for
     # this contact.
-    assert "No email on file." not in body
+    assert "No email address saved." not in body
 
 
 def test_contact_page_still_says_no_email_when_there_never_was_one(client):
@@ -371,5 +371,5 @@ def test_contact_page_still_says_no_email_when_there_never_was_one(client):
         reverse("crm:contact_detail", args=[contact.pk])
     ).content.decode()
 
-    assert "No email on file." in body
+    assert "No email address saved." in body
     assert "is dead" not in body

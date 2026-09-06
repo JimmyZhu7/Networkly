@@ -27,8 +27,8 @@
     {% if user.is_authenticated %}
       <div class="pagehead-actions">
         <nav class="subnav scope-tabs" aria-label="Opportunities views">
-          <a href="{% url 'opportunities' %}" aria-current="page">Browse Openings</a>
-          <a href="{% url 'my_applications' %}">My Applications</a>
+          <a href="{% url 'opportunities' %}" aria-current="page">Browse roles</a>
+          <a href="{% url 'my_applications' %}">My applications</a>
         </nav>
       </div>
     {% endif %}
@@ -183,7 +183,7 @@
       DOM — screen readers still get "Programme Year", and the string is
       pinned by test_the_programme_year_hint_ships_verbatim.
       {% endcomment %}
-      <label{% if selected.year %} class="is-set"{% endif %}><span class="f-cap">Programme Year</span>
+      <label{% if selected.year %} class="is-set"{% endif %}><span class="f-cap">Programme year</span>
         <select name="year" id="f-year">{% include "directory/_facet_options.html" with options=year_facet current=selected.year %}</select>
       </label>
 
@@ -273,10 +273,10 @@
       result count would be a promise made about a list nobody reads
       exhaustively. Deliberately uncounted, per the bar's consistency rule.
       {% endcomment %}
-      <label{% if selected.firm %} class="is-set"{% endif %}><span class="f-cap">Companies</span>
+      <label{% if selected.firm %} class="is-set"{% endif %}><span class="f-cap">Firms</span>
         <div class="cmulti" data-cmulti>
           <button type="button" class="cmulti-btn" aria-haspopup="true" aria-expanded="false">
-            <span class="cmulti-label">All Companies</span>
+            <span class="cmulti-label">All firms</span>
             <svg class="csel-caret" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <div class="cmulti-menu panel panel--raised" hidden>

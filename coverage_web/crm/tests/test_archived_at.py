@@ -102,7 +102,7 @@ def test_the_archived_row_says_which_date_it_is_showing(client):
     assert "Archived " in body
     # The legacy row falls back to the last touch, labelled, never to a
     # made-up archive date.
-    assert "No touches" in body
+    assert "No interactions" in body
 
 
 # ---------------------------------------------------------------------------

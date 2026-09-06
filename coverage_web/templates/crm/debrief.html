@@ -51,15 +51,14 @@
   <header class="pagehead">
     <div class="pagehead-text">
 
-      <h1 class="pagehead-title">Debrief</h1>
+      <h1 class="pagehead-title">Chat notes</h1>
       <p class="pagehead-sub">Chat on {{ touch.ts|date:"N j, Y" }}</p>
       {% comment %}One sentence, not two: the first question of the form
       below is literally "What did you learn?", so asking it again in the
       header was the page putting its own opening question twice.
       {% endcomment %}
       <p class="pagehead-sub">
-        Your chat with {{ contact.name|smart_person_name|smart_title }}, written down while you
-        still have it.
+        Notes and next steps from your chat with {{ contact.name|smart_person_name|smart_title }}.
       </p>
     </div>
   </header>
@@ -70,7 +69,7 @@
          Move them to advocate?</p>
       <form method="post" action="{% url 'crm:debrief_promote' touch.pk %}">
         {% csrf_token %}
-        <button type="submit" class="btn btn-primary">Promote to Advocate</button>
+        <button type="submit" class="btn btn-primary">Mark as advocate</button>
       </form>
     </div>
   {% endif %}

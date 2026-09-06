@@ -183,7 +183,7 @@ def test_the_email_carries_a_dark_palette_for_apple_mail(digest_ctx):
         assert token in html, f"{token} is one of the four tokens the site flips"
     # The hooks are additive: every element still carries its full inline
     # style, so a client that strips the <style> loses nothing.
-    assert 'class="d-page" style="background-color:#f2f4ee' in html
+    assert 'class="d-page" style="background-color:#f6f8fb' in html
 
 
 def test_the_footer_offers_a_way_out(digest_ctx):

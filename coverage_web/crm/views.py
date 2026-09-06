@@ -469,7 +469,7 @@ def proposal_restore(request: HttpRequest, pk: int) -> HttpResponse:
     )
     if outcome == discovery.RESTORED:
         messages.success(
-            request, f"{proposal.name} is back on Today, waiting for your tap."
+            request, f"{proposal.name} is ready for review on Today."
         )
     elif outcome == discovery.ALREADY_A_CONTACT:
         messages.info(
@@ -509,7 +509,7 @@ def contact_merge_act(request: HttpRequest, verb: str) -> HttpResponse:
     if cand is None:
         messages.info(
             request,
-            "That suggestion is no longer standing. Nothing was changed.",
+            "That suggestion is no longer available. Nothing changed.",
         )
         return redirect(reverse("accounts:settings") + "#duplicates")
     if verb == "merge":
@@ -553,7 +553,7 @@ def contact_merge_undo(request: HttpRequest, pk: int) -> HttpResponse:
     record_event("contact_merge_undone", user=request.user, source="settings")
     messages.success(
         request,
-        f"{record.duplicate.name} is back as their own card, history restored.",
+        f"{record.duplicate.name} has been restored as a separate contact, including their history.",
     )
     return redirect(reverse("accounts:settings") + "#duplicates")
 
@@ -626,7 +626,7 @@ def autopilot_start(request: HttpRequest) -> HttpResponse:
         run_id=run.pk if run else None,
     )
     if outcome == autopilot.ALREADY_RUNNING:
-        messages.info(request, "Autopilot is already reading your cards.")
+        messages.info(request, "Autopilot is already reviewing suggestions.")
     elif outcome == autopilot.INSUFFICIENT_CREDITS:
         messages.error(
             request,
@@ -634,9 +634,9 @@ def autopilot_start(request: HttpRequest) -> HttpResponse:
             "and nothing was charged.",
         )
     elif outcome == autopilot.UNCONFIGURED:
-        messages.error(request, "Autopilot isn't switched on for this deploy.")
+        messages.error(request, "Autopilot is not enabled.")
     elif outcome == autopilot.NOTHING_TO_DECIDE:
-        messages.info(request, "Nothing for Autopilot to read right now.")
+        messages.info(request, "No suggestions to review.")
     return render(request, "crm/_cockpit.html", _cockpit_context(request.user))
 
 
@@ -749,7 +749,7 @@ def app_event_act(request: HttpRequest, pk: int, verb: str) -> HttpResponse:
 # ---------------------------------------------------------------------------
 # Contact-card sections below the coverage board, in display order.
 # Every label states the SAME fact: what you sent, and what came back --
-# "Emailed, No Reply" and "Emailed, Replied" are the same pair with only
+# "Awaiting reply" and "Replied" are the same pair with only
 # the outcome swapped, rather than a bare "Replied" that never says what
 # it was a reply TO. "Advocates" was the one plural noun in a list of
 # past-tense verbs -- a status the contact is IN, spelled differently
@@ -772,10 +772,10 @@ def _warmth_labels() -> dict[str, str]:
 
 
 _WARMTH_SECTIONS = [
-    ("replied", "Emailed, Replied"),
-    ("chatted", "Chatted"),
+    ("replied", "Replied"),
+    ("chatted", "Had a chat"),
     ("advocate", "Advocate"),
-    ("no_reply", "Emailed, No Reply"),
+    ("no_reply", "Awaiting reply"),
     # FOUND WHILE AUDITING THE BOARD'S COUNTS (2026-08-25), and it is the same
     # class of bug as the one that audit was for: `no_reply` is cold AND
     # touched, so a contact who is cold and has never been touched matched no
@@ -783,7 +783,7 @@ _WARMTH_SECTIONS = [
     # "Contacts N" at the top. On the demo account that was 24 of 61 people
     # present in the header and absent from the page. They are the ones a
     # student most needs to see, too: a name they added and never wrote to.
-    ("not_contacted", "Not Contacted Yet"),
+    ("not_contacted", "Not contacted"),
 ]
 
 # The Network board's region scope tabs, in display order. A subset of
@@ -965,7 +965,7 @@ def _in_scope(c, scope: str) -> bool:
 # weeks after their real last touch, rendered as freshly touched here while
 # the engine correctly still called them idle. Confirmed on the founder's
 # live data (2026-08-28): a contact with two `bulk_received` rows and zero
-# real outreach showed under "Emailed, No Reply" (`touch_count` counted the
+# real outreach showed under "Awaiting reply" (`touch_count` counted the
 # blasts), and 5 actively-worked contacts plus 118 parked ones showed a
 # staleness ring dozens of days fresher than their real last touch
 # (`last_touch_ts` counted a `manual_override`).
@@ -1106,8 +1106,8 @@ def _contact_card(c, *, tier, today, cadence=None, as_of=None):
         # WHERE THE RELATIONSHIP ACTUALLY STANDS. The board sections partition
         # on warmth and real-touch count only, so a parked contact and an
         # active one produce identical cards: measured 2026-09-01 on the
-        # founder's own board, "Emailed, No Reply" held 92 active rows and 129
-        # parked ones side by side, "Chatted" 9 and 13, and "Advocate" showed
+        # founder's own board, "Awaiting reply" held 92 active rows and 129
+        # parked ones side by side, "Had a chat" 9 and 13, and "Advocate" showed
         # two parked people as his entire advocate bench. The card dict had no
         # way to say so — this is the value; the chip that renders it is the
         # template's business.
@@ -1473,8 +1473,8 @@ def contact_list(request: HttpRequest) -> HttpResponse:
         # dozens of tracks that mostly had no colour to decode at all. This
         # says the SAME thing the dots said, but on the one card it is
         # actually true of, with real counts instead of a swatch. Nothing
-        # is lost: the identical warmth labels ("Emailed, Replied", "Chatted",
-        # "Emailed, No Reply", "Advocate") are still spelled out, with the
+        # is lost: the identical warmth labels ("Replied", "Had a chat",
+        # "Awaiting reply", "Advocate") are still spelled out, with the
         # same colour dots, as the section headers of the Contacts list
         # further down this same page (crm/views.py::_WARMTH_SECTIONS) —
         # this was never the only place that vocabulary lived, just the
@@ -1710,7 +1710,7 @@ def contact_list(request: HttpRequest) -> HttpResponse:
             # template. `contact_list.html`'s legend used to hardcode
             # "Emailed, no reply" / "Emailed, replied" as lowercase literals
             # while the section headings a scroll below it read the Title
-            # Case canonical "Emailed, No Reply" / "Emailed, Replied" off
+            # Case canonical "Awaiting reply" / "Replied" off
             # `sections` above — the same board disagreeing with itself about
             # its own vocabulary one screen apart.
             "warmth_labels": _warmth_labels(),
@@ -2563,7 +2563,7 @@ def _parked_cohorts(user) -> list[dict]:
         if t is not None:
             m = _MANUAL_OVERRIDE_PARSE.match(t.note or "")
             human = ((m.group("human") if m else "") or "").lstrip()
-            label = human or "Parked"
+            label = human or "Paused"
             minute = timezone.localtime(t.ts).replace(second=0, microsecond=0)
             key = (minute, label)
             sort_ts = t.ts
@@ -2755,9 +2755,9 @@ _STATE_LINES = {
     "replied": "They replied",
     "chat_scheduled": "A chat is set up",
     "chat_done": "You have chatted",
-    "advocate": "In your corner",
+    "advocate": "Advocate",
     "quiet": "Gone quiet",
-    "parked": "Parked",
+    "parked": "Paused",
 }
 
 # (warmth, thread_state) pairs where the state sentence already implies the
@@ -2848,7 +2848,7 @@ def _status_line(contact: Contact) -> str:
     )
     if (contact.warmth, contact.thread_state) in _STATE_IMPLIES_WARMTH:
         return state
-    return f"{contact.warmth.capitalize()} · {state}"
+    return f"{'New' if contact.warmth == 'cold' else contact.warmth.capitalize()} · {state}"
 
 
 # What "parked" ACTUALLY means for this contact, by warmth (Phase 1 bench
@@ -2865,16 +2865,10 @@ def _status_line(contact: Contact) -> str:
 #   - chatted/advocate: bench-eligible (`crm.today._opening_bench`) — a live
 #     opening at their firm may put them on today's bench for one tap back.
 _PARK_NOTES = {
-    "cold": "Parked and cold. A reply from them un-parks this automatically "
-            "— nothing else does, and nothing here is on a timer.",
-    "replied": "Parked, but a confirmed deadline at their firm still triggers "
-               "a re-ping before it closes — that has not changed.",
-    "chatted": "Parked. A live opening at their firm may put this contact on "
-               "today's bench — one tap brings them back, nothing does it "
-               "automatically.",
-    "advocate": "Parked. A live opening at their firm may put this contact on "
-                "today's bench — one tap brings them back, nothing does it "
-                "automatically.",
+    "cold": "Outreach paused. A reply resumes this contact automatically. There is no timed restart.",
+    "replied": "Outreach paused. Confirmed deadlines at their firm can still trigger a follow-up reminder.",
+    "chatted": "Outreach paused. A live role at their firm may suggest resuming contact on Today. You decide whether to resume.",
+    "advocate": "Outreach paused. A live role at their firm may suggest resuming contact on Today. You decide whether to resume.",
 }
 
 

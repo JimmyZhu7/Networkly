@@ -30,7 +30,7 @@ scorer's own sentence as each chip's `title`.
         <a href="{% url 'accounts:settings' %}">Fill in your profile</a> and
         this starts picking roles.
       {% else %}
-        Nothing here is personalised; you're signed out.
+        Sign in to see personalized recommendations.
         <a href="{% url 'account_login' %}">Sign in</a> to get roles picked by your
         class year, university, tracks, and target firms.
       {% endif %}
@@ -38,7 +38,7 @@ scorer's own sentence as each chip's `title`.
   {% else %}
     <h2 class="recbar-title" id="recbar-h">Picked for you</h2>
     <p class="recbar-note">
-      Nothing open scores high enough against your profile to call a match.
+      No open roles currently match your profile closely enough.
       Browse the full list below, or widen your regions and tracks in
       <a href="{% url 'accounts:settings' %}">your profile</a>.
     </p>

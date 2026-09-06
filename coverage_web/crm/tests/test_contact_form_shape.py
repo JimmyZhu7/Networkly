@@ -48,7 +48,7 @@ def test_the_add_form_shows_five_controls_and_folds_the_rest(client):
     body = client.get(reverse("crm:contact_new")).content.decode()
 
     assert _DISCLOSURE in body
-    assert "<summary>More</summary>" in body
+    assert "<summary>More details</summary>" in body
     # Name, Firm, Firm (if not listed), Role, Email — the five a first
     # contact is actually made of.
     assert _controls_before_the_disclosure(body) == 5
@@ -97,7 +97,7 @@ def test_quick_add_is_unchanged(client):
     client.force_login(_user())
     body = client.get(reverse("crm:contact_new") + "?quick=1").content.decode()
     assert _DISCLOSURE not in body
-    assert "<summary>More</summary>" not in body
+    assert "<summary>More details</summary>" not in body
     for absent in ("school", "linkedin", "region", "recruiting_contact",
                    "recruitment_related", "campaign_exempt", "angle", "opener"):
         assert f'name="{absent}"' not in body

@@ -18,17 +18,17 @@ this is the one paragraph on the page nobody in the student's life wrote.
   <p class="cd-ai-hint">
     Written {{ contact.ai_summary_generated_at|date:"M j, Y" }}.
     {% if summary_new_touches %}
-      {{ summary_new_touches }} interaction{{ summary_new_touches|pluralize }} logged since. Rewrite it to catch up.
+      {{ summary_new_touches }} interaction{{ summary_new_touches|pluralize }} logged since. Update the summary to include them.
     {% endif %}
   </p>
 {% else %}
-  <p class="cd-ai-hint">A couple of sentences, drafted from the history logged below.</p>
+  <p class="cd-ai-hint">Summarize this contact’s logged interactions.</p>
 {% endif %}
 {% if requested and not generated %}
   {% comment %}Deliberately one line covering both "too thin to say anything"
   and "the API is dark or failed" — the student's next move is the same in
   either case, and nothing was changed by the attempt.{% endcomment %}
-  <p class="cd-ai-hint">Nothing written. Not enough logged history yet, or the AI is unavailable.</p>
+  <p class="cd-ai-hint">Summary unchanged. There may be too little history, or the AI service may be unavailable.</p>
 {% endif %}
 <button class="btn"
         hx-post="{% url 'crm:contact_ai_summary' contact.pk %}"

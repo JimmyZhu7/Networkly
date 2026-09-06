@@ -1513,7 +1513,7 @@ def test_the_preamble_carries_the_students_own_cadence_settings_and_marks_overri
 
     assert "first follow-up: 7 business days (their own setting; the default is 6)" in preamble
     assert "advocate check-in: 3 weeks (their own setting; the default is 4)" in preamble
-    assert "keep-warm check-in: 6 weeks (their own setting; the default is 3)" in preamble
+    assert "contact check-in: 6 weeks (their own setting; the default is 3)" in preamble
     assert "weekly touch goal: 14 touches (their own setting; the default is 10)" in preamble
     assert "advocate target: 2 per firm" in preamble
 

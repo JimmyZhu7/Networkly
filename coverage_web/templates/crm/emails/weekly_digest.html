@@ -45,16 +45,16 @@ reason the light ones are.
                color: #a9c7e6 !important; }
   }
 </style>
-<div class="d-page" style="background-color:#f2f4ee;padding:24px 12px;">
+<div class="d-page" style="background-color:#f6f8fb;padding:24px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td align="center">
 <table class="d-card" role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-       style="width:600px;max-width:100%;background-color:#fcfdf9;border:1px solid #d7dccd;border-radius:14px;overflow:hidden;">
+       style="width:600px;max-width:100%;background-color:#ffffff;border:1px solid #e1e7ef;border-radius:12px;overflow:hidden;">
 
   <tr>
-    <td class="d-rule" style="padding:28px 32px 20px 32px;border-bottom:1px solid #d7dccd;">
-      <span class="d-ink" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;font-weight:700;color:#191b16;">Coverage</span>
-      <div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#666a5e;margin-top:4px;">
+    <td class="d-rule" style="padding:28px 32px 20px 32px;border-bottom:1px solid #e1e7ef;">
+      <span class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#202939;">Coverage</span>
+      <div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#536174;margin-top:4px;">
         {% comment %}`M j`, not `N j`. `N` is Django's AP-style month
         ("Sept. 2", with the period), and every other surface in the product
         writes "Sep 2" — the feed's role rows, the calendar, My
@@ -71,7 +71,7 @@ reason the light ones are.
       entirely for a student who has tiered nothing.
       {% endcomment %}
       {% if digest.coverage %}
-      <div class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#191b16;margin-top:12px;line-height:1.5;">
+      <div class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#202939;margin-top:12px;line-height:1.5;">
         {{ digest.coverage.line }}
       </div>
       {% endif %}
@@ -105,12 +105,12 @@ reason the light ones are.
   {% endcomment %}
   {% for item in digest.closing %}
   <tr>
-    <td {% if not forloop.last %}class="d-rule" {% endif %}style="padding:12px 32px;{% if not forloop.last %}border-bottom:1px solid #d7dccd;{% endif %}">
+    <td {% if not forloop.last %}class="d-rule" {% endif %}style="padding:12px 32px;{% if not forloop.last %}border-bottom:1px solid #e1e7ef;{% endif %}">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;color:#191b16;">
+          <td class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;color:#202939;">
             <a class="d-accent" href="{{ item.url }}" style="color:#1f4e79;text-decoration:none;font-weight:600;">{{ item.firm_name }} &middot; {{ item.title }}</a>
-            <div class="d-ink-3" style="font-size:13px;color:#666a5e;margin-top:2px;">
+            <div class="d-ink-3" style="font-size:13px;color:#536174;margin-top:2px;">
               {{ item.stage_label }}{% if item.location %} &middot; {{ item.location }}{% endif %}
             </div>
           </td>
@@ -121,7 +121,7 @@ reason the light ones are.
             red/green: the marker qualifies the date, it is not a second alarm.
             Same cell so it cannot be read as belonging to the next row.
             {% endcomment %}
-            {% if item.reported %}<div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#666a5e;margin-top:3px;">({{ item.reported.label }})</div>{% endif %}
+            {% if item.reported %}<div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#536174;margin-top:3px;">({{ item.reported.label }})</div>{% endif %}
           </td>
         </tr>
       </table>
@@ -139,7 +139,7 @@ reason the light ones are.
   {% endcomment %}
   {% for item in digest.closing %}{% if item.reported %}{% ifchanged %}
   <tr>
-    <td class="d-ink-3" style="padding:10px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#666a5e;line-height:1.5;">
+    <td class="d-ink-3" style="padding:10px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#536174;line-height:1.5;">
       ({{ item.reported.label }}): {{ item.reported.why }}.
     </td>
   </tr>
@@ -150,18 +150,18 @@ reason the light ones are.
   <tr>
     <td style="padding:24px 32px 4px 32px;">
       <span class="d-ink-2" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#4e5248;">
-        Who to ping
+        Who to contact
       </span>
     </td>
   </tr>
   {% for a in digest.actions %}
   <tr>
-    <td {% if not forloop.last or digest.actions_overflow %}class="d-rule" {% endif %}style="padding:12px 32px;{% if not forloop.last or digest.actions_overflow %}border-bottom:1px solid #d7dccd;{% endif %}">
+    <td {% if not forloop.last or digest.actions_overflow %}class="d-rule" {% endif %}style="padding:12px 32px;{% if not forloop.last or digest.actions_overflow %}border-bottom:1px solid #e1e7ef;{% endif %}">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;color:#191b16;">
+          <td class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;color:#202939;">
             <span style="font-weight:600;">{{ a.contact.name }}</span>
-            <span class="d-ink-3" style="color:#666a5e;"> &middot; {{ a.firm_name }}</span>
+            <span class="d-ink-3" style="color:#536174;"> &middot; {{ a.firm_name }}</span>
             <div class="d-ink-2" style="font-size:13px;color:#4e5248;margin-top:2px;">{{ a.reason }}</div>
           </td>
           <td align="right" style="white-space:nowrap;padding-left:12px;">
@@ -173,7 +173,7 @@ reason the light ones are.
             one surface a student meets before opening it.{% endcomment %}
             <a class="d-pill" href="{{ a.mailto }}" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;color:#1f4e79;text-decoration:none;border:1px solid #cfdbe7;background-color:#e9eef4;border-radius:10px;padding:5px 12px;">{{ a.label }}</a>
             {% else %}
-            <span class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#666a5e;">{{ a.label }}</span>
+            <span class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#536174;">{{ a.label }}</span>
             {% endif %}
           </td>
         </tr>
@@ -183,7 +183,7 @@ reason the light ones are.
   {% endfor %}
   {% if digest.actions_overflow %}
   <tr>
-    <td class="d-ink-3" style="padding:10px 32px 16px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#666a5e;">
+    <td class="d-ink-3" style="padding:10px 32px 16px 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#536174;">
       and {{ digest.actions_overflow }} more waiting in
       <a class="d-accent" href="{{ site_url }}{% url 'crm:week' %}" style="color:#1f4e79;">Today</a>.
     </td>
@@ -226,7 +226,7 @@ reason the light ones are.
   {% endif %}
   {% for pick in digest.picks %}
   <tr>
-    <td {% if not forloop.last %}class="d-rule" {% endif %}style="padding:12px 32px;{% if not forloop.last %}border-bottom:1px solid #d7dccd;{% endif %}">
+    <td {% if not forloop.last %}class="d-rule" {% endif %}style="padding:12px 32px;{% if not forloop.last %}border-bottom:1px solid #e1e7ef;{% endif %}">
       <a class="d-accent" href="{{ pick.url }}" style="color:#1f4e79;text-decoration:none;font-weight:600;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;">{{ pick.firm_name }} &middot; {{ pick.title }}</a>
       {% comment %}
       THE LOCATION, WHICH IS THE ONLY THING TELLING TWO OF THESE ROWS APART.
@@ -243,14 +243,14 @@ reason the light ones are.
       all along (weekly_digest.txt); the HTML half was the one dropping it.
       {% endcomment %}
       {% if pick.location %}
-      <div class="d-ink-3" style="font-size:13px;color:#666a5e;margin-top:2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+      <div class="d-ink-3" style="font-size:13px;color:#536174;margin-top:2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
         {{ pick.location }}
       </div>
       {% endif %}
       {% comment %}Punctuation-normalised in `crm.digest.why_line`, never
       rewritten: see its docstring for why the digest cannot take the
       scorer's tooltip wording as it stands.{% endcomment %}
-      <div class="d-ink-3" style="font-size:13px;color:#666a5e;margin-top:2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+      <div class="d-ink-3" style="font-size:13px;color:#536174;margin-top:2px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
         {{ pick.why }}
       </div>
       {% comment %}
@@ -258,7 +258,7 @@ reason the light ones are.
       section is headed "New for you"; this is the fact that word rests on,
       printed so a reader can check it without leaving the email (D-11).
       {% endcomment %}
-      <div class="d-ink-3" style="font-size:12px;color:#666a5e;margin-top:2px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;">
+      <div class="d-ink-3" style="font-size:12px;color:#536174;margin-top:2px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;">
         {% if pick.first_seen_days == 0 %}First seen today{% else %}First seen {{ pick.first_seen_days }}d ago{% endif %}
       </div>
       {% comment %}
@@ -282,7 +282,7 @@ reason the light ones are.
   {% endcomment %}
   {% if digest.picks_reported and not digest.closing_reported %}
   <tr>
-    <td class="d-ink-3" style="padding:10px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#666a5e;line-height:1.5;">
+    <td class="d-ink-3" style="padding:10px 32px 0 32px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#536174;line-height:1.5;">
       ({{ digest.picks_reported.label }}): {{ digest.picks_reported.why }}.
     </td>
   </tr>
@@ -290,12 +290,12 @@ reason the light ones are.
   {% endif %}
 
   <tr>
-    <td class="d-rule" style="padding:24px 32px 28px 32px;border-top:1px solid #d7dccd;">
+    <td class="d-rule" style="padding:24px 32px 28px 32px;border-top:1px solid #e1e7ef;">
       {% comment %}10px, matching the pills above and the app's own --r-ctl.
       It was 8px, which was a third radius in a product that has one.
       {% endcomment %}
-      <a class="d-btn" href="{{ site_url }}{% url 'crm:week' %}" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;color:#fcfdf9;text-decoration:none;background-color:#1f4e79;border-radius:10px;padding:11px 20px;">Open Coverage</a>
-      <div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#666a5e;margin-top:16px;line-height:1.5;">
+      <a class="d-btn" href="{{ site_url }}{% url 'crm:week' %}" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;background-color:#1f4e79;border-radius:10px;padding:11px 20px;">Open Coverage</a>
+      <div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#536174;margin-top:16px;line-height:1.5;">
         {% comment %}
         THE WAY OUT. This paragraph explained why the mail arrived and then
         offered nothing to do about it: the only off switch was a toggle on a

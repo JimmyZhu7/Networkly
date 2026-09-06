@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Instrument · Coverage{% endblock %}
+{% block title %}Product activity · Coverage{% endblock %}
 
 {% block head %}<style>
   /* Deliberately plain. This page is an instrument for one person; every
@@ -64,7 +64,7 @@
 
 {% block content %}
 <div class="page">
-  {% include "_pagehead.html" with eyebrow="Staff only" title="Instrument" sub="What the product wrote down about itself." %}
+  {% include "_pagehead.html" with eyebrow="Staff only" title="Product activity" sub="Usage, recruiting data, and system activity. Staff only." %}
 
   <div class="inst-grid">
     <div class="inst-card">
@@ -75,7 +75,7 @@
     <div class="inst-card">
       <h2>Network</h2>
       <div class="inst-n">{{ crm.contacts }}</div>
-      <p class="inst-sub">{{ crm.touches_30d }} touches in {{ window_days }}d · {{ crm.with_opener }} with a draft</p>
+      <p class="inst-sub">{{ crm.touches_30d }} interactions in {{ window_days }}d · {{ crm.with_opener }} with a draft</p>
     </div>
     <div class="inst-card">
       <h2>Product events · {{ window_days }}d</h2>

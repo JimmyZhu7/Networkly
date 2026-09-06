@@ -76,7 +76,7 @@ def test_the_rail_lists_every_section_and_every_section_exists(body):
         # it absorbed the digest row: how you read and how you're written to
         # are facts about this person, not about how the engine behaves.
         "profile", "work-auth", "preferences",
-        # Target Firms: the same tier-editing "Your Firms" group the
+        # Target Firms: the same tier-editing "Your firms" group the
         # Network board's drag-and-drop already writes through
         # (crm:set_firm_tier) — Settings adds the missing start/stop-
         # tracking half the board itself has no control for.
@@ -101,7 +101,7 @@ def test_the_rail_lists_every_section_and_every_section_exists(body):
 def test_the_rail_and_the_page_run_in_the_same_order(body):
     """The rail's `.is-active` marker rides a spine and is moved by an
     IntersectionObserver as you scroll. When the rail's order and the page's
-    order disagreed — the rail read Profile, Work Authorization, Appearance,
+    order disagreed — the rail read Profile, Work authorization, Appearance,
     Target Firms while the page ran Profile, Appearance, Target Firms, Work
     Authorization — the marker travelled BACKWARDS past two sections. A rail
     whose order is a fiction is worse than no rail."""
@@ -170,7 +170,7 @@ def test_the_rail_is_grouped(body):
     """Ten flat links was at the limit of scannable. The groups mirror what
     LinkedIn, Notion and Linear all converged on: who you are / how the
     product behaves / how you get in and what we hold."""
-    for group in ("You", "How Coverage Paces You", "Account"):
+    for group in ("You", "Outreach", "Account"):
         assert f'class="settings-nav-group">{group}<' in body
 
 
@@ -547,3 +547,12 @@ def test_the_board_no_longer_prescribes_a_gesture_touch_cannot_send(
     assert "Drop a firm here" not in body
     # Whatever it says instead still has to say what tier is FOR.
     assert "Higher tiers get more attention from Coverage." in body
+
+
+def test_paused_only_recovery_link_counts_current_users_contacts(client, logged_in):
+    """A lone paused category must remain reachable from Settings."""
+    Contact.all_objects.create(user=logged_in, name="Paused contact", thread_state="parked")
+    other = User.objects.create_user(email="other-paused@example.com", password="x")
+    Contact.all_objects.create(user=other, name="Someone else's contact", thread_state="parked")
+    html = client.get(reverse(SETTINGS)).content.decode()
+    assert f'href="{reverse("crm:contact_parked")}">1 paused</a>' in html

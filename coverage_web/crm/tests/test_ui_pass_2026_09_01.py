@@ -209,7 +209,7 @@ def test_the_board_is_down_to_two_card_shapes():
 
 
 def test_log_touch_is_a_ghost_so_the_page_keeps_one_primary():
-    """49 contact cards carried a navy Log Touch and a plain Edit: 98 buttons
+    """49 contact cards carried a navy Log interaction and a plain Edit: 98 buttons
     on one page, 49 of them accent-filled, plus the page's own "+ Add
     Contact" as a fiftieth with nothing to distinguish it.
     """
@@ -254,7 +254,7 @@ def test_both_network_empty_states_say_what_to_do():
 
 
 def test_a_parked_contact_says_so_on_its_card():
-    """"Emailed, No Reply" mixes people still in play with people the
+    """"Awaiting reply" mixes people still in play with people the
     student has stopped following up. Park is a decision, so the chip is
     muted rather than coloured, and it is a STATUS, so it keeps the pill.
     """
@@ -264,7 +264,7 @@ def test_a_parked_contact_says_so_on_its_card():
     client.force_login(user)
     html = client.get(NETWORK).content.decode()
     assert "cc-parked" in html
-    assert ">Parked</span>" in html
+    assert ">Paused</span>" in html
 
 
 def test_the_covered_firms_panel_no_longer_nests_its_own_scroller():

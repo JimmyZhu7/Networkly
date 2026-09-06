@@ -91,7 +91,7 @@ def test_an_open_promise_produces_the_chase_card():
     card = _by_name(user)["Priya Nair"]
     assert card["action"] == "promised_followup"
     assert "an intro to Dana Reed" in card["reason"]
-    assert card["label"] == "Chase the offer"
+    assert card["label"] == "Follow up on their offer"
 
 
 def test_a_debrief_with_no_intro_on_it_is_not_a_promise():

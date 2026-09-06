@@ -292,7 +292,7 @@ def deadline_marker(deadline, precision, *, today=None):
     and neither of these two single-role views is that job.
     """
     if deadline is None:
-        return {"posted": False, "label": "No date posted", "countdown": "", "past": False}
+        return {"posted": False, "label": "Deadline not listed", "countdown": "", "past": False}
     prec = (precision or "").lower()
     if prec == "month":
         label = f"{deadline:%b %Y}"
@@ -4358,7 +4358,7 @@ _STAGES = (
     ("submitted", "Applied"),
     ("interview", "Interviewing"),
     ("offer", "Offer"),
-    (TRACK_CLOSED, "Done"),
+    (TRACK_CLOSED, "Finished"),
 )
 _STAGE_LABELS = dict(_STAGES)
 
@@ -5625,7 +5625,7 @@ def _my_applications_context(request):
         # student's own Done marking and a different fact entirely.
         {
             "key": "posting_closed",
-            "label": "Posting Closed",
+            "label": "Posting closed",
             "items": shut,
             # Kept short on purpose — see the template's own note on why the
             # lens band cut its prose (2026 redesign: "cleaner, less words").
@@ -5653,7 +5653,7 @@ def _my_applications_context(request):
         },
         {
             "key": "closing",
-            "label": "Closing Soon",
+            "label": "Closing soon",
             "items": closing,
             "note": f"Within {CLOSING_SOON_DAYS} days.",
             "empty_state": True,
@@ -5682,7 +5682,7 @@ def _my_applications_context(request):
             # about all of them, which also made the two row markers under it
             # read as two spellings of the heading rather than as the
             # different facts they are.
-            "label": "No Deadline",
+            "label": "Deadline not listed",
             "items": rolling,
             # No note: "No posted deadline" was the heading in other words.
             "note": "",
@@ -5696,7 +5696,7 @@ def _my_applications_context(request):
         # subtraction that never comes out.
         {
             "key": "done",
-            "label": "Done",
+            "label": "Finished",
             "items": done,
             "note": "Withdrawn, rejected, or finished with.",
             "empty_state": False,

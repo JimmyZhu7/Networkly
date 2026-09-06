@@ -530,3 +530,12 @@ def firm_hue(value):
         return 210
     digest = hashlib.md5(str(value).strip().lower().encode("utf-8")).hexdigest()
     return int(digest, 16) % 360
+
+
+@register.filter
+def relationship_label(value):
+    """Readable display names; stored relationship states remain unchanged."""
+    return {
+        "cold": "New", "emailed": "Contacted", "replied": "Replied",
+        "chatted": "Had a chat", "advocate": "Advocate",
+    }.get(value, value)

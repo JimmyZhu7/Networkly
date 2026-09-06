@@ -2,7 +2,7 @@
 
 The product's landing headline is "the deadline and the person behind it, one
 place", and the two surfaces where a student actually decides — the posting
-drawer on the feed, and a tracked role's card on My Applications — knew the
+drawer on the feed, and a tracked role's card on My applications — knew the
 deadline and knew nothing at all about the relationship. The join existed only
 on /firms/<slug>/, a page reached by navigating AWAY from the role being
 decided about.
@@ -14,7 +14,7 @@ What is pinned here:
     role, and `Contact.objects` unscoped raises by construction;
   * the empty state's pre-filled add-contact link (`?firm=<slug>`, the same
     parameter the firm page's own button uses, handled by crm.views.contact_new);
-  * the QUERY SHAPE. My Applications lists every role a student tracks, so the
+  * the QUERY SHAPE. My applications lists every role a student tracks, so the
     obvious per-card contact read grows with the pipeline. The page does ONE
     grouped read for every firm on it, and `assertNumQueries` here is what
     stops an N+1 creeping back in — a perf pass had just finished killing
@@ -252,7 +252,7 @@ def test_drawer_costs_one_query_for_its_people(django_assert_num_queries):
 
 
 # ---------------------------------------------------------------------------
-# My Applications.
+# My applications.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
@@ -260,7 +260,7 @@ def test_saved_role_card_names_your_people_at_that_firm(client):
     """The compact form says "here", not the firm's name.
 
     REWRITTEN 2026-09-02, and the premise it retires is that this surface
-    should read exactly like the drawer. It cannot: on a My Applications card
+    should read exactly like the drawer. It cannot: on a My applications card
     the firm is already the card's own first line, in caps, so the full
     sentence printed "Goldman Sachs" a second time — and the overflow link
     below it a third, on one 300px cell. The founder read the card and named
@@ -298,7 +298,7 @@ def test_saved_role_card_empty_state_prefills_the_firm(client):
 
     body = client.get(reverse("my_applications")).content.decode()
 
-    assert "Nobody here yet" in body
+    assert "No contacts here yet" in body
     assert "Nobody at Goldman Sachs yet" not in body
     assert 'title="At Goldman Sachs"' in body
     assert f"{reverse('crm:contact_new')}?firm=goldman-sachs" in body
@@ -328,7 +328,7 @@ def test_a_done_row_gets_no_networking_prompt_but_keeps_real_names(client):
     # print — "Nobody at Nomura yet" is a sentence this surface can no longer
     # produce, and a test asserting its absence would pass on a page that had
     # gone right back to nagging every finished row.
-    assert "Nobody here yet" not in body
+    assert "No contacts here yet" not in body
     assert "Nobody at Nomura yet" not in body
     assert "Maya Chen" in body
 

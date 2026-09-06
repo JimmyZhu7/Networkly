@@ -107,6 +107,7 @@
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
   {% block head %}{% endblock %}
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
+  <link rel="stylesheet" href="{% static 'css/elements.css' %}">
   <script src="{% static 'js/workspace.js' %}" defer></script>
   <script src="{% static 'js/widgets.js' %}" defer></script>
 </head>
@@ -186,7 +187,7 @@ select on.
         <a href="/opportunities/"{% if request.path|slice:":14" == "/opportunities" or request.path|slice:":7" == "/firms/" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="opportunities" %}Opportunities</a>
         <a href="/app/contacts/"{% if request.path|slice:":13" == "/app/contacts" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="network" %}Network</a>
         <a href="/app/calendar/"{% if request.path|slice:":13" == "/app/calendar" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="calendar" %}Calendar</a>
-        <a href="/assistant/"{% if request.path|slice:":10" == "/assistant" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="talk" %}Talk</a>
+        <a href="/assistant/"{% if request.path|slice:":10" == "/assistant" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="talk" %}Assistant</a>
         <a href="/welcome/"{% if request.path|slice:":8" == "/welcome" or request.path|slice:":8" == "/capture" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="settings" %}Settings</a>
       </nav>
       {% endif %}{% endif %}
@@ -218,9 +219,9 @@ select on.
             what cost the header its second line.{% endcomment %}
             <span class="site-user-name">{{ user.name|default:user.email }}</span>
           </a>
-          <a href="/accounts/logout/">Sign Out</a>
+          <a href="/accounts/logout/">Sign out</a>
         {% else %}
-          <a href="/accounts/login/">Sign In</a>
+          <a href="/accounts/login/">Sign in</a>
         {% endif %}
       </nav>
       {% comment %}On the phone the nav is one scrollable row; without this
@@ -367,7 +368,7 @@ select on.
       <a class="footer-logo" href="/" aria-label="Coverage home">
         {% include "_logo.html" %}<span>Coverage</span>
       </a>
-      <span>Recruiting deadlines and a networking CRM.</span>
+      <span>Your recruiting opportunities and contacts.</span>
       <nav aria-label="Footer">
         <a href="/pricing/">Pricing</a>
         <a href="/welcome/privacy/">Privacy</a>
@@ -804,7 +805,7 @@ select on.
   browser's job, not ours.
   {% endcomment %}
   <dialog class="palette panel" id="cmdk" aria-label="Search Coverage">
-    <input type="search" id="cmdk-q" placeholder="Search people, firms, roles…"
+    <input type="search" id="cmdk-q" aria-label="Search contacts, firms, and roles" placeholder="Search people, firms, roles…"
            autocomplete="off" spellcheck="false">
     <ul id="cmdk-results" role="listbox"></ul>
     <p class="palette-hint">↑↓ move · Enter open · Esc close</p>
@@ -823,12 +824,12 @@ select on.
       // results arrive.
       var ACTIONS = [
         {name: "Today", hint: "Your queue", url: "/app/"},
-        {name: "Add a contact", hint: "Ten seconds", url: "/app/contacts/new/?quick=1"},
-        {name: "Browse openings", hint: "The feed", url: "/opportunities/"},
+        {name: "Add a contact", hint: "Save someone to your network", url: "/app/contacts/new/?quick=1"},
+        {name: "Browse roles", hint: "Open opportunities", url: "/opportunities/"},
         {name: "My applications", hint: "What you're tracking", url: "/opportunities/mine/"},
         {name: "Calendar", hint: "Chats and deadlines", url: "/app/calendar/"},
-        {name: "Talk to Coverage", hint: "Ask your advisor", url: "/assistant/"},
-        {name: "Settings", hint: "Profile and cadence", url: "/welcome/settings/"}
+        {name: "Assistant", hint: "Ask about your recruiting", url: "/assistant/"},
+        {name: "Settings", hint: "Profile and outreach schedule", url: "/welcome/settings/"}
       ];
       function actionsFor(q) {
         q = q.trim().toLowerCase();
@@ -1042,7 +1043,7 @@ select on.
       document.body.addEventListener("htmx:confirm", function (e) {
         if (!e.detail || !e.detail.question) return;
         e.preventDefault();
-        window.covConfirm(e.detail.question).then(function (ok) {
+        window.covConfirm(e.detail.question, {ok: e.detail.elt.dataset.confirmLabel || e.detail.elt.textContent.trim() || DEFAULT_OK}).then(function (ok) {
           if (ok) e.detail.issueRequest(true);
         });
       });

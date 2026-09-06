@@ -54,7 +54,7 @@ All actions continue to request one authoritative cockpit recomputation.
   The gloss is a fact about what a label means, which on this page is a
   `title`; the chip is the label, so the title belongs to the chip.
   {% endcomment %}
-  <span class="chip warmth-{{ a.contact.warmth }}"{% if a.warmth_note %} title="{{ a.warmth_note }}"{% endif %}>{{ a.contact.warmth }}</span>
+  <span class="chip warmth-{{ a.contact.warmth }}"{% if a.warmth_note %} title="{{ a.warmth_note }}"{% endif %}>{{ a.contact.warmth|relationship_label }}</span>
   </div>
 
   <div class="act-context">
@@ -98,8 +98,8 @@ All actions continue to request one authoritative cockpit recomputation.
   would be the one edit here that changes a number rather than a word.
   {% endcomment %}
   <p class="act-last" title="The most recent touch on record, counted in business days like the queue's own clocks">
-    {% if a.moved %}<span class="act-moved" title="They replied or a chat happened within the last week"><i></i>Moving</span> · {% endif %}{% if a.last_kind %}{{ a.last_kind }} · {{ a.last_business_days }} business day{{ a.last_business_days|pluralize }}
-    {% else %}No touches yet{% endif %}
+    {% if a.moved %}<span class="act-moved" title="Log reply or a chat happened within the last week"><i></i>Moving</span> · {% endif %}{% if a.last_kind %}{{ a.last_kind }} · {{ a.last_business_days }} business day{{ a.last_business_days|pluralize }}
+    {% else %}No interactions yet{% endif %}
   </p>
   {% if a.pairs_with_debrief %}
     <p class="act-pair">Debrief this one first.</p>
@@ -114,8 +114,8 @@ All actions continue to request one authoritative cockpit recomputation.
         its own verb, no fake "Sent" touch.
         {% endcomment %}
         <button type="button" class="btn btn-primary act-btn"
-                aria-label="Park {{ a.contact.name }}"
-                hx-post="{% url 'crm:today_act' a.contact.id 'park' %}">Park it</button>
+                aria-label="Pause {{ a.contact.name }}"
+                hx-post="{% url 'crm:today_act' a.contact.id 'park' %}">Pause outreach</button>
       {% elif a.action == "confirm_chat" %}
         {% comment %}
         Two-step on purpose. One click asserting "the chat happened" is the
@@ -172,7 +172,7 @@ All actions continue to request one authoritative cockpit recomputation.
                 aria-label="Mark {{ a.label|lower }} to {{ a.contact.name }} done"
                 title="Record that you did this"
                 hx-post="{% url 'crm:today_act' a.contact.id 'sent' %}"
-                hx-vals='{"kind": "{{ a.touch_kind }}"}'>Done</button>
+                hx-vals='{"kind": "{{ a.touch_kind }}"}'>Log sent</button>
       {% endif %}
       {% if a.action != "park" %}
         {% comment %}
@@ -181,7 +181,7 @@ All actions continue to request one authoritative cockpit recomputation.
         {% endcomment %}
         <button type="button" class="btn act-btn"
                 aria-label="Record that {{ a.contact.name }} replied"
-                hx-post="{% url 'crm:today_act' a.contact.id 'reply' %}">They replied</button>
+                hx-post="{% url 'crm:today_act' a.contact.id 'reply' %}">Log reply</button>
       {% endif %}
       {% if a.contact.email %}
         {% comment %}
@@ -201,7 +201,7 @@ All actions continue to request one authoritative cockpit recomputation.
         {% endcomment %}
         <a class="btn act-btn{% if a.has_draft %} has-draft{% endif %}" href="{{ a.mailto }}"
            {% if a.has_draft %}title="Draft ready"
-           {% endif %}aria-label="Compose an email to {{ a.contact.name }}{% if a.has_draft %}, a draft is ready{% endif %}">Compose</a>
+           {% endif %}aria-label="Compose an email to {{ a.contact.name }}{% if a.has_draft %}, a draft is ready{% endif %}">Draft email</a>
       {% else %}
         <a class="btn act-btn" href="{% url 'crm:contact_detail' a.contact.id %}"
            aria-label="Add an email address for {{ a.contact.name }}">Email</a>
@@ -254,7 +254,7 @@ All actions continue to request one authoritative cockpit recomputation.
         <button type="button" class="btn act-ghost"
                 aria-label="Stop showing {{ a.contact.name }} in today's queue"
                 hx-post="{% url 'crm:today_act' a.contact.id 'park' %}"
-                title="Take them out of the queue until you log a touch">Park it</button>
+                title="Take them out of the queue until you log an interaction">Pause outreach</button>
       {% endif %}
     </div>
     {% endif %}

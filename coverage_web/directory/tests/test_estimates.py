@@ -212,7 +212,7 @@ def test_the_firm_page_prints_the_guessed_on_date(client):
     firm = _firm()
     _estimate(firm, dt.date(2027, 9, 1))
     body = client.get(f"/firms/{firm.slug}/").content.decode()
-    assert "guessed Jul 3, 2026" in body
+    assert "estimated Jul 3, 2026" in body
 
 
 def test_the_firm_page_prints_the_contradiction(client):
@@ -220,7 +220,7 @@ def test_the_firm_page_prints_the_contradiction(client):
     _declared(firm, dt.date(2026, 9, 1))
     _obs(firm, opened=6, o_first=dt.date(2026, 8, 3), o_last=dt.date(2026, 8, 20))
     body = client.get(f"/firms/{firm.slug}/").content.decode()
-    assert "Coverage watched this board and disagrees" in body
+    assert "Later observations contradict this estimate" in body
     assert "Aug 3 to Aug 20" in body
 
 
@@ -228,7 +228,7 @@ def test_a_firm_with_nothing_to_say_says_nothing(client):
     firm = _firm()
     _declared(firm, dt.date(2026, 9, 1))
     body = client.get(f"/firms/{firm.slug}/").content.decode()
-    assert "Coverage watched this board and disagrees" not in body
+    assert "Later observations contradict this estimate" not in body
     assert 'title="The day this estimate was written down' not in body
     assert 'class="tl-observed' not in body
 

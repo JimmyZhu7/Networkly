@@ -709,8 +709,8 @@ def test_the_contact_form_offers_the_recruiting_override(client):
     client.force_login(user)
     body = client.get(reverse("crm:contact_new")).content.decode()
     assert 'name="recruiting_contact"' in body
-    assert "Work it out from their role" in body
-    assert "Yes, recruiting contact" in body
+    assert "Infer from role" in body
+    assert "Yes, a recruiter" in body
 
 
 def test_a_blank_answer_stays_null_rather_than_becoming_false():

@@ -167,7 +167,7 @@
     font-size: var(--fs-s); color: var(--ink-2); line-height: 1.55;
     text-wrap: pretty; }
   /* <b> means "this is a measured figure", and only that. A draft of this
-     pass also used it for bold lead-ins ("Gmail Live:", "Talk to Coverage")
+     pass also used it for bold lead-ins ("Gmail Live:", "Assistant")
      which looked fine and was wrong twice over: it gave one tag two
      meanings, and it split copy that core/tests/test_pricing.py pins as
      contiguous strings, because those sentences are founder decisions the
@@ -399,10 +399,9 @@
 <div class="page">
   <header class="kin-hero panel">
     <span class="kin-hero-icon">{% include "_icon.html" with name="home" %}</span>
-    <p class="kin-hero-eyebrow">Pricing</p>
-    <h1 class="kin-hero-title">The board is free. The sync is Pro.</h1>
-    <p class="kin-hero-sub">Every listing, always current, free for everyone.
-      Pro adds sync, speed, and a stronger advisor.</p>
+    <h1 class="kin-hero-title">Find the plan for your recruiting search.</h1>
+    <p class="kin-hero-sub">Browse the campus roles we track for free.
+      Pro is planned to add more frequent sync and higher assistant limits.</p>
     {% comment %}
     The live counts, promoted out of the Free card's bullets.
 
@@ -421,15 +420,15 @@
     <div class="kin-hero-stats">
       <div class="kin-hero-stat">
         <span class="dash-num">{{ open_count }}</span>
-        <span class="dash-lbl">Live Campus Roles</span>
+        <span class="dash-lbl">Open campus roles</span>
       </div>
       <div class="kin-hero-stat">
         <span class="dash-num">{{ firm_count }}</span>
-        <span class="dash-lbl">Firms Hiring Today</span>
+        <span class="dash-lbl">Firms tracked</span>
       </div>
       <div class="kin-hero-stat">
         <span class="dash-num">{{ market_count }}</span>
-        <span class="dash-lbl">Markets Tracked</span>
+        <span class="dash-lbl">Markets tracked</span>
       </div>
     </div>
   </header>
@@ -449,7 +448,7 @@
             <h2 class="plan-name">Free</h2>
             <span class="plan-badge">Available now</span>
           </div>
-          <p class="plan-tagline">The whole board. No card, no trial clock.</p>
+          <p class="plan-tagline">Browse roles and manage your recruiting. No payment card required.</p>
           <p class="plan-price"><span class="amount">$0</span><span class="per">forever, for what's listed here</span></p>
           {% comment %}
           Every figure here is measured in core.views.pricing, never typed.
@@ -480,17 +479,17 @@
           context, and the promise not to guess is the whole point of it.
           {% endcomment %}
           <ul class="plan-features">
-            <li>Every live campus role, from every firm hiring today</li>
+            <li>Open campus roles from the firms we track</li>
             <li>Filters across all <b>{{ market_count }}</b> markets and six verticals</li>
             <li><b>{{ read_count }}</b> postings read in full</li>
             <li>Deadlines and requirements from the posting, not the board's summary</li>
             <li>Eligibility checked against your class year and visa</li>
             <li><b>{{ sponsorship_count }}</b> roles answering sponsorship outright
               and the rest marked not stated, never guessed</li>
-            <li>Deadline fuses, rolling markers, and a label on every inferred date</li>
+            <li>Confirmed deadlines, rolling roles, and labeled date estimates</li>
             <li>The Today queue, with one-click logging</li>
-            <li>The Network board: warmth lanes and firm tiers</li>
-            <li>Talk to Coverage: an advisor that reads your own contacts,
+            <li>Your contacts, relationship stages, and firm priorities</li>
+            <li>Assistant: an advisor that reads your own contacts,
               firms and deadlines before it answers.
               <span class="feat-meta">{{ advisor_free_cap }} messages a day, {{ advisor_free_grant }} a month.</span></li>
             <li>CSV import, export, and instant deletion</li>
@@ -499,7 +498,7 @@
             {% if user.is_authenticated %}
               <a class="btn btn-primary" href="/app/">Open Today</a>
             {% else %}
-              <a class="btn btn-primary" href="/accounts/signup/">Build My Queue</a>
+              <a class="btn btn-primary" href="/accounts/signup/">Create account</a>
             {% endif %}
           </div>
         </article>
@@ -509,7 +508,7 @@
             <h2 class="plan-name">Pro</h2>
             <span class="plan-badge soon">In the works</span>
           </div>
-          <p class="plan-tagline">For when the replies start coming in.</p>
+          <p class="plan-tagline">More sync and AI capacity for active outreach.</p>
           <p class="plan-price"><span class="amount">$69</span><span class="per">one cycle, ~6 months</span></p>
           <p class="plan-includes">Everything in Free, plus</p>
           <ul class="plan-features">
@@ -526,7 +525,7 @@
             {% endcomment %}
             <li>Gmail Live: real-time sync that logs itself.</li>
             <li>Scan your inbox any time, instead of once every {{ free_rescan_days }} days.</li>
-            <li>Talk to Coverage on a stronger model, with sharper
+            <li>Assistant on a stronger model, with sharper
               judgement on where your week should go.
               <span class="feat-meta">Three times the credits: {{ advisor_pro_grant }} a month.</span></li>
           </ul>
@@ -606,7 +605,7 @@
       until that OAuth setup happens, plan gate or not.
       {% endcomment %}
       <section class="price-compare kin-reveal" style="--i:2">
-        <h2>Side by side.</h2>
+        <h2>Compare plans</h2>
         <div class="cmp-scroll">
           <table class="cmp">
             <caption class="vh">Free and Pro compared, feature by feature</caption>
@@ -640,14 +639,14 @@
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
               </tr>
 
-              <tr><td class="cmp-group" colspan="3">The CRM</td></tr>
+              <tr><td class="cmp-group" colspan="3">Your workspace</td></tr>
               <tr>
                 <td>Today queue with one-click logging</td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
               </tr>
               <tr>
-                <td>Network board: warmth lanes, firm tiers</td>
+                <td>Contacts, relationship stages, firm priorities</td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
               </tr>
@@ -674,7 +673,7 @@
 
               <tr><td class="cmp-group" colspan="3">The advisor</td></tr>
               <tr>
-                <td>Talk to Coverage</td>
+                <td>Assistant</td>
                 <td><span class="cmp-val">Fast model</span></td>
                 <td><span class="cmp-val">Stronger model</span></td>
               </tr>
@@ -767,7 +766,7 @@
   </div>
 
   <section class="price-honesty">
-    <h2>The deal, plainly.</h2>
+    <h2>Your data on every plan</h2>
     <p>Everything in Free stays free. Paid tiers exist to cover what syncing inboxes and serving campuses actually costs. Export or delete everything, on any plan, at any time.</p>
   </section>
 

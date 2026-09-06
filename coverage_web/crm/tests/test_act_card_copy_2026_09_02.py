@@ -49,8 +49,8 @@ demo, sentence and ledger row, before -> after:
 
     First outreach   Added but never contacted. Send the first note.      (47)
                   -> Tier 2 target.                                       (14)
-                     No touches on record                                 (20)
-                  -> No touches yet                                       (14)
+                     No interactions on record                                 (20)
+                  -> No interactions yet                                       (14)
 
     Propose a chat   They replied. Propose a 15-min chat.                 (36)
                   -> Ask for 15 minutes.                                  (19)
@@ -125,7 +125,7 @@ def _footer(a: dict) -> str:
     without a request; the markup itself is pinned in section 7 below.
     """
     if not a.get("last_kind"):
-        return "No touches yet"
+        return "No interactions yet"
     n = a["last_business_days"]
     return f"{a['last_kind']} · {n} business day{'' if n == 1 else 's'}"
 
@@ -222,16 +222,16 @@ def test_a_second_unanswered_note_says_two_and_not_one():
     assert a["action"] == "park"
     assert a["ctx"]["outbound"] == 2
     assert a["reason"] == "No reply after 2 notes."
-    assert a["label"] == "Park it", "the ask is the badge's job, not the sentence's"
+    assert a["label"] == "Pause outreach", "the ask is the badge's job, not the sentence's"
 
 
 def test_an_expired_follow_up_says_why_it_is_a_park_and_nothing_else():
-    """BEFORE: "First note went unanswered 5 weeks ago. Park it, or re-open
+    """BEFORE: "First note went unanswered 5 weeks ago. Pause outreach, or re-open
     with a new reason."
 
     "5 weeks ago" was the ledger row's silence in a SECOND unit — the exact
     two-registers-for-one-fact defect the rail pass ended the same night — and
-    "Park it" is the badge and the primary button. What is left is the only
+    "Pause outreach" is the badge and the primary button. What is left is the only
     thing this card can say that no other element does: why the same silence
     that earned a follow-up last week earns a park now.
     """
@@ -345,7 +345,7 @@ def _first_outreach_user(email="fo@example.com", tier=2):
 
 def test_the_first_outreach_card_says_something_about_the_person():
     """BEFORE: "Added but never contacted. Send the first note." The first
-    half is the ledger row ("No touches yet"), the second is the badge (FIRST
+    half is the ledger row ("No interactions yet"), the second is the badge (FIRST
     OUTREACH), and between them the card said nothing at all about the person
     it was asking the student to spend a morning on.
 
@@ -358,7 +358,7 @@ def test_the_first_outreach_card_says_something_about_the_person():
     assert "never contacted" not in a["reason"]
     assert "Send the first note" not in a["reason"]
     # Both halves of the old sentence, each where it now lives.
-    assert _footer(a) == "No touches yet"
+    assert _footer(a) == "No interactions yet"
 
 
 def test_a_stranger_who_shares_your_school_is_told_apart_from_a_target():
@@ -632,7 +632,7 @@ def test_the_warmth_chip_explains_itself_on_the_page():
     page = _page(_keep_warm_user(email="chip@example.com"))
     chip = re.search(r'<span class="chip warmth-chatted"[^>]*>', page).group(0)
     assert 'title="You have already had the conversation."' in chip
-    assert "chatted" in _face(
+    assert "Had a chat" in _face(
         re.search(r'<span class="chip warmth-chatted".*?</span>', page, re.S).group(0)
     ), "the chip still prints the value it is a title for"
 

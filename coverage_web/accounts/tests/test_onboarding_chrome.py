@@ -131,7 +131,7 @@ def test_step_one_can_be_skipped_and_says_it_is_optional(client, newcomer):
     client.force_login(newcomer)
     body = client.get(f"{reverse(WIZARD)}?step=profile").content.decode()
 
-    assert "All optional." in body
+    assert "All fields are optional." in body
     skip = re.search(r'<a class="ob-skip" href="([^"]+)"', body)
     assert skip, "step 1 should offer the same Skip the later steps do"
     href = skip.group(1)

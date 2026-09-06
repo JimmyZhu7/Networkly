@@ -15,11 +15,11 @@ filtered.
 Your {{ trial_days }}-day Pro trial ended {{ ended_at|date:"j F Y" }}. Your
 account is back on the Free plan.
 
-What changed: real-time Gmail sync is paused, so replies and invites stop
+Gmail sync: real-time Gmail sync is paused, so replies and invites stop
 logging themselves. Scan Now still works, once a week, and it is unlocked
 for you right now.
 
-What did not: every credit, contact, touch and note you have is untouched.
+Your data: every credit, contact, touch and note you have is untouched.
 Nothing was deleted and nothing was clawed back.
 
 Settings: {{ settings_url }}

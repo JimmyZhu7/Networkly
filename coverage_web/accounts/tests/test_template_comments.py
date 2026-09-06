@@ -118,5 +118,5 @@ def test_the_settings_page_still_renders_its_profile_section(client, student):
     braces."""
     client.force_login(student)
     body = client.get(reverse("accounts:settings")).content.decode()
-    assert "Work Authorization" in body
+    assert "Work authorization" in body
     assert "Cadence" in body

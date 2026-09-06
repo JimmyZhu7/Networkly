@@ -42,10 +42,6 @@
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     padding: var(--s7) var(--s6); }
   .desk-copy { min-width: 0; }
-  .desk-eyebrow { display: inline-flex; align-items: center; gap: var(--s2);
-    font-family: var(--font-mono); font-size: var(--fs-micro);
-    text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
-    margin: 0 0 var(--s3); }
   /* Beats `.kin-hero h1` (0,1,1) on specificity without touching it. */
   .desk-hero .desk-title {
     font: var(--w-black) clamp(var(--fs-display-2), 3.6vw, var(--fs-display-1))/1.05 var(--font-display);
@@ -153,9 +149,6 @@
   /* Section scaffolding: generous vertical rhythm, one centered eyebrow per
      section, display-family section titles. */
   .land-section { margin: var(--s8) 0 0; }
-  .land-eyebrow { font-family: var(--font-mono); font-size: var(--fs-micro);
-    color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
-    margin: 0 0 var(--s2); text-align: center; }
   .land-title { font: var(--w-black) clamp(var(--fs-display-3), 3vw, var(--fs-display-2))/1.15 var(--font-display);
     letter-spacing: -0.01em; text-align: center; margin: 0 auto var(--s2);
     max-width: 28ch; }
@@ -217,9 +210,6 @@
   .feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s7);
     align-items: center; margin-top: var(--s7); }
   .feature-row.flip .feature-copy { order: 2; }
-  .feature-kicker { font-family: var(--font-mono); font-size: var(--fs-micro);
-    color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;
-    margin: 0 0 var(--s2); }
   .feature-copy h3 { font: var(--w-black) var(--fs-display-3)/1.2 var(--font-display);
     letter-spacing: -0.01em; margin: 0 0 var(--s3); }
   .feature-copy p { color: var(--ink-2); margin: 0 0 var(--s3); max-width: 44ch; }
@@ -393,32 +383,27 @@
   {% endcomment %}
   <header class="kin-hero desk-hero panel">
     <div class="desk-copy">
-      <p class="desk-eyebrow">
-        <span class="live-dot"></span>
-        Watching {{ open_count|default:"0" }} live roles right now
-      </p>
-      <h1 class="desk-title">Your recruiting desk, running in the background.</h1>
-      <p class="desk-sub">Coverage watches every listing and every reply, and hands you one
-        ranked queue each morning: who to reach, and why.</p>
+      <h1 class="desk-title">Your next role. Your next conversation.</h1>
+      <p class="desk-sub">Find recruiting opportunities, keep track of your contacts, and see who to follow up with each day.</p>
       <div class="actions">
-        <a class="btn btn-primary" href="/opportunities/">Browse Openings</a>
+        <a class="btn btn-primary" href="/opportunities/">Browse roles</a>
         {% if user.is_authenticated %}
           <a class="btn" href="/app/">Open Today</a>
         {% else %}
-          <a class="btn" href="/accounts/signup/">Build My Queue</a>
+          <a class="btn" href="/accounts/signup/">Create account</a>
         {% endif %}
       </div>
       <div class="desk-stats">
-        <div class="desk-stat"><span class="dash-num">{{ open_count|default:"0" }}</span><span class="dash-lbl">Live Campus Roles</span></div>
-        <div class="desk-stat"><span class="dash-num">{{ firm_count|default:"0" }}</span><span class="dash-lbl">Firms Tracked</span></div>
-        <div class="desk-stat"><span class="dash-num">6</span><span class="dash-lbl">Verticals</span></div>
+        <div class="desk-stat"><span class="dash-num">{{ open_count|default:"0" }}</span><span class="dash-lbl">Open campus roles</span></div>
+        <div class="desk-stat"><span class="dash-num">{{ firm_count|default:"0" }}</span><span class="dash-lbl">Firms tracked</span></div>
+        <div class="desk-stat"><span class="dash-num">6</span><span class="dash-lbl">Career tracks</span></div>
       </div>
     </div>
 
     <figure class="desk-panel panel panel--raised">
       <div class="desk-bar">
         <span>Today · your queue</span>
-        <span class="desk-bar-live"><span class="live-dot"></span> live</span>
+        <span class="desk-bar-live">Example</span>
       </div>
       {% comment %}
       EVERY WORD ON THIS MOCK IS A WORD THE PRODUCT SAYS.
@@ -441,14 +426,14 @@
               <b>Sarah Lin</b>
               <span class="desk-why">VP · coffee chat 12d ago</span>
             </span>
-            <span class="desk-go">Compose</span>
+            <span class="desk-go">Draft email</span>
           </div>
           <div class="desk-row panel panel--inset panel--flat" style="--i:1">
             <span class="desk-row-main">
               <b>Marcus Ito</b>
               <span class="desk-why">Analyst · wrote back Tuesday</span>
             </span>
-            <span class="desk-go">Done</span>
+            <span class="desk-go">Log sent</span>
           </div>
           <div class="desk-row panel panel--inset panel--flat" style="--i:2">
             <span class="desk-row-main">
@@ -459,8 +444,8 @@
           </div>
         </div>
         <div class="desk-pace">
-          <span class="desk-ring" role="img" aria-label="7 of 10 weekly touches"></span>
-          <span class="desk-pace-lbl">Weekly pace</span>
+          <progress class="pace-progress" value="7" max="10" aria-label="Example: 7 of 10 weekly outreach messages">7 of 10</progress>
+          <span class="desk-pace-lbl">Weekly outreach · 7 of 10</span>
         </div>
       </div>
       <figcaption class="desk-note">Example queue. Yours is built from your own contacts.</figcaption>
@@ -469,7 +454,6 @@
 
   {% if strip_firms %}
   <section class="land-section" style="margin-top: var(--s6);">
-    <p class="land-eyebrow">Checked directly at the source</p>
     <div class="marquee">
       <div class="marquee-track">
         <div class="marquee-group">
@@ -498,26 +482,25 @@
         </div>
       </div>
     </div>
+    <p class="hint" style="text-align: center; margin-top: var(--s3);">Roles checked on firms’ recruiting sites.</p>
   </section>
   {% endif %}
 
   <section class="land-section">
-    <p class="land-eyebrow">How Coverage works</p>
-    <h2 class="land-title">The deadline. The person behind it. One place.</h2>
+    <h2 class="land-title">Keep your search and your network together.</h2>
 
     <div class="feature-row">
       <div class="feature-copy">
-        <p class="feature-kicker">Opportunities</p>
-        <h3>Every role, straight from the source.</h3>
+        <h3>Roles from firms’ careers pages.</h3>
         <p>Ranked by what closes next.</p>
         <ul class="feature-points">
-          <li>A burning fuse on every real deadline</li>
+          <li>Confirmed deadlines with time remaining</li>
           <li>Rolling roles show when we last saw them live</li>
           <li>{{ region_names|join:", " }}</li>
         </ul>
       </div>
       <div class="vig kin-reveal panel panel--raised">
-        <p class="vig-label">Opportunities · live</p>
+        <p class="vig-label">Opportunities · example</p>
         <div class="v-role panel panel--inset panel--flat panel--edge">
           <span class="v-role-tag">Insight Programme</span>
           <p class="v-role-title">Women in Banking Networking Dinner</p>
@@ -539,29 +522,28 @@
 
     <div class="feature-row flip">
       <div class="feature-copy">
-        <p class="feature-kicker">Today</p>
-        <h3>Wake up knowing exactly who to reach.</h3>
-        <p>Your cadence becomes one ranked queue.</p>
+        <h3>Know who to contact next.</h3>
+        <p>Follow-ups ordered by timing and priority.</p>
         {% comment %}Lane names off `crm/today.py::_TODAY_LANES`, verbs off
         `crm/_act_card.html`. The old copy sold "Overdue first, then due",
         which was the priority-echo lane set today-page.md F6 replaced with
         semantic ones, and "One-click Sent, Reply", which F5 retired.
         {% endcomment %}
         <ul class="feature-points">
-          <li>One click: Done, They replied, Snooze, Skip</li>
-          <li>Every card carries the angle to open with</li>
-          <li>Don't lose these first, then what you can move forward</li>
+          <li>Log sent emails and replies, or snooze a follow-up</li>
+          <li>Your saved notes stay beside each contact</li>
+          <li>See urgent follow-ups before routine outreach</li>
         </ul>
       </div>
       <div class="vig kin-reveal panel panel--raised">
-        <p class="vig-label">Today · one card, opened</p>
+        <p class="vig-label">Today · example</p>
         <div class="v-decide panel panel--inset panel--flat panel--edge">
           <p class="v-decide-why"><span class="v-flag">Don't lose these</span> Tier 1 · no reply in 12 days</p>
           <p class="v-decide-name">Sarah Lin <span>· VP, Investment Banking</span></p>
           <p class="v-decide-angle">Angle: she mentioned the Hong Kong desk rotation on your last call.</p>
           <div class="v-rail">
-            <span class="is-primary">Done</span>
-            <span>They replied</span>
+            <span class="is-primary">Log sent</span>
+            <span>Log reply</span>
             <span>Snooze</span>
             <span>Skip</span>
           </div>
@@ -572,16 +554,15 @@
 
     <div class="feature-row">
       <div class="feature-copy">
-        <p class="feature-kicker">Network</p>
-        <h3>A board, not a spreadsheet.</h3>
-        <p>Drag a contact between warmth lanes and your queue re-ranks itself.</p>
+        <h3>A clear view of every relationship.</h3>
+        <p>Log an interaction to update a relationship and its next follow-up.</p>
         <ul class="feature-points">
           <li>Tier your firms; the queue works Tier 1 first</li>
           <li>Import your spreadsheet in one CSV</li>
         </ul>
       </div>
       <div class="vig kin-reveal panel panel--raised">
-        <p class="vig-label">Network · warmth board</p>
+        <p class="vig-label">Network · example</p>
         {% comment %}
         Column headers read straight off the real board's own vocabulary
         (crm.views._WARMTH_SECTIONS — "Emailed, No Reply / Emailed, Replied /
@@ -613,16 +594,15 @@
 
     <div class="feature-row flip">
       <div class="feature-copy">
-        <p class="feature-kicker">Gmail Live · Pro</p>
-        <h3>Connect Gmail once. The CRM writes itself.</h3>
-        <p>Replies, bounces, and calendar invites log themselves the moment they land. We only read what's needed to log a touch.</p>
+        <h3>Capture recruiting updates from Gmail.</h3>
+        <p>Gmail Live, planned for Pro, captures replies, delivery failures, and calendar invites. It reads only what’s needed to record recruiting updates.</p>
         <ul class="feature-points">
-          <li>A reply lands and warmth updates itself</li>
+          <li>A reply lands and relationship updates itself</li>
           <li>Revoke access any time from your Google account</li>
         </ul>
       </div>
       <div class="vig kin-reveal panel panel--raised">
-        <p class="vig-label">Gmail Live · in the works</p>
+        <p class="vig-label">Gmail sync · example</p>
         <div class="v-mail panel panel--inset panel--flat">
           <div class="hd">
             <span>From: sarah.lin@bank.com</span>
@@ -635,40 +615,39 @@
         vignette above already reads off it. This line was the last place on
         the page still using the marketing shorthand that comment says was
         dropped.{% endcomment %}
-        <p class="v-logline"><span class="ok-dot"></span> Logged reply from <b>Sarah Lin</b> · warmth moved to Emailed, Replied</p>
+        <p class="v-logline"><span class="ok-dot"></span> Logged reply from <b>Sarah Lin</b> · relationship updated to Emailed, Replied</p>
       </div>
     </div>
   </section>
 
   <section class="land-section">
-    <p class="land-eyebrow">Built on honesty</p>
-    <h2 class="land-title">Your data behaves like it's yours.</h2>
+    <h2 class="land-title">Your contacts stay private.</h2>
     <div class="trust-band">
       <div class="trust-item kin-reveal" style="--i:0">
-        <h4>Honest Dates</h4>
+        <h4>Clear source labels</h4>
         <p>Every deadline carries its confidence and freshness. Rumored says rumored.</p>
       </div>
       <div class="trust-item kin-reveal" style="--i:1">
-        <h4>Private by Default</h4>
+        <h4>Private by default</h4>
         <p>The feed is shared. Your contacts, notes, and touches never are.</p>
       </div>
       <div class="trust-item kin-reveal" style="--i:2">
-        <h4>Leave Anytime</h4>
+        <h4>Export or delete</h4>
         <p>Export everything as CSV, or delete it all yourself, immediately.</p>
       </div>
     </div>
   </section>
 
   <section class="cta-band panel">
-    <h2>Start with the feed. Win with the follow-up.</h2>
-    <p>The queue and the board are one account away.</p>
+    <h2>Start your recruiting workspace.</h2>
+    <p>Create an account to save roles and manage your contacts.</p>
     <div class="actions">
       {% if user.is_authenticated %}
         <a class="btn btn-primary" href="/app/">Open Today</a>
       {% else %}
-        <a class="btn btn-primary" href="/accounts/signup/">Build My Queue</a>
+        <a class="btn btn-primary" href="/accounts/signup/">Create account</a>
       {% endif %}
-      <a class="btn" href="{% url 'core:pricing' %}">See Pricing</a>
+      <a class="btn" href="{% url 'core:pricing' %}">View plans</a>
     </div>
   </section>
 </div>

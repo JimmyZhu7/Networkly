@@ -245,7 +245,7 @@ def test_a_rail_that_scores_nothing_still_explains_itself(client, django_user_mo
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())
     assert "firmcol--picked" in body, "the column must not vanish"
-    assert "Nothing scores high enough yet" in body
+    assert "No matching roles yet" in body
     # Paired with the cycle sentences, which on an early-cycle profile are
     # usually the whole of the answer.
     assert "Estimated to open" in body

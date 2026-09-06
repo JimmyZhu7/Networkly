@@ -98,7 +98,7 @@ def test_sending_with_no_api_key_is_a_readable_message_not_a_500(signed_in, user
 def test_the_composer_is_disabled_while_the_feature_is_dark(signed_in):
     body = signed_in.get(reverse("assistant:chat")).content.decode()
 
-    assert "needs an Anthropic API key" in body
+    assert "assistant is not enabled yet" in body
     assert "disabled" in body
 
 
@@ -249,7 +249,7 @@ def test_the_nav_offers_the_page_on_every_signed_in_screen(signed_in, user):
     talk = re.search(r'<a href="/assistant/"[^>]*>(.*?)</a>', nav.group(), re.S)
     assert talk, "Talk must be linked from the primary navigation"
     # Inline icons and template whitespace do not change the visible label.
-    assert strip_tags(talk.group(1)).strip() == "Talk"
+    assert strip_tags(talk.group(1)).strip() == "Assistant"
 
 
 def test_opening_a_specific_conversation_by_id_shows_its_own_thread(signed_in, user):
@@ -1452,14 +1452,14 @@ def test_a_notice_gets_no_copy_button(signed_in, user):
     _turn(user, conversation, "user", "who should I chase?")
     notice = ChatMessage(
         user=user, conversation=conversation, role="assistant", notice=ChatMessage.NOTICE_FAILED,
-        content=[{"type": "text", "text": "I couldn't reach the model just then."}],
+        content=[{"type": "text", "text": "I assistant could not respond just then."}],
     )
     notice.save()
 
     body = signed_in.get(reverse("assistant:chat_conversation", args=[conversation.id])).content.decode()
 
     thread = _rendered_thread(body)
-    assert "couldn't reach the model" in body
+    assert "assistant could not respond" in body
     assert 'class="as-msg-btn as-msg-copy"' not in thread
     assert 'class="as-msg-btn as-msg-retry"' not in thread
     assert 'class="as-msg-feedback"' not in thread

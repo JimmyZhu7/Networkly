@@ -120,13 +120,12 @@ def test_no_rule_animates_with_a_keyframe_that_is_gone(settings):
     # total is still stated, by the segment pill, and
     # `test_the_segment_pill_is_the_only_surface_stating_the_board_total`
     # is what holds it there now.
-    [("/", "live roles right now")],
+    [("/", "Open campus roles")],
 )
 def test_the_live_count_itself_is_still_reported(path, marker):
     """Removing the animation must not remove the number with it."""
     html = Client().get(path).content.decode()
 
-    assert 'class="live-dot"' in html, (
-        f"{path} lost its live marker entirely; only the pulse was meant to go"
-    )
+    # The decorative eyebrow was removed; the factual summary keeps its count.
+    assert re.search(r'class="dash-num">\d+</span><span class="dash-lbl">Open campus roles', html)
     assert marker in html, f"{path} no longer reports the live roles count"

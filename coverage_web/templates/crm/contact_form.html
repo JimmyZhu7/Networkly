@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if mode == "edit" %}Edit Contact{% else %}Add Contact{% endif %} · Coverage{% endblock %}
+{% block title %}{% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %} · Coverage{% endblock %}
 
 {% block head %}
 <style>
@@ -52,7 +52,7 @@
 <div class="page cf-wrap">
   <header class="pagehead">
     <div class="pagehead-text">
-      <h1 class="pagehead-title">{% if mode == "edit" %}Edit Contact{% else %}Add a Contact{% endif %}</h1>
+      <h1 class="pagehead-title">{% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %}</h1>
     </div>
   </header>
 
@@ -127,7 +127,7 @@
       </div>
       {% else %}
       <details class="cf-more"{% if mode == "edit" or form.region.errors or form.linkedin.errors %} open{% endif %}>
-        <summary>More</summary>
+        <summary>More details</summary>
 
         <div class="cf-grid">
           <div>
@@ -151,7 +151,7 @@
           your answer wins either way.
           {% endcomment %}
           <div>
-            <label for="{{ form.recruiting_contact.id_for_label }}">Recruiting contact?</label>
+            <label for="{{ form.recruiting_contact.id_for_label }}">Is this person a recruiter?</label>
             {{ form.recruiting_contact }}
             <p class="note">{{ form.recruiting_contact.help_text }}</p>
           </div>
@@ -181,14 +181,14 @@
         </div>
 
         <div class="cf-full">
-          <label for="{{ form.angle.id_for_label }}">Angle</label>
+          <label for="{{ form.angle.id_for_label }}">Outreach context</label>
           {{ form.angle }}
           <p class="note">Your reason to reach out. Private to you, never sent.</p>
         </div>
         <div class="cf-full">
-          <label for="{{ form.opener.id_for_label }}">Opener</label>
+          <label for="{{ form.opener.id_for_label }}">Email draft</label>
           {{ form.opener }}
-          <p class="note">The draft email itself. Seeds the compose body.</p>
+          <p class="note">Opens in your mail app when you select Draft email.</p>
         </div>
         <div class="cf-full">
           <label for="{{ form.notes.id_for_label }}">Notes</label>
@@ -199,9 +199,9 @@
 
       <div class="cf-actions">
         {% if quick %}<input type="hidden" name="quick" value="1">{% endif %}
-        <button type="submit" class="btn btn-primary">{% if mode == "edit" %}Save Changes{% else %}Add Contact{% endif %}</button>
+        <button type="submit" class="btn btn-primary">{% if mode == "edit" %}Save changes{% else %}Add contact{% endif %}</button>
         {% if quick %}
-          <a class="cf-cancel" href="{% url 'crm:contact_new' %}">Every field</a>
+          <a class="cf-cancel" href="{% url 'crm:contact_new' %}">Full form</a>
         {% elif mode != "edit" %}
           <a class="cf-cancel" href="{% url 'crm:contact_new' %}?quick=1">Quick add</a>
         {% endif %}

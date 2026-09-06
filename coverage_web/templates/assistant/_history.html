@@ -73,7 +73,7 @@ delete — so a rename's new position (ChatConversation.Meta.ordering =
         {% for c in group.conversations %}
           {% include "assistant/_history_row.html" %}
         {% empty %}
-          <p class="as-history-empty">Empty. Move a chat in.</p>
+          <p class="as-history-empty">No conversations in this folder.</p>
         {% endfor %}
       </div>
     </details>
@@ -84,6 +84,6 @@ delete — so a rename's new position (ChatConversation.Meta.ordering =
       {% for c in unfiled %}{% include "assistant/_history_row.html" %}{% endfor %}
     </div>
   {% elif not folders %}
-    <p class="as-history-empty">No chats yet.</p>
+    <p class="as-history-empty">No conversations yet.</p>
   {% endif %}
 </div>

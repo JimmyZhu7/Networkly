@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Out Other Devices · Coverage{% endblock %}
+{% block title %}Sign out other devices · Coverage{% endblock %}
 
 {% block head %}
 <style>
@@ -12,20 +12,15 @@
 {% block content %}
 <div class="page page--narrow sout-wrap">
   <header class="pagehead pagehead--compact">
-    <div class="pagehead-text"><h1 class="pagehead-title">Sign Out Other Devices</h1></div>
+    <div class="pagehead-text"><h1 class="pagehead-title">Sign out other devices</h1></div>
   </header>
-  <p class="lede">For the library computer you forgot to sign out of.</p>
+  <p class="lede">End your other sessions while staying signed in here.</p>
 
   <div class="panel panel--page">
     <ul class="sout-list">
-      <li><strong>Every other signed-in device is signed out</strong>: any browser,
-        anywhere, that still had your session.</li>
-      <li><strong>This device stays signed in.</strong> You won't be logged out of the
-        browser you're reading this in.</li>
-      <li><strong>Nothing is deleted.</strong> No contacts, no touches, no settings. This only ends sessions.</li>
-      <li><strong>Your password is unchanged.</strong> If you think someone knows it,
-        <a href="{% url 'account_change_password' %}">change it</a> as well; signing out a
-        device someone can sign back into buys you nothing.</li>
+      <li>All other browsers and devices will be signed out.</li>
+      <li>This session, your data, and your password stay unchanged.</li>
+      <li>If someone else knows your password, <a href="{% url 'account_change_password' %}">change it</a> too.</li>
     </ul>
   </div>
 
@@ -33,7 +28,7 @@
     {% csrf_token %}
     <div class="actions">
       <button type="submit" class="btn btn-primary"
-              aria-label="Sign out on all other devices">Sign Out Other Devices</button>
+              aria-label="Sign out on all other devices">Sign out other devices</button>
       <a class="btn" href="{% url 'accounts:settings' %}#security">Cancel</a>
     </div>
   </form>

@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
-{% block title %}Create Your Account · Coverage{% endblock %}
+{% block title %}Create your account · Coverage{% endblock %}
 
 {% block head %}{% include "account/_auth_styles.html" %}{% endblock %}
 
 {% block content %}
 <div class="auth-wrap">
   <div class="auth-card panel panel--raised">
-    <h1 class="auth-title">Create Your Account</h1>
+    <h1 class="auth-title">Create your account</h1>
 
     {% include "account/_auth_providers.html" %}
 
-    <div class="auth-or"><span>Or With Email</span></div>
+    <div class="auth-or"><span>Or use email</span></div>
 
     <form class="auth-form" method="post" action="{% url 'account_signup' %}">
       {% csrf_token %}

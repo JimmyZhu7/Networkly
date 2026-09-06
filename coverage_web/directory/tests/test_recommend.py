@@ -554,7 +554,7 @@ def test_signed_out_sees_no_tailored_bar(client, live_board):
     assert resp.context["picks"] == []
     assert resp.context["has_profile"] is False
     assert _HEADING not in body and _RAIL not in body
-    assert "you&#x27;re signed out" in body or "you're signed out" in body
+    assert "Sign in to see personalized recommendations" in body
 
 
 @pytest.mark.django_db
@@ -605,7 +605,7 @@ def test_a_profiled_user_with_no_matches_is_told_so(client):
     resp = client.get(reverse("opportunities"))
     assert resp.context["has_profile"] is True
     assert resp.context["picks"] == []
-    assert "scores high enough" in resp.content.decode()
+    assert "currently match your profile closely enough" in resp.content.decode()
 
 
 @pytest.mark.django_db

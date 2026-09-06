@@ -30,7 +30,7 @@ request, and this dialog has none.
       {% comment %}One line only: the dialog's own subtitle right above this
       already explains what a memory is, so an empty state that explains it
       again is the same sentence twice on one small screen.{% endcomment %}
-      <p class="as-memory-empty">Nothing yet.</p>
+      <p class="as-memory-empty">Nothing saved yet.</p>
     {% endif %}
   </div>
 
@@ -42,12 +42,12 @@ request, and this dialog has none.
   <form class="as-memory-add" method="post" action="{% url 'assistant:remember_fact' %}"
         hx-post="{% url 'assistant:remember_fact' %}" hx-target="#as-memory-panel" hx-swap="outerHTML">
     {% csrf_token %}
-    <label class="vh" for="as-memory-input">Something to remember</label>
+    <label class="vh" for="as-memory-input">Preference to remember</label>
     <input id="as-memory-input" type="text" name="fact"
            maxlength="200" autocomplete="off" placeholder="Ruled out PE.">
     <button type="submit" class="btn btn-primary">Remember</button>
   </form>
   {% if memory_full %}
-    <p class="as-memory-note" role="status">Holding {{ memory_max }}, the most this page keeps. Forget one first.</p>
+    <p class="as-memory-note" role="status">Saved {{ memory_max }}, preferences. Remove one to add another.</p>
   {% endif %}
 </div>

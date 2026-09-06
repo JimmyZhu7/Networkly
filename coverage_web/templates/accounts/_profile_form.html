@@ -50,7 +50,7 @@ the field, exactly what this note would have said.
     {% with n=form.saved_long_ties|length %}
       {% if n == 1 %}One of your saved ties reads as a sentence.{% else %}{{ n }} of your saved ties read as sentences.{% endif %}
     {% endwith %}
-    Coverage looks for them word for word in a contact's own notes, so a long one matches nothing.
+    Use short names, such as a school or employer. Coverage looks for an exact match in your contact notes.
   </p>
   <div class="aff-notice-actions">
     {% comment %}
@@ -60,7 +60,7 @@ the field, exactly what this note would have said.
     a page the student opened to do something else. The white pill on the
     amber ground carries enough weight to be the thing you press.
     {% endcomment %}
-    <a class="btn" href="#id_affiliations" data-aff-notice-go>Review Them</a>
+    <a class="btn" href="#id_affiliations" data-aff-notice-go>Review affiliations</a>
     <button type="button" class="btn aff-notice-x" data-aff-notice-x>Dismiss</button>
   </div>
 </div>
@@ -94,7 +94,7 @@ replacement for one.
   </span>
   <div class="avatar-field-controls">
     <div class="avatar-actions">
-      <label for="id_avatar" class="btn">{% if user.avatar %}Change Photo{% else %}Upload Photo{% endif %}</label>
+      <label for="id_avatar" class="btn">{% if user.avatar %}Change photo{% else %}Upload photo{% endif %}</label>
       {{ form.avatar }}
       {% if user.avatar %}
         <label class="avatar-remove">{{ form.remove_avatar }} Remove</label>
@@ -105,7 +105,7 @@ replacement for one.
   </div>
 </div>
 
-<label for="id_name">Display Name</label>
+<label for="id_name">Display name</label>
 {{ form.name }}
 {{ form.name.errors }}
 
@@ -123,7 +123,7 @@ replacement for one.
 {% comment %}
 Two-up on the settings page (.set-form scopes the grid); a plain stack
 everywhere else, e.g. the narrow onboarding step. School shared this row with
-Class Year until 2026-09-01; it moved above so Study Level could sit beside
+Graduation year until 2026-09-01; it moved above so Study level could sit beside
 the year it qualifies (the year says when you finish, this says what), and a
 long university name gets the full width. _welcome_head.html anchors the
 identity/search seam to this grid, so it stays the last block of that half.
@@ -135,12 +135,12 @@ is never guessed from class year.
 {% endcomment %}
 <div class="grid-2">
   <div>
-    <label for="id_class_year">Class Year</label>
+    <label for="id_class_year">Graduation year</label>
     {{ form.class_year }}
     {{ form.class_year.errors }}
   </div>
   <div>
-    <label for="id_study_level">Study Level</label>
+    <label for="id_study_level">Study level</label>
     {{ form.study_level }}
     {{ form.study_level.errors }}
   </div>
@@ -168,7 +168,7 @@ that field, not a new one.
 2026-08-29, second pass: the text box moved off the page and into a
 `<dialog>` — chips are the page's steady state, and a box that sits there
 empty and waiting is more control than a field most students touch once
-ever needs. "+ Add Email" opens the dialog (native <dialog>, same
+ever needs. "Add school email" opens the dialog (native <dialog>, same
 showModal()/backdrop-click pattern as base.html's command palette and
 directory/_drawer.html — the browser owns focus trap and Escape); typing
 an address and pressing Add or Enter commits a chip and closes it. It
@@ -177,10 +177,10 @@ Profile's own `<form>` (settings.html), and forms cannot nest — so commit
 and cancel are plain buttons the script drives, same as the chips
 themselves.
 {% endcomment %}
-<label id="se-label">School Email</label>
+<label id="se-label">School email</label>
 <div class="se-field" data-se-field>
   <ul class="se-chips" aria-live="polite"></ul>
-  <button type="button" class="btn se-add-open" data-se-open>+ Add Email</button>
+  <button type="button" class="btn se-add-open" data-se-open>Add school email</button>
   <dialog class="se-dialog panel" data-se-dialog aria-labelledby="se-label">
     <label for="id_school_emails">Add a school email</label>
     <input type="text" id="id_school_emails" class="se-input"
@@ -202,7 +202,7 @@ its own <label> per checkbox, so there is no single control to point at, and
 the styling for a group heading lives on the element. Every SINGLE control on
 this page does get a real `for` — see the a11y note in settings.html.
 {% endcomment %}
-<label>Target Recruiting Cycle</label>
+<label>Target recruiting cycle</label>
 <div class="chipset">{{ form.target_cycles }}</div>
 {{ form.target_cycles.errors }}
 {% comment %}
@@ -454,7 +454,7 @@ would be re-bound on every in-place save, stacking duplicates.
 {% endscript %}
 
 {% comment %}
-School Email's chip widget. Same progressive-enhancement shape as
+School email's chip widget. Same progressive-enhancement shape as
 base.html's `.csel`/number-stepper enhancers (enhance/enhanceAll, a
 `dataset` flag against double-binding, re-run on `htmx:afterSettle`) rather
 than this file's own avatar script above, which delegates bare listeners on
@@ -590,7 +590,7 @@ its two enhancers.
 {% comment %}
 Affiliations: the live readout, and the one-time note's dismissal.
 
-Same progressive-enhancement shape as the School Email widget above
+Same progressive-enhancement shape as the School email widget above
 (enhance/enhanceAll, a `dataset` flag against double-binding, re-run on
 `htmx:afterSettle`) and for the same reason: both have per-node state to
 seed, and this partial is an htmx swap target, so a listener bound directly

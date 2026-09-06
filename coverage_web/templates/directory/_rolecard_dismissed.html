@@ -28,7 +28,7 @@ again via `_one_rolecard` — untracked, which is what it was before the click.
   <p class="rcd-said">Not for me.</p>
   <p class="rcd-what">{% if show_firm %}{{ r.firm_name|smart_title }} &mdash; {% endif %}{{ r.title|smart_title }}</p>
   <p class="rcd-note">Won't be suggested again. All of them are on
-    <a href="{% url 'my_applications' %}#hidden">My Applications</a>.</p>
+    <a href="{% url 'my_applications' %}#hidden">My applications</a>.</p>
   <button type="button" class="rcd-undo"
           hx-post="{% url 'track_opportunity' r.id %}"
           hx-vals='{"status": "undismiss", "from": "card", "show_firm": "{% if show_firm %}1{% else %}0{% endif %}"}'

@@ -94,7 +94,7 @@ def test_log_touch_moves_warmth_and_response_shows_movement(client):
     body = resp.content.decode()
 
     # The fragment shows the movement, not just the new state.
-    assert "cold" in body and "replied" in body
+    assert "Relationship New" in body and "> Replied" in body
     assert "→" in body  # from -> to arrow
     assert "Logged" in body
 
@@ -128,7 +128,7 @@ def test_log_touch_rejects_unknown_kind_without_writing(client):
 
 
 # ---------------------------------------------------------------------------
-# 2b. Today's "Park it" quick action is a state change, not a fake touch.
+# 2b. Today's "Pause outreach" quick action is a state change, not a fake touch.
 # ---------------------------------------------------------------------------
 @pytest.mark.django_db(transaction=True)
 def test_today_park_sets_thread_state_and_writes_no_maintain_touch(client):
@@ -175,7 +175,7 @@ def test_contact_detail_shows_fit_score_axes_and_reasoning(client):
     assert resp.status_code == 200
     body = resp.content.decode()
 
-    assert "Fit Score" in body
+    assert "Relationship fit" in body
     for axis in ("Depth", "Responsiveness", "Recency", "Leverage"):
         assert axis in body
     # The deterministic reasoning line rendered.
@@ -227,7 +227,7 @@ def test_responsiveness_meta_names_both_sides_when_both_exist(client):
 
 
 # ---------------------------------------------------------------------------
-# 5a. The Firm Fit rail's Structural axis printed the scoring engine's own
+# 5a. The Firm fit rail's Structural axis printed the scoring engine's own
 # method label at a student: "rules v1: region match, track no". Live on
 # /app/contacts/484/ (Travis Chen, Amazon). Rendered, not unit-tested on the
 # template string, because the defect is what reaches the page.
@@ -521,7 +521,7 @@ def test_contact_card_days_since_matches_the_debrief_and_today_calendar_date_con
 
 @pytest.mark.django_db
 def test_the_warmth_sections_account_for_every_contact_the_header_counts(client):
-    """FOUND AUDITING THE BOARD'S COUNTS (2026-08-25). "Emailed, No Reply" is
+    """FOUND AUDITING THE BOARD'S COUNTS (2026-08-25). "Awaiting reply" is
     cold AND touched, so a contact who was added and never written to matched
     no section and rendered nowhere — while still being counted in "Contacts
     N" at the top. 24 of 61 people on the demo account. A number in a header
@@ -551,7 +551,7 @@ def test_a_bulk_blast_alone_lands_a_cold_contact_in_not_contacted_not_emailed(cl
     """FOUND AUDITING CONTACT CATEGORIZATION (2026-08-28), on the founder's own
     live data: a contact (Caroline Baenen, id 482) whose only rows on file
     were a `manual_override` correction and two `bulk_received` blasts — real
-    outreach: zero — rendered under "Emailed, No Reply" because `touch_count`
+    outreach: zero — rendered under "Awaiting reply" because `touch_count`
     counted every row on the table regardless of kind. That section's whole
     claim is "you wrote to this person and they went quiet"; a program-blast
     recipient nobody ever personally emailed does not belong there, and
@@ -1079,8 +1079,8 @@ def test_the_swap_fragment_is_the_whole_grid(client):
     )
     body = resp.content.decode()
     assert 'id="contact-live"' in body and "cd-grid" in body
-    assert "Fit Score" in body, "the rail rides in the swap"
-    assert "Compose" in body, "so does the reach card"
+    assert "Relationship fit" in body, "the rail rides in the swap"
+    assert "Draft email" in body, "so does the reach card"
     assert "Logged" in body, "and the movement flag"
 
 

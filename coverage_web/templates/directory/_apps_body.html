@@ -192,7 +192,7 @@ survives even if it was in the batch.
                   {% if r.facts %}<span class="lens-facts">{% for f in r.facts %}<span class="fact-chip {{ f.css }}" title="{{ f.why }}">{{ f.label }}</span>{% endfor %}</span>{% endif %}
                   {% if r.has_text %}<button type="button" class="meta-read lens-read" data-role-read data-role-id="{{ r.id }}"
                           hx-get="{% url 'role_description' r.id %}"
-                          hx-target="#role-drawer-body" hx-swap="innerHTML">Read</button>{% endif %}
+                          hx-target="#role-drawer-body" hx-swap="innerHTML">View role</button>{% endif %}
                   {% comment %}
                   WHO YOU ALREADY KNOW THERE. This was the one thing on the
                   deleted stage cards that the row could not otherwise say,
@@ -235,7 +235,7 @@ survives even if it was in the batch.
                     <option value="submitted"{% if r.stage == 'submitted' %} selected{% endif %}>Applied</option>
                     <option value="interview"{% if r.stage == 'interview' %} selected{% endif %}>Interviewing</option>
                     <option value="offer"{% if r.stage == 'offer' %} selected{% endif %}>Offer</option>
-                    <option value="closed"{% if r.stage == 'closed' %} selected{% endif %}>Done</option>
+                    <option value="closed"{% if r.stage == 'closed' %} selected{% endif %}>Finished</option>
                   </select>
                 </form>
                 {% comment %}
@@ -306,8 +306,7 @@ survives even if it was in the batch.
 {% else %}
   <div class="empty">
     <h2>No roles saved yet.</h2>
-    <p>Star a role in the feed to keep it here, or just apply. Coverage reads
-      the confirmation email and marks it applied for you.
+    <p>Save a role to track it here. If you connect Gmail, Coverage can also capture application confirmations.
       <a href="{% url 'opportunities' %}">Browse openings</a>.</p>
   </div>
 {% endif %}

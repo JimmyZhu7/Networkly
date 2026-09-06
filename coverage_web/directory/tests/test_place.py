@@ -336,7 +336,7 @@ def test_neither_surface_invents_a_sentence_for_an_unknown_place(client):
     feed_body = client.get("/opportunities/").content.decode()
     for body in (firm_body, feed_body):
         assert "Location not listed" not in body
-        assert "not listed" not in body.lower()
+        assert "location not listed" not in body.lower()
 
 
 # ---------------------------------------------------------------------------

@@ -55,7 +55,7 @@ on actually holding the text.
     {% if card.has_text %}
       <button type="button" class="meta-read" data-role-read data-role-id="{{ card.id }}"
               hx-get="{% url 'role_description' card.id %}"
-              hx-target="#role-drawer-body" hx-swap="innerHTML">Read</button>
+              hx-target="#role-drawer-body" hx-swap="innerHTML">View role</button>
     {% endif %}
   </div>
 </article>

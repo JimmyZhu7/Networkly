@@ -34,6 +34,6 @@ def test_home_page_shows_live_ledger_counts(client):
     )
 
     content = client.get("/").content.decode()
-    assert "Live Campus Roles" in content
+    assert "Open campus roles" in content
     # Only the campus bucket counts toward the hero figure; "other" does not.
     assert '<span class="dash-num">1</span>' in content

@@ -14,7 +14,7 @@
     </div>
     {% if user.is_authenticated %}
       <div class="pagehead-actions">
-        <a class="btn" href="{% url 'crm:contact_new' %}?firm={{ firm.slug }}">＋ Add a Contact Here</a>
+        <a class="btn" href="{% url 'crm:contact_new' %}?firm={{ firm.slug }}">＋ Add contact</a>
       </div>
     {% endif %}
   </header>
@@ -26,7 +26,7 @@
     everyone; this section is the only thing on the page that is yours.
     {% endcomment %}
     <section class="section fd-mine panel">
-      <h2>Your Network Here
+      <h2>Your contacts here
         <span class="scrub-count">{{ my_total }}</span>
         {% if my_advocates %}<span class="fd-adv">{{ my_advocates }} advocate{{ my_advocates|pluralize }}</span>{% endif %}
       </h2>
@@ -56,15 +56,15 @@
           {% endfor %}
         </div>
       {% else %}
-        <p class="fd-none">Nobody here yet. One contact turns a deadline into a way in.
+        <p class="fd-none">No contacts here yet. Add a contact to track your relationship with this firm.
           <a href="{% url 'crm:contact_new' %}?firm={{ firm.slug }}">Add your first</a>.</p>
       {% endif %}
     </section>
   {% endif %}
 
   <section class="section">
-    <h2>Cycle Dates</h2>
-    <p class="lede">Confirmed dates are solid. Everything else is marked rumored, with its confidence.</p>
+    <h2>Recruiting dates</h2>
+    <p class="lede">Confirmed and estimated dates are labeled separately. Estimates show their confidence.</p>
     {% include "directory/_timeline.html" %}
   </section>
 
@@ -81,8 +81,8 @@
     hedged one-liner — silence over a thin claim.
     {% endcomment %}
     <section class="section">
-      <h2>Observed Activity</h2>
-      <p class="lede">What Coverage's own scraper has watched this firm's boards do. Not a forecast.</p>
+      <h2>Observed activity</h2>
+      <p class="lede">Changes observed on this firm’s careers pages. These are historical observations, not forecasts.</p>
       <ul class="cyc-obs">
         {% for row in cycle_observed %}
           <li class="cyc-obs-row">
@@ -96,7 +96,7 @@
   {% endif %}
 
   <section class="section">
-    <h2>Open Roles <span class="scrub-count">{{ total }}</span></h2>
+    <h2>Open roles <span class="scrub-count">{{ total }}</span></h2>
     {% comment %}
     THE UNREADABLE-BOARD LINE (P9). This firm runs a campus board, we know
     its address, and we do not read it: its own robots.txt asks us not to,
@@ -199,7 +199,7 @@
             product doesn't cover.
             <a href="{% url 'directory:firm_detail' firm.slug %}?role=all">Show everything</a>.</p>
         {% else %}
-          <h2>Nothing open right now.</h2>
+          <h2>No open roles right now.</h2>
           <p>We'll list this firm's openings as soon as the next check finds any.</p>
         {% endif %}
       </div>

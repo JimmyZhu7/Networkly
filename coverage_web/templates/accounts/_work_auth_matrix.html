@@ -21,18 +21,6 @@ as `form`. Field names and values are unchanged, so saved data and every
 POST contract stay exactly as they were.
 {% endcomment %}
 <div class="wa-matrix">
-  <div class="wa-head" aria-hidden="true">
-    <span class="wa-corner"></span>
-    {% comment %}Two wordings per column: the full one, and a short one that
-    takes over under 560px, where the full text overran its column by 11px
-    and the matrix's `overflow: hidden` silently cut it. This header is
-    aria-hidden — it is a visual legend — and each radio's own label carries
-    the accessible name, so swapping the visible wording changes nothing that
-    is announced.{% endcomment %}
-    <span class="wa-col wa-col-yes"><span class="wa-col-full">No visa needed</span><span class="wa-col-short">No visa</span></span>
-    <span class="wa-col wa-col-need"><span class="wa-col-full">Needs sponsorship</span><span class="wa-col-short">Visa</span></span>
-    <span class="wa-col wa-col-unk"><span class="wa-col-full">Unspecified</span><span class="wa-col-short">Unsure</span></span>
-  </div>
   {% for field in form.rows %}
     <div class="wa-row" role="radiogroup"
          aria-labelledby="{{ field.auto_id }}-lab" aria-describedby="wa-note">
@@ -49,5 +37,4 @@ but a screen reader still gets it announced. `.vh` (coverage.css) rather
 than local markup, since this partial is also the onboarding step's own
 widget and needs a class that resolves there too.
 {% endcomment %}
-<p class="vh" id="wa-note">Feeds the structural axis of your firm fit
-  score. A region left blank stays unknown, never guessed.</p>
+<p class="field-hint" id="wa-note">Used to assess eligibility by region. Unspecified regions remain unknown.</p>
