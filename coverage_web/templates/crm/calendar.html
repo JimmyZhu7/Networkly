@@ -460,6 +460,39 @@
     font-size: var(--fs-xs); color: var(--ink-3); text-decoration: underline;
     text-underline-offset: 2px; transition: color var(--t-fast); }
   .cal-ev-del:hover { color: var(--danger); }
+  /* The row's two retiring controls sit on one line so the popover does not
+     grow a stack of buttons, and they read in the order they are meant to be
+     reached: calling a meeting off first, because a real meeting that is no
+     longer happening is the ordinary case; deleting it outright after that,
+     for a row that should never have existed. Their labels live in
+     `_calendar_event.html`, not in this comment: the page's own tests read
+     the rendered stylesheet, and a button name written here would be found
+     on a month with no such button on it. */
+  .cal-ev-actions { display: flex; flex-wrap: wrap; gap: var(--s3);
+    align-items: center; }
+  /* The move-it disclosure opens the same way an event does — a summary that
+     is plainly a control, and a body that rises in rather than appearing.
+     Styled off `.cal-ev-del` so the row's own controls stay one family. */
+  .cal-ev-move { margin: var(--s2) 0; }
+  .cal-ev-move > summary { cursor: pointer; list-style: none;
+    font-size: var(--fs-xs); color: var(--ink-3); text-decoration: underline;
+    text-underline-offset: 2px; transition: color var(--t-fast); }
+  .cal-ev-move > summary::-webkit-details-marker { display: none; }
+  .cal-ev-move > summary:hover { color: var(--ink); }
+  .cal-ev-move[open] > summary { color: var(--ink); }
+  .cal-ev-move form { margin-top: var(--s2);
+    animation: rise-in 200ms cubic-bezier(0.22,1,0.36,1) both; }
+  .cal-ev-move-grid { display: grid; gap: var(--s2);
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+  .cal-ev-move-grid label { display: flex; flex-direction: column; gap: 4px;
+    margin: 0; font-size: var(--fs-xs); color: var(--ink-3); }
+  .cal-ev-move-grid input { margin: 0; width: 100%; font-size: var(--fs-xs); }
+  .cal-ev-move-go { margin-top: var(--s2); border: 1px solid var(--line);
+    background: var(--paper); border-radius: 6px; padding: 3px 10px;
+    cursor: pointer; font-size: var(--fs-xs); color: var(--ink);
+    transition: background-color var(--t-fast), border-color var(--t-fast); }
+  .cal-ev-move-go:hover { background: var(--surface);
+    border-color: var(--line-strong); }
   .cal-ev-chat { border-left-color: var(--w-chatted-bar); }
   .cal-ev-event { border-left-color: var(--accent); }
   .cal-ev-deadline { border-left-color: var(--stale-t); }

@@ -53,8 +53,18 @@ has to do it.
       {% if ev.reported and not ev.cancelled %}<span class="vh">(reported time)</span>{% endif %}
     </summary>
     <div class="cal-ev-body">
+      {% comment %}Two cancellations, two sentences, because they are two
+      different facts. A captured or mirrored row was called off by whoever
+      organised it. A typed row was called off by the student, on this page,
+      and the thing they need told is what their subscribed calendar now
+      says — that is the whole reason Cancel keeps the row instead of
+      deleting it.{% endcomment %}
       {% if ev.cancelled %}
-        <p class="cal-ev-meta">The organiser cancelled this event. It remains here for your records.</p>
+        {% if ev.movable %}
+          <p class="cal-ev-meta">You cancelled this event. It stays here, and any calendar subscribed to your feed shows it as cancelled.</p>
+        {% else %}
+          <p class="cal-ev-meta">The organiser cancelled this event. It remains here for your records.</p>
+        {% endif %}
       {% endif %}
       {% if ev.all_day %}<p class="cal-ev-meta">All day</p>{% endif %}
       {% if ev.contact %}<p class="cal-ev-meta">{{ ev.contact.name|smart_person_name|smart_title }}</p>{% endif %}
@@ -81,19 +91,74 @@ has to do it.
       {% if ev.from_calendar %}
         <p class="cal-ev-meta cal-ev-prov">From your Google Calendar · edit it there</p>
       {% endif %}
-      {% if ev.removable %}
-      <form method="post" action="{% url 'crm:calendar_delete' ev.id %}">
-        {% csrf_token %}
-        {% comment %}Where to put you back after the row is gone: the view and
-        the anchor, not just the month. Removing something from the week of 9
-        March used to return the March grid.{% endcomment %}
-        <input type="hidden" name="view" value="{{ view }}">
-        <input type="hidden" name="y" value="{{ year }}">
-        <input type="hidden" name="m" value="{{ month }}">
-        <input type="hidden" name="d" value="{{ anchor.day }}">
-        <button type="submit" class="cal-ev-del">Remove</button>
-      </form>
+      {% comment %}THE TWO VERBS A MEETING NEEDS, and they exist here rather
+      than as delete-then-add because the subscription is watching. Moving
+      the row keeps its UID, so a phone shows the meeting move; cancelling
+      it keeps the UID too, so the phone shows it struck off instead of
+      quietly losing it. `ev.movable` is a typed row with no upstream copy —
+      a Google event is not ours to move, and a captured chat's time is
+      still owned by the mailbox that keeps re-reading its invite.
+
+      Reschedule is a disclosure rather than two permanently open inputs:
+      the popover is already the row's whole story, and a date field sitting
+      open under every event reads as something waiting to be filled in.
+      {% endcomment %}
+      {% if ev.movable and not ev.cancelled %}
+      <details class="cal-ev-move">
+        <summary>Reschedule</summary>
+        <form method="post" action="{% url 'crm:calendar_reschedule' ev.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="view" value="{{ view }}">
+          <input type="hidden" name="y" value="{{ year }}">
+          <input type="hidden" name="m" value="{{ month }}">
+          <input type="hidden" name="d" value="{{ anchor.day }}">
+          <div class="cal-ev-move-grid">
+            <label>Date
+              <input type="date" name="day" value="{{ ev.day_value }}" required>
+            </label>
+            {% comment %}Blank on purpose for an all-day row, and emptying it
+            puts a timed one back to all-day. Same rule as the add form, said
+            where the student is about to use it.{% endcomment %}
+            <label>Time
+              <input type="time" name="at" value="{{ ev.time_value }}">
+            </label>
+          </div>
+          <p class="cal-ev-meta">Leave the time blank for an all-day entry.</p>
+          <button type="submit" class="cal-ev-move-go">Move event</button>
+        </form>
+      </details>
       {% endif %}
+      <div class="cal-ev-actions">
+        {% if ev.movable and not ev.cancelled %}
+        <form method="post" action="{% url 'crm:calendar_cancel' ev.id %}">
+          {% csrf_token %}
+          <input type="hidden" name="view" value="{{ view }}">
+          <input type="hidden" name="y" value="{{ year }}">
+          <input type="hidden" name="m" value="{{ month }}">
+          <input type="hidden" name="d" value="{{ anchor.day }}">
+          <button type="submit" class="cal-ev-del">Cancel event</button>
+        </form>
+        {% endif %}
+        {% if ev.removable %}
+        <form method="post" action="{% url 'crm:calendar_delete' ev.id %}">
+          {% csrf_token %}
+          {% comment %}Where to put you back after the row is gone: the view and
+          the anchor, not just the month. Removing something from the week of 9
+          March used to return the March grid.
+
+          Remove still deletes outright, and is the narrower of the two: it is
+          for a row that should never have been there — a typo, a duplicate —
+          where there is no subscriber to tell anything to. A real meeting that
+          is off gets Cancel, which keeps the record and says so on the feed.
+          {% endcomment %}
+          <input type="hidden" name="view" value="{{ view }}">
+          <input type="hidden" name="y" value="{{ year }}">
+          <input type="hidden" name="m" value="{{ month }}">
+          <input type="hidden" name="d" value="{{ anchor.day }}">
+          <button type="submit" class="cal-ev-del">Remove</button>
+        </form>
+        {% endif %}
+      </div>
     </div>
   </details>
 {% elif ev.url %}

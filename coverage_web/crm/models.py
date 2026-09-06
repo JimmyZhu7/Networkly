@@ -904,6 +904,28 @@ class CalendarEvent(PrivateModel):
     # SUBSCRIBED, and an entry that silently vanishes from someone's phone
     # teaches them to distrust the whole calendar.
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    # THE REVISION NUMBER A SUBSCRIBER READS (RFC 5545 SEQUENCE).
+    #
+    # A subscribed calendar already holds a copy of this event, keyed on its
+    # UID. When the row moves or is called off, the feed re-serves the same
+    # UID with different contents, and the client has to decide whether what
+    # it just fetched is newer than what it is already showing. SEQUENCE is
+    # the field that answers that: same UID, higher number, so the change is
+    # an update to a meeting the student already has rather than an
+    # indistinguishable re-read. Without it a client is entitled to keep the
+    # copy it has — which is the reschedule silently not arriving on the one
+    # surface a subscription exists for.
+    #
+    # A COUNTER RATHER THAN A TIMESTAMP, because that is what the standard
+    # asks for: SEQUENCE is an integer that only ever goes up, and every
+    # calendar client compares it as one. Zero on every row ever written,
+    # including the ones that predate this column, so a first revision is
+    # unambiguously 1.
+    #
+    # BUMPED BY THE ROUTES THAT CHANGE WHAT A SUBSCRIBER SEES and by nothing
+    # else — `calendar_reschedule` and `calendar_cancel`. Editing a note
+    # nobody's phone displays is not a revision of the meeting.
+    ics_sequence = models.PositiveIntegerField(default=0)
     # HOW SURE WE ARE OF `starts_at`, on the deadline pipeline's own scale
     # (`directory.ingest`: a board's published field is 1.0, a date read out
     # of the posting's prose is 0.6, and the UI says "reported" for the

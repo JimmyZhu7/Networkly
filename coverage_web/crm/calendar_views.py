@@ -32,13 +32,14 @@ honest move is to say where a date came from, not to withhold a real one.
 from __future__ import annotations
 
 import calendar as calmod
-from datetime import date, datetime, timedelta, timezone as dt_timezone
+from datetime import date, datetime, time as dt_time, timedelta, timezone as dt_timezone
 from urllib.parse import urlencode
 
+from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -173,6 +174,23 @@ def _events_by_day(user, first: date, last: date) -> dict[date, list[dict]]:
             # question is "does an upstream copy exist", and `external_id`
             # answers it; `source` only says who found it first.
             "removable": not ev.external_id,
+            # WHETHER "Reschedule" AND "Cancel" ARE HONEST BUTTONS, which is
+            # a narrower question than `removable` above and has to be. A
+            # captured chat has no upstream copy to restore, so removing it
+            # sticks — but its `starts_at` is still owned by the mailbox,
+            # and `capture.gmail._upsert_scheduled_chat` re-reads the invite
+            # it came from on every poll. A hand-typed time on that row is a
+            # time the next run may quietly overwrite, which is the same
+            # class of lie as a Remove button on a Google event. Only a row
+            # the student typed is a row nothing else writes to. See
+            # `_own_manual_event`, which is the server-side half of this.
+            "movable": (ev.source == CalendarEvent.SOURCE_MANUAL
+                        and not ev.external_id),
+            # Prefill values for the inline reschedule form, on the user's
+            # own clock — the same `local` the chip's time label is drawn
+            # from, so the form opens showing the hour the row displays.
+            "day_value": day.isoformat(),
+            "time_value": "" if ev.all_day else local.strftime("%H:%M"),
             "from_calendar": bool(ev.external_id),
             # Kept on the grid rather than dropped, on exactly the reasoning
             # layer 4 uses for a posting the firm has pulled: this is a
@@ -696,6 +714,166 @@ def calendar_delete(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect(f"/app/calendar/{_qs(view, anchor)}")
 
 
+class RescheduleForm(forms.Form):
+    """Where the meeting moves to. A date, and a time that may be blank.
+
+    The same two inputs as the add form, and deliberately not the add form
+    itself: `CalendarEventForm` also owns the title, kind, contact, location
+    and notes, so binding it here would mean rendering all six controls
+    inside every event popover on a seven-column grid, and a POST that
+    omitted any required one would silently blank it. Moving a meeting is
+    one question — when — and this form asks only that.
+
+    Blank time means the same thing it means on the add form: an all-day
+    entry, stored at local midnight with `all_day` set. So a reschedule can
+    also turn a 9:30 into "some time on the 14th" and back, which is the
+    other half of getting the date wrong.
+    """
+
+    day = forms.DateField(
+        label="Date", widget=forms.DateInput(attrs={"type": "date"}))
+    at = forms.TimeField(
+        label="Time", required=False,
+        widget=forms.TimeInput(attrs={"type": "time"}))
+
+    def clean(self):
+        cleaned = super().clean()
+        day, at = cleaned.get("day"), cleaned.get("at")
+        if day:
+            # The user's own zone, exactly as `CalendarEventForm.clean` reads
+            # it: "3pm" has to mean 3pm where the student is, or every move
+            # made from Hong Kong would land on the server's afternoon.
+            cleaned["starts_at"] = timezone.make_aware(
+                datetime.combine(day, at or dt_time.min),
+                timezone.get_current_timezone())
+            cleaned["all_day"] = at is None
+        return cleaned
+
+
+def _own_manual_event(user, pk: int) -> CalendarEvent:
+    """The one kind of row these two routes may touch, or a 404.
+
+    THREE ROWS LOOK ALIKE ON THE GRID AND ONLY ONE IS OURS TO CHANGE.
+
+    * `source="gcal"` (and any row carrying an `external_id`, adopted ones
+      included) is the student's own Google Calendar restated through a
+      view-only grant. Moving or cancelling it here would change the local
+      copy and nothing else, and the next `gcal_sync` would put the old time
+      straight back — the ghost loop `calendar_delete` above refuses a
+      deletion to avoid, for the same reason and with the same consequence.
+    * `source="capture"` is a chat Coverage found in the mailbox, and
+      `capture.gmail._upsert_scheduled_chat` goes on maintaining its
+      `starts_at` from the invites it keeps re-reading. A hand-typed time on
+      that row is a time the next poll is entitled to overwrite. The place a
+      captured chat gets moved is the invite, which is where the organiser
+      moves it.
+    * `source="manual"` with no `external_id` is a row the student typed and
+      nothing else writes to. That one is theirs.
+
+    404 RATHER THAN A SILENT REDIRECT, which is the opposite of what
+    `calendar_delete` does above and is not an inconsistency. That endpoint
+    predates the Remove button and has to stay reachable-but-inert for a
+    replayed form. These two are new, are rendered only on rows that pass
+    the test above, and answer the same way for a row that does not exist,
+    a row belonging to somebody else, and a row Google owns — which is the
+    only way to keep another student's pk from being a probe.
+    """
+    return get_object_or_404(
+        CalendarEvent.objects.for_user(user).filter(
+            source=CalendarEvent.SOURCE_MANUAL, external_id=""),
+        pk=pk,
+    )
+
+
+@login_required
+@require_POST
+def calendar_reschedule(request: HttpRequest, pk: int) -> HttpResponse:
+    """Move one of the student's own events, IN PLACE.
+
+    THE POINT IS THE ROW THAT SURVIVES. Until this existed, the only way to
+    fix a mistyped hour was Remove then Add, which is a different row and
+    therefore a different `UID` in the subscribed feed — so a calendar the
+    student had already subscribed on their phone showed the meeting
+    disappearing and an unrelated one appearing, rather than moving. Same
+    row, same UID, one higher `SEQUENCE`: that is the whole difference, and
+    it is the difference between a subscription that tracks their week and
+    one they learn to distrust.
+
+    `ends_at` TRAVELS BY ITS DURATION rather than being recomputed or
+    dropped. A meeting with a stated end is an hour long wherever it lands;
+    rewriting `starts_at` alone would leave a DTEND before its DTSTART on
+    anything moved later in the day, which is a malformed VEVENT.
+    """
+    ev = _own_manual_event(request.user, pk)
+    today = timezone.localdate()
+    view = _resolve_view(request.POST.get("view"))
+    anchor = _resolve_anchor(request.POST.get("y") or today.year,
+                             request.POST.get("m") or today.month,
+                             request.POST.get("d"), today)
+    form = RescheduleForm(request.POST)
+    if not form.is_valid():
+        # The typed values are one field each and are still on the screen the
+        # student came from, so a message is enough here — re-rendering the
+        # whole grid to keep two inputs would close every other popover on
+        # the page to do it.
+        messages.error(request, "That date could not be read, so nothing moved.")
+        return redirect(f"/app/calendar/{_qs(view, anchor)}")
+
+    duration = (ev.ends_at - ev.starts_at) if ev.ends_at else None
+    ev.starts_at = form.cleaned_data["starts_at"]
+    ev.all_day = form.cleaned_data["all_day"]
+    ev.ends_at = (ev.starts_at + duration) if duration else None
+    # A subscriber is holding a copy of this meeting at the old time. The
+    # bump is what tells it the copy is stale; without it the client is
+    # entitled to keep showing the hour the student just corrected.
+    ev.ics_sequence = (ev.ics_sequence or 0) + 1
+    ev.save(update_fields=["starts_at", "ends_at", "all_day", "ics_sequence"])
+    return redirect(f"/app/calendar/{_qs(view, anchor)}")
+
+
+@login_required
+@require_POST
+def calendar_cancel(request: HttpRequest, pk: int) -> HttpResponse:
+    """Call one of the student's own events off, KEEPING THE ROW.
+
+    CANCELLING IS NOT DELETING, and the feed is where the difference shows.
+    A deleted row simply stops being in the .ics, so a calendar that has
+    already synced it removes it with no explanation — the same silent
+    disappearance `_ics_body` refuses for a posting a firm has pulled, on a
+    surface the student is even less likely to be looking at when it
+    happens. `cancelled_at` keeps the UID and lets the feed say
+    `STATUS:CANCELLED` and `TRANSP:TRANSPARENT`: the meeting is visibly off
+    and the hour is visibly free, which is what somebody planning their week
+    around this needs to be told.
+
+    It is also the treatment `CalendarEvent.cancelled_at` already documents,
+    and the one the mailbox and Google pipelines already write. Until now
+    nothing a STUDENT did could set it, so a chat they called off themselves
+    was the one cancellation the subscription could not report.
+
+    Remove still exists and still hard-deletes (`calendar_delete` above).
+    That is the escape hatch for a row that should never have been there at
+    all — a typo, a duplicate — where there is nothing to tell a subscriber
+    about because nothing was ever really on. Cancel is the default because
+    a real meeting that is off is the ordinary case.
+
+    Cancelling twice is a no-op rather than an error: the second press moves
+    no dates, bumps no revision, and lands the student back on the same grid
+    showing the same struck-through row, which is the truth.
+    """
+    ev = _own_manual_event(request.user, pk)
+    today = timezone.localdate()
+    view = _resolve_view(request.POST.get("view"))
+    anchor = _resolve_anchor(request.POST.get("y") or today.year,
+                             request.POST.get("m") or today.month,
+                             request.POST.get("d"), today)
+    if ev.cancelled_at is None:
+        ev.cancelled_at = timezone.now()
+        ev.ics_sequence = (ev.ics_sequence or 0) + 1
+        ev.save(update_fields=["cancelled_at", "ics_sequence"])
+    return redirect(f"/app/calendar/{_qs(view, anchor)}")
+
+
 @login_required
 @require_POST
 def calendar_token_reset(request: HttpRequest) -> HttpResponse:
@@ -830,6 +1008,15 @@ def _ics_body(user) -> HttpResponse:
         lines += ["BEGIN:VEVENT",
                   f"UID:coverage-ev-{ev.id}@coverage.app",
                   f"DTSTAMP:{stamp}",
+                  # The revision this copy is (RFC 5545). Same UID at a
+                  # higher SEQUENCE is how a subscribed client knows the
+                  # meeting MOVED rather than that it read the same feed
+                  # again; `DTSTAMP` cannot do that job, because it is the
+                  # moment this response was assembled and changes on every
+                  # fetch whether anything happened or not. Only the two
+                  # routes that change what a subscriber sees bump it, so a
+                  # feed refreshed every fifteen minutes stays quiet.
+                  f"SEQUENCE:{ev.ics_sequence or 0}",
                   f"SUMMARY:{esc(ev.title)}"]
         if ev.cancelled_at is not None:
             # Preserve the subscribed event's identity while releasing its
