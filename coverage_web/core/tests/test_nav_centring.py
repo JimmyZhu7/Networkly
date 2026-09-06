@@ -124,7 +124,7 @@ def test_the_last_pill_can_clear_the_right_edge_fade(settings):
     """Settings is the last pill, so centring pins the row flush to its end —
     and flush against the end, the pill's tail sits under the 28px mask fade
     and finishes at ~18% opacity. Trailing padding gives it somewhere to go."""
-    css = (settings.BASE_DIR / "static" / "css" / "coverage.css").read_text()
+    css = (settings.BASE_DIR / "static" / "css" / "networkly.css").read_text()
 
     phone = re.search(r"@media \(max-width: 640px\) \{(.*)", css, re.S).group(1)
     nav = re.search(r"\.site-nav \{(.*?)\}", phone, re.S).group(1)

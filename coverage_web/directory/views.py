@@ -1497,7 +1497,7 @@ def _flag_conflicting_closes(rows: list[dict]) -> list[dict]:
             row["state"] = "conflicting"
             row["conflict"] = {
                 "label": "conflicting dates on file",
-                "why": ("Coverage has more than one closing date on file for "
+                "why": ("Networkly has more than one closing date on file for "
                         "this cycle and cannot tell which is current. Check "
                         "the firm's own posting before relying on either."),
             }
@@ -3030,7 +3030,7 @@ def _urgency_item(o, *, now, today, my_firm_ids, profile=None, cutoffs=None):
         "assessment": (
             {"label": "Test-gated",
              "why": ("This firm's own process is a test or competition. "
-                     "Coverage does not score your network here because "
+                     "Networkly does not score your network here because "
                      "there is no documented path from a chat to the "
                      "pipeline. See the firm page.")}
             if o.firm.recruiting_style == Firm.RECRUITING_STYLE_ASSESSMENT

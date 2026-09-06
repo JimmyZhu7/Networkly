@@ -217,7 +217,7 @@ def test_the_rail_labels_are_not_the_smallest_type_on_the_page(client, newcomer)
 def test_the_firm_tile_indicator_is_a_checkbox_not_a_radio(client, newcomer):
     """A hollow circle on a control that expects a dozen answers tells a
     student, before they read a word, to pick one. The geometry now matches
-    the shared square checkbox in coverage.css."""
+    the shared square checkbox in networkly.css."""
     client.force_login(newcomer)
     body = client.get(f"{reverse(WIZARD)}?step=firms").content.decode()
     css = " ".join(re.findall(r"<style>(.*?)</style>", body, re.S))

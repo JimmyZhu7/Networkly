@@ -16,7 +16,7 @@ So the rules pinned here are not stylistic:
      long a posting WILL stay open. `test_no_surface_predicts_a_duration`
      asserts against the vocabulary such a claim would have to use.
   2. AN UNWATCHED OPEN IS NOT AN OPEN. A posting from a firm's onboarding
-     batch has a `first_seen` that records when Coverage arrived, not when
+     batch has a `first_seen` that records when Networkly arrived, not when
      the posting did. Those rows get NOTHING — not "at least N days", which
      is a different claim, and not a zero.
   3. ONE CUTOFF, ONE DEFINITION. `build_cycle_observations` and the two live
@@ -114,7 +114,7 @@ def _opp(firm, *, days_ago, status="open", bucket="internship", title=None,
 
 def test_the_onboarding_batch_gets_no_duration_at_all():
     """The oldest posting at a firm defines that firm's onboarding day, and
-    every posting sharing it says "Coverage arrived", not "this opened".
+    every posting sharing it says "Networkly arrived", not "this opened".
 
     The honest statement for those rows would be "open AT LEAST N days" — a
     materially different claim with a different shape — so the module says
@@ -293,12 +293,12 @@ def test_the_feed_row_prints_the_elapsed_figure_for_a_watched_dated_role(client)
          url="https://example.test/watched")
 
     html = _feed(client)
-    assert "Coverage watched this posting open 12 days ago" in html
+    assert "Networkly watched this posting open 12 days ago" in html
     assert "Not a forecast of when it closes." in html
     # On the deadline column, which is the element making the date claim this
     # figure qualifies — not loose in the markup somewhere.
     due = html[html.index('class="rr-due"'):]
-    assert "Coverage watched this posting open 12 days ago" in due[:600]
+    assert "Networkly watched this posting open 12 days ago" in due[:600]
 
 
 def test_the_feed_row_stays_silent_on_an_onboarding_batch_role(client):
@@ -344,7 +344,7 @@ def test_the_elapsed_figure_is_not_on_the_meta_line_at_all():
     the fact stopped being on that line on 2026-09-02.
 
     The contract that replaces it is stronger and is the reason the span
-    moved: nothing on the meta line may be about Coverage's own observation
+    moved: nothing on the meta line may be about Networkly's own observation
     history. Every other item there is about the READER (the verdict, the
     assessment route) or about what the POSTING states. This one was about
     us, which is what makes it a tooltip on this board.
@@ -355,7 +355,7 @@ def test_the_elapsed_figure_is_not_on_the_meta_line_at_all():
         "the deadline column's title, beside the other evidence-age fact")
     # And it is on that column, not merely deleted.
     due = src[src.index('class="rr-due"'):]
-    assert "Coverage watched this posting open" in due[:1200]
+    assert "Networkly watched this posting open" in due[:1200]
 
 
 def test_the_elapsed_figure_leaves_no_orphaned_style_rule():

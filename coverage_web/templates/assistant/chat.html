@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load csp %}
 
-{% block title %}Talk to Coverage · Coverage{% endblock %}
+{% block title %}Talk to Networkly · Networkly{% endblock %}
 
 {% block body_class %} class="as-body-chat"{% endblock %}
 
@@ -15,14 +15,14 @@ The shape of this page is deliberately borrowed from the AI chat interfaces
 every student already knows (ChatGPT, Claude.ai): a fixed-height shell below
 the masthead, a docked sidebar of past chats, messages scrolling in their own
 pane, a composer pinned to the bottom rather than drifting down the document.
-What stays Coverage's own is everything ELSE — the ledger palette, Fraunces
+What stays Networkly's own is everything ELSE — the ledger palette, Fraunces
 for the title, the same pill buttons and card radii as Today and Network, the
 ink evidence line under an answer. Familiar mechanics, the site's own
 materials.
 {% endcomment %}
 <style>
   /* This page's own "app screen" replaces the marketing footer entirely —
-     see base.html's body_class block. A sliver of "Coverage / Recruiting
+     see base.html's body_class block. A sliver of "Networkly / Recruiting
      deadlines and a networking CRM" peeking in under the composer read as
      debris leaking onto an AI interface, not as the rest of the site being
      one scroll away. */
@@ -91,7 +91,7 @@ materials.
   .as-new-folder-btn:hover, .as-new-folder-btn[aria-expanded="true"] {
     background: var(--accent-soft); border-color: var(--accent-line); color: var(--ink); }
   .as-new-folder-btn svg { width: 15px; height: 15px; }
-  /* Two rarely-reached actions (new folder, what Coverage remembers) folded
+  /* Two rarely-reached actions (new folder, what Networkly remembers) folded
      behind one "⋯" trigger — the same one-kebab-one-menu shape this page
      already uses for every conversation and folder row, rather than a third
      idiom sitting in the sidebar header. Both stay exactly one click away;
@@ -244,7 +244,7 @@ materials.
      Measured: tab into the sidebar and `document.activeElement` IS the
      kebab, while its computed opacity stays "0" — every chat row and every
      folder row hands a keyboard a control it cannot see, and whatever ring
-     coverage.css would draw is painted at zero alpha with it. The thread's
+     networkly.css would draw is painted at zero alpha with it. The thread's
      own per-turn actions already got this right one section down
      (`.as-msg-actions:focus-within`); these three were the rest of the same
      idea, unfinished. Hover still reveals; focus now does too. */
@@ -308,7 +308,7 @@ materials.
   .as-sidebar-toggle svg { width: 16px; height: 16px; }
   {% comment %}
   The title rides on `.pagehead-title` alone now, so the face, the weight,
-  the clamp and the spacing above it all come from coverage.css. These two
+  the clamp and the spacing above it all come from networkly.css. These two
   rules say the only thing that is different about wearing the shared header
   inside an app shell: no hairline and no accent stroke, because a rule
   across the top of a thread would read as the thread's first divider.
@@ -350,7 +350,7 @@ materials.
     font-size: var(--fs-xs); color: var(--ink-3); }
   #as-credits-value { font-family: var(--font-mono);
     font-variant-numeric: tabular-nums; color: var(--ink-2); }
-  /* Plan badge (.pill.plan-pro/.plan-free, coverage.css) — same inline
+  /* Plan badge (.pill.plan-pro/.plan-free, networkly.css) — same inline
      margin-left pattern as settings.html's Credits card. */
   .as-meta .pill { margin-left: var(--s2); vertical-align: 1px; }
 
@@ -374,7 +374,7 @@ materials.
      overlapped `.as-meta` by 34.8px — "119 credits left this month" and the
      FREE pill printed straight through the fourth card, both illegible where
      they crossed. The centring spilled the same 46.8px off the top, putting
-     the Coverage mark inside the notice above it. At 375x780 the overlap was
+     the Networkly mark inside the notice above it. At 375x780 the overlap was
      50.9px.
 
      `overflow-y: auto` is what `.as-log` already does one branch over, so
@@ -394,7 +394,7 @@ materials.
      the empty state is shorter than its content. It is also the only child
      here with no text inside to hold it open, so it was the one that gave
      way: measured at 375x667 the computed box was 44px x 22px — half height,
-     `border-radius: 50%` still on — so the Coverage mark rendered as a
+     `border-radius: 50%` still on — so the Networkly mark rendered as a
      flattened ellipse, on the first screen a new user sees. The width never
      moved because width is the cross axis, which is what made it read as a
      squashed logo rather than a small one. */
@@ -450,7 +450,7 @@ materials.
   }
   /* Added only between the first token of a reply and its `done` event
      (runStream's applyEvent) — the ring pulses for exactly as long as
-     Coverage is actually still generating. Same expanding-ring technique
+     Networkly is actually still generating. Same expanding-ring technique
      as `.as-mic.is-listening` below, `--accent` in place of `--danger`
      since this is normal activity, not a live microphone. */
   .as-avatar.is-thinking {
@@ -489,7 +489,7 @@ materials.
   .as-attachment-chip svg { flex: none; width: 13px; height: 13px; color: var(--ink-3); }
 
   /* ---- Per-turn actions: one small button under each bubble — Copy on
-     what Coverage said, Edit on what the student said. Quiet until the turn
+     what Networkly said, Edit on what the student said. Quiet until the turn
      is hovered or something inside it takes focus, the same restraint the
      history row's kebab uses. A thread that shows every control at rest
      reads as a toolbar; this one stays a conversation until you reach for
@@ -542,7 +542,7 @@ materials.
     border: 1px solid var(--accent-line); border-radius: 16px 16px 4px 16px;
     background: var(--surface); padding: var(--s3) var(--s4); max-height: 240px;
     overflow-y: auto; font: var(--w-reg) var(--fs-m)/1.5 var(--font-ui); color: var(--ink); }
-  /* Same reason the composer clears these: coverage.css draws its own
+  /* Same reason the composer clears these: networkly.css draws its own
      sitewide textarea focus ring and hover shadow, square-cornered, which
      shows up floating inside this input's rounded border. */
   .as-msg-edit-input:hover { border-color: var(--accent-line); box-shadow: none; }
@@ -687,14 +687,14 @@ materials.
     font-family: var(--font-ui); font-size: var(--fs-m); line-height: 1.5;
     max-height: 200px; overflow-y: auto; padding: 7px 0; color: var(--ink); }
   /* The pill's own :focus-within ring above is the composer's ONLY focus
-     affordance. Without this, coverage.css's sitewide
+     affordance. Without this, networkly.css's sitewide
      `textarea:focus-visible` rule draws ITS OWN ring — a 2px outline PLUS a
      3px soft box-shadow halo — around just the textarea, sitting visibly
      inside the pill's rounded border: two competing rings, one a literal
      halo floating inside the other. Both properties have to be cleared, not
      just outline; the halo in the bug report was the box-shadow half.
 
-     Same leak, hover instead of focus: coverage.css also has a sitewide
+     Same leak, hover instead of focus: networkly.css also has a sitewide
      `textarea:hover` rule (border-color + box-shadow), and the textarea
      here has no border-radius of its own — so on hover its square-cornered
      shadow shows up floating inside the pill's rounded one, a "weird
@@ -793,7 +793,7 @@ materials.
   {% comment %}
   The composer's three icon buttons, the sidebar's close and the thread's
   kebab measured 34, 34, 34, 28 and 24px on a phone. They are round, which is
-  correct — the control-shape rule (coverage.css §6) is about a pressable
+  correct — the control-shape rule (networkly.css §6) is about a pressable
   thing's CORNER, and a circular icon button whose whole shape is the target
   is not a capsule pretending to be a chip. What is not correct is the size:
   a 24px kebab is a target a finger cannot reliably hit, and this is the page
@@ -814,6 +814,7 @@ materials.
 {% endblock %}
 
 {% block content %}
+<template id="assistant-brand-mark">{% include "_logo.html" %}</template>
 <div class="page as-page">
   <div class="as-app" id="as-app">
     <div class="as-sidebar-backdrop" id="as-sidebar-backdrop"></div>
@@ -859,7 +860,7 @@ materials.
                 <path d="M10 2.5a2.5 2.5 0 0 1 2.5 2.5c0 .3-.03.58-.1.85a2.5 2.5 0 0 1 1.1 2.35c0 .93-.5 1.74-1.25 2.18.03.15.05.31.05.47A2.5 2.5 0 0 1 9.8 13.3 2 2 0 0 1 8 14.5V4.5a2 2 0 0 1 2-2z"
                       stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
               </svg>
-              What Coverage remembers
+              What Networkly remembers
             </button>
           </div>
         </div>
@@ -914,12 +915,12 @@ materials.
         The two pages that DO still carry an eyebrow are Contact detail and
         Debrief, and both were kept on purpose: each states a fact printed
         nowhere else on its page (the contact's role, which past chat is
-        being debriefed). "Advisor" over "Talk to Coverage" states nothing
+        being debriefed). "Advisor" over "Talk to Networkly" states nothing
         the title does not, which is exactly why it is not one of them.
         {% endcomment %}
         <div class="pagehead as-pagehead">
           <div class="pagehead-text">
-            <h1 class="pagehead-title">Talk to Coverage</h1>
+            <h1 class="pagehead-title">Talk to Networkly</h1>
           </div>
         </div>
       </header>
@@ -956,7 +957,7 @@ how the asking looks.
 </dialog>
 
 {% comment %}
-What Coverage remembers — facts saved via the `remember` tool (agent.py) or
+What Networkly remembers — facts saved via the `remember` tool (agent.py) or
 typed into the input at the bottom of this dialog, carried into every
 conversation's preamble regardless of which chat or folder it's in.
 Rendered once here with the page's own `memories` context; either write
@@ -964,7 +965,7 @@ swaps #as-memory-panel, same shape as every other list on this page.
 {% endcomment %}
 <dialog class="as-confirm as-memory-dialog panel panel--flat" id="as-memory">
   <div class="as-memory-head">
-    <h2 class="as-memory-dialog-title">What Coverage remembers</h2>
+    <h2 class="as-memory-dialog-title">What Networkly remembers</h2>
     <button type="button" class="as-sidebar-close" id="as-memory-close" aria-label="Close">
       <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -1078,7 +1079,7 @@ element by the next turn.
 
     // 3. Enter sends, Shift+Enter writes a newline — the composer's own
     // shortcut, not a global page one, so it never fires while typing
-    // anywhere else in Coverage.
+    // anywhere else in Networkly.
     document.addEventListener("keydown", function (e) {
       if (e.target && e.target.id === "as-input" && e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -1266,7 +1267,7 @@ element by the next turn.
     // 6c. The confirm dialog every destructive action shares. A form marks
     // itself with `data-confirm="<message>"` instead of the browser's own
     // confirm() (which cannot be styled at all — every OS draws its own,
-    // and none of them look like Coverage). Delegated on `document` so it
+    // and none of them look like Networkly). Delegated on `document` so it
     // covers both delete-conversation and delete-folder forms without
     // wiring either one by hand, and any future one for free.
     var confirmDialog = document.getElementById("as-confirm");
@@ -1561,15 +1562,9 @@ element by the next turn.
       composerForm.removeAttribute("hx-disabled-elt");
       composerForm.removeAttribute("hx-indicator");
 
-      // The exact mark _logo.html renders, inlined: the assistant avatar a
-      // JS-built turn needs is otherwise unreachable (no template engine on
-      // this side), and re-deriving it from a fetched partial for one 180-
-      // byte SVG is not worth the round trip.
-      var LOGO_MARK =
-        '<svg class="logo-mark" viewBox="0 0 24 24" fill="none" ' +
-        'xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
-        '<path d="M4 16a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="2.6" ' +
-        'stroke-linecap="round"/><circle cx="12" cy="16.4" r="2.6" fill="currentColor"/></svg>';
+      // Reuse the server-rendered mark for streamed assistant turns.
+      var LOGO_MARK = document.getElementById("assistant-brand-mark").innerHTML;
+
 
       function escapeHtml(s) {
         var d = document.createElement("div");
@@ -1867,7 +1862,7 @@ element by the next turn.
         // timesince; a turn drawn here is happening right now, so "Just
         // now" is exactly as true as any relative time gets — a page
         // reload afterwards picks up the real one from the template.
-        who.textContent = (role === "user" ? "You" : "Coverage") + " ";
+        who.textContent = (role === "user" ? "You" : "Networkly") + " ";
         var when = document.createElement("time");
         when.className = "as-msg-time";
         when.textContent = "Just now";
@@ -2130,7 +2125,7 @@ element by the next turn.
             // Terminal too, so the question above it earns its pencil here
             // as well: "try that again in a moment" is exactly when someone
             // wants to reword and retry. The notice itself gets no Copy —
-            // Coverage talking about itself is not an answer.
+            // Networkly talking about itself is not an answer.
             if (pending) attachUserActions(pending.turn, event.user_message_id, pending.text);
             scrollLogToEnd();
           } else if (event.type === "done" && assistantTurn) {

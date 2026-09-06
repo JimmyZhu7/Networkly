@@ -1,4 +1,4 @@
-"""Talk to Coverage opens with the same header as every other nav page.
+"""Talk to Networkly opens with the same header as every other nav page.
 
 Reported live: "the spacing at the top is weird". Two numbers, both measured
 in a browser at 1280x800 and 375x812 in both colour schemes.
@@ -19,7 +19,7 @@ in a browser at 1280x800 and 375x812 in both colour schemes.
 
 The two pages that DO still carry an eyebrow are Contact detail and Debrief,
 and both were kept on purpose: each states a fact printed nowhere else on its
-page. "Advisor" over "Talk to Coverage" states nothing the title does not.
+page. "Advisor" over "Talk to Networkly" states nothing the title does not.
 """
 
 from __future__ import annotations
@@ -47,14 +47,14 @@ def signed_in(client, django_user_model):
 
 def _markup(html: str) -> str:
     """The page with its stylesheets removed. `.pagehead-eyebrow` is NAMED in
-    coverage.css and in this page's own style block, so a substring check on
+    networkly.css and in this page's own style block, so a substring check on
     the raw body is true whether or not an eyebrow was drawn."""
     return re.sub(r"<style[^>]*>.*?</style>", "", html, flags=re.DOTALL)
 
 
 def test_the_chat_header_renders_a_title_and_nothing_above_it(signed_in):
     markup = _markup(signed_in.get(reverse("assistant:chat")).content.decode())
-    assert "Talk to Coverage" in markup
+    assert "Talk to Networkly" in markup
     assert 'class="pagehead-eyebrow"' not in markup, (
         "Talk was the last nav page with an eyebrow; it reads as a stray line "
         "crammed onto the title because no other page has one."
@@ -87,7 +87,7 @@ def test_the_chat_title_keeps_the_shared_headers_own_spacing(signed_in):
         "last one closed the gap above it to 0px"
     )
     # The title wears the shared class and nothing else.
-    assert 'class="pagehead-title">Talk to Coverage<' in _markup(html)
+    assert 'class="pagehead-title">Talk to Networkly<' in _markup(html)
 
 
 def test_the_composer_textarea_owns_its_own_height(signed_in):

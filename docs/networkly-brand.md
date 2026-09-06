@@ -1,0 +1,13 @@
+# Networkly identity
+
+Approved September 5, 2026: the supplied connected-people N symbol and custom lowercase Networkly wordmark. The blue initial n and dark lettering retain the selected design.
+
+The original high-resolution lockup is preserved unchanged at `coverage_web/static/img/networkly/approved-lockup.png`. It comes from the user-approved `output/networkly-logos/selected/networkly-people-lockup-v2.png`, matching the attached screenshot. `_wordmark.html` uses its exact silhouette as an SVG luminance mask, applying the existing light/dark theme colors. No replacement font is used. `email-lockup.png` is a browser-rendered export of that same component. `_logo.html` and the favicon/install assets share simplified native geometry for compact placements.
+
+The rebrand covers navigation, footer, accessible labels, page and social titles, public/auth/legal screens, onboarding, email bodies and subjects, sender display name, notifications, app manifest, download filenames, calendar display names, checkout labels, and assistant prompts/messages. The shared stylesheet is now `networkly.css`. The streamed assistant avatar reuses the server-rendered mark.
+
+Internal package/database names, existing login addresses, stored user text, and calendar event UIDs are retained. Changing a calendar UID would create duplicate events in existing subscriptions. Deployment hostnames, verified sender addresses, and OAuth-provider console branding are external configuration; this change does not invent a new domain or alter credentials. Allauth emails override a legacy Site display name without changing its host, links, or database record.
+
+Validation: 52 page/theme/viewport checks across public and authenticated routes returned 200, with no visible legacy brand wording, horizontal overflow, or JavaScript errors. A final 18-check confirmation at 1440, 820 and 390 pixels in both themes verified that the logo stays inside navigation. Favicons have intrinsic dimensions, raster fallbacks, and versioned URLs; install icons keep their artwork within the maskable safe area.
+
+The full regression run reported 11,228 passed, 26 failed, and 13 opt-in live-network skips. The failures were superseded branding assertions and a missing SVG favicon size declaration. After correcting those, all 26 failed cases passed, followed by all 592 tests across affected files, email/trial rendering, production settings, new brand regression guards, and design checks. All 97 templates compile; Django system checks and whitespace checks pass. This is a full run plus targeted confirmation, not a second full-suite run. External Gmail, AI and payment transactions were not performed.

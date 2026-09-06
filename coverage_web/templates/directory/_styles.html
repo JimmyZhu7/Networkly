@@ -1,6 +1,6 @@
 {% comment %}
 Directory-only extras. Everything generic (pills, deadline, markers, empty,
-honesty, timeline chrome) lives in static/css/coverage.css.
+honesty, timeline chrome) lives in static/css/networkly.css.
 {% endcomment %}
 <style>
   /* ======================================================================
@@ -17,7 +17,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
 
   /* WIDTH AND TOP CHROME, widened/tightened 2026-08-31 -- the founder's own
      complaint, measured against a real wide monitor rather than guessed:
-     `.page--full`'s shared 1440px cap (coverage.css) sits centered on
+     `.page--full`'s shared 1440px cap (networkly.css) sits centered on
      anything wider, so a 2000px+ window painted ~280px of plain background
      on EACH side of a page whose whole point is a dense, information-heavy
      grid -- exactly the surface that benefits most from the width a wide
@@ -286,7 +286,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      beside it, which read as a misregistration rather than a choice. One
      stated height beats five paddings agreeing by coincidence.
 
-     No border-radius: the base rule in coverage.css already gives every input
+     No border-radius: the base rule in networkly.css already gives every input
      and select `--r-ctl`, and this override used to take it back to 999px —
      the same legacy carry-over `.filters .csel-btn` carried, in the one place
      a grep of the stylesheet does not reach. It matters twice over. The search
@@ -332,7 +332,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      JS off, and it survives the htmx swap like every other rendered state. */
   .filters-search { position: relative; flex: 1 1 15rem; max-width: 24rem; }
   /* `background-color`, never the `background` shorthand, in every tier rule
-     below. coverage.css draws the native <select>'s caret as a
+     below. networkly.css draws the native <select>'s caret as a
      `background-image` (L1311), and the shorthand resets it to `none` — which
      would leave the no-JS fallback, and the first frames before the enhancer
      runs, as four flat boxes with no affordance saying they open. */
@@ -410,7 +410,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
   /* The WRAPPER above is untouched: it is a filter control drawn to match
      its row-mates in this bar, and standardising the app's checkboxes is
      not a reason to restyle the pill it happens to sit in. The BOX inside
-     it is now the app's one shared checkbox (coverage.css §11) rather than
+     it is now the app's one shared checkbox (networkly.css §11) rather than
      a 15px native widget recoloured with `accent-color`, so its tick agrees
      with every other tick in the product while the pill goes on reading as
      a button. Everything this rule used to say — margin, flex, cursor,
@@ -651,7 +651,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      EVERY RULE AFTER IT. That happened here and silently killed 103 of 185
      rules, including .rolecard and .firmcols: the whole feed unwrapped into
      unstyled blocks while the nav still looked fine, because the nav's styles
-     live in coverage.css and had already parsed. A template test now guards
+     live in networkly.css and had already parsed. A template test now guards
      this (directory/tests/test_styles_block.py). */
 
   /* The live dot beside "Rolling", inside the row's due column. Slightly
@@ -662,7 +662,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      role: ten of them on the first viewport of the founder's board, sixty-odd
      down a scrolled column, each one an infinite animation on a fact that
      never changes. "Rolling" is a STATE — this posting has no deadline — not
-     an event, and coverage.css's own `.live-dot` (L2125-2137) already made
+     an event, and networkly.css's own `.live-dot` (L2125-2137) already made
      exactly this argument and removed its own ring. The colour is the signal
      and the colour stays; the dot is now static, which also drops the last
      infinite animation on this page that was not bound to a live state. */
@@ -695,7 +695,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      empty state were merged into one, and its comment says what the modifier
      is for: "the copy belongs next to the Picked column, not in place of
      it". Nothing anywhere read the class. `git grep` found one hit, the line
-     that writes it, and no rule in this file or in coverage.css.
+     that writes it, and no rule in this file or in networkly.css.
 
      What that cost, measured on `?q=zzqqxx` at 1440px — the exact state the
      modifier names, every pick filtered out but the column still drawing:
@@ -1003,7 +1003,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      button was an outlined `.scope-act` sitting beside a "Which ones?"
      toggle and a `<details>` summary all wearing the same treatment. One
      action, one emphasis. `--r-ctl` because it is a thing you PRESS
-     (coverage.css L1089) — the pill is reserved for things that report
+     (networkly.css L1089) — the pill is reserved for things that report
      state.
 
      The disabled state keeps the shape and drops the fill, so the slot does
@@ -1878,7 +1878,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
   .fd-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
   /* Warmth by colour AND by position in the list (sorted strongest first),
      never colour alone. The four `.warmth-dot-*` colours moved to
-     coverage.css §14c: My Applications inlines its own stylesheet and never
+     networkly.css §14c: My Applications inlines its own stylesheet and never
      includes this file, so the same dot has to be defined site-wide for the
      role drawer and the pipeline cards to draw it. */
   .fd-person-id { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -1931,7 +1931,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
          htmx holding the old node on screen with that class for exactly
          that long before inserting the new one. Until now nothing styled
          it, so the 120ms was a pause, not a fade.
-       - `settle` on the arriving stub. coverage.css §15's own keyframe, the
+       - `settle` on the arriving stub. networkly.css §15's own keyframe, the
          one `#cov-results` fresh content already uses, so the receipt
          arrives the same way every other swapped-in thing on this page
          does. 160ms out, 220ms in: the exchange reads as one motion.
@@ -1979,7 +1979,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      an inner scroll so a 4,000-character description never pushes the page,
      and a fixed close button that stays reachable while the body scrolls.
      ====================================================================== */
-  /* The posting drawer's styles now live in static/css/coverage.css: the
+  /* The posting drawer's styles now live in static/css/networkly.css: the
      drawer is included by the feed, the firm page AND My Applications, and
      component CSS defined in one page's inline styles is a component the
      other pages silently lose — the exact bug that left My Applications
@@ -2127,7 +2127,7 @@ honesty, timeline chrome) lives in static/css/coverage.css.
      DARK — the tiles that were painted in light-mode literals.
 
      Both blocks, both directions: the media query sets the default and
-     `[data-theme]` overrides it either way, the same shape coverage.css's
+     `[data-theme]` overrides it either way, the same shape networkly.css's
      own palette uses (a student reading at midnight in a light-mode OS is
      a real person, not a configuration error). Every other rule in this
      file is already token-driven and needs nothing here.

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load socialaccount %}
 
-{% block title %}Connected accounts · Coverage{% endblock %}
+{% block title %}Connected accounts · Networkly{% endblock %}
 
 {% block head %}{% include "account/_account_page.html" %}{% endblock %}
 
@@ -13,11 +13,11 @@
   </header>
   {% comment %}
   Sign-in only. Every provider in settings/base.py requests identity scopes
-  and nothing else — connecting one here never grants Coverage mailbox access,
+  and nothing else — connecting one here never grants Networkly mailbox access,
   and the copy must keep saying so (§3's login-only rule). Gmail Live's
   mailbox access is a SEPARATE consent, on the Settings page, never this one.
   {% endcomment %}
-  <p class="acct-lede">Sign-in only. Connecting one gives Coverage your name and
+  <p class="acct-lede">Sign-in only. Connecting one gives Networkly your name and
     email address, never access to your mailbox.</p>
 
   <div class="panel panel--page">

@@ -1,7 +1,7 @@
 /* Responsive navigation. Without JavaScript every destination stays visible. */
 (function () {
-  if (window.coverageWorkspaceReady) return;
-  window.coverageWorkspaceReady = true;
+  if (window.networklyWorkspaceReady) return;
+  window.networklyWorkspaceReady = true;
   document.documentElement.classList.add("workspace-ready");
 
   var phoneSettings = window.matchMedia("(max-width: 820px)");

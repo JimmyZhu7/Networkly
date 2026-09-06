@@ -1,6 +1,6 @@
 """Nothing in the shared stylesheet styles something that no longer exists.
 
-`static/css/coverage.css` is loaded on every page by every visitor, so a rule
+`static/css/networkly.css` is loaded on every page by every visitor, so a rule
 that styles a retired component is bytes everyone pays for and nobody uses.
 Worse, it is a lie about the product: a 2026-09-01 audit read six such rules
 as live components and asked why they were inconsistent with the rest of the
@@ -32,7 +32,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 WEB = REPO / "coverage_web"
-CSS = WEB / "static" / "css" / "coverage.css"
+CSS = WEB / "static" / "css" / "networkly.css"
 
 # family prefix -> the template fragment that generates it. Fewer than 20
 # entries by design: a long allowlist is a stylesheet nobody is pruning.
@@ -119,7 +119,7 @@ def test_no_shared_rule_styles_something_nothing_renders():
         if not re.search(r"(?<![\w-])" + re.escape(cls) + r"(?![\w-])", blob):
             dead.append(cls)
     assert not dead, (
-        "coverage.css styles classes nothing renders: "
+        "networkly.css styles classes nothing renders: "
         + ", ".join("." + c for c in dead)
         + ". Delete the rule, or add the family to DYNAMIC_FAMILIES with the "
           "template fragment that builds it."

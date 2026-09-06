@@ -33,7 +33,7 @@ def test_workspace_identifies_exactly_one_current_destination(client, student, p
     current = re.findall(r'<a href="([^"]+)"[^>]*aria-current="page"', nav)
     assert current == [destination]
     assert nav.count("<a href=") == 6
-    assert 'aria-label="Search Coverage"' in body
+    assert 'aria-label="Search Networkly"' in body
     assert 'aria-controls="workspace-primary"' in body
 
 

@@ -1449,10 +1449,10 @@ _NO_CLASS = re.compile(
 
 DERIVED_SUMMER = ("A summer {cohort} internship is the penultimate-year "
                   "placement, so its interns graduate in {year}. The posting "
-                  "does not say this; Coverage inferred it.")
+                  "does not say this; Networkly inferred it.")
 DERIVED_GRAD = ("A graduate programme starting in {cohort} hires from that "
                 "year's finishing class. The posting does not say this; "
-                "Coverage inferred it.")
+                "Networkly inferred it.")
 
 
 def derive_class_year(bucket: str, title: str, cohort: str) -> tuple[str, str]:

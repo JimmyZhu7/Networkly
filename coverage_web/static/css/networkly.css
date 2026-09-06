@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Coverage design system — static/css/coverage.css  (v2)
+   Networkly design system — static/css/networkly.css  (v2)
    "An instrument, not a movement." Ledger look: paper, ink, hairlines,
    one navy accent, pill badges, mono tabular figures for numbers. Both
    colour schemes ship (see design spec §0).
@@ -1981,7 +1981,7 @@ table.summary td:last-child { text-align: right; font-family: var(--font-mono);
 .df-v.vd-language_ok { color: var(--ok); }
 .df-v.vd-language_warn, .df-v.vd-visa_firm_no { color: var(--stale-t); }
 
-/* WHY COVERAGE RATES THIS ONE. One quiet line under the header, in the
+/* WHY NETWORKLY RATES THIS ONE. One quiet line under the header, in the
    meta line's own size and colour — the same one-line-not-pills call
    `_rolecard.html`'s `.rr-why` and the Picked column header both make, so
    the same reasoning reads the same way on all three surfaces. Ellipsised

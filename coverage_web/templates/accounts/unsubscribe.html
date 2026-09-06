@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if done %}Unsubscribed{% else %}Stop the weekly digest{% endif %} · Coverage{% endblock %}
+{% block title %}{% if done %}Unsubscribed{% else %}Stop the weekly digest{% endif %} · Networkly{% endblock %}
 
 {% block head %}{% include "account/_auth_styles.html" %}{% endblock %}
 
@@ -23,7 +23,7 @@ person needs to know after unsubscribing from anything.
       <a class="btn btn-primary auth-submit" href="{% url 'accounts:settings' %}#preferences">Open settings</a>
     {% else %}
       <h1 class="auth-title">Stop the weekly digest?</h1>
-      <p class="auth-sub">Coverage sends {{ email }} one email a week, and only in a week your board has something due.</p>
+      <p class="auth-sub">Networkly sends {{ email }} one email a week, and only in a week your board has something due.</p>
       <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-primary auth-submit">Unsubscribe</button>

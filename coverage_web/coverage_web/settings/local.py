@@ -21,7 +21,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # `Cache-Control`/`ETag`, which puts browsers into *heuristic* caching: they
 # invent a freshness lifetime (commonly ~10% of the file's age) and keep
 # serving the old file. Safari is aggressive about this, so an edit to
-# coverage.css could go unseen for a long time — which looks exactly like a
+# networkly.css could go unseen for a long time — which looks exactly like a
 # CSS bug that isn't there (it presented once as a wildly oversized avatar,
 # because only the pre-avatar stylesheet had loaded).
 #

@@ -22,7 +22,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-CSS = Path(__file__).resolve().parents[2] / "static" / "css" / "coverage.css"
+CSS = Path(__file__).resolve().parents[2] / "static" / "css" / "networkly.css"
 TEMPLATE = (
     Path(__file__).resolve().parents[2] / "templates" / "crm" / "_contact_live.html"
 )
@@ -31,7 +31,7 @@ TEMPLATE = (
 def _rule(selector: str) -> str:
     text = CSS.read_text()
     match = re.search(r"(?m)^" + re.escape(selector) + r"\s*\{(.*?)\}", text, re.S)
-    assert match, f"{selector} is gone from coverage.css"
+    assert match, f"{selector} is gone from networkly.css"
     return " ".join(match.group(1).split())
 
 

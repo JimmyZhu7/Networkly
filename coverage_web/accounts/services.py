@@ -1372,11 +1372,11 @@ EXPORT_FILES: list[tuple[str, object, str]] = [
     ("calendar_events.csv", calendar_events_csv,
      "Coffee chats and events on your calendar, captured or hand-added."),
     ("chat_folders.csv", chat_folders_csv,
-     "Your own groupings of Talk to Coverage conversations."),
+     "Your own groupings of Talk to Networkly conversations."),
     ("chat_conversations.csv", chat_conversations_csv,
-     "Every Talk to Coverage conversation you've started, with its folder."),
+     "Every Talk to Networkly conversation you've started, with its folder."),
     ("chat_messages.csv", chat_messages_csv,
-     "Every message in every Talk to Coverage conversation."),
+     "Every message in every Talk to Networkly conversation."),
     ("advisor_memories.csv", advisor_memories_csv,
      "Facts the advisor has remembered about your search, in its own words."),
     ("daily_briefs.csv", daily_briefs_csv,
@@ -1418,7 +1418,7 @@ def export_manifest() -> list[tuple[str, str]]:
 
 def _export_readme() -> str:
     lines = [
-        "Coverage — your data",
+        "Networkly — your data",
         "=" * 20,
         "",
         "One CSV per table. Every row in here is yours; nothing is shared with",

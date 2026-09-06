@@ -10,7 +10,7 @@ there is nothing to buy yet (billing/stripe_gateway.py is unconfigured and
 the pricing page's Pro card carries an "In the works" badge) and a mail
 that pushes an unbuyable plan is the kind of thing that gets a product
 filtered.
-{% endcomment %}Coverage · your Pro trial has ended
+{% endcomment %}Networkly · your Pro trial has ended
 
 Your {{ trial_days }}-day Pro trial ended {{ ended_at|date:"j F Y" }}. Your
 account is back on the Free plan.

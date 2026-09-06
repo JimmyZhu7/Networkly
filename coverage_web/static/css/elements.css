@@ -243,3 +243,13 @@ summary::marker { color: var(--ink-3); font-size: .8em; }
 .cad-sentence { position: static; width: auto; height: auto; clip: auto; clip-path: none; overflow: visible; white-space: normal; color: var(--ink-2); }
 .cad-lab { text-align: left !important; }
 @media (max-width:640px) { .desk-hero .desk-title { font-size: 36px; } .desk-pace { align-items: stretch; flex-direction: column; } }
+
+/* Approved Networkly lockup: exact lettering, with theme-aware ink. */
+.brand-lockup { display: block; width: 184px; height: auto; max-width: 100%; flex: 0 1 auto; overflow: visible; }
+.brand-blue { fill: var(--accent); }
+.brand-lettering { fill: var(--ink); }
+.workspace-nav .wordmark { min-height: 48px; min-width: 0; }
+.footer-logo .brand-lockup { width: 158px; }
+@media (max-width: 760px) {
+  .wordmark .brand-lockup { width: 164px; }
+}

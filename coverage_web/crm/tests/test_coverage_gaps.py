@@ -1,4 +1,4 @@
-"""Tests for the Coverage-Gaps ranking, the CG tag it now drives, and the
+"""Tests for the Networkly-Gaps ranking, the CG tag it now drives, and the
 advocate arithmetic on the Network board (crm/coverage.py +
 crm.views.contact_list).
 
@@ -45,7 +45,7 @@ def _cards(body: str) -> str:
     """Just the tier lanes, not the board around them.
 
     Replaces `_gap_strip`, which sliced the page down to the deleted
-    Coverage Gaps `<h2>`. Ends at `.net-legend-mini`, not the panel's
+    Networkly Gaps `<h2>`. Ends at `.net-legend-mini`, not the panel's
     `</section>`: the key inside that panel draws a "CG" swatch of its own,
     and leaving it in scope would make "no card on this board is tagged"
     indistinguishable from "the key always shows one anyway" — the same
@@ -159,7 +159,7 @@ def test_ranking_is_deterministic_on_ties():
 def test_limit_returns_only_the_worst_handful_when_it_is_asked_for():
     """`limit` still caps, but it no longer caps BY DEFAULT.
 
-    The default was 6 while the Coverage Gaps strip drew exactly six rows.
+    The default was 6 while the Networkly Gaps strip drew exactly six rows.
     That strip is gone and the tag that replaced it has no cap, so the
     default is None and a caller that wants a handful says so. Renamed from
     `test_limit_returns_only_the_worst_handful` because the old name read as
@@ -301,7 +301,7 @@ def test_tier_cost_makes_the_commitment_visible():
 # ---------------------------------------------------------------------------
 @pytest.mark.django_db
 def test_the_widget_is_gone_and_left_nothing_behind(client):
-    """Delete, not hide. The founder asked for the Coverage Gaps widget off
+    """Delete, not hide. The founder asked for the Networkly Gaps widget off
     the page, so no part of it may render on any account: not the heading,
     not the ledger, not a row, not the "Who to find" dropdown that lived
     inside it, and not the CSS that drew any of them.
@@ -333,7 +333,7 @@ def test_the_widget_is_gone_and_left_nothing_behind(client):
                  'class="gap-state"', 'class="btn gap-act"', 'class="src"',
                  'class="src-toggle"', 'class="src-panel'):
         assert gone not in markup, f"{gone} still renders"
-    for gone in ("Coverage Gaps", "Who to find", "Ranked by exposure",
+    for gone in ("Networkly Gaps", "Who to find", "Ranked by exposure",
                  "to close", "aria-label=\"Add a contact at "):
         assert gone not in markup, f"{gone!r} is still on the page"
 
@@ -390,7 +390,7 @@ def test_network_page_shows_gaps_and_advocate_fractions(client):
     # full, including where the "0 of N advocates" number moved to for a
     # firm that HAS contacts but no advocate yet.
     # The tier cost line ("2 firms × 2 = 4 advocates · ... in place · ... to
-    # go") was pulled from Firm Coverage per direct feedback that it read as
+    # go") was pulled from Firm Networkly per direct feedback that it read as
     # clutter under every tier label. coverage.tier_cost() is still exercised
     # directly by test_tier_cost_makes_the_commitment_visible above; only the
     # render was removed.
@@ -576,7 +576,7 @@ def test_the_tag_shows_no_number_and_explains_itself_in_words(client):
         assert number not in cards, f"a number leaked back onto a card: {number!r}"
     assert not re.search(r">\s*1 of \d", cards), "a rank is back on a card"
     # The tag's own tooltip is a sentence, not a formula.
-    assert ('title="Coverage gap. You ranked this firm high and nobody here '
+    assert ('title="Relationship gap. You ranked this firm high and nobody here '
             'is warm yet."') in cards
 
 
@@ -773,13 +773,13 @@ def test_the_key_explains_the_tag_without_a_hover(client):
     legend = body[body.index('class="net-legend-mini"'):]
     legend = legend[: legend.index("</p>")]
     assert 'class="pill fc-cg"' in legend, "the key lost its CG swatch"
-    assert "Coverage gap, nobody warm yet" in legend, (
+    assert "Relationship gap, nobody warm yet" in legend, (
         "the key shows a CG swatch with no words beside it, which explains "
         "nothing a reader did not already see on a card"
     )
     # Beside the entry it was built to match, not instead of it.
     assert "Sponsors visas" in legend
-    assert legend.index("Sponsors visas") < legend.index("Coverage gap")
+    assert legend.index("Sponsors visas") < legend.index("Relationship gap")
 
 
 @pytest.mark.django_db

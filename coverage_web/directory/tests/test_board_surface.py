@@ -19,7 +19,7 @@ in this suite while being plainly visible on the page:
     the 2026-08-30 row redesign.
 
 Colour is asserted by TOKEN NAME rather than by measuring a ratio in Python:
-the tokens' own values live in `static/css/coverage.css` and are another
+the tokens' own values live in `static/css/networkly.css` and are another
 workstream's to move, and the promise this file can keep is "this figure is
 painted with the tier built to be read", not "this hex is 4.5:1". The measured
 ratios are in the docstrings so the next reader knows what was checked and how.
@@ -280,7 +280,7 @@ def test_the_out_of_band_refresh_ships_the_folded_counts(client, dupes):
 # ---------------------------------------------------------------------------
 # 2. ONE CONTROL SHAPE.
 #
-# coverage.css's `.btn` rule (L1089-1093) states it: "Status chips keep the
+# networkly.css's `.btn` rule (L1089-1093) states it: "Status chips keep the
 # pill; controls don't." The board was the last page ignoring it — Save, Read,
 # "Save them all" and Undo were all 999px under a filter bar squared to
 # `--r-ctl` in the same pass, so a student met both shapes on one screen.
@@ -359,7 +359,7 @@ def test_the_capsule_is_spent_on_the_group_not_on_five_buttons():
 
 
 def test_the_read_button_is_squared_for_every_page_that_draws_it():
-    """`.meta-read` is defined in `static/css/coverage.css` (L1767) with a
+    """`.meta-read` is defined in `static/css/networkly.css` (L1767) with a
     999px radius, and the override lives in `directory/_drawer.html` rather
     than in the feed's own `_styles.html`.
 
@@ -421,7 +421,7 @@ def test_the_closing_soon_figure_uses_the_text_tier_not_the_bar_tier():
 def test_the_rolling_dot_does_not_pulse_forever():
     """"Rolling" is a state, not an event. `.rolling-dot::after` ran
     `pulse-ring` on an infinite loop on every rolling role — ten on the first
-    viewport, sixty-odd down one scrolled column. coverage.css's own
+    viewport, sixty-odd down one scrolled column. networkly.css's own
     `.live-dot` (L2125-2137) already made this argument and removed its own
     ring. The colour carries the signal; nothing needs to move."""
     css = _css()
@@ -531,7 +531,7 @@ def test_the_tiles_are_restated_for_dark_in_both_directions():
     BOTH blocks, because dark arrives two ways. The media query sets the
     default and `[data-theme]` overrides it in either direction — a student
     reading at midnight in a light-mode OS is a real person, not a
-    configuration error, and this is the shape coverage.css's own palette
+    configuration error, and this is the shape networkly.css's own palette
     uses. A dark rule written only inside the media query is a rule the
     theme toggle cannot reach.
 

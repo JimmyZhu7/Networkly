@@ -1,6 +1,6 @@
-# Coverage
+# Networkly
 
-Everyone tracks recruiting deadlines. Nobody tracks the relationship. Coverage
+Everyone tracks recruiting deadlines. Nobody tracks the relationship. Networkly
 is a shared, centrally-scraped opportunities feed for campus recruiting
 (consulting, finance) — free, never paywalled, ranked by deadline then
 freshness — wrapped around a private, per-student networking CRM that scans a

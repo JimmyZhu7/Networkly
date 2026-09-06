@@ -1,7 +1,7 @@
 /* Widget behavior enhances native controls; server responses remain authoritative. */
 (function () {
-  if (window.coverageWidgetsReady) return;
-  window.coverageWidgetsReady = true;
+  if (window.networklyWidgetsReady) return;
+  window.networklyWidgetsReady = true;
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
   var stage = "all", stagePath = location.pathname, restoreStageFocus = false;
   var pending = new WeakMap();
@@ -93,11 +93,11 @@
       pending.set(widget, count + 1);
       widget.classList.add("widget-pending");
       widget.setAttribute("aria-busy", "true");
-      detail.xhr.coverageWidget = widget;
+      detail.xhr.networklyWidget = widget;
     }
   });
   document.addEventListener("htmx:afterRequest", function (event) {
-    var detail = event.detail, widget = detail.xhr && detail.xhr.coverageWidget;
+    var detail = event.detail, widget = detail.xhr && detail.xhr.networklyWidget;
     if (!widget) return;
     var count = Math.max(0, (pending.get(widget) || 1) - 1);
     pending.set(widget, count);

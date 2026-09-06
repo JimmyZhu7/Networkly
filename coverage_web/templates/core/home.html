@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% load textstyle %}
 
-{% block title %}Coverage{% endblock %}
+{% block title %}Networkly{% endblock %}
 
 {% block head %}
 <style>
-  /* ---- Landing-page-only styles. Everything shared lives in coverage.css. -- */
+  /* ---- Landing-page-only styles. Everything shared lives in networkly.css. -- */
 
   /* ---- The hero sheen runs once ------------------------------------------
      `.kin-hero::after` is a 7.5s diagonal sheen declared `infinite` in
-     coverage.css §15, and this page and /pricing/ are the only two that wear
+     networkly.css §15, and this page and /pricing/ are the only two that wear
      it. Nothing about a marketing hero changes, so an animation that never
      stops is decoration on a static thing: it draws the eye back to the
      masthead every 7.5 seconds while the visitor is reading the section
@@ -20,10 +20,10 @@
      visible resting position and stays there.
 
      Longhands, not the `animation` shorthand, and that is the point:
-     coverage.css's reduced-motion block sets `animation: none`, which sets
+     networkly.css's reduced-motion block sets `animation: none`, which sets
      animation-NAME to none. Nothing here touches the name, so under
      `prefers-reduced-motion` there is still no animation at all. Written in
-     this page's own style block rather than in coverage.css because that
+     this page's own style block rather than in networkly.css because that
      file belongs to another pass; when the shared rule becomes one-shot,
      this block and pricing.html's copy of it can both go. */
   .kin-hero::after { animation-iteration-count: 1; animation-fill-mode: both; }
@@ -35,9 +35,9 @@
      The card keeps `.kin-hero` — its gradient, sheen sweep, border and
      rise-in are already the marketing card treatment. That rule is SHARED
      with /pricing/ and both auth screens, so every override here is scoped
-     to `.desk-hero`; nothing in coverage.css changes and those three pages
+     to `.desk-hero`; nothing in networkly.css changes and those three pages
      render exactly as before. Every colour is a token, so dark mode comes
-     for free through the palette in coverage.css §2. */
+     for free through the palette in networkly.css §2. */
   .desk-hero { display: grid; align-items: center; gap: var(--s7);
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
     padding: var(--s7) var(--s6); }
@@ -180,7 +180,7 @@
     font-size: 11px; font-weight: var(--w-bold); overflow: hidden;
     background: hsl(var(--hue, 210) 52% 90%); color: hsl(var(--hue, 210) 55% 24%); }
   /* The real mark when we have one. The landing page is where these earn
-     the most — it is the page making the claim that Coverage checks these
+     the most — it is the page making the claim that Networkly checks these
      firms directly — and it was still showing two-letter monograms after the
      app had 78 logos. White tile, `contain` so wordmarks are not cropped.
 
@@ -255,7 +255,7 @@
      the hero now shows, two screens apart. Repeating it taught the visitor
      nothing on the second look, so this vignette drops a level instead: the
      hero shows WHAT the queue looks like, this shows what a row is FOR —
-     why Coverage ranked this person today, the angle to open with, and the
+     why Networkly ranked this person today, the angle to open with, and the
      four one-click outcomes the copy beside it promises. */
   .v-decide { border-left-color: var(--accent);
     padding: var(--s3) var(--s4); position: relative; }
@@ -348,7 +348,7 @@
   }
 
   /* Reduced motion: the hero's two entrances are the only new animations on
-     this page. coverage.css §17 already collapses every duration to 0.01ms,
+     this page. networkly.css §17 already collapses every duration to 0.01ms,
      which lands `both`-filled animations on their end state — this states it
      outright so a future edit can't reintroduce a delayed reveal that leaves
      rows invisible. */
@@ -375,7 +375,7 @@
   treatment (tinted gradient, sheen sweep, border, rise-in) — but that rule
   also dresses /pricing/ and both auth screens, so every layout override for
   this page is scoped to `.desk-hero` in the style block above and nothing in
-  coverage.css is touched.
+  networkly.css is touched.
 
   The panel is illustrative. A logged-out visitor has no queue, so the names
   are fictional and the caption says so outright — the same honesty the

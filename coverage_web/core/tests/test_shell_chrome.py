@@ -15,7 +15,7 @@ which between them frame every other page in the product:
     10px, and hardcoded dark fallbacks that could not follow the palette. A
     second toast style beside `.msg`, which every flash message already uses.
   * `500.html` was light-only, on the old ink and the old navy. It cannot
-    depend on coverage.css (that stylesheet may be exactly what is down), so
+    depend on networkly.css (that stylesheet may be exactly what is down), so
     it inlines the palette; what it had inlined was three redesigns stale.
 """
 
@@ -37,7 +37,7 @@ def test_theme_color_is_the_v4_navy_and_follows_the_scheme(client):
     tags = re.findall(r'<meta name="theme-color"[^>]*>', body)
 
     assert len(tags) == 2, f"one fallback plus one dark override, found {tags}"
-    assert 'content="#1f4e79"' in tags[0] and "media" not in tags[0], (
+    assert 'content="#2857c7"' in tags[0] and "media" not in tags[0], (
         "the unqualified tag comes first, as the fallback for clients that "
         "do not understand `media` here"
     )
@@ -114,7 +114,7 @@ def test_the_500_page_carries_both_palettes_and_no_stale_ink():
 
     # Still self-contained: an error page that needs a stylesheet is an error
     # page that fails when the stylesheet is what broke.
-    assert "coverage.css" not in page
+    assert "networkly.css" not in page
     assert "<link" not in page
 
     assert "@media (prefers-color-scheme: dark)" in page

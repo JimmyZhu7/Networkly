@@ -63,7 +63,7 @@ values.
         </div>
       {% else %}
         {% comment %}
-        WHY the column is blank, when Coverage is the one that blanked it.
+        WHY the column is blank, when Networkly is the one that blanked it.
         A hard bounce and a "no longer with the firm" auto-reply both clear
         the address (capture.gmail.apply_findings, capture.mailfacts), and
         until now the only trace was a line buried in the notes below — so
@@ -80,7 +80,7 @@ values.
             {% else %}
               Mail to them bounced.
             {% endif %}
-            <span class="cd-email">{{ dead_address.about_email }}</span> is no longer usable. Coverage won’t suggest emailing it.
+            <span class="cd-email">{{ dead_address.about_email }}</span> is no longer usable. Networkly won’t suggest emailing it.
             <a href="{% url 'crm:contact_edit' contact.pk %}">Add a new address</a> if you find one.
           </p>
         {% else %}

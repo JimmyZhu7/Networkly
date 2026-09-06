@@ -10,8 +10,8 @@ page that must never itself 500.
 That constraint is also why the palette below is a block of literal hex rather
 than `var(--paper)` and friends: an error page cannot depend on a stylesheet
 that may be exactly what is down. The values are copied from
-static/css/coverage.css §1 (light) and its dark block, so the page reads as
-Coverage in both schemes instead of as the pre-v4 ink-and-navy it wore until
+static/css/networkly.css §1 (light) and its dark block, so the page reads as
+Networkly in both schemes instead of as the pre-v4 ink-and-navy it wore until
 now (#171717 ink, #1d3a5f link, no dark scheme at all — a light card thrown at
 a reader whose whole OS is dark).
 {% endcomment %}
@@ -21,7 +21,7 @@ a reader whose whole OS is dark).
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#1f4e79">
   <meta name="theme-color" content="#141712" media="(prefers-color-scheme: dark)">
-  <title>Something broke · Coverage</title>
+  <title>Something broke · Networkly</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -55,7 +55,7 @@ a reader whose whole OS is dark).
   <main>
     <h1>Something went wrong.</h1>
     <p>Try refreshing the page. If the problem continues, try again later.</p>
-    <p><a href="/">Back to Coverage</a></p>
+    <p><a href="/">Back to Networkly</a></p>
   </main>
 </body>
 </html>

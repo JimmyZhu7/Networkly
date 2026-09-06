@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %} · Coverage{% endblock %}
+{% block title %}{% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %} · Networkly{% endblock %}
 
 {% block head %}
 <style>
@@ -11,7 +11,7 @@
   .cf-card label { font-size: var(--fs-s); }
   /* `:not([type="checkbox"])` because this card holds one — "Always keep in
      my daily queue". A bare `.cf-card input` ties on specificity with the
-     shared `input[type="checkbox"]` rule (coverage.css §11) and, sitting
+     shared `input[type="checkbox"]` rule (networkly.css §11) and, sitting
      later in the cascade, was stretching a 16px box across the column. */
   .cf-card input:not([type="checkbox"]), .cf-card select, .cf-card textarea { width: 100%; }
   .cf-actions { display: flex; gap: var(--s3); align-items: center; margin-top: var(--s4); }
@@ -147,7 +147,7 @@
           {% comment %}
           The override for the queue's coffee-chat rule. Three choices rather
           than a checkbox because the stored value is nullable and blank is a
-          real answer: leave it and Coverage reads the role text, set it and
+          real answer: leave it and Networkly reads the role text, set it and
           your answer wins either way.
           {% endcomment %}
           <div>

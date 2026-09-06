@@ -2940,7 +2940,7 @@ def _starter_seeds(user, today) -> list[dict]:
             seeds.append({
                 "key": "gmail",
                 "title": "Connect Gmail",
-                "why": "Already emailing people? Coverage reads six months of "
+                "why": "Already emailing people? Networkly reads six months of "
                        "your sent mail once and offers whoever you wrote to "
                        "at a firm on your board. Nothing is added until you "
                        "tap. After that, replies log themselves.",

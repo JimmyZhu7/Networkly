@@ -96,7 +96,7 @@ def gmail_callback(request):
             # beats letting the user wonder why nothing arrives instantly.
             messages.warning(
                 request,
-                "Real-time updates aren't active yet — Coverage will keep "
+                "Real-time updates aren't active yet — Networkly will keep "
                 "retrying. Your historical scan will still run.",
             )
         else:

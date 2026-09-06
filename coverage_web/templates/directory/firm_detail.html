@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load textstyle %}
 
-{% block title %}{{ firm.name|smart_title }} · Coverage{% endblock %}
+{% block title %}{{ firm.name|smart_title }} · Networkly{% endblock %}
 
 {% block head %}{% include "directory/_styles.html" %}{% endblock %}
 
@@ -71,7 +71,7 @@
   {% if cycle_observed %}
     {% comment %}
     Measured, not asserted. `timeline` above is what a human read and vouched
-    for (a `FirmDate`, with a confidence band); this is what Coverage's own
+    for (a `FirmDate`, with a confidence band); this is what Networkly's own
     scraper has watched happen on this firm's own boards since it started
     watching (`FirmCycleObservation` — see its docstring). No prediction, no
     "typically" or "usually": history starts 2026-07-23 and every number and

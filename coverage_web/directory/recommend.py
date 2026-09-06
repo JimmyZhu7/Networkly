@@ -1146,7 +1146,7 @@ def _region_fit(profile: Profile, c: Candidate) -> tuple[int, list[Reason]]:
         if profile.regions:
             return W_REGION_UNKNOWN, [Reason(
                 "Location not read",
-                "Coverage could not tell which market this role is in — "
+                "Networkly could not tell which market this role is in — "
                 "the posting's location did not parse — so it cannot say "
                 "whether it is in one of your regions. Check the posting.",
                 "region",
@@ -1173,7 +1173,7 @@ def _region_fit(profile: Profile, c: Candidate) -> tuple[int, list[Reason]]:
             # outside all six tracked markets under "other" (Toronto, Sydney,
             # Mumbai). It is a stated place, so it binds, but there is no label
             # for it that would mean anything in a chip.
-            chip, where = "Not in your regions", "a market Coverage does not track"
+            chip, where = "Not in your regions", "a market Networkly does not track"
         else:
             chip, where = f"Not in your regions ({short})", full
         return W_REGION_MISMATCH, [Reason(

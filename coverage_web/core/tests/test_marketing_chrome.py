@@ -8,10 +8,10 @@ page rather than argued about:
     directory's copy of the same tile had already been corrected to 24%, so
     the landing page was the last surface still failing it, on a component
     that repeats about forty times across the strip.
-  * `.kin-hero::after` is a 7.5s sheen declared `infinite` in coverage.css.
+  * `.kin-hero::after` is a 7.5s sheen declared `infinite` in networkly.css.
     Nothing about a marketing hero changes, so it pulled the eye back to the
     masthead every 7.5 seconds forever. Both pages now stop it after one
-    pass, in their own style blocks, because coverage.css belongs to another
+    pass, in their own style blocks, because networkly.css belongs to another
     pass.
   * the comparison table held a 480px min-width inside a 375px scroller, so
     the Pro column was off-screen with no fade, no shadow and no hint. Below
@@ -45,7 +45,7 @@ def test_home_monogram_ink_clears_AA(client):
 def test_hero_sheen_plays_once(client, url):
     """Both marketing pages, because both draw `.kin-hero`.
 
-    Longhands, deliberately: coverage.css's reduced-motion block sets the
+    Longhands, deliberately: networkly.css's reduced-motion block sets the
     `animation` shorthand to none, which sets the NAME to none, and nothing
     here touches the name. So the override cannot resurrect the animation for
     a reader who asked for no motion.

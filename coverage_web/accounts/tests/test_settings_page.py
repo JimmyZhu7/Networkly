@@ -84,14 +84,14 @@ def test_the_rail_lists_every_section_and_every_section_exists(body):
         # ONE card for the weekly goal and the six cadence knobs. Weekly
         # Pace used to be its own section immediately below; a heading and
         # a card frame around a single number, under a heading that already
-        # promised "how hard Coverage chases".
+        # promised "how hard Networkly chases".
         "cadence",
         # Credits (docs/credit-system-plan.md §6): always rendered, unlike
         # Gmail Live below it, which only shows up once GMAIL_LIVE_* is
         # configured — every account has a plan and a balance regardless.
         "credits",
         # Legal is inside "data" now: Privacy and Terms are what says what
-        # Coverage may do with what this card counts. Both routes survive
+        # Networkly may do with what this card counts. Both routes survive
         # (see test_the_legal_routes_survive_the_fold below); only the
         # second card frame went.
         "security", "data", "danger",
@@ -546,7 +546,7 @@ def test_the_board_no_longer_prescribes_a_gesture_touch_cannot_send(
     assert "Drag a firm to change its tier" not in body
     assert "Drop a firm here" not in body
     # Whatever it says instead still has to say what tier is FOR.
-    assert "Higher tiers get more attention from Coverage." in body
+    assert "Higher tiers get more attention from Networkly." in body
 
 
 def test_paused_only_recovery_link_counts_current_users_contacts(client, logged_in):

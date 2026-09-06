@@ -11,6 +11,10 @@ from analytics import views as analytics_views
 from core import views as core_views
 from directory import views as directory_views
 
+admin.site.site_header = "Networkly administration"
+admin.site.site_title = "Networkly"
+admin.site.index_title = "Administration"
+
 urlpatterns = [
     # Not a literal "admin/": settings.ADMIN_URL_PREFIX (default "admin/",
     # production sets an unguessable one) so the staff door that reads every

@@ -20,14 +20,14 @@ Two shapes, decided by `ev.editable`:
 
 `ev.removable` is a second, narrower question inside the first shape. An
 event mirrored from a connected Google Calendar is the user's own row and
-opens like any other, but Remove is withheld: Coverage's grant is view-only,
+opens like any other, but Remove is withheld: Networkly's grant is view-only,
 so the event stays in Google and the next sync would put it straight back.
 That is the same rule again — a control that looks like it does something
 has to do it.
 {% endcomment %}
 {% if ev.editable %}
   {% comment %}`ev.cancelled` is an organiser having sent a METHOD:CANCEL for
-  a chat Coverage captured off their original invite. Same treatment, and the
+  a chat Networkly captured off their original invite. Same treatment, and the
   same argument, as `posting_closed` below: the row stays on the grid because
   this page is a RECORD of the month, and it is struck through so it cannot be
   read as a meeting that is still on. Today's queue is where it stops
@@ -75,7 +75,7 @@ has to do it.
         {% endif %}
       {% endif %}
       {% comment %}A third provenance, and it says where to go to change it.
-      A mirrored row is the student's own Google Calendar restated: Coverage
+      A mirrored row is the student's own Google Calendar restated: Networkly
       holds a view-only grant, so this page cannot move or remove it and
       saying so is more use than a Remove button that would be undone by the
       next sync.{% endcomment %}

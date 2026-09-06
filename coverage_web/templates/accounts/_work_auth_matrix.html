@@ -9,7 +9,7 @@ vocabulary is said ONCE (the column captions), the sentence is said ONCE
 (the footnote), and the whole answer is legible at a glance — six rows of
 dots, coloured by state.
 
-Interaction is pure CSS over NATIVE radios (see `.wa-` in coverage.css):
+Interaction is pure CSS over NATIVE radios (see `.wa-` in networkly.css):
 click a cell and its dot fills with the state's colour, stamps a glyph
 (✓ can work / ! needs visa / – abstain: never colour alone) and springs with
 the same `chip-check` pop the Regions/Tracks chips use. No JS; keyboard and
@@ -33,7 +33,7 @@ POST contract stay exactly as they were.
 {% comment %}
 Visually hidden (2026-08-29), not deleted: every .wa-row's radiogroup
 points aria-describedby at this id, so a sighted user drops the sentence
-but a screen reader still gets it announced. `.vh` (coverage.css) rather
+but a screen reader still gets it announced. `.vh` (networkly.css) rather
 than local markup, since this partial is also the onboarding step's own
 widget and needs a class that resolves there too.
 {% endcomment %}

@@ -13,7 +13,7 @@ Native <dialog>: the browser owns the focus trap, Escape, and the top layer.
 {% comment %}
 TWO RULES THAT BELONG TO THIS COMPONENT AND HAVE NOWHERE ELSE TO LIVE.
 
-The drawer's own styles sit in static/css/coverage.css for a stated reason:
+The drawer's own styles sit in static/css/networkly.css for a stated reason:
 the drawer is drawn by the feed, the firm page AND My Applications, and a
 component defined in one page's inline styles is a component the other two
 silently lose (that is the bug that left My Applications with chips and no
@@ -26,12 +26,12 @@ button on two pages out of three and left the third a pill.
 {% endcomment %}
 <style>
   /* THE READ BUTTON IS A CONTROL, SO IT IS 10px. `.meta-read` is defined at
-     coverage.css L1767 with `border-radius: 999px`, and coverage.css's own
+     networkly.css L1767 with `border-radius: 999px`, and networkly.css's own
      `.btn` rule (L1089-1093) states the law it was breaking: "Status chips
      keep the pill; controls don't." Read opens a dialog. It was the last
      999px control on a board whose filter bar, Save, Undo and bulk-save
      button were all squared to `--r-ctl` in the same pass. Overridden here
-     rather than edited there because coverage.css belongs to another
+     rather than edited there because networkly.css belongs to another
      workstream this round; fold this rule into L1767 when that lands. */
   .meta-read { border-radius: var(--r-ctl); }
 

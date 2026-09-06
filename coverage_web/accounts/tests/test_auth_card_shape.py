@@ -4,7 +4,7 @@ Two defects from the 2026-09-01 UI audit, both on the first screen a student
 who is not signed in ever reaches:
 
   * "Continue with Google" was a 999px capsule and "Sign In", forty pixels
-    below it, was squared. `--r-ctl`'s own comment in coverage.css says the
+    below it, was squared. `--r-ctl`'s own comment in networkly.css says the
     token is for "buttons, inputs"; a provider button and a submit button are
     the same kind of thing, so they are now the same shape.
   * measured at 375px: "Forgot?" 43x19, the "Keep me signed in" row 21px,
@@ -73,7 +73,7 @@ def test_the_shell_footer_links_get_the_same_floor():
 
     READ FROM THE SHARED STYLESHEET, not from the page's inline `<style>`
     blocks. The rule shipped inside a `<style>` in base.html, with a note
-    saying it belonged in `coverage.css` and would move there once that file
+    saying it belonged in `networkly.css` and would move there once that file
     was not being edited by another pass; it moved on 2026-09-01. The
     assertion follows it rather than being weakened: the floor is still
     pinned, on the same two selectors, under the same `pointer: coarse`
@@ -84,9 +84,9 @@ def test_the_shell_footer_links_get_the_same_floor():
     `@media (pointer: coarse)` block on a rendered page as the feed's, and
     the shell's block was reaching them first.
     """
-    css = (settings.BASE_DIR / "static" / "css" / "coverage.css").read_text()
+    css = (settings.BASE_DIR / "static" / "css" / "networkly.css").read_text()
     blocks = re.findall(r"@media \(pointer: coarse\) \{(.*?)\n\}", css, re.S)
-    assert blocks, "no coarse-pointer block left in coverage.css"
+    assert blocks, "no coarse-pointer block left in networkly.css"
     joined = "\n".join(blocks)
     assert ".site-footer-inner nav a" in joined
     assert re.search(r"\.site-auth a\s*\{[^}]*min-height: 44px", joined)

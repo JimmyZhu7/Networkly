@@ -18,7 +18,7 @@ def test_home_page_renders_with_htmx_script_tag(client):
 
     assert response.status_code == 200
     content = response.content.decode()
-    assert "Coverage" in content
+    assert "Networkly" in content
     # Vendored static asset, not a CDN — see coverage_web/static/vendor/.
     assert "vendor/htmx.min.js" in content
 

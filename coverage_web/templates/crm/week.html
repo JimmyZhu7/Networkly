@@ -3,7 +3,7 @@
 {% load textstyle %}
 {% load assistant_extras %}
 
-{% block title %}Today · Coverage{% endblock %}
+{% block title %}Today · Networkly{% endblock %}
 
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
@@ -114,7 +114,7 @@
       {% comment %}
       MIXED EVIDENCE, SAID OUT LOUD. The number is a count of deadlines, and
       `Opportunity.confidence` says where each of those deadlines came from:
-      1.0 is a field the board published, anything under it is Coverage's own
+      1.0 is a field the board published, anything under it is Networkly's own
       regex reading the posting's prose. On the live board that is the large
       majority of dated open roles, so a bare urgent figure here was quoting
       our reading back as the market's calendar — the exact claim every other
@@ -242,10 +242,10 @@
     {% endcomment %}
     <div class="setup-nudge kin-reveal">
       <div class="setup-nudge-text">
-        <b>Finish setting up.</b> Pick your target firms and Coverage fills
+        <b>Finish setting up.</b> Pick your target firms and Networkly fills
         this queue and sorts the feed to them.
       </div>
-      <a class="btn btn-primary" href="{% url 'accounts:onboarding' %}?step=profile">Set up Coverage</a>
+      <a class="btn btn-primary" href="{% url 'accounts:onboarding' %}?step=profile">Set up Networkly</a>
     </div>
   {% endif %}
 
@@ -278,7 +278,7 @@
   {% if situation_events %}
     {% comment %}
     The situation snapshot (assistant.situation.build_situation): what moved
-    in data Coverage already scrapes, since RECENT_DAYS ago — a deadline
+    in data Networkly already scrapes, since RECENT_DAYS ago — a deadline
     change or a close on a role this student tracks, or a fresh posting at
     a firm they already have a foothold at. Deterministic cards built
     straight from typed event fields, NO model involved in the text — see
@@ -387,7 +387,7 @@
   2. THE COUNTS FLIPPED. The cards animate — a leaving card fades, a
      surviving one glides, all of it the browser's own view transition —
      and then "5 of 9 today" changed to "4 of 9 today" between two frames
-     with nothing to mark it. Motion rule M4 (coverage.css §15b) says a
+     with nothing to mark it. Motion rule M4 (networkly.css §15b) says a
      number may move when it changes in response to the reader, and this
      is that case exactly: the reader pressed something and the number is
      the receipt. `chip-check` already exists for "a thing just became

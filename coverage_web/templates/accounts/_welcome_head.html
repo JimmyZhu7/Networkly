@@ -1,7 +1,7 @@
 {% load csp %}
 {% comment %}
 The onboarding wizard's own stylesheet. Nothing here styles body/nav/main —
-the shared shell (static/css/coverage.css) owns those, and every colour, size,
+the shared shell (static/css/networkly.css) owns those, and every colour, size,
 radius, weight and easing below is one of its tokens. No new colour and no new
 type step is invented in this file.
 
@@ -9,10 +9,10 @@ Scoped under `.ob`, which only the wizard renders, so none of it can reach the
 settings page — which shares two of the wizard's partials
 (_profile_form.html, _work_auth_matrix.html) and must keep its own layout.
 
-Motion: one system, borrowed from the site's kinetic layer (coverage.css
+Motion: one system, borrowed from the site's kinetic layer (networkly.css
 §15b/§15c) rather than invented here — the same `cubic-bezier(0.22, 1, 0.36,
 1)` spring, the same rise-in entrance shape, the same index-driven stagger as
-`.kin-reveal`. coverage.css §17 already collapses every animation to 0.01ms
+`.kin-reveal`. networkly.css §17 already collapses every animation to 0.01ms
 under `prefers-reduced-motion: reduce`; the explicit block at the bottom of
 this file is not redundant with it — see the note there.
 {% endcomment %}
@@ -40,7 +40,7 @@ this file is not redundant with it — see the note there.
      preview that scrolls away is a preview nobody sees while answering.
 
      The offset has to clear `.site-header`, which is itself `position:
-     sticky; top: 0; z-index: 40` (coverage.css §3) — so anything that pins
+     sticky; top: 0; z-index: 40` (networkly.css §3) — so anything that pins
      higher than the masthead's own height pins UNDERNEATH it. An earlier cut
      used a flat `calc(var(--s7) + var(--s2))` = 56px against a masthead that
      measures 113px, and the panel's eyebrow and the first digit of its count
@@ -128,7 +128,7 @@ this file is not redundant with it — see the note there.
   }
   /* `--fs-micro` (11px), not `--fs-nano` (10px). The rail is the student's
      map of how much of the wizard is left, and it was set in the smallest
-     type on the page — a floor coverage.css reserves for uppercase badge
+     type on the page — a floor networkly.css reserves for uppercase badge
      labels, which these are not: they are the only navigation this screen
      has. */
   .ob-rail-lab {
@@ -339,7 +339,7 @@ this file is not redundant with it — see the note there.
        It was a hollow CIRCLE, which is the shape of a radio, on a control
        where the whole point is to pick many firms. A student reading shape
        before text was told "choose one" by a grid that expects a dozen. The
-       geometry here is now the shared checkbox's exactly (coverage.css §11:
+       geometry here is now the shared checkbox's exactly (networkly.css §11:
        16px, 1.5px --line-strong, 4px radius, an 11px tick), so the box that
        means "one of many" looks the same everywhere in the product. */
     .ob-firm::after {
@@ -355,7 +355,7 @@ this file is not redundant with it — see the note there.
     .ob-firm:has(:checked) .ob-firm-name { color: var(--accent-ink); font-weight: var(--w-bold); }
     .ob-firm:has(:checked)::after {
       background-color: var(--accent); border-color: var(--accent);
-      /* The shared tick token (coverage.css §2), same glyph the chipset
+      /* The shared tick token (networkly.css §2), same glyph the chipset
          chips and every plain checkbox stamp. */
       background-image: var(--tick);
       animation: ob-pop 260ms cubic-bezier(0.22, 1, 0.36, 1);
@@ -622,7 +622,7 @@ this file is not redundant with it — see the note there.
   /* ===================================================================
      11. Reduced motion
 
-     coverage.css §17 already collapses every animation and transition to
+     networkly.css §17 already collapses every animation and transition to
      0.01ms globally, which covers the entrances above. This block is not
      redundant with it: `animation-duration: 0.01ms` still RUNS each
      animation, and these should not run at all rather than run instantly —

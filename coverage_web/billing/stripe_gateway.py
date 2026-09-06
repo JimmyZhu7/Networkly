@@ -143,7 +143,7 @@ def create_checkout_session(user, pack_key: str, success_url: str, cancel_url: s
                 "price_data": {
                     "currency": "usd",
                     "unit_amount": pack["price_cents"],
-                    "product_data": {"name": f"Coverage credits — {pack['label']}"},
+                    "product_data": {"name": f"Networkly credits — {pack['label']}"},
                 },
                 "quantity": 1,
             }

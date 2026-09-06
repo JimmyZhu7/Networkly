@@ -572,7 +572,7 @@ def import_link_firm(request):
 @require_GET
 def import_template(request):
     resp = HttpResponse(services.import_template_csv(), content_type="text/csv")
-    resp["Content-Disposition"] = 'attachment; filename="coverage-contacts-template.csv"'
+    resp["Content-Disposition"] = 'attachment; filename="networkly-contacts-template.csv"'
     return resp
 
 
@@ -946,17 +946,17 @@ def export(request):
         resp = HttpResponse(
             services.export_zip(request.user), content_type="application/zip"
         )
-        resp["Content-Disposition"] = 'attachment; filename="coverage-data.zip"'
+        resp["Content-Disposition"] = 'attachment; filename="networkly-data.zip"'
         return resp
     if kind == "contacts":
         record_event("export_downloaded", user=request.user, kind="contacts")
         return _csv_download(
-            services.contacts_csv(request.user), "coverage-contacts.csv"
+            services.contacts_csv(request.user), "networkly-contacts.csv"
         )
     if kind == "touches":
         record_event("export_downloaded", user=request.user, kind="touches")
         return _csv_download(
-            services.touches_csv(request.user), "coverage-touches.csv"
+            services.touches_csv(request.user), "networkly-touches.csv"
         )
     contacts = Contact.objects.for_user(request.user)
     return render(

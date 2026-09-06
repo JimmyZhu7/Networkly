@@ -1,10 +1,11 @@
+{% load static %}
 {% comment %}
 Weekly digest — the HTML half of the send_weekly_digest pair (see
 templates/crm/emails/weekly_digest.txt for the plain-text half, which every
 client falls back to and which some render exclusively).
 
 Table-based layout with every rule inlined, on purpose: this is mail, not a
-page. Nothing in static/css/coverage.css survives an email client's CSS
+page. Nothing in static/css/networkly.css survives an email client's CSS
 sanitizer (Gmail strips <link>/<style>-at-a-distance in several surfaces,
 Outlook desktop renders via Word's engine and ignores flex/grid entirely), so
 the site's actual stylesheet is not an option here. What IS reused is the
@@ -23,7 +24,7 @@ is the same thing they do today and is fine. The classes exist ONLY as hooks
 for that block: every element still carries its own complete inline style, so
 a client that strips the <style> entirely loses nothing.
 
-The dark values are coverage.css's own dark palette, the same four tokens the
+The dark values are networkly.css's own dark palette, the same four tokens the
 site flips (paper, surface/line, ink, accent), copied as literals for the same
 reason the light ones are.
 {% endcomment %}
@@ -39,7 +40,7 @@ reason the light ones are.
     .d-ok    { color: #74c095 !important; }
     .d-now   { color: #e2867c !important; }
     /* The accent flips to a LIGHT blue in dark, so the ink that sits on it
-       flips too. Same pairing rule coverage.css states for --on-accent. */
+       flips too. Same pairing rule networkly.css states for --on-accent. */
     .d-btn   { background-color: #7aa7d4 !important; color: #10161d !important; }
     .d-pill  { background-color: #232a35 !important; border-color: #38465a !important;
                color: #a9c7e6 !important; }
@@ -53,7 +54,7 @@ reason the light ones are.
 
   <tr>
     <td class="d-rule" style="padding:28px 32px 20px 32px;border-bottom:1px solid #e1e7ef;">
-      <span class="d-ink" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#202939;">Coverage</span>
+      <img src="{{ site_url }}{% static 'img/networkly/email-lockup.png' %}" width="184" height="42" alt="Networkly" style="display:block;width:184px;height:auto;border:0;background-color:#ffffff;padding:6px;border-radius:6px;">
       <div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;color:#536174;margin-top:4px;">
         {% comment %}`M j`, not `N j`. `N` is Django's AP-style month
         ("Sept. 2", with the period), and every other surface in the product
@@ -66,7 +67,7 @@ reason the light ones are.
       at all are the two numbers that predict whether this student gets an
       interview (`crm.coverage`'s own ladder); this week's deadlines are what
       happens to them. `crm.digest._coverage_summary` builds the sentence from
-      the same counts the Network board's Coverage Gaps strip ranks, so the
+      the same counts the Network board's Relationship gaps strip ranks, so the
       three firms it names are the three that strip would put first. Absent
       entirely for a student who has tiered nothing.
       {% endcomment %}
@@ -98,7 +99,7 @@ reason the light ones are.
   follows it rather than inventing a second answer.
 
   `item.reported` is `directory.views.deadline_provenance`, set only when
-  `Opportunity.confidence` is under 1.0: Coverage read the date out of the
+  `Opportunity.confidence` is under 1.0: Networkly read the date out of the
   posting's prose rather than quoting a field the board published. That is 96%
   of dated open campus roles on the live board, so the digest was rendering our
   own reading as the firm's stated fact on nearly every row it sent.
@@ -168,7 +169,7 @@ reason the light ones are.
             {% if a.mailto and a.contact.email %}
             {% comment %}10px, not 999px. These were the only capsules the
             email had, and the app squared every control it draws to
-            `--r-ctl` ("buttons, inputs", coverage.css §1). A mail that still
+            `--r-ctl` ("buttons, inputs", networkly.css §1). A mail that still
             drew pills was showing a shape the product no longer has, on the
             one surface a student meets before opening it.{% endcomment %}
             <a class="d-pill" href="{{ a.mailto }}" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;font-weight:600;color:#1f4e79;text-decoration:none;border:1px solid #cfdbe7;background-color:#e9eef4;border-radius:10px;padding:5px 12px;">{{ a.label }}</a>
@@ -294,7 +295,7 @@ reason the light ones are.
       {% comment %}10px, matching the pills above and the app's own --r-ctl.
       It was 8px, which was a third radius in a product that has one.
       {% endcomment %}
-      <a class="d-btn" href="{{ site_url }}{% url 'crm:week' %}" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;background-color:#1f4e79;border-radius:10px;padding:11px 20px;">Open Coverage</a>
+      <a class="d-btn" href="{{ site_url }}{% url 'crm:week' %}" style="display:inline-block;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;background-color:#1f4e79;border-radius:10px;padding:11px 20px;">Open Networkly</a>
       <div class="d-ink-3" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;color:#536174;margin-top:16px;line-height:1.5;">
         {% comment %}
         THE WAY OUT. This paragraph explained why the mail arrived and then
@@ -306,7 +307,7 @@ reason the light ones are.
         accounts/unsubscribe.py, which is the one module outside
         NotificationsForm allowed to touch `weekly_digest_opt_out`.
         {% endcomment %}
-        You're getting this because you're onboarded on Coverage. It runs weekly, built from your own tracked roles and contacts, and stays quiet the week neither has anything due.
+        You're getting this because you're onboarded on Networkly. It runs weekly, built from your own tracked roles and contacts, and stays quiet the week neither has anything due.
         <a class="d-accent" href="{{ site_url }}{% url 'accounts:digest_unsubscribe' digest.unsubscribe_token %}" style="color:#1f4e79;">Stop these emails</a>.
       </div>
     </td>

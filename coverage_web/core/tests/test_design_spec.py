@@ -20,7 +20,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
 SPEC = REPO / "docs" / "design-spec.md"
-CSS = REPO / "coverage_web" / "static" / "css" / "coverage.css"
+CSS = REPO / "coverage_web" / "static" / "css" / "networkly.css"
 TEMPLATES = REPO / "coverage_web" / "templates"
 
 # The fenced block in §0 that carries the typeface list, keyed off its own
@@ -48,7 +48,7 @@ def _css_families() -> set[str]:
     """Every family declared by an `@font-face` rule in the shared stylesheet."""
     css = CSS.read_text(encoding="utf-8")
     faces = re.findall(r"@font-face\s*\{(.*?)\}", css, re.DOTALL)
-    assert faces, "coverage.css declares no @font-face rules"
+    assert faces, "networkly.css declares no @font-face rules"
     return {m for face in faces for m in _FAMILY.findall(face)}
 
 
@@ -111,7 +111,7 @@ def _css_block(selector: str) -> str:
     """The declaration body of one rule, keyed on its exact selector text."""
     css = CSS.read_text(encoding="utf-8")
     match = re.search(re.escape(selector) + r"\s*\{(.*?)\}", css, re.DOTALL)
-    assert match, f"coverage.css no longer has a `{selector}` rule"
+    assert match, f"networkly.css no longer has a `{selector}` rule"
     return match.group(1)
 
 

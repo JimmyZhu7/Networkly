@@ -1,4 +1,4 @@
-# Coverage
+# Networkly
 
 ## Platform
 Web. Django templates, htmx, vendored JavaScript, and self-hosted fonts. PostgreSQL owns application data. No frontend framework migration is needed.

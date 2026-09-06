@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load csp textstyle %}
 
-{% block title %}Calendar · Coverage{% endblock %}
+{% block title %}Calendar · Networkly{% endblock %}
 
 {% block head %}<style>
   /* ---- The month grid ---------------------------------------------------
@@ -92,7 +92,7 @@
 
      Restyled to the app's ordinary section-heading voice instead of a
      second masthead: `--font-ui`/`--w-bold` is the same pairing `h2` uses
-     everywhere else in the product (coverage.css: `h2 { font: var(--w-bold)
+     everywhere else in the product (networkly.css: `h2 { font: var(--w-bold)
      var(--fs-l) ... }`), and `--ink-2` is the secondary-text token
      `.pagehead-sub` already uses one line below the real title. This is
      the "you are looking at" label for the grid beneath it, not a second
@@ -116,7 +116,7 @@
   /* 2026-08-29: this bar's controls carried their own one-off pill shape
      (border-radius: 999px), a permanent box-shadow, and the lighter --line
      border — none of which is what a button looks like anywhere else in
-     the product (see .btn, coverage.css: --r-ctl radius, --line-strong
+     the product (see .btn, networkly.css: --r-ctl radius, --line-strong
      border, shadow only on hover). ‹ › /Today/Subscribe/+ Add all carried
      the real .btn class in the markup from then on; what was left here was
      only what .btn does not already give a circular icon button — the fixed
@@ -130,14 +130,14 @@
   `.btn`s — measured as the most shape variety in any single row on the site.
 
   The segment stays a capsule and that is not an inconsistency: the
-  control-shape rule now written into coverage.css §6 allows exactly one
+  control-shape rule now written into networkly.css §6 allows exactly one
   exception, a segmented choice among peers, where the round belongs to the
   group's track rather than to any one control's edge. An arrow is not a
   segmented choice. It is a button that happens to be square, so it takes a
   button's corner.
 
   On a coarse pointer it grows to 44 in both directions. `.btn`'s shared
-  floor (coverage.css §16b) only sets `min-height`, and a 44x36 target is
+  floor (networkly.css §16b) only sets `min-height`, and a 44x36 target is
   still a miss on the axis a thumb travels along a month bar.
 
   2026-09-02: `‹`, `›` and Today are now ONE control rather than three. They
@@ -195,7 +195,7 @@
 
      SIZE is the whole demotion, and colour deliberately is not: this states
      `--fs-xs` and nothing else, so the link keeps the accent ink and the
-     hover underline `a` gives every link in the product (coverage.css §3).
+     hover underline `a` gives every link in the product (networkly.css §3).
      Written in the counts' own `--ink-2` it matched the static text beside it
      exactly, which is not a quieter control, it is a control you cannot tell
      is one. */
@@ -218,7 +218,7 @@
      between them, and `:empty` does not match an element with a text node in
      it. Flex is what collapses it to 0x0; the keys are what decide whether it
      is there at all. Bare, not behind `@supports`, like the other purely
-     cosmetic `:has()` rules in coverage.css — a browser without it gets
+     cosmetic `:has()` rules in networkly.css — a browser without it gets
      today's 12px, which is what it has now. */
   .cal-legend:not(:has(.cal-key)) { display: none; }
   .cal-key { display: inline-flex; align-items: center; gap: 6px; }
@@ -234,7 +234,7 @@
 
   .cal-grid { overflow: hidden;
     {% comment %}
-    220ms `settle`, the keyframe coverage.css §15 already defines for htmx's
+    220ms `settle`, the keyframe networkly.css §15 already defines for htmx's
     own swaps. Every navigation on this page — a month arrow, Today, the
     Month/Week/Day segment — is a full page load, so the grid was replaced
     between two frames with nothing connecting the old month to the new one:
@@ -527,14 +527,14 @@
   .cal-ev-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis;
     white-space: nowrap; font-weight: var(--w-med); }
   /* Captured from the mailbox rather than typed — a small provenance mark,
-     because "did I add this or did Coverage find it?" is a real question. */
+     because "did I add this or did Networkly find it?" is a real question. */
   /* A flex item, not a float: the card is a flex row now, and a float inside
      one is ignored — the mark would simply not appear. */
   .cal-ev-auto::after { content: "↻"; flex: none; color: var(--ink-3);
     font-size: 10px; }
 
   /* ---- The view switcher ------------------------------------------------
-     `.subnav.scope-tabs` from coverage.css does the work: the bordered
+     `.subnav.scope-tabs` from networkly.css does the work: the bordered
      capsule, the solid navy on the selected segment, the sideways scroll on
      a narrow screen. What is left here is only what a BAR item needs and a
      standalone strip does not — `.subnav` carries a top margin for a strip
@@ -571,7 +571,7 @@
   {% comment %}
   The segment is the one control on this bar that keeps a capsule, and it
   earns it under the single exception in the control-shape rule
-  (coverage.css §6): a segmented choice among peers, where the round belongs
+  (networkly.css §6): a segmented choice among peers, where the round belongs
   to the group's track. It still owes a finger 44px, which its 30px tabs
   were not giving — `.btn`'s shared floor cannot reach these, since they are
   `.subnav` links rather than buttons.
@@ -837,7 +837,7 @@
       <a class="btn cal-arrow" href="{{ next_url }}" hx-get="{{ next_url }}" aria-label="Next {{ period_noun }}" rel="next">›</a>
     </div>
     {% comment %}The product's own segmented control (.subnav.scope-tabs in
-    coverage.css, the same component the Network and Opportunities filters
+    networkly.css, the same component the Network and Opportunities filters
     use) rather than a fourth button shape on a bar that already carries
     three.
 

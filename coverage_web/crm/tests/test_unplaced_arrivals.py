@@ -618,7 +618,7 @@ def test_the_count_leads_its_own_line_and_the_verb_is_not_redefined():
     (the caption beside it stays `--fs-micro`), and the button takes NOTHING
     from this stylesheet except where it sits — shape, padding, colour,
     min-height and every state are `.btn`'s, which is the control-shape rule
-    coverage.css §6 writes down.
+    networkly.css §6 writes down.
     """
     css = " ".join(STYLES.read_text().split())
     figure = re.search(r"\.unplaced-n \{(.*?)\}", css, re.S).group(1)

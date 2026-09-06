@@ -530,7 +530,7 @@ def contact_merge_act(request: HttpRequest, verb: str) -> HttpResponse:
         messages.success(
             request,
             f"Kept {cand.primary.name} and {cand.duplicate.name} as two "
-            "people. Coverage will not ask about this pair again.",
+            "people. Networkly will not ask about this pair again.",
         )
     return redirect(reverse("accounts:settings") + "#duplicates")
 

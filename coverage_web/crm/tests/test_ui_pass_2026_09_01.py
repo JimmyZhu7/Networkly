@@ -336,7 +336,7 @@ def test_the_grid_settles_when_the_month_or_view_changes():
     """Every navigation here is a full page load, so the grid was replaced
     between two frames with nothing connecting one month to the next — the
     one place on the site where content changes on purpose and says nothing
-    about it. `settle` is the keyframe coverage.css §15 already defines.
+    about it. `settle` is the keyframe networkly.css §15 already defines.
     """
     css = _styles(_get(CALENDAR, "ui-calmotion@example.com"))
     grid = re.search(r"\.cal-grid \{(.*?)\}", css, re.S).group(1)
@@ -366,7 +366,7 @@ def test_talk_wears_the_shared_page_header():
     assert '<p class="pagehead-eyebrow">' not in html, (
         "Talk is the only nav page with no eyebrow, by decision; one came back"
     )
-    assert '<h1 class="pagehead-title">Talk to Coverage</h1>' in html
+    assert '<h1 class="pagehead-title">Talk to Networkly</h1>' in html
     assert "pagehead-sub" not in html, "the chat keeps its vertical room"
 
 
@@ -487,11 +487,11 @@ def test_the_shared_stylesheet_states_the_control_shape_and_motion_rules():
 
 def _css() -> str:
     """The shared stylesheet, found from THIS file rather than from the
-    working directory. `open("static/css/coverage.css")` only resolves when
+    working directory. `open("static/css/networkly.css")` only resolves when
     pytest is invoked from `coverage_web/`, so these tests passed or errored
     depending on where the runner happened to stand."""
     return (Path(__file__).resolve().parents[2] / "static" / "css"
-            / "coverage.css").read_text(encoding="utf-8")
+            / "networkly.css").read_text(encoding="utf-8")
 
 
 def test_the_dead_rules_are_gone():

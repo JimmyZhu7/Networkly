@@ -19,7 +19,7 @@ from django.utils import timezone
 
 REPO = Path(__file__).resolve().parents[3]
 WEB = REPO / "coverage_web"
-CSS = WEB / "static" / "css" / "coverage.css"
+CSS = WEB / "static" / "css" / "networkly.css"
 TEMPLATES = WEB / "templates"
 
 DISPLAY_TOKENS = {"--fs-display-1", "--fs-display-2", "--fs-display-3", "--fs-figure"}
@@ -35,7 +35,7 @@ EMAIL_LITERAL_PX = {
 
 def _stylesheets() -> dict[str, str]:
     """The shared file plus every template that carries a <style> block."""
-    out = {"static/css/coverage.css": CSS.read_text(encoding="utf-8")}
+    out = {"static/css/networkly.css": CSS.read_text(encoding="utf-8")}
     for path in sorted(TEMPLATES.rglob("*.html")):
         text = path.read_text(encoding="utf-8", errors="ignore")
         if "<style" in text:
@@ -192,7 +192,7 @@ def test_every_layout_measure_has_a_consumer():
     css = CSS.read_text(encoding="utf-8")
     body = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
     others = "\n".join(
-        t for n, t in _stylesheets().items() if n != "static/css/coverage.css"
+        t for n, t in _stylesheets().items() if n != "static/css/networkly.css"
     )
     for token in ("--page-w", "--page-w-narrow", "--page-w-wide", "--page-w-full"):
         assert re.search(re.escape(token) + r":", body), token

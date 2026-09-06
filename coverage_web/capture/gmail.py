@@ -1345,7 +1345,7 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
             continue
         if contact is None:
             result.skipped_unmatched += 1
-            result.details.append(f"{name}: no matching contact in Coverage — skipped")
+            result.details.append(f"{name}: no matching contact in Networkly — skipped")
             # THE DISCOVERY HOOK. An unmatched finding used to end here, full
             # stop — `_match_contact`'s docstring calls it drift, and for the
             # per-contact daily sync it usually is. But on the live listener

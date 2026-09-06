@@ -1085,7 +1085,7 @@ def test_no_verdict_is_rendered_as_struck_through_text():
     """Strikethrough reads as NEGATION: struck-out "Won't sponsor you" says
     the opposite of what it means. A closed door is stated, not crossed out."""
     import pathlib as _pl
-    css = (_pl.Path(__file__).resolve().parents[2] / "static" / "css" / "coverage.css").read_text()
+    css = (_pl.Path(__file__).resolve().parents[2] / "static" / "css" / "networkly.css").read_text()
     for m in re.finditer(r"([^{}]*)\{([^}]*text-decoration:[^;}]*line-through[^;}]*)[;}]", css):
         assert False, f"line-through on {m.group(1).strip()!r}"
 
@@ -1170,7 +1170,7 @@ def test_unconfirmed_note_is_empty_once_status_is_actually_closed():
 @pytest.mark.django_db
 def test_the_feed_card_marks_a_title_link_it_cannot_currently_vouch_for(client):
     """The card's title link is the primary discovery surface — a student
-    can leave Coverage from it without ever opening the Read drawer or
+    can leave Networkly from it without ever opening the Read drawer or
     reaching a separate Apply button. It must carry the caution, not just
     the drawer behind it."""
     firm = Firm.objects.create(slug="jpm", name="J.P. Morgan")
@@ -1549,7 +1549,7 @@ def test_the_card_asks_for_its_eligibility_verdict_once(client, monkeypatch):
 # ---------------------------------------------------------------------------
 # ABSOLUTE FRESHNESS ON THE CARD (WS-OPP-07).
 #
-# The countdown in the deadline column is a claim about a page Coverage read
+# The countdown in the deadline column is a claim about a page Networkly read
 # at SOME point, and until now the only place the product said when was the
 # drawer — which a student reaches by opening it. Measured 2026-09-01: a
 # quarter of the rows under Today's "Closing in 10 days" ribbon were counting
@@ -1586,7 +1586,7 @@ def test_a_row_verified_today_prints_no_age(client):
     assert "d old" not in body
     # …but the age is still on the deadline column's own tooltip, on every
     # row that has one. That half is unconditional.
-    assert "Coverage last confirmed this posting live today" in body
+    assert "Networkly last confirmed this posting live today" in body
 
 
 @pytest.mark.django_db
@@ -1722,7 +1722,7 @@ def test_the_today_ribbon_reads_one_definition_of_closing_soon():
 
 def test_the_today_ribbons_qualifier_names_the_reported_count():
     """The ribbon's other half of the same honesty. 96% of dated open campus
-    deadlines are Coverage's own reading of the posting's prose, so an
+    deadlines are Networkly's own reading of the posting's prose, so an
     unqualified urgent number over that window is mostly reporting our own
     reading back as the market's calendar."""
     from pathlib import Path

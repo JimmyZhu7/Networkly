@@ -265,7 +265,7 @@ def test_the_evidence_reads_as_evidence_under_the_name():
 # ---------------------------------------------------------------------------
 def test_the_role_input_is_finally_the_size_its_own_rule_asked_for():
     """`.act-fill-in` has declared `padding: 4px 8px` and `--fs-s` since the
-    blanks were added and not one character of it applied: coverage.css §7
+    blanks were added and not one character of it applied: networkly.css §7
     styles every text input as `input[type="text"]`, 0,1,1 against this rule's
     0,1,0. Measured at 1280 before this pass: a 41px control 203px wide with
     185px of usable inner width, against 226px of placeholder text — the card
@@ -290,7 +290,7 @@ def test_the_region_control_is_told_the_same_thing_on_the_class_that_renders():
     """base.html's `enhance()` wraps every non-multiple select in `.csel`,
     hides the native control as `.csel-native` and draws a `.csel-btn` in its
     place. `select.act-fill-in` therefore governs a 1px clipped element while
-    the visible box kept coverage.css's full `9px 14px` — 41px next to a
+    the visible box kept networkly.css's full `9px 14px` — 41px next to a
     30.2px Role input, two blanks in one form at visibly different sizes.
     """
     user = _user("prop-select@example.com")
@@ -302,7 +302,7 @@ def test_the_region_control_is_told_the_same_thing_on_the_class_that_renders():
 
 
 def test_the_blank_labels_drop_the_stacked_forms_margin():
-    """coverage.css §7 gives every `label` `var(--s4) 0 var(--s1)`, which is
+    """networkly.css §7 gives every `label` `var(--s4) 0 var(--s1)`, which is
     right for a stacked form and wrong for a label sitting BESIDE its control.
     Measured 2026-09-02: it made the Role row 39.2px tall around a 30.2px
     input, twice a card.

@@ -779,8 +779,8 @@ def test_streaming_with_no_api_key_yields_one_unconfigured_notice(user, conversa
         {
             "type": "notice",
             "kind": "unconfigured",
-            "text": "Talk to Coverage isn't switched on yet — it needs an Anthropic API "
-            "key set on the server. Everything else in Coverage works as normal.",
+            "text": "Talk to Networkly isn't switched on yet — it needs an Anthropic API "
+            "key set on the server. Everything else in Networkly works as normal.",
         }
     ]
     assert _turns(user, conversation)[-1].notice == ChatMessage.NOTICE_UNCONFIGURED
@@ -871,18 +871,18 @@ def test_a_successful_first_turn_is_retitled_by_the_model(user, conversation):
 
 def test_a_title_wrapped_in_markdown_bold_is_unwrapped(user, conversation):
     """Measured live: Haiku wraps the whole title in **bold** often enough
-    that the sidebar showed "**Identifying Coverage Gaps**" literally."""
+    that the sidebar showed "**Identifying Networkly Gaps**" literally."""
     client = FakeClient(
         [
             _response([_text("Some answer.")], "end_turn"),
-            _response([_text("**Identifying Coverage Gaps**")], "end_turn"),
+            _response([_text("**Identifying Networkly Gaps**")], "end_turn"),
         ]
     )
 
     agent.run_turn(user, conversation, "Where am I thinnest?", client=client)
 
     conversation.refresh_from_db()
-    assert conversation.title == "Identifying Coverage Gaps"
+    assert conversation.title == "Identifying Networkly Gaps"
 
 
 def test_the_title_prompt_forbids_naming_the_speakers(user, conversation):
@@ -1505,7 +1505,7 @@ def test_the_preamble_states_the_target_cycle_and_the_timezone_name():
 def test_an_unset_timezone_is_named_as_utc_not_guessed_from_regions():
     preamble = agent.build_preamble(_founder_like(timezone=""))
 
-    assert "Timezone: not set, so Coverage uses UTC" in preamble
+    assert "Timezone: not set, so Networkly uses UTC" in preamble
 
 
 def test_the_preamble_carries_the_students_own_cadence_settings_and_marks_overrides():
@@ -1555,7 +1555,7 @@ def test_an_empty_profile_still_gets_the_cadence_and_timezone_facts():
     preamble = agent.build_preamble(blank)
 
     assert "have not filled in their profile yet" in preamble
-    assert "Timezone: not set, so Coverage uses UTC" in preamble
+    assert "Timezone: not set, so Networkly uses UTC" in preamble
     assert "Cadence settings" in preamble
 
 

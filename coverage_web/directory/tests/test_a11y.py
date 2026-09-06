@@ -69,7 +69,7 @@ def test_the_monogram_keeps_its_contrast_headroom(client):
 
 def test_both_themes_are_defined_and_system_preference_leads():
     css = (pathlib.Path(__file__).resolve().parents[2]
-           / "static" / "css" / "coverage.css").read_text()
+           / "static" / "css" / "networkly.css").read_text()
     assert "@media (prefers-color-scheme: dark)" in css, "the OS decides by default"
     assert ':root:not([data-theme="light"])' in css, "an explicit light choice wins"
     assert ':root[data-theme="dark"]' in css, "an explicit dark choice wins"
@@ -81,7 +81,7 @@ def test_text_on_an_accent_fill_flips_with_the_palette():
     --on-accent, so a future `color: #fff` on an accent fill is a
     regression this catches."""
     css = (pathlib.Path(__file__).resolve().parents[2]
-           / "static" / "css" / "coverage.css").read_text()
+           / "static" / "css" / "networkly.css").read_text()
     for rule in (".btn-primary {", ".site-nav a.active {"):
         i = css.index(rule)
         block = css[i:css.index("}", i)]
@@ -95,21 +95,21 @@ def test_the_theme_is_applied_before_the_stylesheet_loads(client):
     body = client.get("/opportunities/").content.decode()
     head = body[: body.index("</head>")]
     assert "coverage-theme" in head
-    assert head.index("coverage-theme") < head.index("coverage.css")
+    assert head.index("coverage-theme") < head.index("networkly.css")
 
 
 # ---------------------------------------------------------------------------
 # The token contract. Every colour in the product routes through the variables
-# in coverage.css, which means one bad token edit can fail contrast on every
+# in networkly.css, which means one bad token edit can fail contrast on every
 # page at once — and a palette change (the ledger-paper identity shift did
 # exactly this to every base token) is precisely when it happens. So the
 # tokens themselves are measured, in both themes, from the shipped file.
 
 
 def _css_tokens():
-    """Both themes' token maps, parsed from coverage.css itself."""
+    """Both themes' token maps, parsed from networkly.css itself."""
     css = (pathlib.Path(__file__).resolve().parents[2]
-           / "static" / "css" / "coverage.css").read_text()
+           / "static" / "css" / "networkly.css").read_text()
     # Light: the first :root block. Dark: the explicit [data-theme="dark"]
     # block (identical to the media-query one by construction; asserted below).
     blocks = re.findall(r'(:root(?:\[data-theme="dark"\])?)\s*{(.*?)\n}', css, re.S)
@@ -184,7 +184,7 @@ def test_every_text_entry_input_type_is_styled():
     so this reads the form templates for the types actually in use and
     asserts the stylesheet covers each one."""
     root = pathlib.Path(__file__).resolve().parents[2]
-    css = (root / "static" / "css" / "coverage.css").read_text()
+    css = (root / "static" / "css" / "networkly.css").read_text()
     styled = set(re.findall(r'input\[type="([a-z-]+)"\]', css))
 
     used = set()
@@ -224,7 +224,7 @@ def test_the_section_label_has_exactly_one_definition():
     written independently in four files and drifted — letter-spacing across
     0.06/0.07/0.08em, colour between ink-2 and ink-3 — so the same label
     looked subtly different on every page and there was nowhere to fix it
-    once. coverage.css §6b owns the type now; a page may still add what is
+    once. networkly.css §6b owns the type now; a page may still add what is
     genuinely local (a flex row, an indent, a mono face) but must not
     restate the shared properties."""
     root = pathlib.Path(__file__).resolve().parents[2]
@@ -250,7 +250,7 @@ def test_only_section_headers_wear_the_rule():
     label names a menu and the cadence caption names a diagram, so both take
     the type and skip the rule. A signature worn everywhere stops being one."""
     css = (pathlib.Path(__file__).resolve().parents[2]
-           / "static" / "css" / "coverage.css").read_text()
+           / "static" / "css" / "networkly.css").read_text()
     ruled = re.search(r"\n([^\n]*)\s*{\s*\n?\s*position: relative; padding-bottom: 7px;", css)
     assert ruled, "the ruled-label selector list is gone"
     selector = ruled.group(1)
@@ -272,7 +272,7 @@ def test_nothing_sets_type_below_the_floor():
     hero, a 28px instrument figure) that no shared token should own. The
     defect is going below the smallest token, not declining to use one."""
     root = pathlib.Path(__file__).resolve().parents[2]
-    files = list((root / "templates").rglob("*.html")) + [root / "static" / "css" / "coverage.css"]
+    files = list((root / "templates").rglob("*.html")) + [root / "static" / "css" / "networkly.css"]
     floor = 10.0
     offenders = []
     for f in files:
@@ -321,7 +321,7 @@ def test_no_rule_dims_text_with_opacity():
     templates — no visible text node) and fade 1 -> 0.4 until hovered or
     focused, same as the icon-only tf-tier control above them."""
     root = pathlib.Path(__file__).resolve().parents[2]
-    files = list((root / "templates").rglob("*.html")) + [root / "static" / "css" / "coverage.css"]
+    files = list((root / "templates").rglob("*.html")) + [root / "static" / "css" / "networkly.css"]
     offenders = []
     for f in files:
         text = f.read_text()
@@ -345,7 +345,7 @@ def test_no_rule_dims_text_with_opacity():
 # .adv-socket, .act-moved) each carry one. It was a miss, not a decision — and
 # a sweep found three more: both `kin-sheen` hero washes and `.live-dot`.
 #
-# coverage.css §17 does end with a blanket `animation-duration: 0.01ms` over
+# networkly.css §17 does end with a blanket `animation-duration: 0.01ms` over
 # `*`, so nothing was visibly moving. But that rule keeps the animation
 # *running* — an infinite loop retimed to 100k iterations a second rather than
 # stopped — so it is a backstop, not the guard. The per-component
@@ -379,7 +379,7 @@ def _is_guarded(selector: str, guarded: set[str]) -> bool:
 
 def test_every_looping_animation_can_be_switched_off():
     root = pathlib.Path(__file__).resolve().parents[2]
-    files = list((root / "templates").rglob("*.html")) + [root / "static" / "css" / "coverage.css"]
+    files = list((root / "templates").rglob("*.html")) + [root / "static" / "css" / "networkly.css"]
 
     unguarded = []
     for f in files:

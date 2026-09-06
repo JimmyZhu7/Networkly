@@ -53,7 +53,7 @@ only reintroduce the clipping bug this file's history is full of.
   {% comment %}
   HOW OLD THE EVIDENCE IS, on the column that asserts the date.
 
-  The countdown in this column is a claim about a page Coverage read at some
+  The countdown in this column is a claim about a page Networkly read at some
   point; until now the only place the product said WHEN it read it was the
   drawer, which a student reaches by opening it. Measured 2026-09-01, a
   quarter of the rows under Today's "Closing in 10 days" ribbon were counting
@@ -70,7 +70,7 @@ only reintroduce the clipping bug this file's history is full of.
   {% comment %}
   HOW LONG IT HAS BEEN OPEN RIDES HERE TOO (2026-09-02). "Open 14d" used to
   be the last span of the meta line below. It is a fact about the EVIDENCE,
-  how long Coverage has watched this posting stay open, not about the reader
+  how long Networkly has watched this posting stay open, not about the reader
   or their eligibility, which its own comment there said outright, and it was
   the item that pushed 66% of dated rows onto a second meta line and left the
   orphan separator at the end of the first. So it joins the other
@@ -79,7 +79,7 @@ only reintroduce the clipping bug this file's history is full of.
   the whole reason this figure exists rather than a "typically open N days"
   one is that it predicts nothing (see `directory.open_runs`).
   {% endcomment %}
-  <span class="rr-due"{% if r.verified_days is not None or r.dated and r.open_run_days is not None %} title="{% if r.verified_days is not None %}Coverage last confirmed this posting live {% if r.verified_days == 0 %}today{% elif r.verified_days == 1 %}1 day ago{% else %}{{ r.verified_days }} days ago{% endif %}.{% endif %}{% if r.dated and r.open_run_days is not None %}{% if r.verified_days is not None %} {% endif %}Coverage watched this posting open {% if r.open_run_days == 0 %}today{% elif r.open_run_days == 1 %}1 day ago{% else %}{{ r.open_run_days }} days ago{% endif %} and it is still open. Not a forecast of when it closes.{% endif %}"{% endif %}>
+  <span class="rr-due"{% if r.verified_days is not None or r.dated and r.open_run_days is not None %} title="{% if r.verified_days is not None %}Networkly last confirmed this posting live {% if r.verified_days == 0 %}today{% elif r.verified_days == 1 %}1 day ago{% else %}{{ r.verified_days }} days ago{% endif %}.{% endif %}{% if r.dated and r.open_run_days is not None %}{% if r.verified_days is not None %} {% endif %}Networkly watched this posting open {% if r.open_run_days == 0 %}today{% elif r.open_run_days == 1 %}1 day ago{% else %}{{ r.open_run_days }} days ago{% endif %} and it is still open. Not a forecast of when it closes.{% endif %}"{% endif %}>
     {% if r.dated %}
       {% comment %}
       The abbreviation is deliberate (views.py: "Closes in 12 days" does not
@@ -230,7 +230,7 @@ only reintroduce the clipping bug this file's history is full of.
       the assessment is.
 
       A LINK, not a chip, and that is the honesty part: the tooltip states
-      the limit ("Coverage does not score your network here") and the firm
+      the limit ("Networkly does not score your network here") and the firm
       page is where the fuller answer lives. The wording says the firm hires
       by assessment and stops there. It never says networking hurts. No
       source shows that, only that no mechanism is documented

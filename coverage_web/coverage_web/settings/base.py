@@ -573,6 +573,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # touches the CASA/restricted-scope question at all. Do not add scopes here.
 # ---------------------------------------------------------------------------
 SITE_ID = 1
+# Product identity is independent of deployment host and stored Site name.
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Networkly] "
+EMAIL_SUBJECT_PREFIX = "[Networkly] "
+DEFAULT_FROM_EMAIL = "Networkly <no-reply@localhost>"
 
 AUTHENTICATION_BACKENDS = [
     # FIRST, per django-axes' own docs. It authenticates nobody; it raises

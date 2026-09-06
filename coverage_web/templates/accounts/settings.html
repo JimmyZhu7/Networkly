@@ -3,7 +3,7 @@
 {% load static %}
 {% load textstyle %}
 
-{% block title %}Settings · Coverage{% endblock %}
+{% block title %}Settings · Networkly{% endblock %}
 
 {% block head %}
 {% comment %}
@@ -14,7 +14,7 @@ checked chip in every chipset, every cell of the work-authorization matrix,
 every target-firm chip — because CSS cannot tell "just became checked" from
 "was already checked when the stylesheet applied". A page a student opens to
 change ONE thing performed 23 confirmations of things they changed weeks ago,
-which is motion rule M2 (coverage.css §15b) broken 23 times on one screen.
+which is motion rule M2 (networkly.css §15b) broken 23 times on one screen.
 
 The class is on `document.documentElement` and set from the HEAD, which is
 the only place early enough: `<body>` does not exist during head parse, and a
@@ -24,7 +24,7 @@ before the frame is composited, the second after it, so the gate lifts on the
 earliest tick that is guaranteed to be past the load state. From then on
 every pop is a real change by a real person.
 
-The rules it suppresses live in coverage.css beside the gate's own comment.
+The rules it suppresses live in networkly.css beside the gate's own comment.
 {% endcomment %}
 {% script %}
   document.documentElement.classList.add("is-settling");
@@ -69,7 +69,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
      column, which the reader works out instantly; the group headers below
      are what they actually navigate by, so the hierarchy now runs
      title < link < group rather than title == group as before. */
-  /* Shared section label (coverage.css §6b), minus the rule — it names a nav
+  /* Shared section label (networkly.css §6b), minus the rule — it names a nav
      group, not a section. Only the indent is local. */
   .settings-nav-title { padding-left: var(--s3); }
 
@@ -129,7 +129,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
   /* Now a real <label for> on every row that owns a single control (see the
      a11y note in the markup); the class carries the styling either way. */
   .set-row-label { display: block; font-weight: var(--w-med); font-size: var(--fs-m); }
-  /* The Credits card's plan badge (.pill.plan-pro/.plan-free, coverage.css)
+  /* The Credits card's plan badge (.pill.plan-pro/.plan-free, networkly.css)
      sits inline after the label text — same margin-left pattern as
      pricing.html's .cmp-badge. */
   .set-row-label .pill { margin-left: var(--s2); vertical-align: 1px; }
@@ -333,7 +333,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
 
   /* ---- Decisions rows: identity, state and evidence at three weights ----
      Every row in this card used to print its whole story — who it's about,
-     what Coverage decided, and the forensic detail that decision rests on —
+     what Networkly decided, and the forensic detail that decision rests on —
      as one paragraph of .set-row-desc, all the same small grey, so the
      evidence sentence ("Same mailbox name at two registered domains…") read
      at the same weight as the fact it was evidence FOR. Three tiers now:
@@ -354,7 +354,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
      the eye still lands on the identity first and reads this second. */
   .dec-sub { font-weight: var(--w-reg); color: var(--ink-3); font-size: var(--fs-s); }
   /* The evidence a merge suggestion or a completed merge rests on. It is a
-     trust feature — it is WHY Coverage thinks two cards are one person —
+     trust feature — it is WHY Networkly thinks two cards are one person —
      so it must stay reachable, but it is forensic detail, not the fact the
      row exists to state, so it does not compete at the row's own size and
      weight. <details> costs nothing closed and needs no script, the same
@@ -522,7 +522,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
      ====================================================================== */
   .cad-viz { display: grid; gap: var(--s5); margin-bottom: var(--s5);
     padding: var(--s5) var(--s5) var(--s4); }
-  /* Shared section label (coverage.css §6b), minus the rule — it captions a
+  /* Shared section label (networkly.css §6b), minus the rule — it captions a
      diagram. Only the mono face is local; the gap down to the track belongs
      to .cad-rail's margin-top and is deliberately NOT set here. Owning it in
      both places means the two margins collapse to whichever is larger, and
@@ -531,7 +531,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
   .cad-rail-title { margin: 0; font-family: var(--font-mono); }
   /* The track is flat and quiet; the SPAN is what carries colour. A gradient
      across the whole rail said the clock was running everywhere, when the
-     thing worth seeing is the one stretch Coverage is counting: nothing
+     thing worth seeing is the one stretch Networkly is counting: nothing
      until the follow-up, nothing until the circle-back, everything after the
      re-ping. Symmetric margins so a marker at 0% and one at 100% get equal
      room for their labels — 44px, since a label is now name AND number on
@@ -572,7 +572,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
      with nothing lost. Staggered per rail: three dots marching in lockstep
      read as a loading bar. */
   {% comment %}
-  THREE PASSES, NOT FOREVER (2026-09-01). Motion rule M1 (coverage.css §15b)
+  THREE PASSES, NOT FOREVER (2026-09-01). Motion rule M1 (networkly.css §15b)
   reserves an infinite animation for a state that is actually live, and this
   diagram is a static explanation of how the cadence engine paces a cold
   contact — nothing about it is running. Three dots crossing three rails in
@@ -746,7 +746,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
   .tf-col { border-left-color: var(--line-strong);
     padding: var(--s3) var(--s4);
     transition: border-color var(--t-fast), background-color var(--t-fast); }
-  /* Escalating emphasis, not a severity colour (the Coverage Gaps strip's
+  /* Escalating emphasis, not a severity colour (the Relationship gaps strip's
      tier borders mean "how urgent" — reusing that red/amber/grey here
      would say something is WRONG with Tier 1, when it's simply the most
      important section). Accent scales down tier by tier instead. */
@@ -869,7 +869,7 @@ The rules it suppresses live in coverage.css beside the gate's own comment.
   {% comment %}
   `--r-ctl`. "Tier 1 / Tier 2 / Tier 3" beside a search result is a row of
   three buttons that each add a firm — pressable, so squared, per the
-  control-shape rule in coverage.css §6. It read as a chip and it is not one:
+  control-shape rule in networkly.css §6. It read as a chip and it is not one:
   a chip reports a state, and these do something. They were also the odd
   shape out on a page that already carried nine button treatments.
 
@@ -1027,7 +1027,7 @@ that don't already declare explicit htmx behaviour.
       Theme and the weekly digest, one card. They were two: an "Appearance"
       card holding a single theme row, and a "Notifications" card holding the
       digest. Two headings, two subtitles and two card frames for two rows
-      that answer the same question — how Coverage presents itself to you —
+      that answer the same question — how Networkly presents itself to you —
       and neither of which changes what the engine does.
 
       They keep their separate save paths because their SCOPES genuinely
@@ -1149,7 +1149,7 @@ that don't already declare explicit htmx behaviour.
           hint describes; the drag is still bound underneath as the pointer
           shortcut for people who have a pointer.
           {% endcomment %}
-          <p class="field-hint">Pick a tier, or drag. Higher tiers get more attention from Coverage.</p>
+          <p class="field-hint">Pick a tier, or drag. Higher tiers get more attention from Networkly.</p>
           <div class="tf-board" id="tf-board" data-tf-board>
             {% for col in firm_tiers %}
               <div class="tf-col panel panel--flat panel--edge" data-tier="{{ col.tier }}">
@@ -1452,7 +1452,7 @@ that don't already declare explicit htmx behaviour.
       ---- Pace & Cadence ----
       One card, two forms. Weekly Pace was its own section directly below this
       one: a heading, a subtitle and a card frame around a SINGLE number, sat
-      under a heading that already promised "how hard Coverage chases". How
+      under a heading that already promised "how hard Networkly chases". How
       many touches you aim for and how long the engine waits between them are
       the same subject, and the rail already grouped them under one heading —
       the page just hadn't caught up.
@@ -1685,7 +1685,7 @@ that don't already declare explicit htmx behaviour.
           {% comment %}
           One question per bulk send: was that you job hunting, or the other
           hat you wear. See crm/campaigns.py for the founder's 201-thread club
-          panel mail merge that Coverage read as his recruiting network.
+          panel mail merge that Networkly read as his recruiting network.
 
           2026-08-29: only the ones still asking the question print inline —
           a classified send is a durable answer you already gave, and a page
@@ -1844,7 +1844,7 @@ that don't already declare explicit htmx behaviour.
           behind "Past merges" below — Undo still reaches it there. The
           evidence sentence still shows verbatim wherever a row does, on
           either side of the click, one tap away rather than gone: it is WHY
-          Coverage thinks two cards are one person, a trust feature that has
+          Networkly thinks two cards are one person, a trust feature that has
           to survive being reachable even when it isn't loud.
           {% endcomment %}
           {% if merge_suggestions or recent_merges %}
@@ -1878,12 +1878,12 @@ that don't already declare explicit htmx behaviour.
                 sentence at the same size — the forensic reasoning
                 ("same mailbox name at two registered domains…") reading as
                 loud as the decision it supports. It is a trust feature
-                (it's WHY Coverage thinks these are one person), so it stays
+                (it's WHY Networkly thinks these are one person), so it stays
                 reachable, one tap away, rather than gone.
                 {% endcomment %}
                 {% if s.evidence %}
                 <details class="dec-evidence">
-                  <summary>Why Coverage flagged this</summary>
+                  <summary>Why Networkly flagged this</summary>
                   <p>{{ s.evidence }}</p>
                 </details>
                 {% endif %}
@@ -1927,7 +1927,7 @@ that don't already declare explicit htmx behaviour.
                   </div>
                   {% if m.evidence %}
                   <details class="dec-evidence">
-                    <summary>Why Coverage flagged this</summary>
+                    <summary>Why Networkly flagged this</summary>
                     <p>{{ m.evidence }}</p>
                   </details>
                   {% endif %}
@@ -2140,7 +2140,7 @@ that don't already declare explicit htmx behaviour.
                   delete. Same sentence shape as the Google Calendar card
                   below, so the two read as the same kind of switch.
                   {% endcomment %}
-                  Not connected. View only: Coverage reads your mail to log
+                  Not connected. View only: Networkly reads your mail to log
                   touches and can never send, reply or delete.
                   {% if not gmail_live.trial_days_left and not gmail_live.is_pro %}
                     Real-time sync needs Pro.
@@ -2269,7 +2269,7 @@ that don't already declare explicit htmx behaviour.
       until the OAuth consent screen actually carries the calendar scope (see
       `settings.GCAL_LIVE_ENABLED`). A Connect button that sends a student to
       a Google page which refuses the request is worse than no button — they
-      read the refusal as Coverage being broken. Same rule as the Gmail card,
+      read the refusal as Networkly being broken. Same rule as the Gmail card,
       not a new one.
       {% endcomment %}
       {% if google_calendar.available %}
@@ -2303,7 +2303,7 @@ that don't already declare explicit htmx behaviour.
                     {% endif %}
                   {% endif %}
                 {% else %}
-                  Not connected. View only: Coverage reads your events onto
+                  Not connected. View only: Networkly reads your events onto
                   your timeline and can never add, move or delete anything on
                   your calendar.
                 {% endif %}
@@ -2536,7 +2536,7 @@ that don't already declare explicit htmx behaviour.
 
       {% comment %}
       ---- Your Data ----
-      What Coverage holds on you, how to take it out, and the two documents
+      What Networkly holds on you, how to take it out, and the two documents
       that say what we may do with it. Legal was a separate card below this
       one — its own heading and subtitle over two links — and the two are one
       subject: this is the card that answers "what do you have on me". Both
@@ -2566,7 +2566,7 @@ that don't already declare explicit htmx behaviour.
           its count and its route. This used to be a strip above the board
           itself, in three separate vocabularies; it was removed on 2026-08-28
           and landed here, which is the page that already exists to say what
-          Coverage holds and how much of it.
+          Networkly holds and how much of it.
 
           Each clause hides at zero, for the reason the strip's own comments
           gave: a permanent link to a list that is always empty is a standing

@@ -55,7 +55,7 @@ labelled rule between social and email sign-in. Shared by login and signup.{% en
   .auth-check { display: flex; flex-direction: row; align-items: center;
     gap: var(--s2); margin: 0 0 var(--s4); font-size: var(--fs-s);
     font-weight: var(--w-reg); text-transform: none; letter-spacing: normal; }
-  /* The box is the shared `input[type="checkbox"]` control (coverage.css
+  /* The box is the shared `input[type="checkbox"]` control (networkly.css
      §11), which already sets size, margin, flex and the drawn tick. The
      `width: auto` this rule used to carry would now beat that 16px. */
   .auth-submit { width: 100%; justify-content: center; }
@@ -78,7 +78,7 @@ labelled rule between social and email sign-in. Shared by login and signup.{% en
      they belong to does not gain a 44px step; the label row and the standalone
      "Forgot?" take the floor directly.
 
-     Lives here rather than in coverage.css because these classes are this
+     Lives here rather than in networkly.css because these classes are this
      card's own; the site-wide `.btn` floor is the CSS pass's to write. */
   @media (pointer: coarse) {
     /* Wide as well as tall: "Forgot?" measures 43px across, one pixel under

@@ -31,7 +31,7 @@ pytestmark = pytest.mark.django_db
 
 
 def _coverage_css(settings) -> str:
-    return (settings.BASE_DIR / "static" / "css" / "coverage.css").read_text()
+    return (settings.BASE_DIR / "static" / "css" / "networkly.css").read_text()
 
 
 def test_the_live_dot_does_not_pulse(settings):
@@ -39,7 +39,7 @@ def test_the_live_dot_does_not_pulse(settings):
     css = _coverage_css(settings)
 
     block = re.search(r"^\.live-dot \{(.*?)\}", css, re.S | re.M)
-    assert block, ".live-dot is gone from coverage.css; re-check this guard"
+    assert block, ".live-dot is gone from networkly.css; re-check this guard"
     assert "animation" not in block.group(1), (
         "the live dot animates again. The roles count is real and can simply "
         "be stated; a pulsing dot next to it reads as a landing-page growth "

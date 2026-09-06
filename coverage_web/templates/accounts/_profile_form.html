@@ -50,7 +50,7 @@ the field, exactly what this note would have said.
     {% with n=form.saved_long_ties|length %}
       {% if n == 1 %}One of your saved ties reads as a sentence.{% else %}{{ n }} of your saved ties read as sentences.{% endif %}
     {% endwith %}
-    Use short names, such as a school or employer. Coverage looks for an exact match in your contact notes.
+    Use short names, such as a school or employer. Networkly looks for an exact match in your contact notes.
   </p>
   <div class="aff-notice-actions">
     {% comment %}
@@ -341,7 +341,7 @@ cursor while typing and a screen reader has to hear it without being yanked.
   Only while the box is empty; once there are lines, the readout is what
   belongs in this space.
   {% endcomment %}
-  <p class="aff-empty" data-aff-empty{% if form.shape_report %} hidden{% endif %}>Coverage looks for each one word for word in a contact's own notes.</p>
+  <p class="aff-empty" data-aff-empty{% if form.shape_report %} hidden{% endif %}>Networkly looks for each one word for word in a contact's own notes.</p>
 </div>
 {{ form.affiliations.errors }}
 

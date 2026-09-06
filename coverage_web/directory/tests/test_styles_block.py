@@ -9,7 +9,7 @@ That is not hypothetical. It shipped: two such comments in
 `templates/directory/_styles.html` silently killed 103 of the file's 185
 rules, including `.rolecard` and `.firmcols`. The feed unwrapped into
 unstyled blocks — while the top nav still looked perfectly fine, because its
-styles live in `static/css/coverage.css` and had already parsed. Nothing
+styles live in `static/css/networkly.css` and had already parsed. Nothing
 failed, no error was logged, and the page returned 200. The only symptom was
 visual, on a page no test rendered.
 
@@ -431,7 +431,7 @@ import pathlib
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
 _BASE = _ROOT / "templates" / "base.html"
 _OPPS = _ROOT / "templates" / "directory" / "opportunities.html"
-_CSS = _ROOT / "static" / "css" / "coverage.css"
+_CSS = _ROOT / "static" / "css" / "networkly.css"
 
 
 def test_the_viewport_clamp_helper_exists_and_both_dropdowns_call_it():
@@ -1019,7 +1019,7 @@ def test_every_modifier_the_board_writes_is_read_by_a_rule():
 
     html = response.content.decode()
     css_file = (pathlib.Path(__file__).resolve().parents[2]
-                / "static" / "css" / "coverage.css")
+                / "static" / "css" / "networkly.css")
     readable = "\n".join(_STYLE_RE.findall(html)) + "\n" + css_file.read_text()
     # COMMENTS STRIPPED FIRST, the same trap `_rules` above records and for
     # the same reason: this stylesheet argues for its rules in prose directly
@@ -1034,7 +1034,7 @@ def test_every_modifier_the_board_writes_is_read_by_a_rule():
                   if f".{cls}" not in readable)
     assert not dead, (
         f"{dead}: written into a class attribute and read by no rule in the "
-        "page's own <style> blocks or in coverage.css. Either style it or "
+        "page's own <style> blocks or in networkly.css. Either style it or "
         "stop writing it — a modifier that draws nothing is a comment "
         "pretending to be code."
     )

@@ -1057,7 +1057,7 @@ def _record_bounce(
         about_name=name[:255], status=MailFact.STATUS_PENDING,
         contact=contact,
         action_note=(
-            f"{failed_email} is undeliverable. Coverage will not ask you to "
+            f"{failed_email} is undeliverable. Networkly will not ask you to "
             "email it again."
         )[:300],
     )

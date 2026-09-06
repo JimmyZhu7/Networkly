@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Pricing · Coverage{% endblock %}
+{% block title %}Pricing · Networkly{% endblock %}
 
 {% block head %}
 <style>
@@ -42,7 +42,7 @@
 
   /* The hero sheen runs once. Same override, same reasoning, same removal
      condition as core/home.html's copy — see the long note there. Longhands
-     only, so coverage.css's `prefers-reduced-motion` block (which sets the
+     only, so networkly.css's `prefers-reduced-motion` block (which sets the
      animation NAME to none) still wins. */
   .kin-hero::after { animation-iteration-count: 1; animation-fill-mode: both; }
 
@@ -411,7 +411,7 @@
     page, the hardest part of it to see. Every SaaS pricing page that shows
     live inventory puts it above the cards, not inside a bullet.
 
-    This is `.kin-hero-stats` from coverage.css, the same component the
+    This is `.kin-hero-stats` from networkly.css, the same component the
     landing hero uses for the same three figures. No new CSS, no new
     tokens, and it re-themes and re-flows with everything else. The numbers
     are still the measured ones from core.views.pricing; nothing here is
@@ -720,7 +720,7 @@
           <p class="plan-price"><span class="amount">$299</span><span class="per">per year, flat &middot; up to 25 members</span></p>
           <p class="plan-includes">Every member on Free, plus</p>
           <ul class="plan-features">
-            <li>Shared firm tiers and a club-wide coverage board</li>
+            <li>Shared firm tiers and a club-wide network board</li>
             <li>See which firms your members already reach</li>
             <li>Member seats managed by club officers, no per-seat billing
               for the board</li>
@@ -752,7 +752,7 @@
           <p class="plan-includes">Everything in Team, plus</p>
           <ul class="plan-features">
             <li>Campus-wide feed with your own tracked firms</li>
-            <li>Cohort analytics: coverage, pace, outcomes</li>
+            <li>Cohort analytics: relationships, pace, outcomes</li>
             <li>SSO and roster provisioning</li>
             <li>A named contact, not a ticket queue</li>
           </ul>
@@ -781,10 +781,10 @@
     </details>
     <details class="panel panel--flat">
       <summary>What would a Team plan look like for my club?</summary>
-      <p>Shared tiers, shared coverage, one flat plan an officer manages, not per-seat billing to negotiate. If you run a finance society, we want your input before it ships.</p>
+      <p>Shared tiers, shared contacts, one flat plan an officer manages, not per-seat billing to negotiate. If you run a finance society, we want your input before it ships.</p>
     </details>
     <details class="panel panel--flat">
-      <summary>What happens to my data if I stop using Coverage?</summary>
+      <summary>What happens to my data if I stop using Networkly?</summary>
       <p>Export it as CSV whenever you like. Delete your account yourself and everything goes with it, immediately.</p>
     </details>
   </section>

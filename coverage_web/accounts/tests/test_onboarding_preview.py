@@ -239,7 +239,7 @@ def test_work_step_names_the_four_states_honestly(client, user, world):
     assert "No sponsorship" in body
     assert "Firm policy known" in body
     assert "Not stated" in body
-    assert ("Most postings never say. Coverage shows you the ones that do, "
+    assert ("Most postings never say. Networkly shows you the ones that do, "
             "tells you when it is the firm's policy rather than the posting, "
             "and scores the rest as neutral, never as a guess.") in " ".join(body.split())
 
@@ -545,7 +545,7 @@ def test_the_wizard_stylesheet_has_no_unterminated_comment(client, user):
 
 
 def test_the_preview_panel_sticks_below_the_masthead(client, user):
-    """`.site-header` is itself sticky at `top: 0` (coverage.css §3), so the
+    """`.site-header` is itself sticky at `top: 0` (networkly.css §3), so the
     panel has to offset by the masthead's real height or it pins underneath
     it — which it did, at a flat 56px against a 113px masthead, hiding the
     panel's eyebrow and the first digit of its count at every scroll

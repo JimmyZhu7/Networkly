@@ -1,5 +1,5 @@
 ---
-name: Coverage
+name: Networkly
 description: A clear recruiting workspace with restrained color and visible actions.
 colors:
   paper: "#f6f8fb"
@@ -133,15 +133,17 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.r-panel}"
 ---
-# Design System: Coverage
+# Design System: Networkly
 
 ## Overview
 
 **Creative North Star: "A Clear Recruiting Workspace"**
 
-Coverage presents a clear recruiting workspace: destinations on the left, the current task in front, supporting context beside it. Cool surfaces, slate text, precise blue selection, and quiet borders make dense recruiting records easy to scan.
+Networkly presents a clear recruiting workspace: destinations on the left, the current task in front, supporting context beside it. Cool surfaces, slate text, precise blue selection, and quiet borders make dense recruiting records easy to scan.
 
-This records the implemented September 2026 shell, widget, and element refurbishment. In `coverage_web/templates/base.html`, `coverage_web/static/css/coverage.css` supplies base primitives, semantic status palettes, and self-hosted fonts; route styles load through the head block; `coverage_web/static/css/workspace.css` then establishes the shared shell and principal widgets; `coverage_web/static/css/elements.css` loads last and supplies the small-control and secondary-surface refinements. Read the final cascade, including selector specificity, before copying a route rule. Route-specific structure still belongs to its templates. Historical visual prescriptions in `docs/design-spec.md` and `design-system/coverage/MASTER.md` are subordinate; their product and functional contracts are not replaced.
+This records the implemented September 2026 shell, widget, and element refurbishment. In `coverage_web/templates/base.html`, `coverage_web/static/css/networkly.css` supplies base primitives, semantic status palettes, and self-hosted fonts; route styles load through the head block; `coverage_web/static/css/workspace.css` then establishes the shared shell and principal widgets; `coverage_web/static/css/elements.css` loads last and supplies the small-control and secondary-surface refinements. Read the final cascade, including selector specificity, before copying a route rule. Route-specific structure still belongs to its templates. Historical visual prescriptions in `docs/design-spec.md` and `design-system/coverage/MASTER.md` are subordinate; their product and functional contracts are not replaced.
+
+The approved Networkly identity uses a connected two-person N symbol beside the custom lowercase wordmark, with a blue initial n and slate lettering. The shared wordmark preserves the approved source silhouette using an SVG luminance mask and theme tokens; compact marks and browser/install icons use native geometry. Header and footer links carry the accessible name Networkly home. Use the full lockup where space permits and the symbol for assistant avatars, brief markers, and icons. Email headers use a raster export of the same lockup.
 
 **Key Characteristics:**
 

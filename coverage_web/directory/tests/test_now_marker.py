@@ -34,7 +34,7 @@ import re
 # Every stylesheet that draws a cycle band.
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
 SOURCES = [
-    _ROOT / "static" / "css" / "coverage.css",
+    _ROOT / "static" / "css" / "networkly.css",
 ]
 
 _RULE_RE = re.compile(r"([^{}@]+)\{([^{}]*)\}")
@@ -61,7 +61,7 @@ def test_the_surface_still_marks_the_current_month():
     is the colour-independent signal for where today is."""
     markers = _now_markers()
     files = {p.name for p, _, _ in markers}
-    assert files == {"coverage.css"}, (
+    assert files == {"networkly.css"}, (
         f"the cycle band lost its 'you are here' marker; found {files}"
     )
 

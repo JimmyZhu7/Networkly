@@ -198,7 +198,7 @@ def send_trial_ended_email(user) -> bool:
     }
     try:
         message = EmailMultiAlternatives(
-            subject="Your Coverage Pro trial has ended",
+            subject="Your Networkly Pro trial has ended",
             body=render_to_string("accounts/emails/trial_ended.txt", ctx),
             to=[address],
         )

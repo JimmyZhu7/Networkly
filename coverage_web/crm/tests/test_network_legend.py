@@ -46,7 +46,7 @@ def test_the_key_carries_one_entry_per_mark_a_card_can_wear():
     and the key cannot explain is an abbreviation with no reading.
 
     Six entries as of 2026-09-02: the four warmth dots, "SP", and "CG", which
-    arrived when the Coverage Gaps strip was deleted and its status moved
+    arrived when the Networkly Gaps strip was deleted and its status moved
     onto the cards. The two swatches are both `.pill` and both `aria-hidden`,
     because the words beside them are the accessible content.
     """
@@ -66,7 +66,7 @@ def test_the_key_carries_one_entry_per_mark_a_card_can_wear():
         "alongside the words that explain it"
     )
     for swatch, words in (("fc-spon", "Sponsors visas"),
-                          ("fc-cg", "Coverage gap, nobody warm yet")):
+                          ("fc-cg", "Relationship gap, nobody warm yet")):
         assert f'class="pill {swatch}"' in legend and words in legend, (
             f"{swatch} has a swatch or its words, not both"
         )

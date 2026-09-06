@@ -3,10 +3,10 @@ Plain text, not HTML — autoescape is off for the whole file so a firm name
 with an "&" or a mailto: URL's "&"-joined query params render as literal
 characters instead of HTML entities (Django's template engine autoescapes by
 default regardless of the .txt extension; only an explicit tag turns it off).
-{% endcomment %}Coverage · your week of {{ digest.today|date:"M j" }}
+{% endcomment %}Networkly · your week of {{ digest.today|date:"M j" }}
 {% comment %}
 The line the digest leads with — see the HTML half for why. Built by
-`crm.digest._coverage_summary` from the counts the Network board's Coverage
+`crm.digest._coverage_summary` from the counts the Network board's Networkly
 Gaps strip already ranks; absent for a student who has tiered nothing.
 {% endcomment %}{% if digest.coverage %}
 {{ digest.coverage.line }}
@@ -23,7 +23,7 @@ nothing, and a mail client's sanitizer would strip the styling anyway. So the
 marker is words, in both halves of this pair.
 
 `item.reported` is `directory.views.deadline_provenance` — set only when
-`Opportunity.confidence` is below 1.0, i.e. Coverage read the date out of the
+`Opportunity.confidence` is below 1.0, i.e. Networkly read the date out of the
 posting's own prose instead of quoting a field the board published. On the live
 board that is 96% of dated open campus roles, so a digest that dropped the
 marker was presenting our own reading as the firm's statement on nearly every
@@ -71,9 +71,9 @@ half. The key prints here only when Closing did not already print it.
 {% endfor %}{% if digest.picks_reported and not digest.closing_reported %}
 ({{ digest.picks_reported.label }}): {{ digest.picks_reported.why }}.
 {% endif %}{% endif %}
-Open Coverage: {{ site_url }}{% url 'crm:week' %}
+Open Networkly: {{ site_url }}{% url 'crm:week' %}
 
-You're getting this because you're onboarded on Coverage. It runs weekly, built from your own tracked roles and contacts, and stops on its own the week neither has anything due.
+You're getting this because you're onboarded on Networkly. It runs weekly, built from your own tracked roles and contacts, and stops on its own the week neither has anything due.
 
 Stop these emails: {{ site_url }}{% url 'accounts:digest_unsubscribe' digest.unsubscribe_token %}
 {% endautoescape %}

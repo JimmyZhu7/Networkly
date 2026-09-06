@@ -1,4 +1,4 @@
-// Coverage's service worker — deadline push alerts only.
+// Networkly's service worker — deadline push alerts only.
 //
 // Deliberately NOT an offline-cache worker. A stale-cache bug on a live
 // deadline feed (the wrong "closes in 2 days" served from cache after the
@@ -16,7 +16,7 @@
 // depends on controlling app pages.
 
 self.addEventListener("push", function (event) {
-  var data = { title: "Coverage", body: "A tracked role is closing soon.", url: "/opportunities/mine/" };
+  var data = { title: "Networkly", body: "A tracked role is closing soon.", url: "/opportunities/mine/" };
   if (event.data) {
     try {
       data = Object.assign(data, event.data.json());
@@ -44,7 +44,7 @@ self.addEventListener("notificationclick", function (event) {
   var url = (event.notification.data && event.notification.data.url) || "/opportunities/mine/";
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
-      // Focus an already-open Coverage tab rather than piling up a new one
+      // Focus an already-open Networkly tab rather than piling up a new one
       // every time a deadline fires — the same instinct as any native app's
       // notification tap.
       for (var i = 0; i < list.length; i++) {

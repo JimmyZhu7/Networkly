@@ -585,7 +585,7 @@ class ProfileForm(forms.Form):
             if address.rsplit("@", 1)[-1] in _FREEMAIL_DOMAINS:
                 raise forms.ValidationError(
                     f"“{address}” is a personal email provider, not a school. "
-                    "Coverage can't treat it as your institution — that would "
+                    "Networkly can't treat it as your institution — that would "
                     "hide every alum who writes from the same provider."
                 )
             if address not in addresses:
@@ -893,7 +893,7 @@ CADENCE_LABELS: dict[str, tuple[str, str, str]] = {
     "park_after_business_days": (
         "Pause after",
         "business days",
-        "Silence before Coverage parks them.",
+        "Silence before Networkly parks them.",
     ),
     # Rendered as a two-option segment, not a spinner (see CADENCE_SEGMENTS),
     # so the description no longer has to say "Capped at 2: one note, one

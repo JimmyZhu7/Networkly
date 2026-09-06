@@ -1404,7 +1404,7 @@ def test_the_page_header_outranks_page_content_in_paint_order(client):
     """
     user = _user(weekly_touch_goal=14)
     client.force_login(user)
-    css = (settings.BASE_DIR / "static" / "css" / "coverage.css").read_text()
+    css = (settings.BASE_DIR / "static" / "css" / "networkly.css").read_text()
     head = css.split(".pagehead {", 1)[1].split("}", 1)[0]
     assert "z-index" in head, (
         "The page header must declare its own stacking level; without it a "

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load csp textstyle %}
 
-{% block title %}My applications · Coverage{% endblock %}
+{% block title %}My applications · Networkly{% endblock %}
 
 {% block head %}
 <style>
@@ -97,7 +97,7 @@
   .apps-lenses { margin-top: var(--s5); border: 1px solid var(--line);
     border-radius: var(--r-panel); background: var(--surface);
     box-shadow: var(--shadow-1); padding: var(--s4) var(--s5) var(--s5); }
-  /* Shared section label (coverage.css §6b); only the icon row is local. */
+  /* Shared section label (networkly.css §6b); only the icon row is local. */
   .apps-lenses-eyebrow { display: flex; align-items: center; gap: 6px; }
   /* The band's own prose is the heading and nothing else. The rule that
      styled its intro paragraph went with the sentence — see _apps_body.html's
@@ -224,7 +224,7 @@
   /* Fact chips inline after the firm, wrapping with it rather than claiming a
      row: this list is a scan of what closes when, and a second line per row
      would halve how much of it fits on screen. The chips themselves are the
-     shared component in coverage.css. */
+     shared component in networkly.css. */
   .lens-facts { display: inline-flex; flex-wrap: wrap; gap: 4px;
     margin-left: var(--s2); vertical-align: middle; }
   /* A pulled posting keeps its row and loses its urgency styling: the left
@@ -290,7 +290,7 @@
      than one that is 12px wider.
      ---------------------------------------------------------------------- */
   /* Size and colour only. The border is NOT restated: `.csel-btn`'s base rule
-     already takes `var(--line-strong)`, and coverage.css's own note on the
+     already takes `var(--line-strong)`, and networkly.css's own note on the
      filter-bar override says a line that only ever agreed with the base rule
      is where the next divergence gets in unnoticed. `--ink-2` is a real
      change — the row's title is the ink on this row, and its stage is the
@@ -504,7 +504,7 @@
     gap: 2px var(--s2); min-width: 0; }
   .apps-hidden-title { color: var(--ink); }
   /* FIRM AND PLACE, TOLD APART FROM THE ROLE. `.apps-firm` had no rule
-     anywhere — not here, not in coverage.css — so all three spans on this row
+     anywhere — not here, not in networkly.css — so all three spans on this row
      rendered identically: measured, firm, title and location were each
      #191b16, 13px, weight 400, no transform, no letter-spacing, separated by
      nothing but an 8px gap: firm, then role, then city ran together as one

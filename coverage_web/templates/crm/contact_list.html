@@ -2,7 +2,7 @@
 {% load csp %}
 {% load textstyle %}
 
-{% block title %}Network · Coverage{% endblock %}
+{% block title %}Network · Networkly{% endblock %}
 
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
@@ -31,7 +31,7 @@
   <div class="network-toolbar">
     <nav class="network-sections" aria-label="Network sections">
       <a href="#net-contacts">Contacts</a>
-      <a href="#net-coverage">Firm coverage</a>
+      <a href="#net-coverage">Firm network</a>
     </nav>
   <nav class="subnav scope-tabs standalone" aria-label="Network region">
     <a href="{% url 'crm:contact_list' %}"{% if not scope %} aria-current="page"{% endif %}>All</a>
@@ -79,7 +79,7 @@
     not-recruitment) now hang off Settings > Your Data, beside the archived
     link that already lived there. They are account-level ledgers, not
     lenses on this board, and that is the page that already exists to say
-    what Coverage holds and how many.
+    what Networkly holds and how many.
   - "The board says what it is not showing" is still honoured, just not
     three times in three vocabularies at the top of the board. Settings
     carries the counts and the routes together.
@@ -140,7 +140,7 @@
   <section class="net-unplaced">
     <h2 class="strip-title">Unplaced <span class="scrub-count">{{ contact_total }}</span></h2>
     <p class="net-caveat">
-      Nobody has said where these people sit, and Coverage will not guess.
+      Nobody has said where these people sit, and Networkly will not guess.
       Until then they match deadlines in both markets.
     </p>
     <form id="place-form" method="post" action="{% url 'crm:contacts_bulk' %}">
@@ -230,7 +230,7 @@
   same endpoint (`crm:contacts_bulk`), same reversibility.
   {% endcomment %}
 
-  {# ---- Firm Coverage by tier (pick or drag) ---- #}
+  {# ---- Firm network by tier (pick or drag) ---- #}
   {# ---- Full contact cards, by warmth ---- #}
   <section class="net-contacts" id="net-contacts">
     <h2 class="strip-title strip-title-lg">Contacts</h2>
@@ -306,7 +306,7 @@
     Order is fixed (Replied, Chatted, Advocates, then the two cold halves),
     not sorted by size: with only five fixed categories, a reader benefits
     more from "Replied is always first" than from a leaderboard that
-    reshuffles as counts change — the same lesson the Coverage Gaps strip
+    reshuffles as counts change — the same lesson the Relationship gaps strip
     already drew from dropping its rank badge (04eb8cb). The dominant
     category (137 of 174 on the live account) is instead marked by WEIGHT:
     each row's own background fills left-to-right by its real share of
@@ -454,7 +454,7 @@
                 following up, and the Advocate row was two parked people — a
                 bucket reading as live work when none of it was. This is a
                 STATUS chip, so it keeps the pill (the control-shape rule in
-                coverage.css §6 draws exactly that line), and it is muted
+                networkly.css §6 draws exactly that line), and it is muted
                 rather than coloured: park is a decision the student made on
                 purpose, not a warning.
 
@@ -726,7 +726,7 @@
                 because a 190px card shares this line with the firm's name.
                 {% endcomment %}
                 {% comment %}
-                "CG" is the deleted Coverage Gaps strip, on the card it was
+                "CG" is the deleted Relationship gaps strip, on the card it was
                 always about. It is NOT the same fact as the gap label on
                 the verb below: that names the rung EVERY under-target firm
                 sits on, and every under-target firm has one. This is the
@@ -760,7 +760,7 @@
                 <div class="firm-card-head">
                   <div class="firm-card-name">{{ fc.firm.name|smart_title }}</div>
                   {% if fc.cg %}
-                    <span class="pill fc-cg" title="Coverage gap. You ranked this firm high and nobody here is warm yet.">CG</span>
+                    <span class="pill fc-cg" title="Relationship gap. You ranked this firm high and nobody here is warm yet.">Gap</span>
                   {% endif %}
                   {% if fc.sponsors %}
                     <span class="pill fc-spon" title="Sponsors visas. See Opportunities for which regions.">SP</span>
@@ -816,7 +816,7 @@
                   {% endif %}
                 </div>
                 {% comment %}
-                What the Coverage Gaps strip used to give its worst 6 firms,
+                What the Relationship gaps strip used to give its worst 6 firms,
                 on all of them: a status is not a task, and this was the one
                 thing 55-odd of these cards couldn't do — the click target
                 existed for six firms on the whole page and nowhere else.
@@ -916,9 +916,9 @@
 
         `aria-hidden` on the swatch, same as SP: the words beside it are
         the accessible content, and a screen reader announcing "CG
-        Coverage gap" would read the abbreviation twice.
+        Relationship gap" would read the abbreviation twice.
         {% endcomment %}
-        <span><span class="pill fc-cg" aria-hidden="true">CG</span>Coverage gap, nobody warm yet</span>
+        <span><span class="pill fc-cg" aria-hidden="true">Gap</span>Relationship gap, nobody warm yet</span>
       </p>
       </div>
   </section>

@@ -36,7 +36,7 @@ from django.test import Client
 pytestmark = pytest.mark.django_db
 
 TEMPLATES = Path(__file__).resolve().parents[2] / "templates"
-CSS = Path(__file__).resolve().parents[2] / "static" / "css" / "coverage.css"
+CSS = Path(__file__).resolve().parents[2] / "static" / "css" / "networkly.css"
 
 BASE_HTML = TEMPLATES / "base.html"
 COCKPIT = TEMPLATES / "crm" / "_cockpit.html"

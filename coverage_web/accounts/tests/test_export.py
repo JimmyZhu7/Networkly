@@ -402,7 +402,7 @@ def test_kind_all_serves_a_zip_attachment(client, student, loaded):
     resp = client.get(reverse("accounts:export") + "?kind=all")
     assert resp.status_code == 200
     assert resp["Content-Type"] == "application/zip"
-    assert "coverage-data.zip" in resp["Content-Disposition"]
+    assert "networkly-data.zip" in resp["Content-Disposition"]
     assert zipfile.ZipFile(io.BytesIO(resp.content)).testzip() is None
 
 
@@ -410,8 +410,8 @@ def test_the_single_file_downloads_still_work(client, student, loaded):
     """Keeping them is the point — a student who wants contacts in a
     spreadsheet shouldn't have to unzip anything."""
     client.force_login(student)
-    for kind, filename in (("contacts", "coverage-contacts.csv"),
-                           ("touches", "coverage-touches.csv")):
+    for kind, filename in (("contacts", "networkly-contacts.csv"),
+                           ("touches", "networkly-touches.csv")):
         resp = client.get(reverse("accounts:export") + f"?kind={kind}")
         assert resp.status_code == 200
         assert filename in resp["Content-Disposition"]
@@ -425,7 +425,7 @@ def test_export_requires_a_login(client):
 # ---------------------------------------------------------------------------
 # CSV formula injection
 #
-# The export is the one place Coverage hands third-party-authored text to a
+# The export is the one place Networkly hands third-party-authored text to a
 # program that executes text. A sender the student never chose picks their
 # own Subject line; capture/gmail_live.py copies it into Touch.note; the
 # student opens their export in Excel. Everything below exists to keep that

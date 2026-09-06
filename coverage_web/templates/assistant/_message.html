@@ -3,13 +3,13 @@
 {% comment %}
 One turn in the thread. `row` is a dict built by assistant.views._thread_rows:
 role, text, message_id (the stored row's own pk), tools (human labels for the
-lookups behind an answer), notice (non-empty only for a message Coverage
+lookups behind an answer), notice (non-empty only for a message Networkly
 wrote about itself), attachments (user turns only — filenames of any
 image/document blocks it carried).
 
 Under the bubble sits one quiet actions row, invisible until the turn is
 hovered or something inside it is focused (chat.html's `.as-msg-actions`),
-holding the things each side of the conversation is for: on Coverage's own
+holding the things each side of the conversation is for: on Networkly's own
 turns, Copy, Retry, and a thumbs up/down; on yours, Edit. Same restraint as
 the history rows' kebab — the thread stays calm until you reach for it.
 
@@ -29,7 +29,7 @@ knows how to do. No new JS path, just a second door into the same one.
     {# `timesince1`: depth=1, so a turn from earlier today reads "13 hours #}
     {# ago" rather than the default depth=2's "5 days, 13 hours ago" -- see #}
     {# core.templatetags.textstyle.timesince1. #}
-    <p class="as-who">{% if row.role == 'user' %}You{% else %}Coverage{% endif %}{% if row.created %} <time class="as-msg-time" datetime="{{ row.created|date:'c' }}">{{ row.created|timesince1 }} ago</time>{% endif %}</p>
+    <p class="as-who">{% if row.role == 'user' %}You{% else %}Networkly{% endif %}{% if row.created %} <time class="as-msg-time" datetime="{{ row.created|date:'c' }}">{{ row.created|timesince1 }} ago</time>{% endif %}</p>
     <div class="as-bubble">
       {% if row.attachments %}
         <div class="as-attachments">

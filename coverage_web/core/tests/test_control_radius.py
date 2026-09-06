@@ -48,7 +48,7 @@ import pytest
 
 
 def _css(settings) -> str:
-    return (settings.BASE_DIR / "static" / "css" / "coverage.css").read_text()
+    return (settings.BASE_DIR / "static" / "css" / "networkly.css").read_text()
 
 
 def _rule(css: str, selector: str, indent: str = "") -> str:
@@ -56,7 +56,7 @@ def _rule(css: str, selector: str, indent: str = "") -> str:
 
     Anchored at the line start so `.btn` cannot match `.btn-primary` or the
     `.filters .csel-btn` override further down the file. `indent` is how the
-    rule is laid out in ITS file, and is part of that anchor: coverage.css
+    rule is laid out in ITS file, and is part of that anchor: networkly.css
     writes top-level rules at column 0 and indents the media-query overrides
     beneath them, so requiring `""` here is what keeps `.site-nav` from
     resolving to its own narrow-screen override further down.
@@ -115,7 +115,7 @@ def test_the_filter_bars_own_stylesheet_does_not_re_pill_its_controls(settings):
     """The filter bar keeps some of its styling in a template `<style>` block,
     and that is where the last pill hid: `.filters select, .filters
     input[type="search"]` and the mobile `Filters` disclosure each re-rounded
-    to 999px where a grep of coverage.css could not see them. The search box
+    to 999px where a grep of networkly.css could not see them. The search box
     and the disclosure are the two controls the custom dropdown does NOT
     replace, so on Opportunities they were the ones left rounded after the
     stylesheet was swept — one on desktop, one on the phone."""

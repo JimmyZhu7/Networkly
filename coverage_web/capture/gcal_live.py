@@ -187,7 +187,7 @@ def connect_calendar(user, code: str, redirect_uri: str) -> GoogleCalendarConnec
     creds = flow.credentials
     if not creds.refresh_token:
         raise GcalError(
-            "Google did not return a refresh token — revoke Coverage's "
+            "Google did not return a refresh token — revoke Networkly's "
             "access at https://myaccount.google.com/permissions and "
             "reconnect."
         )

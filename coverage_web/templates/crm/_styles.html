@@ -1,6 +1,6 @@
 {% comment %}
 CRM-only extras. The meter, axes, bands, chips, prio badges, touches and
-moved-flag all live in static/css/coverage.css (the animation contract for
+moved-flag all live in static/css/networkly.css (the animation contract for
 .meter-fill / .moved-flag is defined there and must not be duplicated here).
 {% endcomment %}
 <style>
@@ -19,7 +19,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .cd-rail { position: sticky; top: 88px; display: flex; flex-direction: column;
     gap: var(--s4); }
   @media (max-width: 1023px) { .cd-rail { position: static; } }
-  /* `.panel` (coverage.css §5) carries the surface, hairline, corner and
+  /* `.panel` (networkly.css §5) carries the surface, hairline, corner and
      lift. What is left here is this card's own inset. */
   .cd-card { padding: var(--s5); }
   .cd-h { display: flex; align-items: center; gap: var(--s2);
@@ -37,7 +37,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .cd-angle { margin: var(--s3) 0 0; font-size: var(--fs-s); }
   {% comment %}
   The site has one eyebrow: mono, uppercase, `--fs-micro`, 0.07em, `--ink-3`,
-  declared once in coverage.css §6b and worn by every section label on every
+  declared once in networkly.css §6b and worn by every section label on every
   page. This one was the same idea at 0.06em, inline in the middle of a
   sentence — the only inline eyebrow in the product, and off the shared
   tracking by a hair nobody could see but every future copy would inherit.
@@ -124,13 +124,13 @@ moved-flag all live in static/css/coverage.css (the animation contract for
      the pagehead's drawn dash continued into the page body, which is why the
      segment is the same 18px. Static on purpose — the rail cards already
      rise in, and a signature that animates everywhere stops being one. */
-  /* .strip-title: the shared section label (coverage.css §6b), 11px
+  /* .strip-title: the shared section label (networkly.css §6b), 11px
      uppercase -- correct for "Unplaced"/"Contacts", which sit right above
-     the rows they label. Coverage Gaps and Covered Firms (renamed
-     2026-08-31 from "Firm Coverage") are the page's two major strips, each
+     the rows they label. Relationship gaps and Covered Firms (renamed
+     2026-08-31 from "Firm network") are the page's two major strips, each
      with its own visual block below, and read as afterthoughts at caption
      size. `-lg` is a page-scoped ADDITION to the shared class, not an edit
-     to it: coverage.css's `.strip-title` is used
+     to it: networkly.css's `.strip-title` is used
      by rail titles, Settings' nav and other pages that must not move. */
   .strip-title-lg { font-size: var(--fs-l); font-weight: var(--w-bold);
     color: var(--ink); text-transform: none; letter-spacing: -0.01em; }
@@ -246,7 +246,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   {% comment %}
   The receipt for an act. The cards move under a view transition and the
   count above them used to just flip between two frames, which is the one
-  case motion rule M4 (coverage.css §15b) explicitly allows: a number that
+  case motion rule M4 (networkly.css §15b) explicitly allows: a number that
   changed because the reader did something. `chip-check` is the spring this
   app already uses for "a thing just became true", so the count borrows it
   rather than introducing a second one.
@@ -257,7 +257,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   inline-block` is what lets a transform apply at all.
 
   Its own keyframe rather than a borrowed one: `chip-check` is declared
-  twice in this codebase (coverage.css and, later, this file) with different
+  twice in this codebase (networkly.css and, later, this file) with different
   curves, and the one that would actually win here starts at scale(0.4) — a
   pop written for a checkbox tick appearing from nothing, far too big for a
   figure that is only going from 5 to 4. Same idea, smaller amplitude.
@@ -271,10 +271,10 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   }
   @media (prefers-reduced-motion: reduce) { .lane-count.is-changed { animation: none; } }
   {% comment %}
-  Static, per motion rule M1 (coverage.css §15b). "Critical" is a condition
+  Static, per motion rule M1 (networkly.css §15b). "Critical" is a condition
   the lane is in, not something happening to it: the queue can sit in that
   condition for a week, and a marker that pulses for a week is decoration
-  wearing urgency. This is the argument `.live-dot` in coverage.css already
+  wearing urgency. This is the argument `.live-dot` in networkly.css already
   made about its own ring and won — that comment even names this dot as the
   remaining user of `kin-pulse-ring`, which no longer has one. The dot keeps
   the danger colour, and the lane keeps its name in text, which is what
@@ -376,7 +376,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .act-fill { display: grid; grid-template-columns: auto minmax(0, 1fr);
     gap: 6px var(--s2); align-items: center; margin-top: var(--s2); }
   {% comment %}
-  `margin: 0` because coverage.css §7's `label` carries `var(--s4) 0 var(--s1)`
+  `margin: 0` because networkly.css §7's `label` carries `var(--s4) 0 var(--s1)`
   — the right margin for a stacked form, wrong for a label sitting BESIDE its
   control. Measured 2026-09-02: it made the Role row 39.2px tall around a
   30.2px input, nine pixels of a stacked form's rhythm inside a grid that is
@@ -414,7 +414,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
     font-size: var(--fs-xs); }
   .act-ghosts { display: flex; gap: var(--s4); }
   {% comment %}
-  `min-width` as well as the shared coarse-pointer `min-height` (coverage.css
+  `min-width` as well as the shared coarse-pointer `min-height` (networkly.css
   §16b). Measured at 375px, Skip came out 43 x 44 — tall enough and one pixel
   narrow, because "Skip" is four characters and nothing set a floor on the
   other axis. A 44px target is 44 in both directions.
@@ -504,7 +504,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .dbh-avoid { flex: none; }
 
   .rail-card { padding: var(--s5); }
-  /* .rail-title: the shared section label (coverage.css §6b), plus the flex
+  /* .rail-title: the shared section label (networkly.css §6b), plus the flex
      row below that lets a "see all" link share its line. */
   .rail-empty { color: var(--ink-3); font-size: var(--fs-s); margin: 0; }
 
@@ -1022,7 +1022,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   {% comment %}
   THE COMPACT CONTROL THE STYLESHEET ALREADY ASKED FOR. `.act-fill-in` has
   declared `padding: 4px 8px` and `--fs-s` since the blanks were added, and
-  not one character of it ever applied: coverage.css §7 styles every text
+  not one character of it ever applied: networkly.css §7 styles every text
   input as `input[type="text"]`, 0,1,1 against this rule's 0,1,0. The card
   rendered two full-size 41px form controls, so 88px of its 188 was two boxes
   that were never meant to be that big. Typed as
@@ -1045,7 +1045,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   AND THE ONE THE STUDENT ACTUALLY TOUCHES. base.html's `enhance()` wraps every
   non-multiple `<select>` in `.csel`, hides the native control as
   `.csel-native` and draws a `.csel-btn` in its place — so `select.act-fill-in`
-  governs a 1px clipped element and the visible box takes coverage.css's full
+  governs a 1px clipped element and the visible box takes networkly.css's full
   `9px 14px`. Region has to be told the same thing the Role input was told, on
   the class that is really rendering, or the two blanks are visibly different
   sizes in a two-line form. `.act-fill` scopes it: no other select on the site
@@ -1104,7 +1104,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .prop-undo-said { flex: 1 1 auto; }
   .prop-undo-note { color: var(--ink-3); }
   {% comment %}
-  `--r-ctl`, per the control-shape rule now written into coverage.css's own
+  `--r-ctl`, per the control-shape rule now written into networkly.css's own
   `.btn` block: Undo is pressed, so it takes the shape of a thing you press.
   It was 999px, which spent the badge shape on an action and put a capsule
   20px from the squared `.btn`s in the same strip.
@@ -1229,7 +1229,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   ======================================================================
   {% endcomment %}
 
-  /* ---- Network board (radar layout, Coverage light theme) ---- */
+  /* ---- Network board (radar layout, Networkly light theme) ---- */
   .scope-tabs { margin-top: var(--s3); }
   /* This section used to share its row with a bulk-selection panel this
      board no longer has (`.net-board`'s two-column grid, removed along with
@@ -1270,7 +1270,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
      that looked clickable and wasn't. */
   .net-mini { flex-direction: row; align-items: center; gap: 6px;
     cursor: pointer;
-    /* coverage.css's generic `label { margin: var(--s4) 0 var(--s1) }` is
+    /* networkly.css's generic `label { margin: var(--s4) 0 var(--s1) }` is
        meant for a form field's caption sitting above an input — every
        <label> on the site gets it unless overridden. This card inherited
        that 16px-top/4px-bottom margin the moment it became a <label> for
@@ -1284,7 +1284,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
      styling nothing: the Unplaced panel's boxes were raw browser widgets,
      the one place in the app with no treatment at all. Both names are gone
      now; the box is the shared `input[type="checkbox"]` control
-     (coverage.css §11), which already gives it size, margin, flex and the
+     (networkly.css §11), which already gives it size, margin, flex and the
      drawn tick, and gives the next one for free too. */
   .net-mini-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
   /* Selected. Tint the whole card, not just the box — at four cards a row
@@ -1375,7 +1375,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .lane-all:hover { text-decoration: underline; }
   /* The per-firm region chips under the Unplaced group header. `.btn` does
      the shape (one control family, `--r-ctl`, the rule spelled out on `.btn`
-     in coverage.css); this only sets the row and takes the type down to the
+     in networkly.css); this only sets the row and takes the type down to the
      header's own micro size, because a full-size button per group would
      out-shout the names it sits above. */
   .net-group-chips { display: flex; flex-wrap: wrap; gap: var(--s2);
@@ -1614,7 +1614,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .firm-card-head { flex: none; display: flex; align-items: baseline;
     gap: var(--s2); min-width: 0; }
   {% comment %}
-  The red mono countdown, moved here whole from the deleted Coverage Gaps
+  The red mono countdown, moved here whole from the deleted Relationship gaps
   block (2026-09-02) because this card is the only thing that draws it now.
   Unchanged: same token, same face, same weight. It reads "6d" here where
   the strip read "6d to close", and that difference has always been in the
@@ -1656,7 +1656,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   chip idiom and `.pill.fc-spon` above is its green twin, so CG is the same
   three declarations with the danger family swapped in. `--danger-soft`
   ground, `--danger` ink, `--danger-line` edge, defined in both schemes in
-  coverage.css.
+  networkly.css.
 
   The point of the SOFT fill is the row it lands in. `.gap-due-tag` two
   elements along is `--danger` at `--w-med` with no fill, and two bare red
@@ -1688,7 +1688,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
     transform-origin: left; }
   /* The warmth bar grows in just after its card settles — the board fills
      with colour left-to-right. Disabled with everything else under §17. */
-  /* Capped to match .kin-reveal's cap (coverage.css §15): the bar chases its
+  /* Capped to match .kin-reveal's cap (networkly.css §15): the bar chases its
      own card, so an uncapped bar on a capped card would grow in before the
      card finished arriving on high indexes. */
   .firm-card.kin-reveal .firm-bar {
@@ -1703,7 +1703,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .seg-advocate { background: var(--w-advocate-bar); }
 
   /* The one-click action every under-target firm card carries — the
-     "who to work next" the Coverage Gaps strip used to compute for its
+     "who to work next" the Relationship gaps strip used to compute for its
      worst 6, on every card since 2026-08-31 and now the only place it
      exists at all. Deliberately NOT a full button: 55-odd of 69 cards show
      this, and the strip's tall bordered verb (`.gap-act`, deleted with the
@@ -1724,7 +1724,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   `--fs-xs`, up from 10px, and a 32px floor under the hit area. The comment
   above argues for a quiet line rather than the strip's full button chrome
   and that argument stands — this is still a link, not a button. What did not
-  stand is the size: `--fs-nano`'s own token comment in coverage.css reserves
+  stand is the size: `--fs-nano`'s own token comment in networkly.css reserves
   10px for "uppercase badge labels only", and this is the card's ONLY verb,
   measured 247 x 16px on a phone. `display: flex` + `align-items: center` is
   what turns the min-height into a real target instead of a taller box with
@@ -1747,7 +1747,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   Three changes, all from the 2026-09-01 measurement pass.
 
   `--r-ctl`, not 999px: this is a control you press, and the control-shape
-  rule now written into coverage.css §6 allows a capsule only for a segmented
+  rule now written into networkly.css §6 allows a capsule only for a segmented
   choice among peers. A lone dropdown is not that.
 
   `--fs-xs` and a 32px floor, for the same reason as `.fc-act-link` above —
@@ -2225,7 +2225,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
      `.net-mini` — this card already has its own click targets (Log Touch,
      Edit), so the box has to be its own deliberate target rather than
      fighting those for the click. Drawn by the shared
-     `input[type="checkbox"]` rule (coverage.css §11); the only thing left
+     `input[type="checkbox"]` rule (networkly.css §11); the only thing left
      here is the vertical nudge.
 
      Centred on the AVATAR, not on the cap-height of the name: the avatar
@@ -2647,7 +2647,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
       color-mix(in srgb, var(--accent) 8%, transparent) 50%, transparent 66%);
     background-size: 250% 100%; background-repeat: no-repeat;
     {% comment %}
-    ONE pass, not a loop, per motion rule M1 (coverage.css §15b): an infinite
+    ONE pass, not a loop, per motion rule M1 (networkly.css §15b): an infinite
     animation has to be bound to a live state, and this card's state changes
     once a day. Looping it made the sheen a property of the card rather than
     of its arrival, on the page a student opens more often than any other —
@@ -2698,7 +2698,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   {% endcomment %}
   .daily-brief-note { position: relative; margin: var(--s2) 0 0;
     font-size: var(--fs-xs); color: var(--ink-3); max-width: 68ch; }
-  /* `.btn` (coverage.css) supplies the pill shape, padding and border — this
+  /* `.btn` (networkly.css) supplies the pill shape, padding and border — this
      only adjusts it to sit inside the tinted card: accent ink instead of
      the default border-strong/surface pairing, and flex:none so the parent
      row's flex-grow lands entirely on .daily-brief-body, never squeezing
@@ -2734,7 +2734,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
     color: inherit; text-decoration: none;
     transition: border-color var(--t-fast), background var(--t-fast); }
   /* `text-decoration: none` has to be repeated HERE, not just on the base
-     rule above: coverage.css's global `a:hover { text-decoration:
+     rule above: networkly.css's global `a:hover { text-decoration:
      underline }` matches every link on hover, including this one, and its
      specificity (element + :hover) beats the base `.situation-card` rule
      (a bare class) for the one property neither `:hover` rule here used to
@@ -2803,7 +2803,7 @@ moved-flag all live in static/css/coverage.css (the animation contract for
   .act-moved i { width: 7px; height: 7px; border-radius: 50%;
     background: var(--ok); position: relative; }
   {% comment %}
-  KEPT infinite, and it is the arguable one. Motion rule M1 (coverage.css
+  KEPT infinite, and it is the arguable one. Motion rule M1 (networkly.css
   §15b) allows a loop only while it is bound to a live state, and "moved
   this week" is the closest thing on the board to one: the badge renders
   only on a card whose deadline actually shifted since the last look, it

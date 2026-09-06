@@ -713,7 +713,7 @@ copy exactly once, and this is the once.
                 {% if mf.row.quote %}
                   <p class="act-quote">&ldquo;{{ mf.row.quote }}&rdquo;</p>
                 {% else %}
-                  <p class="act-reason">{{ mf.row.subject|default:"An automated reply Coverage could not read." }}</p>
+                  <p class="act-reason">{{ mf.row.subject|default:"An automated reply Networkly could not read." }}</p>
                 {% endif %}
               </div>
               <div class="act-quick">
@@ -807,7 +807,7 @@ copy exactly once, and this is the once.
           {% endif %}
         {% else %}
           <h2>No contacts yet.</h2>
-          <p>Add the people you're networking with and Coverage will tell you who to reach, and when.</p>
+          <p>Add the people you're networking with and Networkly will tell you who to reach, and when.</p>
         {% endif %}
         {% comment %}
         A generic "Go to Network" under three specific, named first moves is
@@ -1300,7 +1300,7 @@ copy exactly once, and this is the once.
         button, so the reader is asked something and then handed a number.
 
         "sit" is a trading floor's word for a DESK, and the field this block
-        is short of is a MARKET. Coverage stores no desk, and the tool the
+        is short of is a MARKET. Networkly stores no desk, and the tool the
         button opens asks for a country. A student who reads the heading
         literally goes looking for a field that does not exist.
 
@@ -1378,7 +1378,7 @@ copy exactly once, and this is the once.
       US", the founder's own two regions, so any student recruiting anywhere
       else read a card naming markets they do not target.
 
-      What is NOT here is why it matters. "Coverage matches a firm's
+      What is NOT here is why it matters. "Networkly matches a firm's
       deadlines to a person by market" is a fact about how the product works,
       not one the student acts on, so it is the caption's `title`. Same rule
       the rest of this rail follows: keep the fact, cut the explanation.
@@ -1386,7 +1386,7 @@ copy exactly once, and this is the once.
       {% if unplaced_arrival_count %}
         <div class="unplaced-card panel panel--inset panel--flat">
           <h3 class="rail-title">Contacts to place</h3>
-          <p class="unplaced-count" title="Coverage matches a firm's deadlines to a person by market. These arrived from capture with no market on file, and nothing infers one."><span class="unplaced-n">{{ unplaced_arrival_count }}</span> new this week with no market set.</p>
+          <p class="unplaced-count" title="Networkly matches a firm's deadlines to a person by market. These arrived from capture with no market on file, and nothing infers one."><span class="unplaced-n">{{ unplaced_arrival_count }}</span> new this week with no market set.</p>
           <a class="btn btn-primary unplaced-act" href="{% url 'crm:contact_list' %}?scope=unplaced">Place them</a>
         </div>
       {% endif %}
@@ -1610,7 +1610,7 @@ copy exactly once, and this is the once.
                 where it already was.
                 {% endcomment %}
                 {% if d.open_run %}
-                  <span class="activity-run" title="Campus postings at this firm that Coverage watched open and that are still open. Not a forecast of when they close.">{% if d.open_run.longest_days %}{{ d.open_run.count }} roles open, oldest {{ d.open_run.longest_days }}d{% else %}{{ d.open_run.count }} roles open, all opened today{% endif %}</span>
+                  <span class="activity-run" title="Campus postings at this firm that Networkly watched open and that are still open. Not a forecast of when they close.">{% if d.open_run.longest_days %}{{ d.open_run.count }} roles open, oldest {{ d.open_run.longest_days }}d{% else %}{{ d.open_run.count }} roles open, all opened today{% endif %}</span>
                 {% endif %}
               </span>
               <span class="activity-when{% if d.urgent %} is-urgent{% endif %}">{{ d.when }}</span>

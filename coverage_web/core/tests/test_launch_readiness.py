@@ -55,6 +55,7 @@ def test_a_500_traceback_actually_reaches_the_logs():
     import logging.config
 
     from django.conf import settings
+    from urllib.parse import urlsplit
 
     assert settings.LOGGING, (
         "LOGGING is unset, so Django falls back to DEFAULT_LOGGING, whose "
@@ -139,6 +140,7 @@ def test_the_favicon_survives_the_pushstate_fallback(client):
     to resolve, not a fallback."""
     import re
     from django.conf import settings
+    from urllib.parse import urlsplit
 
     head = client.get("/").content.decode().split("</head>")[0]
     assert "data:image/svg" not in head, "a data URI is what blanked it the first time"
@@ -148,9 +150,9 @@ def test_the_favicon_survives_the_pushstate_fallback(client):
 
     # Every declared icon must exist on disk where staticfiles will serve it.
     for href in hrefs:
-        rel = href.split("/static/", 1)[-1]
+        rel = urlsplit(href).path.split("/static/", 1)[-1]
         assert (settings.BASE_DIR / "static" / rel).is_file(), f"missing icon file: {href}"
-    assert any(h.endswith(".png") for h in hrefs), "no raster icon declared"
+    assert any(urlsplit(h).path.endswith(".png") for h in hrefs), "no raster icon declared"
 
     # A raster must be declared BEFORE the SVG. Safari — the browser that
     # actually showed the blank tab — has the patchier SVG-favicon support of
@@ -184,6 +186,7 @@ def test_the_svg_icon_declares_its_own_size():
     That false positive is exactly how this was nearly missed."""
     import re
     from django.conf import settings
+    from urllib.parse import urlsplit
 
     svg = (settings.BASE_DIR / "static" / "img" / "favicon.svg").read_text()
     root = re.match(r"<svg\b([^>]*)>", svg.strip())

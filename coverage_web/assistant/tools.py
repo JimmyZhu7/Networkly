@@ -393,11 +393,11 @@ TOOL_SCHEMAS: list[dict] = [
     {
         "name": "search_opportunities",
         "description": (
-            "Open campus roles on Coverage's board — insight programmes, "
+            "Open campus roles on Networkly's board — insight programmes, "
             "internships and entry-level roles only. Filter by market, firm, "
             "free text, or how soon they close. Every dated role carries a "
             "`deadline_source`: `stated` means the board published that "
-            "date as a field, `reported` means Coverage read it out of "
+            "date as a field, `reported` means Networkly read it out of "
             "the posting's own text and it may be wrong. Most are "
             "`reported`. A role with no deadline simply never stated one."
         ),
@@ -430,7 +430,7 @@ TOOL_SCHEMAS: list[dict] = [
                     "description": (
                         "Only roles with a deadline this many days out or "
                         "sooner. STATED AND REPORTED BOTH — most will be "
-                        "`reported`, i.e. Coverage's own reading of the "
+                        "`reported`, i.e. Networkly's own reading of the "
                         "posting's text. Check each row's `deadline_source` "
                         "before repeating a date as the firm's."
                     ),
@@ -530,7 +530,7 @@ TOOL_SCHEMAS: list[dict] = [
             "to say, which a fresh search_opportunities call does not. A "
             "moved deadline carries `deadline_source` exactly as "
             "search_opportunities does: `reported` means the new date is "
-            "Coverage's own reading of the posting's text and the 'move' "
+            "Networkly's own reading of the posting's text and the 'move' "
             "may be our regex reading a re-scraped page differently, not "
             "the firm changing anything; `stated` means the board published "
             "it as a field. Most are `reported`."
@@ -691,7 +691,7 @@ TOOL_SCHEMAS: list[dict] = [
             "employer — 'Marcus Lee, Associate at Evercore' means "
             "firm_text='Evercore', not firm_text left blank because the "
             "sentence was 'about' the person rather than the firm. The firm "
-            "text is matched against Coverage's own directory, so a named "
+            "text is matched against Networkly's own directory, so a named "
             "employer puts the person ON that firm's coverage board and gives "
             "them a market; `firm_on_board` in the result says whether it "
             "matched."
@@ -1210,7 +1210,7 @@ def _get_firm(user, args) -> dict:
         if spaced:
             firm = Firm.objects.filter(name__icontains=spaced).order_by("name").first()
     if firm is None:
-        raise ToolError(f"No firm on Coverage's board matches {needle!r}.")
+        raise ToolError(f"No firm on Networkly's board matches {needle!r}.")
 
     today = _today(user)
     uf = UserFirm.objects.for_user(user).filter(firm_id=firm.id).first()
@@ -1804,7 +1804,7 @@ def _log_touch(user, args, *, message_id: str) -> dict:
         "warmth_after": contact.warmth,
         "thread_state_before": before[1],
         "thread_state_after": contact.thread_state,
-        "undo": "The student can correct this on the contact's page in Coverage.",
+        "undo": "The student can correct this on the contact's page in Networkly.",
     }
 
 
@@ -1821,7 +1821,7 @@ def _track_opportunity(user, args) -> dict:
 
     opp = Opportunity.objects.select_related("firm").filter(pk=args.get("opportunity_id")).first()
     if opp is None:
-        raise ToolError("No open role on Coverage's board has that id.")
+        raise ToolError("No open role on Networkly's board has that id.")
 
     existing = UserOpportunity.objects.for_user(user).filter(opportunity_id=opp.id).first()
 
@@ -1898,7 +1898,7 @@ def _track_opportunity(user, args) -> dict:
     if is_posting_closed(opp):
         result["posting_closed"] = True
         result["instruction"] = (
-            "Coverage's scraper has seen this posting taken down. It is "
+            "Networkly's scraper has seen this posting taken down. It is "
             "saved, but say plainly that it is closed rather than talking "
             "about its deadline as something still ahead of them."
         )
@@ -2161,7 +2161,7 @@ def _add_contact(user, args) -> dict:
         "firm_on_board": contact.firm_id is not None,
         "role": contact.role,
         "region": contact.region or "unknown",
-        "undo": "The student can edit or archive this on the contact's page in Coverage.",
+        "undo": "The student can edit or archive this on the contact's page in Networkly.",
     }
 
 

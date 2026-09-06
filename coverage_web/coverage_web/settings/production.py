@@ -120,7 +120,10 @@ elif RENDER_EXTERNAL_HOSTNAME:
 # Default is the console backend so an unconfigured deploy logs the reset link
 # to Render's logs (recoverable) instead of 500ing on localhost SMTP.
 vars().update(env.email_url("EMAIL_URL", default="consolemail://"))
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Coverage <no-reply@localhost>")
+from email.utils import formataddr, parseaddr
+DEFAULT_FROM_EMAIL = formataddr(("Networkly", parseaddr(
+    env("DEFAULT_FROM_EMAIL", default="no-reply@localhost")
+)[1]))
 
 # Serve compressed, hashed static files via WhiteNoise. Requires a
 # `collectstatic` at build time (the Dockerfile / render build step does this).

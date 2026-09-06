@@ -507,7 +507,7 @@ def connect_gmail(user, code: str, redirect_uri: str) -> GmailConnection:
         # one. Nothing to store without it — reconnecting after revoking
         # access in the Google Account is the user-facing fix.
         raise GmailLiveError(
-            "Google did not return a refresh token — revoke Coverage's "
+            "Google did not return a refresh token — revoke Networkly's "
             "access at https://myaccount.google.com/permissions and "
             "reconnect."
         )

@@ -14,6 +14,8 @@ unchanged.
 
 from __future__ import annotations
 
+from copy import copy
+
 from allauth.account.adapter import DefaultAccountAdapter
 
 _SUPPRESSED_TEMPLATES = {
@@ -23,6 +25,15 @@ _SUPPRESSED_TEMPLATES = {
 
 
 class CoverageAccountAdapter(DefaultAccountAdapter):
+    def render_mail(self, template_prefix, email, context, headers=None):
+        # Preserve hosts and confirmation links without mutating cached Site data.
+        context = dict(context)
+        if context.get("current_site") is not None:
+            site = copy(context["current_site"])
+            site.name = "Networkly"
+            context["current_site"] = site
+        return super().render_mail(template_prefix, email, context, headers=headers)
+
     def add_message(self, request, level, message_template=None, message_context=None,
                      extra_tags="", message=None):
         if message_template in _SUPPRESSED_TEMPLATES:

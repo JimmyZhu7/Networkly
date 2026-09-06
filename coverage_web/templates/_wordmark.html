@@ -1,0 +1,20 @@
+{% load static %}{% comment %}The approved logo's exact silhouette is rendered as a luminance mask. The original raster remains untouched; theme colors apply to the two original color regions. logo_id is unique per placement.{% endcomment %}
+<svg class="brand-lockup" viewBox="120 240 1595 360" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="brand-ink-{{ logo_id }}" color-interpolation-filters="sRGB">
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncR type="linear" slope="-2" intercept="1.8"/>
+        <feFuncG type="linear" slope="-2" intercept="1.8"/>
+        <feFuncB type="linear" slope="-2" intercept="1.8"/>
+      </feComponentTransfer>
+    </filter>
+    <mask id="brand-shape-{{ logo_id }}" maskUnits="userSpaceOnUse" x="120" y="240" width="1595" height="360" style="mask-type:luminance">
+      <image href="{% static 'img/networkly/approved-lockup.png' %}" width="1827" height="861" filter="url(#brand-ink-{{ logo_id }})"/>
+    </mask>
+  </defs>
+  <g mask="url(#brand-shape-{{ logo_id }})">
+    <path class="brand-blue" d="M120 240h575v360H120z"/>
+    <path class="brand-lettering" d="M695 240h1020v360H695z"/>
+  </g>
+</svg>

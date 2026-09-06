@@ -818,9 +818,9 @@ def _ics_body(user) -> HttpResponse:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Coverage//Calendar//EN",
-        "X-WR-CALNAME:Coverage",
-        "X-WR-CALDESC:Chats and confirmed recruiting deadlines from Coverage",
+        "PRODID:-//Networkly//Calendar//EN",
+        "X-WR-CALNAME:Networkly",
+        "X-WR-CALDESC:Chats and confirmed recruiting deadlines from Networkly",
     ]
     stamp = now.strftime("%Y%m%dT%H%M%SZ")
 

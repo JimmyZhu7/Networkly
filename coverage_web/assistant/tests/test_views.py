@@ -44,7 +44,7 @@ def test_the_page_renders_for_a_signed_in_student(signed_in):
 
     assert response.status_code == 200
     body = response.content.decode()
-    assert "Talk to Coverage" in body
+    assert "Talk to Networkly" in body
     # The label the whole app puts on model-written text.
     assert "Check it before you rely on it" in body
     assert 'id="as-thread"' in body
@@ -1446,7 +1446,7 @@ def test_the_very_first_answer_in_a_conversation_still_offers_retry(signed_in, u
 
 @override_settings(ANTHROPIC_API_KEY="")
 def test_a_notice_gets_no_copy_button(signed_in, user):
-    """Coverage talking about itself is not an answer worth copying."""
+    """Networkly talking about itself is not an answer worth copying."""
     conversation = ChatConversation(user=user)
     conversation.save()
     _turn(user, conversation, "user", "who should I chase?")
@@ -1480,7 +1480,7 @@ def test_a_stream_that_ends_badly_still_names_the_message_to_edit(signed_in, use
 
 
 # ---------------------------------------------------------------------------
-# Feedback: thumbs up/down on one of Coverage's own answers. A fire-and-
+# Feedback: thumbs up/down on one of Networkly's own answers. A fire-and-
 # forget product event (analytics.events.record_event), not a stored rating —
 # these tests are about the write landing with the right shape and the right
 # tenant guard, not about anything the page reads back.

@@ -189,8 +189,8 @@ def _shared_css() -> str:
     """The static stylesheet as shipped, comments stripped."""
     from django.contrib.staticfiles import finders
 
-    path = finders.find("css/coverage.css")
-    assert path, "css/coverage.css is not on the static path"
+    path = finders.find("css/networkly.css")
+    assert path, "css/networkly.css is not on the static path"
     with open(path, encoding="utf-8") as fh:
         return re.sub(r"/\*.*?\*/", "", fh.read(), flags=re.S)
 
