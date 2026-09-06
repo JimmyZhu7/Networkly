@@ -149,7 +149,7 @@ def test_step_four_offers_a_third_door_for_a_student_with_no_history(client, new
         "Gmail needs a sent-mail history and a CSV needs a spreadsheet; the "
         "step about contacts has to offer adding one by hand"
     )
-    assert "Add One by Hand" in body
+    assert "Add one by hand" in body
 
 
 @pytest.mark.django_db

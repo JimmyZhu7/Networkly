@@ -6,37 +6,27 @@
 {% block head %}{% include "directory/_styles.html" %}{% endblock %}
 
 {% block content %}
-<div class="page">
-  <p class="subnav"><a href="{% url 'opportunities' %}">← Opportunities</a></p>
+<div class="page page--full directory-page directory-firm">
+  <nav class="directory-back" aria-label="Breadcrumb"><a href="{% url 'opportunities' %}"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m11 5-5 5 5 5M6 10h10"/></svg>Opportunities</a></nav>
   <header class="pagehead">
     <div class="pagehead-text">
       <h1 class="pagehead-title">{{ firm.name|smart_title }}</h1>
     </div>
     {% if user.is_authenticated %}
       <div class="pagehead-actions">
-        <a class="btn" href="{% url 'crm:contact_new' %}?firm={{ firm.slug }}">＋ Add contact</a>
+        <a class="btn" href="{% url 'crm:contact_new' %}?firm={{ firm.slug }}">Add contact</a>
       </div>
     {% endif %}
   </header>
 
   {% if user.is_authenticated %}
-    {% comment %}Your people at this firm. The page used to show a firm's
-    deadlines and nothing about the relationship — on the product whose pitch
-    is that everyone already tracks deadlines. Deadlines are the same for
-    everyone; this section is the only thing on the page that is yours.
-    {% endcomment %}
-    <section class="section fd-mine panel">
+    <section class="section fd-mine">
       <h2>Your contacts here
         <span class="scrub-count">{{ my_total }}</span>
         {% if my_advocates %}<span class="fd-adv">{{ my_advocates }} advocate{{ my_advocates|pluralize }}</span>{% endif %}
       </h2>
       {% if my_contacts %}
         {% if my_next and not my_next_restates_top_row %}
-          {% comment %}Only rendered when "Warmest here" names someone other
-          than whoever the list right below already puts first — otherwise
-          the two lines say the same name and role twice, adjacently (see
-          _my_network_at's my_next_restates_top_row comment in views.py).
-          {% endcomment %}
           <p class="fd-next">Warmest here:
             <a href="{% url 'crm:contact_detail' my_next.id %}">{{ my_next.name|smart_person_name|smart_title }}</a>{% if my_next.role %} · {{ my_next.role|smart_title }}{% endif %}
           </p>
@@ -69,17 +59,6 @@
   </section>
 
   {% if cycle_observed %}
-    {% comment %}
-    Measured, not asserted. `timeline` above is what a human read and vouched
-    for (a `FirmDate`, with a confidence band); this is what Networkly's own
-    scraper has watched happen on this firm's own boards since it started
-    watching (`FirmCycleObservation` — see its docstring). No prediction, no
-    "typically" or "usually": history starts 2026-07-23 and every number and
-    date below is one this specific firm's board actually produced. A firm
-    with too little measured activity to say anything real (see views.py's
-    `CYCLE_OBSERVATION_MIN_SAMPLE`) gets no section here at all rather than a
-    hedged one-liner — silence over a thin claim.
-    {% endcomment %}
     <section class="section">
       <h2>Observed activity</h2>
       <p class="lede">Changes observed on this firm’s careers pages. These are historical observations, not forecasts.</p>
@@ -97,32 +76,9 @@
 
   <section class="section">
     <h2>Open roles <span class="scrub-count">{{ total }}</span></h2>
-    {% comment %}
-    THE UNREADABLE-BOARD LINE (P9). This firm runs a campus board, we know
-    its address, and we do not read it: its own robots.txt asks us not to,
-    and D-20 settled that we honour that. Without this sentence the page
-    shows a firm's experienced requisitions and no internship, which a
-    student reads as "the programme is not running" — a claim the product
-    has no evidence for and would be making by omission. So the page says
-    what it cannot see and hands over the link.
-
-    Above the scope line on purpose: the scope line explains which of the
-    rows we HAVE are printed, and this explains which rows we never had.
-    {% endcomment %}
     {% if unreachable_board %}
       <p class="scope-line scope-hidden">We do not scrape {{ firm.name }}'s campus board<span class="scope-sep">·</span>{{ unreachable_board.reason }}<span class="scope-sep">·</span><a href="{{ unreachable_board.url }}" rel="noopener noreferrer" target="_blank">Open it yourself</a></p>
     {% endif %}
-    {% comment %}
-    THE SCOPE LINE. This page counted every open requisition a firm had —
-    925 for Barclays, against the "13 Open" the contacts board showed for the
-    same firm on the same day. The gap was all experienced hiring, and the
-    page named none of it: the group heading read "Other 912" and no sentence
-    said what "Other" was or why the two numbers disagreed.
-
-    It now says its scope in the feed's own words, with the same opt-in.
-    Wording is deliberately parallel to _results.html so the two surfaces
-    read as one product rather than two sentences about the same idea.
-    {% endcomment %}
     {% if cards %}
       {% if role == "all" %}
         <p class="scope-line scope-hidden">Showing everything we scraped<span class="scope-sep">·</span>{{ campus_total }} campus, {{ other_total }} experienced<span class="scope-sep">·</span><a href="{% url 'directory:firm_detail' firm.slug %}">Campus roles only</a></p>
@@ -132,30 +88,9 @@
         <p class="scope-line scope-hidden">Showing campus roles only<span class="scope-sep">·</span>{{ other_total }} experienced role{{ other_total|pluralize }} hidden<span class="scope-sep">·</span><a href="{% url 'directory:firm_detail' firm.slug %}?role=all">Show everything</a></p>
       {% endif %}
     {% endif %}
-    {% comment %}
-    THE MARKET LINE. Only rendered when a group was capped, because only then
-    is anything hidden that this line has to answer for. A student who cannot
-    work in the US learns from one line that 136 of PwC's campus roles are in
-    Singapore and 253 in Europe — which twelve sampled rows cannot tell her,
-    and 716 printed rows told her only by being unreadable. Plain text, not
-    links: filtering lives in the feed, and the view's `_open_markets` note
-    says why this page does not grow a filter bar by the back door.
-    {% endcomment %}
     {% if capped and markets %}
       <p class="fd-markets">{% for m in markets %}{{ m.label }} {{ m.n }}{% if not forloop.last %}<span class="scope-sep">·</span>{% endif %}{% endfor %}</p>
     {% endif %}
-    {% comment %}
-    Grouped by kind under the ruled section label, in the order the view
-    already sorts (campus buckets first, deadline inside each). The kind used
-    to ride every card as a pill — 75 restatements of five values; one label
-    per group says it once and gives this page the same signature the app's
-    other section boundaries wear. Rows, not cards: see _card.html for why.
-
-    The groups now arrive pre-cut from views._role_groups: the heading keeps
-    the group's TRUE total, the rows are a sample of it, and the line under
-    them names the remainder and where it lives. A group small enough to print
-    whole grows none of that — which is every group on the median firm.
-    {% endcomment %}
     {% if role_groups %}
       {% for group in role_groups %}
         <p class="sec-label frow-group">{{ group.label }} <span class="scrub-count">{{ group.total }}</span></p>
@@ -165,29 +100,10 @@
           {% endfor %}
         </div>
         {% if group.more %}
-          {% comment %}The count is this page's own arithmetic — the group's
-          total minus the rows printed above it — so it can only ever describe
-          THIS page. The destination is the feed narrowed to this firm and
-          this kind, which resolves to the group's total: verified against the
-          live corpus at PwC (internship 397, entry-level 319, experienced
-          780) and Goldman (internship 257, entry-level 60), the two sides
-          matching row for row through both folds.
-
-          Counting `.rolecard` in the feed's DOM does NOT reproduce those
-          numbers and is not meant to: the "Picked for you" column repeats a
-          few of the same roles at the head of the row (see _results.html),
-          so Goldman's internship filter draws 259 cards for 257 roles.
-          {% endcomment %}
           <p class="frow-more"><a href="{% url 'opportunities' %}?firm={{ firm.slug }}&amp;role={{ group.value }}">Show the other {{ group.more }} in Opportunities</a></p>
         {% endif %}
       {% endfor %}
     {% else %}
-      {% comment %}An empty campus scope is not an empty firm. Saying
-      "Nothing open right now" on a firm running 912 experienced searches
-      would be the old bug wearing the opposite sign: a true statement about
-      a scope the reader was never told about. The count and the way out
-      belong in the empty state itself, not in a scope line the reader has
-      no rows to attach it to.{% endcomment %}
       <div class="empty">
         {% if role == "other" %}
           <h2>No experienced roles open here.</h2>

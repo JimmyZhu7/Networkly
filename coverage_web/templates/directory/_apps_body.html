@@ -58,7 +58,6 @@ survives even if it was in the batch.
       <button type="button" class="apps-fseg{% if not stage.count %} is-empty{% endif %}" data-stage-filter="{{ stage.key }}" data-stage-label="{{ stage.label }}" aria-pressed="false" disabled>
         <span class="apps-fseg-n">{{ stage.count }}</span>
         <span class="apps-fseg-l">{{ stage.label }}</span>
-        <span class="apps-fseg-bar">{% if stage.count %}<i style="width: {{ stage.pct }}%"></i>{% endif %}</span>
       </button>
     {% endfor %}
   </div>
@@ -74,21 +73,7 @@ survives even if it was in the batch.
   funnel's.
   {% endcomment %}
   <section class="apps-lenses" aria-labelledby="lenses-h">
-    <p class="apps-lenses-eyebrow">
-      {% comment %}
-      "Cross-section, not extra roles" stood here, over two overlapping
-      circles, and both were apparatus for a duplication that no longer
-      exists: the band used to show the same rows the stage sections below
-      showed, and the eyebrow's whole job was to promise they were not extra.
-      With the sections gone the sentence is not merely redundant, it is
-      FALSE — there is no second appearance for these rows to be a
-      cross-section of. What the band needs said instead is the one thing its
-      six headings do not say on their own: what the order means.
-      {% endcomment %}
-      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 4.2v4l2.6 1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8" cy="8" r="6.2"/></svg>
-      Soonest first
-    </p>
-    <h2 class="apps-lenses-h" id="lenses-h">Everything you're tracking</h2>
+    <div class="directory-section-heading"><h2 class="apps-lenses-h" id="lenses-h">Everything you're tracking</h2><p>Soonest first</p></div>
     {% comment %}
     Cut from three sentences to one (2026 redesign, "cleaner, less words"),
     and now to none. The last sentence read "The same N live roles, sorted by
@@ -133,8 +118,8 @@ survives even if it was in the batch.
               scrolling straight to "Rolling" still sees its own rows
               arrive in sequence instead of already-settled.
               {% endcomment %}
-              <li class="apps-lens-row kin-reveal u-{{ r.urgency.key }}{% if r.posting_closed %} is-shut{% endif %}" style="--i: {{ forloop.counter0 }}" data-app-stage="{{ r.stage }}">
-                <span class="lens-when{% if not r.deadline.posted and not r.posting_closed %} lens-rolling{% endif %}{% if r.posting_closed %} lens-shut{% endif %}">
+              <li class="apps-lens-row u-{{ r.urgency.key }}{% if r.posting_closed %} is-shut{% endif %}" style="--i: {{ forloop.counter0 }}" data-app-stage="{{ r.stage }}">
+                <span class="lens-when{% if not r.deadline.posted and not r.posting_closed %}{% if r.rolling_stated %} lens-rolling{% else %} lens-unstated{% endif %}{% endif %}{% if r.posting_closed %} lens-shut{% endif %}">
                   {% if r.posting_closed %}
                     {% comment %}The firm took this posting down, so the
                     countdown beside it is the one number on the row that

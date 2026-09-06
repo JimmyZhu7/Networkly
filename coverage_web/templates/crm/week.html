@@ -8,7 +8,7 @@
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
 {% block content %}
-<div class="page page--wide today-page">
+<div class="page page--wide crm-page today-page">
   {% comment %}
   Compact header strip, not a hero. The old hero plus four stat cards spent
   every pixel above the fold at 1440x800 on the commodity layer (deadlines)
@@ -34,7 +34,7 @@
     <div class="pagehead-actions">
       <span class="workspace-date">{% now "l, j F" %}</span>
       <details class="quickadd">
-        <summary class="btn btn-primary">＋ Quick add</summary>
+        <summary class="btn btn-primary">Quick add</summary>
         <div class="quickadd-menu panel panel--raised">
           <a href="{% url 'crm:contact_new' %}?quick=1">
             <span>A person</span><span class="quickadd-hint">Name and firm, ten seconds</span>

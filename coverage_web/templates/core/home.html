@@ -359,7 +359,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="page">
+<div class="page support-public support-home">
   {% comment %}
   No flash-message loop here. base.html renders `.page-msgs` inside <main>
   for EVERY page, and this template used to render its own second copy —
@@ -381,7 +381,7 @@
   are fictional and the caption says so outright — the same honesty the
   "Your data behaves like it's yours" band further down claims.
   {% endcomment %}
-  <header class="kin-hero desk-hero panel">
+  <header class="desk-hero">
     <div class="desk-copy">
       <h1 class="desk-title">Your next role. Your next conversation.</h1>
       <p class="desk-sub">Find recruiting opportunities, keep track of your contacts, and see who to follow up with each day.</p>
@@ -400,7 +400,7 @@
       </div>
     </div>
 
-    <figure class="desk-panel panel panel--raised">
+    <figure class="desk-panel">
       <div class="desk-bar">
         <span>Today · your queue</span>
         <span class="desk-bar-live">Example</span>
@@ -421,21 +421,21 @@
       {% endcomment %}
       <div class="desk-body">
         <div class="desk-queue">
-          <div class="desk-row panel panel--inset panel--flat" style="--i:0">
+          <div class="desk-row" style="--i:0">
             <span class="desk-row-main">
               <b>Sarah Lin</b>
               <span class="desk-why">VP · coffee chat 12d ago</span>
             </span>
             <span class="desk-go">Draft email</span>
           </div>
-          <div class="desk-row panel panel--inset panel--flat" style="--i:1">
+          <div class="desk-row" style="--i:1">
             <span class="desk-row-main">
               <b>Marcus Ito</b>
               <span class="desk-why">Analyst · wrote back Tuesday</span>
             </span>
             <span class="desk-go">Log sent</span>
           </div>
-          <div class="desk-row panel panel--inset panel--flat" style="--i:2">
+          <div class="desk-row" style="--i:2">
             <span class="desk-row-main">
               <b>Priya Nair</b>
               <span class="desk-why">Associate · new intro</span>
@@ -444,7 +444,6 @@
           </div>
         </div>
         <div class="desk-pace">
-          <progress class="pace-progress" value="7" max="10" aria-label="Example: 7 of 10 weekly outreach messages">7 of 10</progress>
           <span class="desk-pace-lbl">Weekly outreach · 7 of 10</span>
         </div>
       </div>
@@ -457,18 +456,6 @@
     <div class="marquee">
       <div class="marquee-track">
         <div class="marquee-group">
-          {% for f in strip_firms %}
-            <span class="strip-chip">
-              {% if f.logo %}
-                <span class="mono has-logo"><img src="{{ f.logo.url }}" alt="" width="128" height="128" loading="lazy" decoding="async"></span>
-              {% else %}
-                <span class="mono" style="--hue: {{ f.slug|firm_hue }}">{{ f.slug|slice:":2"|upper }}</span>
-              {% endif %}
-              {{ f.name|smart_title }}
-            </span>
-          {% endfor %}
-        </div>
-        <div class="marquee-group" aria-hidden="true">
           {% for f in strip_firms %}
             <span class="strip-chip">
               {% if f.logo %}
@@ -499,21 +486,19 @@
           <li>{{ region_names|join:", " }}</li>
         </ul>
       </div>
-      <div class="vig kin-reveal panel panel--raised">
+      <div class="vig">
         <p class="vig-label">Opportunities · example</p>
-        <div class="v-role panel panel--inset panel--flat panel--edge">
+        <div class="v-role">
           <span class="v-role-tag">Insight Programme</span>
           <p class="v-role-title">Women in Banking Networking Dinner</p>
           <div class="v-fuse">
-            <span class="v-fuse-track"><span class="v-fuse-fill"></span></span>
             <span class="v-fuse-label">Closes in 9 days</span>
           </div>
         </div>
-        <div class="v-role rolling panel panel--inset panel--flat panel--edge">
+        <div class="v-role rolling">
           <span class="v-role-tag">Internship · 2027</span>
           <p class="v-role-title">Summer Analyst, Investment Banking</p>
           <div class="v-fuse">
-            <span class="v-fuse-track"><span class="v-fuse-fill"></span></span>
             <span class="v-live"><span class="live-dot"></span> Rolling · seen today</span>
           </div>
         </div>
@@ -535,9 +520,9 @@
           <li>See urgent follow-ups before routine outreach</li>
         </ul>
       </div>
-      <div class="vig kin-reveal panel panel--raised">
+      <div class="vig">
         <p class="vig-label">Today · example</p>
-        <div class="v-decide panel panel--inset panel--flat panel--edge">
+        <div class="v-decide">
           <p class="v-decide-why"><span class="v-flag">Don't lose these</span> Tier 1 · no reply in 12 days</p>
           <p class="v-decide-name">Sarah Lin <span>· VP, Investment Banking</span></p>
           <p class="v-decide-angle">Angle: she mentioned the Hong Kong desk rotation on your last call.</p>
@@ -561,7 +546,7 @@
           <li>Import your spreadsheet in one CSV</li>
         </ul>
       </div>
-      <div class="vig kin-reveal panel panel--raised">
+      <div class="vig">
         <p class="vig-label">Network · example</p>
         {% comment %}
         Column headers read straight off the real board's own vocabulary
@@ -576,17 +561,17 @@
         <div class="v-board">
           <div class="v-col">
             <span class="v-col-h">Emailed, No Reply</span>
-            <div class="v-card panel panel--inset">David Park · PE</div>
-            <div class="v-card panel panel--inset">Ana Sousa · S&amp;T</div>
+            <div class="v-card">David Park · PE</div>
+            <div class="v-card">Ana Sousa · S&amp;T</div>
           </div>
           <div class="v-col">
             <span class="v-col-h">Emailed, Replied</span>
-            <div class="v-card lift panel panel--inset">Marcus Ito · IBD</div>
-            <div class="v-card panel panel--inset">Priya Nair · AM</div>
+            <div class="v-card lift">Marcus Ito · IBD</div>
+            <div class="v-card">Priya Nair · AM</div>
           </div>
           <div class="v-col">
             <span class="v-col-h">Advocate</span>
-            <div class="v-card hot panel panel--inset">Sarah Lin · IBD</div>
+            <div class="v-card hot">Sarah Lin · IBD</div>
           </div>
         </div>
       </div>
@@ -601,9 +586,9 @@
           <li>Revoke access any time from your Google account</li>
         </ul>
       </div>
-      <div class="vig kin-reveal panel panel--raised">
+      <div class="vig">
         <p class="vig-label">Gmail sync · example</p>
-        <div class="v-mail panel panel--inset panel--flat">
+        <div class="v-mail">
           <div class="hd">
             <span>From: sarah.lin@bank.com</span>
             <span>Subject: <b>Re: coffee chat</b></span>
@@ -638,7 +623,7 @@
     </div>
   </section>
 
-  <section class="cta-band panel">
+  <section class="cta-band">
     <h2>Start your recruiting workspace.</h2>
     <p>Create an account to save roles and manage your contacts.</p>
     <div class="actions">

@@ -44,7 +44,7 @@ def test_the_page_renders_for_a_signed_in_student(signed_in):
 
     assert response.status_code == 200
     body = response.content.decode()
-    assert "Talk to Networkly" in body
+    assert "Assistant" in body
     # The label the whole app puts on model-written text.
     assert "Check it before you rely on it" in body
     assert 'id="as-thread"' in body

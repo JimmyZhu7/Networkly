@@ -23,7 +23,7 @@ moved-to-a-hover call this page's location cap and stage pill already make.
 The drawer and the firm page pass no `compact` and are untouched: there the
 block stands alone, with no card around it naming the firm.
 {% endcomment %}
-<div class="rp panel panel--inset panel--flat{% if compact %} rp-compact{% endif %}{% if not net.people %} rp-empty{% endif %}">
+<div class="rp{% if compact %} rp-compact{% endif %}{% if not net.people %} rp-empty{% endif %}">
   {% if net.people %}
     {% comment %}The sentence the PM review asked for, in the second person
     and with a number in it. "You know 1 person here" is the whole join said

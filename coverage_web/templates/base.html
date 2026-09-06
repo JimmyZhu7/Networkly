@@ -62,7 +62,7 @@
   audit flagged elsewhere. The unqualified tag stays first as the fallback
   for clients that do not understand `media` on this meta.{% endcomment %}
   <meta name="theme-color" content="#2857c7">
-  <meta name="theme-color" content="#131923" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#191e20" media="(prefers-color-scheme: dark)">
   {% comment %}Registers the notification-display worker (deadline push
   alerts — see static/service-worker.js's own docstring for why it is NOT
   an offline-cache worker) for every signed-in visitor, same "students live
@@ -108,6 +108,9 @@
   {% block head %}{% endblock %}
   <link rel="stylesheet" href="{% static 'css/workspace.css' %}">
   <link rel="stylesheet" href="{% static 'css/elements.css' %}">
+  <link rel="stylesheet" href="{% static 'css/presentation-crm.css' %}">
+  <link rel="stylesheet" href="{% static 'css/presentation-directory.css' %}">
+  <link rel="stylesheet" href="{% static 'css/presentation-support.css' %}">
   <script src="{% static 'js/workspace.js' %}" defer></script>
   <script src="{% static 'js/widgets.js' %}" defer></script>
 </head>
@@ -142,7 +145,7 @@ select on.
       <a class="wordmark" aria-label="Networkly home" href="{% if user.is_authenticated and user.onboarded_at %}/app/{% else %}/{% endif %}">{% include "_wordmark.html" with logo_id="nav" %}</a>
       {% if user.is_authenticated and user.onboarded_at and not hide_site_nav %}
       <button class="workspace-menu" type="button" data-workspace-menu aria-controls="workspace-primary" aria-expanded="false" aria-label="Open navigation">{% include "_nav_icon.html" with name="menu" %}</button>
-      <button class="workspace-search" type="button" data-open-search aria-label="Search Networkly">{% include "_nav_icon.html" with name="search" %}<span>Search anything</span><kbd>⌘ K</kbd></button>
+      <button class="workspace-search" type="button" data-open-search aria-label="Search Networkly">{% include "_nav_icon.html" with name="search" %}<span>Search</span><kbd>⌘ K</kbd></button>
       {% endif %}
       {% comment %}
         NO SITE NAV DURING THE WIZARD. /welcome/ is the Settings prefix, so
@@ -197,7 +200,7 @@ select on.
       {% endcomment %}
       <nav class="site-auth" aria-label="Account">
         {% if user.is_authenticated %}
-          <a href="/welcome/#profile" class="site-user">
+          <a href="/welcome/#profile" class="site-user" aria-label="Account settings for {{ user.name|default:user.email }}">
             {% if user.avatar %}
               {% comment %}
               `onerror` covers the case `{% if user.avatar %}` can't: the DB

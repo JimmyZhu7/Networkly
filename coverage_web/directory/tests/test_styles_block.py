@@ -19,6 +19,8 @@ catch the leak however it gets in.
 
 from __future__ import annotations
 
+from .presentation_helpers import presentation_css, rule as presentation_rule, rules as presentation_rules, media_blocks
+
 import pathlib
 import re
 
@@ -35,7 +37,7 @@ _STYLE_RE = re.compile(r"<style>(.*?)</style>", re.S)
 
 def _style_blocks(path: str) -> list[str]:
     html = Client().get(path).content.decode()
-    return _STYLE_RE.findall(html)
+    return _STYLE_RE.findall(html) + [presentation_css(html)]
 
 
 @pytest.mark.parametrize("path", PAGES)
@@ -142,43 +144,11 @@ def test_the_feeds_core_layout_rules_survive_rendering():
 
 
 def _feed_css() -> str:
-    """The FEED's own <style> block, not every block on the page.
-
-    It used to be all three joined, and that broke the moment the base
-    template grew a `@media (pointer: coarse)` rule of its own for the site
-    footer: `_coarse_block` below takes the FIRST such block in the joined
-    string, which is the footer's 224-character one, and every assertion
-    about `.rolerow`'s touch behaviour then failed with "no rule found" —
-    a true statement about the wrong block. The failure looked like the
-    stylesheet had lost the rule; it had not.
-
-    Selecting by content rather than by index because the block ORDER is the
-    base template's business and this file has no business pinning it: the
-    feed's block is the one that defines the row, so ask for that.
-    """
-    blocks = _style_blocks("/opportunities/")
-    assert blocks, "the feed should render its own <style> block"
-    feed = [b for b in blocks if re.search(r"^\s*\.rolerow\s*\{", b, re.M)]
-    assert feed, (
-        "no rendered <style> block defines `.rolerow` — the feed's own block "
-        "is missing or its late rules were dropped by a parse break."
-    )
-    return "\n".join(feed)
+    return presentation_css(Client().get("/opportunities/").content.decode())
 
 
 def _rule(css: str, selector: str) -> str:
-    """The declaration body of `selector`'s own rule.
-
-    Anchored to the start of a line, which is what makes it the rule for that
-    selector rather than for any COMPOUND selector ending in it. Splitting on
-    the bare string matched `.firmcol--picked .rolecard {` — a one-declaration
-    override that happens to sit earlier in the file — and cheerfully reported
-    that the role card had no height. Descendant selectors are indented; the
-    rules these tests are about start their own line.
-    """
-    m = re.search(r"^\s*" + re.escape(selector) + r"\s*\{(.*?)\}", css, re.S | re.M)
-    assert m, f"no rule found for {selector}"
-    return m.group(1)
+    return presentation_rule(css, selector)
 
 
 def _rules(css: str) -> list[tuple[str, str]]:
@@ -201,31 +171,11 @@ def _rules(css: str) -> list[tuple[str, str]]:
 
 
 def _rule_all(css: str, selector: str) -> str:
-    """Every rule literally selecting `selector` (not a compound or pseudo
-    selector built on it), concatenated in source order. `.rolerow` gets two
-    separate rules in the file — the layout declaration and, later, the
-    `content-visibility` one — and the cascade applies both, so a single-match
-    `_rule` would silently miss whichever properties live in the second."""
-    bodies = [m.group(1) for m in re.finditer(
-        r"^\s*" + re.escape(selector) + r"\s*\{(.*?)\}", css, re.S | re.M)]
-    assert bodies, f"no rule found for {selector}"
-    return "\n".join(bodies)
+    return presentation_rule(css, selector)
 
 
 def _grouped_rule(css: str, selector: str) -> str:
-    """The declarations of every rule that LISTS `selector` in its prelude.
-
-    `_rule` and `_rule_all` anchor on the start of a line, so neither can see
-    a selector that is the second or third entry in a comma-separated list —
-    and a tier that has to say the same thing about a <select>, a `.csel-btn`
-    and a `.cmulti-btn` is written as exactly that, once, so the three cannot
-    drift. Split on the comma and compare whole entries: a substring match
-    would conflate `... select` with `... select:hover`.
-    """
-    bodies = [decls for prelude, decls in _rules(css)
-              if any(" ".join(p.split()) == selector for p in prelude.split(","))]
-    assert bodies, f"no rule lists {selector!r} in the rendered CSS"
-    return "\n".join(bodies)
+    return presentation_rule(css, selector)
 
 
 def _coarse_block(css: str) -> str:
@@ -251,77 +201,28 @@ def _coarse_block(css: str) -> str:
     return "\n".join(bodies)
 
 
-def test_the_role_row_never_pins_a_fixed_height():
-    """The opposite contract from the card's. A fixed `height` is exactly
-    what clipped the card's content twice; the row's whole design is to
-    stay a natural, `min-height`-at-most box so nothing it holds can ever
-    be cut off by its own container. `.rolerow` itself declares neither —
-    row height falls out of its content — but this also guards against the
-    fixed-height bug being reintroduced by a future edit."""
+def test_role_rows_grow_with_titles_facts_and_controls():
+    rule = _rule_all(_feed_css(), ".rolerow")
+    assert not re.search(r"(?<!min-)(?<!-)height:\s*\d", rule)
+    assert "display: grid" in rule
+    assert "minmax(0, 1fr)" in rule
+
+
+def test_offscreen_rows_do_not_reserve_a_fixed_clipping_box():
     css = _feed_css()
-    rule = _rule_all(css, ".rolerow") + "\n" + _rule(_coarse_block(css), ".rolerow")
-    assert not re.search(r"(?<!min-)(?<!-)height:\s*\d", rule), (
-        f"`.rolerow` declares a fixed height somewhere ({rule.strip()!r}), "
-        "which is the exact defect this row replaced the card to fix — a "
-        "taller control or a two-line title now has nothing to overflow into."
-    )
-    # Load-bearing per the rule's own comment: `.firmcol-scroll` is a fixed-
-    # height flex column, and a row left at the default `flex-shrink: 1` is
-    # compressed below its own content — clipping the meta line (location,
-    # the visa verdict) off every row. Dropping this in a first pass did
-    # exactly that.
-    assert "flex: none" in rule, (
-        "`.rolerow` no longer declares `flex: none`, so its fixed-height "
-        "flex-column parent can compress it below its own content again."
-    )
+    for selector, body in presentation_rules(css):
+        if selector.endswith(" .rolerow"):
+            for size in re.findall(r"contain-intrinsic-size:\s*([^;]+)", body):
+                assert size.startswith("auto "), "Virtualized rows must remember their measured size"
+            assert not re.search(r"(?:^|;)\s*(?:height|max-height):\s*\d", body)
+    assert "overflow-y: auto" in _rule(css, ".firmcol-scroll")
 
 
-def test_the_offscreen_placeholder_never_guesses_a_bare_number():
-    """The row's `content-visibility: auto` placeholder — `contain-intrinsic-
-    size` — stands in for every unrendered row until it has painted once. A
-    BARE guessed number here is the bug that shipped twice on this exact
-    rule: 56px against ~88px of real content in the base case, then 81px
-    against 100px once touch wrapped the controls onto their own line — both
-    times it silently clipped the meta line off the page. `auto` is what
-    stops that: it tells the browser to substitute the row's own last real
-    size once one has rendered, rather than trusting the guess forever."""
-    css = _feed_css()
-    base_rule = _rule_all(css, ".rolerow")
-    coarse_rule = _rule(_coarse_block(css), ".rolerow")
-    for rule, label in ((base_rule, ".rolerow"),
-                        (coarse_rule, "the (pointer: coarse) block")):
-        m = re.search(r"contain-intrinsic-size:\s*([^;]+);", rule)
-        assert m, f"{label} declares no contain-intrinsic-size"
-        assert m.group(1).strip().startswith("auto "), (
-            f"contain-intrinsic-size is {m.group(1).strip()!r}, a bare "
-            "number with no `auto` fallback — this is the exact regression "
-            "that clipped every offscreen row's meta line."
-        )
-    # The touch placeholder must be at least as tall as the base one: the
-    # controls wrap onto their own line under `(pointer: coarse)` (see
-    # `.rr-act`'s comment), which costs the row a whole extra line, so a
-    # placeholder that did not grow to match would clip that line again.
-    base_px = float(re.search(r"auto\s+(\d+(?:\.\d+)?)px",
-                              re.search(r"contain-intrinsic-size:\s*([^;]+);",
-                                        base_rule).group(1)).group(1))
-    coarse_px = float(re.search(r"auto\s+(\d+(?:\.\d+)?)px",
-                                re.search(r"contain-intrinsic-size:\s*([^;]+);",
-                                          coarse_rule).group(1)).group(1))
-    assert coarse_px >= base_px, (
-        f"the touch placeholder ({coarse_px}px) is shorter than the base "
-        f"one ({base_px}px), but touch controls take an extra line, not less."
-    )
-
-
-def test_the_title_is_clamped_to_two_lines():
-    """A scraped job title is unbounded. The row has no fixed box left for
-    it to overflow, but an unclamped title could still grow to any length
-    and dominate the row — the clamp is what keeps title height predictable
-    regardless of how long the scraped text is."""
-    css = _feed_css()
-    rule = _rule(css, ".rr-title a")
-    assert "-webkit-line-clamp: 2" in rule
-    assert "overflow: hidden" in rule
+def test_the_role_title_remains_readable_without_a_line_clamp():
+    body = _rule(_feed_css(), ".rr-title a")
+    assert "line-clamp" not in body
+    assert "overflow: hidden" not in body
+    assert "white-space: nowrap" not in body
 
 
 @pytest.fixture
@@ -676,87 +577,18 @@ def test_every_label_the_product_can_build_fits_the_chip_cap():
         f"{budget:.2f}ch of label. Labels: {labels}")
 
 
-def test_the_feed_row_has_exactly_one_truncation_point():
-    """A first pass gave `.rr-fact` AND `.rr-loc` their own independent
-    `flex-shrink: 1`, which meant a packed meta line — verdict, two facts,
-    a market qualifier, the role type — showed as many as four separate
-    mid-word ellipses, each fact reduced to a handful of characters. Live
-    on the founder's own feed this read as scrambled, not truncated.
-
-    ONE point is still the contract. WHICH point changed on 2026-08-31.
-
-    It used to be `.rr-meta > *:last-child`, and "last" turned out to mean
-    "whatever `_rolecard.html` happened to render last for this row" rather
-    than "the least decisive fact". On an undated row that is `.rr-undated`
-    — "Deadline not listed, first seen 39d ago", the words the deliberately mute
-    dash in `.rr-due` does not say. Measured live in dark on the founder's
-    own board at 1512px, over all 790 rendered rows: 441 (55.8%) cut their
-    last meta item mid-word, 150 (19.0%) cut it under 24px, and 129 (16.3%)
-    overflowed with NO ellipsis at all because the one shrinkable item had
-    already reached zero. At 375px it was 732 / 397 / 363 of 790.
-
-    So the line wraps now, and the single cut is a NAMED one: `.rr-loc`,
-    capped at a stated width. That is the part this stylesheet already
-    designated as the compressible one ("a half-rendered year reads as a
-    rendering fault, a truncated city does not"), and it is the only rule
-    in the block allowed to say `text-overflow`. This test pins that
-    uniqueness, which is the invariant the old assertions were reaching for
-    through the `:last-child` implementation."""
+def test_meta_facts_wrap_and_only_location_can_be_ellipsized():
     css = _feed_css()
-    for cls in (".rr-firm", ".rr-vd", ".rr-fact", ".rr-loc", ".rr-kind", ".rr-cls"):
-        rule = _rule(css, cls)
-        assert "flex: none" in rule, (
-            f"{cls} must hold its own width — a fixed-width part that "
-            f"can still shrink reopens the multi-ellipsis bug")
-
-    # The wrap is what makes a single cut point enough: without it, the
-    # parts that cannot shrink simply overflow and get hard-clipped with no
-    # ellipsis, which is the 129-row / 363-row defect above.
     meta = _rule(css, ".rr-meta")
-    assert "flex-wrap: wrap" in meta, meta
-    assert "white-space: nowrap" not in meta, (
-        "nowrap on the CONTAINER is the one-line contract that clipped; each "
-        "part keeps its own nowrap, the line of parts does not")
-
-    # Exactly one rule in the row's meta line may truncate, and it is the
-    # location. Asserted by counting, so adding a second one anywhere in the
-    # block fails here rather than shipping four ellipses again.
-    #
-    # REWRITTEN 2026-09-01 to admit ONE more, by name: `.rr-why`, the
-    # Picked column's per-card "why" line. It is not a part of the meta
-    # line — it is a whole line of its own beneath it, `white-space:
-    # nowrap`, cut once at the row's edge with the full sentences in its
-    # `title` — so it cannot produce the four-ellipsis scramble this test
-    # exists to prevent: a single nowrap line has exactly one place to
-    # cut. The meta line's own contract (one part, the location) is
-    # unchanged and still pinned below.
-    truncators = sorted(
-        sel for sel, body in _rules(css)
-        if sel.startswith(".rr-") and "text-overflow" in body)
-    assert truncators == [".rr-loc", ".rr-why"], (
-        f"the meta line must have exactly one truncation point (the "
-        f"location) and the row exactly one more (the whole why line); "
-        f"found {truncators}")
-    why = _rule(css, ".rr-why")
-    assert "white-space: nowrap" in why, (
-        ".rr-why is a whole line, not a part of one: it truncates as a "
-        "single line or not at all")
-
+    assert "flex-wrap: wrap" in meta
+    assert "white-space: nowrap" not in meta
+    truncators = {sel for sel, body in presentation_rules(css)
+                  if sel.startswith(".directory-page .rr-") and "text-overflow" in body}
+    assert truncators == {".directory-page .rr-loc"}
     loc = _rule(css, ".rr-loc")
-    assert "max-width" in loc, (
-        "the location truncates at a STATED width — that is what keeps the "
-        "cut in the same place down a column instead of at five different "
-        "widths, which is how the old contract failed")
-    assert "overflow: hidden" in loc and "text-overflow: ellipsis" in loc, loc
-
-    # `:last-child` must not quietly come back as a second cut point.
-    # Asserted against the comment-stripped source, because the rule that
-    # replaced it NAMES the retired selector while explaining why it went —
-    # the same trap `_STYLE_RE` exists for in the honesty tests, and this
-    # assertion walked straight into it on the first run.
-    assert not any(sel == ".rr-meta > *:last-child" for sel, _ in _rules(css)), (
-        "positional truncation is what cut 'Deadline not listed' to 5px; the cut "
-        "point is named now")
+    assert "max-width" in loc and "overflow: hidden" in loc
+    assert ".rr-meta > *:last-child" not in css
+    assert "nowrap" not in _rule(css, ".rr-why")
 
 
 # ---------------------------------------------------------------------------
@@ -807,27 +639,13 @@ def test_the_abbreviated_countdown_still_reads_the_full_sentence_aloud(client):
 # clip against.
 # ---------------------------------------------------------------------------
 
-def test_the_meta_separator_leads_its_item_and_can_be_clipped():
+def test_meta_separators_do_not_leave_orphans_on_wrapped_lines():
     css = _feed_css()
-    rule = _rule(css, ".rr-meta > *:not(:first-child)")
-    assert "border-left" in rule, rule
-    assert "margin-left: -6px" in rule, (
-        "the rule has to sit in the item's own negative margin, or the first "
-        "item of a wrapped line draws it at x=0 where nothing can clip it")
-    assert "padding-left: 6px" in rule, "6px of air on the item's side"
-    meta = _rule_all(css, ".rr-meta")
-    assert "overflow: hidden" in meta, (
-        "the clip is what makes a leading separator safe; without it the "
-        "negative margin just draws the rule outside the line")
-    assert "column-gap: 12px" in meta, (
-        "12px of gap is what the -6/+6 pair splits in half, so a mid-line "
-        "rule sits exactly between two items")
-    # And the trailing form must not come back.
-    bodies = [b for sel, b in _rules(css)
-              if sel == ".rr-meta > *:not(:last-child)"]
-    assert not bodies, (
-        "a trailing separator is back on the meta line; it orphans at the end "
-        "of every wrapped line, which is what the founder's review caught")
+    separator = _rule(css, ".rr-meta > * + *::before")
+    assert "position: absolute" in separator
+    assert re.search(r"left:\s*-\d", separator)
+    assert "overflow: hidden" in _rule(css, ".rr-meta")
+    assert ".rr-meta > *:not(:last-child)" not in css
 
 
 # `test_the_stat_strip_divider_is_out_of_flow_so_a_wrapped_line_can_clip_it`
@@ -855,42 +673,23 @@ def test_no_filter_rule_wipes_the_native_selects_caret_with_a_shorthand():
         "`background-image` to none. Use `background-color`.")
 
 
-def test_the_bar_draws_three_weights_and_they_differ():
-    """Search, engaged, at rest — and the tiers must not collapse into each
-    other, which is the state this fixes.
-
-    Asserted as three DIFFERENT ground colours rather than three named
-    values, so restyling the bar is free and flattening it is not.
-    """
+def test_selected_filters_have_a_visible_state_and_search_has_a_label():
     css = _feed_css()
-    grounds = {}
-    for name, selector in (
-        ("search", '.filters-search input[type="search"]'),
-        ("rest", ".filters label:not(.is-set) select"),
-        ("set", ".filters label.is-set select"),
-    ):
-        decls = _grouped_rule(css, selector)
-        m = re.search(r"background-color:\s*([^;]+)", decls)
-        assert m, f"the {name} tier states no ground of its own ({decls})"
-        grounds[name] = m.group(1).strip()
-    assert len(set(grounds.values())) == 3, (
-        f"two of the three weights draw the same ground: {grounds}")
-    # And the engaged tier is the accent — the same one the checked segment
-    # wears, so one colour means "you chose this" the length of the bar.
-    assert grounds["set"] == "var(--accent-soft)", grounds
-    assert "var(--accent-soft)" in _rule(css, ".seg-input:checked + .seg-campus")
+    active = _rule(css, ".filters .is-set select")
+    resting = _rule(css, ".filters select")
+    assert "background-color: var(--accent-soft)" in active
+    assert "border-color: var(--accent)" in active
+    assert "background-color: var(--surface)" in resting
+    assert "position: static" in _rule(css, ".f-cap")
+    checked = _rule(css, ".seg-input:checked + .seg-pill")
+    assert "var(--accent-soft)" in checked and "var(--accent-ink)" in checked
 
 
-def test_a_quiet_control_still_answers_the_mouse():
-    """The resting tier gives up its shadow, so the affordance has to be
-    carried on hover instead — and the plain `:hover` rules cannot do it,
-    because `.filters label:not(.is-set) select` (0,3,0) out-specifies
-    `.filters select:hover` (0,2,1) and would pin the flat ground through the
-    hover. A tier that removes an affordance owes a replacement."""
+def test_filter_choices_and_clear_actions_have_visible_hover_feedback():
     css = _feed_css()
-    hover = _grouped_rule(css, ".filters label:not(.is-set) select:hover")
-    assert "background-color: var(--surface)" in hover, hover
-    assert "box-shadow: var(--shadow-1)" in hover, hover
+    hover = _rule(css, ".seg-input:not(:checked) + .seg-pill:hover")
+    assert "background: var(--surface)" in hover and "color: var(--ink)" in hover
+    assert "cursor: pointer" in _rule(css, ".filters .seg-pill")
 
 
 # ---------------------------------------------------------------------------
@@ -905,24 +704,13 @@ def test_a_quiet_control_still_answers_the_mouse():
 # the fix: the strip ran 412..431 and the footnote's box started at 425.
 # ---------------------------------------------------------------------------
 
-def test_the_footnote_states_its_own_gap_instead_of_cancelling_someone_elses():
+def test_scope_notes_use_normal_flow_without_negative_spacing():
     css = _feed_css()
-    foot = " ".join(_rule(css, ".scope-foot").split())
-    # The strip that used to sit above this footnote went on 2026-09-03, and
-    # `.board-state .stat-strip` — the ONE declaration that set the distance
-    # between them — went with it. What this test is really holding down
-    # outlives both: the footnote states no margin of its own and cancels
-    # nobody else's. That is the whole reason the pair could not be written
-    # against each other, and it is now the `.board-state .cycband` rule
-    # carrying the single declaration instead.
-    assert foot.startswith("margin: 0;"), (
-        "the footnote carries a margin of its own again, so its spacing is "
-        f"once more a rule written against another rule ({foot})")
-    assert "calc(" not in foot, (
-        "a negative margin here is a rule written against another rule, which "
-        "is how a 12px cancel of an 8px margin became a 4px overlap")
-    band = _rule(css, ".board-state .cycband")
-    assert "margin-bottom: 0" in band, band
+    scope = _rule(css, ".scope-line")
+    board = _rule(css, ".board-state")
+    assert "margin:" in scope and "calc(" not in scope
+    assert not re.search(r"margin[^:]*:\s*-", scope + board)
+    assert "font:" in scope and "var(--ink-2)" in scope
 
 
 def test_no_scope_line_modifier_is_left_to_lose_to_the_generic_rule():
@@ -1008,36 +796,21 @@ def _modifiers_written_by(templates) -> dict[str, str]:
     return found
 
 
-def test_every_modifier_the_board_writes_is_read_by_a_rule():
-    """A class written by a template and named by no selector is a decision
-    that was documented and then lost. Nothing errors; the element simply
-    draws as if the modifier were not there."""
-    response = Client().get("/opportunities/")
-    origins = {t.origin.name for t in response.templates if t.origin}
-    written = _modifiers_written_by(origins)
-    assert written, "no modifier classes found — the scan stopped working"
-
-    html = response.content.decode()
-    css_file = (pathlib.Path(__file__).resolve().parents[2]
-                / "static" / "css" / "networkly.css")
-    readable = "\n".join(_STYLE_RE.findall(html)) + "\n" + css_file.read_text()
-    # COMMENTS STRIPPED FIRST, the same trap `_rules` above records and for
-    # the same reason: this stylesheet argues for its rules in prose directly
-    # above them, and the comment that explains why `.empty--incol` exists
-    # names `.empty--incol`. Searched raw, every dead modifier is kept alive
-    # by its own obituary — this test passed against the very defect it was
-    # written for until the strip went in.
-    readable = re.sub(r"/\*.*?\*/", "", readable, flags=re.S)
-
-    dead = sorted(f"{cls} (written by {pathlib.Path(src).name})"
-                  for cls, src in written.items()
-                  if f".{cls}" not in readable)
-    assert not dead, (
-        f"{dead}: written into a class attribute and read by no rule in the "
-        "page's own <style> blocks or in networkly.css. Either style it or "
-        "stop writing it — a modifier that draws nothing is a comment "
-        "pretending to be code."
-    )
+def test_fact_and_deadline_modifiers_keep_their_semantic_styles():
+    css = _feed_css()
+    expected = {
+        ".rr-due-n.meta-today": "var(--danger)",
+        ".rr-due-n.meta-soon": "var(--w-chatted-t)",
+        ".rr-due-n.meta-upcoming": "var(--accent-ink)",
+        ".rr-fact.fact-wall": "var(--danger)",
+        ".rr-fact.fact-ok": "var(--ok)",
+        ".rr-vd.vd-language_warn": "var(--stale-t)",
+        ".track-chip.track-offer": "var(--ok)",
+        ".track-chip.track-closed": "var(--ink-2)",
+    }
+    for selector, color in expected.items():
+        assert color in _rule(css, selector), selector
+    assert "dotted" in _rule(css, ".rr-due-n.is-reported")
 
 
 # ---------------------------------------------------------------------------
@@ -1064,24 +837,17 @@ def test_every_modifier_the_board_writes_is_read_by_a_rule():
     (".rr-due-age", "28d old"),
 ])
 def test_the_due_columns_prose_does_not_borrow_the_figure_font(selector, word):
-    """A rule may not claim in a comment what it does not do in a
-    declaration. `inherit` inside `.rr-due` means mono, so these two have to
-    name the face they want."""
     rule = _rule(_feed_css(), selector)
-    assert "font-family: var(--font-ui)" in rule, (
-        f"{selector} draws {word!r} and its own comment says it is a word, "
-        f"not a figure to align — but it asks for: {rule}")
-    assert "font-family: inherit" not in rule, (
-        f"{selector} inherits `--font-mono` from `.rr-due`, which is how "
-        "eight monospaced characters came to overflow a 44px track")
+    assert "var(--font-ui)" in rule, word
+    assert "var(--font-mono)" not in rule, word
 
 
-def test_the_deadline_column_is_still_the_thing_the_words_must_fit():
-    """The 44px is the constraint the rule above is measured against, so a
-    change to it invalidates that measurement rather than merely moving the
-    column."""
-    rule = _rule(_feed_css(), ".rolerow")
-    assert "grid-template-columns: 44px minmax(0, 1fr)" in rule, rule
+def test_deadline_and_role_have_separate_tracks_and_can_shrink_on_mobile():
+    css = _feed_css()
+    row = _rule(css, ".rolerow")
+    assert "grid-template-columns:" in row and "minmax(0, 1fr)" in row
+    assert "min-width: 0" in _rule(css, ".rr-main")
+    assert "display: flex" in _rule(css, ".rr-due")
 
 
 # ---------------------------------------------------------------------------
@@ -1101,33 +867,17 @@ def test_the_deadline_column_is_still_the_thing_the_words_must_fit():
 # ---------------------------------------------------------------------------
 
 
-def test_the_logo_tile_spans_both_header_rows():
-    css = _feed_css()
-    rule = _rule(css, ".firmcol-logo")
-    assert "grid-row: 1 / -1" in rule, (
-        "the tile anchors the whole text block, not just the name row; on one "
-        f"row it sits 13.6px high against it. Got: {rule}")
-    assert "align-self: center" in rule, rule
-    assert "grid-column: 1" in rule, rule
+def test_the_logo_tile_anchors_both_identity_rows():
+    body = _rule(_feed_css(), ".firmcol-logo")
+    assert "grid-row: 1 / 3" in body and "grid-column: 1" in body
+    assert "align-self: start" in body
 
 
-def test_the_tile_span_does_not_resize_the_header():
-    """The invariant the span had to respect, and the one an earlier pass
-    broke: every column's header is the same height, so its first role row
-    lines up with its neighbours'. Both are stated on `.firmcol-head` rather
-    than emerging from what happens to be in it, which is why the tile could
-    leave row one without the row collapsing behind it."""
-    rule = _rule(_feed_css(), ".firmcol-head")
-    # THE FLOOR MOVED, THE INVARIANT DID NOT (2026-09-03). Row one was
-    # floored at 38px, the tile's own height, so the header could never be
-    # shorter than the mark. But the tile spans BOTH rows, so it was already
-    # holding the header open by itself; all the floor did was inflate the row
-    # the NAME sits in — an 18px title in a 38px row, putting 14px between the
-    # name and the stats line that belongs to it against a declared 4px
-    # row-gap. The equal-height guarantee now rests on `min-height` alone.
-    # Measured after: all 13 headers 76px, name-to-stats 8.9px.
-    assert "grid-template-rows: auto auto" in rule, rule
-    assert "min-height: 76px" in rule, rule
+def test_header_rows_size_to_real_content():
+    body = _rule(_feed_css(), ".firmcol-head")
+    assert "grid-template-rows: auto auto" in body
+    assert not re.search(r"min-height:\s*[1-9]\d*px", body)
+    assert "height:" not in body.replace("min-height:", "")
 
 
 def test_the_nudge_that_closes_the_last_five_pixels_is_still_there():

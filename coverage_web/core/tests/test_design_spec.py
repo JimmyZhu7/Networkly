@@ -140,7 +140,7 @@ def test_nav_badges_and_chips_keep_readable_source_labels():
     assert "text-transform: uppercase" in _css_block(".site-nav a")
     assert "text-transform: uppercase" in _css_block(".pill, .chip, .prio")
     workspace = (CSS.parent / "workspace.css").read_text(encoding="utf-8")
-    nav_style = re.search(r"\.workspace-nav \.site-nav a\s*\{(.*?)\}", workspace, re.S)
+    nav_style = re.search(r"\.site-header \.site-nav a\s*\{(.*?)\}", workspace, re.S)
     assert nav_style and "text-transform: none" in nav_style.group(1)
 
     nav = re.search(
@@ -168,7 +168,7 @@ def test_the_labels_the_case_decision_named_still_ship():
         # longer a literal between two tags and cannot be read the way the
         # rest of this list is. "Covered Firms" replaces both: same page, same
         # Title Case rule, still a literal.
-        "crm/contact_list.html": ["Covered Firms", "Log interaction"],
+        "crm/contact_list.html": ["Firm network", "Log interaction"],
         "account/login.html": ["Welcome back"],
         "core/home.html": ["Create account"],
         "accounts/import.html": ["Import contacts"],

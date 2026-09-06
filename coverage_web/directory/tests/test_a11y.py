@@ -10,6 +10,8 @@ rule that covers every control.
 
 from __future__ import annotations
 
+from .presentation_helpers import presentation_css, rule as presentation_rule, rules as presentation_rules, media_blocks
+
 import pathlib
 import re
 
@@ -51,16 +53,13 @@ def test_every_firm_column_names_itself_as_a_section(client):
     assert '<h2 class="firmcol-h"' in body
 
 
-def test_the_monogram_keeps_its_contrast_headroom(client):
-    """The tile is hsl(hue 52% 90%) and the glyph hsl(hue 55% L). At L=31%
-    the pair measured 4.11:1 on some hues, under the 4.5 that text needs;
-    24% clears it across the wheel. A future tweak that raises L again should
-    fail here rather than on a user's screen."""
-    root = pathlib.Path(__file__).resolve().parents[2]
-    css = (root / "templates" / "directory" / "_styles.html").read_text()
-    m = re.search(r"\.firmcol-logo \{.*?color: hsl\(var\(--hue, 210\) 55% (\d+)%\)", css, re.S)
-    assert m, "the monogram rule moved — re-measure before changing it"
-    assert int(m.group(1)) <= 24, "lightness above 24% drops the glyph under 4.5:1"
+def test_the_monogram_meets_text_contrast_in_every_theme(client):
+    css = presentation_css(_page(client))
+    tile = presentation_rule(css, ".firmcol-logo")
+    assert "color: var(--ink-2)" in tile
+    assert "background: var(--surface)" in tile
+    for theme, tokens in _css_tokens().items():
+        assert _ratio(tokens["ink-2"], tokens["surface"]) >= 4.5, theme
 
 
 # ---------------------------------------------------------------------------

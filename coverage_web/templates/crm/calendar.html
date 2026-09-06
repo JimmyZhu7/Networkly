@@ -747,7 +747,7 @@
 </style>{% endblock %}
 
 {% block content %}
-<div class="page page--full">
+<div class="page page--full crm-page calendar-page">
   {% comment %}Eyebrow matches every other page's pattern ("Your
   relationships", "Your pipeline", "Your account") rather than spelling out
   the four kinds — the legend row right below already does that, in colour,
@@ -755,7 +755,7 @@
   a count, is the same duplication the sub avoids below. The sub keeps the
   one thing neither the eyebrow nor the legend says: where an entry came
   from.{% endcomment %}
-  {% include "_pagehead.html" with eyebrow="Your dates" title="Calendar" sub="Chats from your inbox, touches you logged, and the deadlines you track." %}
+  {% include "_pagehead.html" with title="Calendar" sub="Chats from your inbox, touches you logged, and the deadlines you track." %}
 
   {% comment %}
   EVERY NAVIGATION ON THIS PAGE SWAPS THIS BLOCK; nothing reloads the page.
@@ -866,7 +866,7 @@
     rotates to a `×` when open, so the label does not have to carry the state
     either.{% endcomment %}
     <details class="cal-add" id="add"{% if form_open %} open{% endif %}>
-      <summary class="btn btn-primary">Add</summary>
+      <summary class="btn btn-primary">Add event</summary>
       <form class="cal-form panel" method="post" action="{% url 'crm:calendar_add' %}">
         {% csrf_token %}
         {% comment %}The view and anchor travel with the submission so a

@@ -24,59 +24,7 @@ rule reaches all three. The two below are here rather than in
 include `_styles.html`, so putting `.meta-read` there would have squared the
 button on two pages out of three and left the third a pill.
 {% endcomment %}
-<style>
-  /* THE READ BUTTON IS A CONTROL, SO IT IS 10px. `.meta-read` is defined at
-     networkly.css L1767 with `border-radius: 999px`, and networkly.css's own
-     `.btn` rule (L1089-1093) states the law it was breaking: "Status chips
-     keep the pill; controls don't." Read opens a dialog. It was the last
-     999px control on a board whose filter bar, Save, Undo and bulk-save
-     button were all squared to `--r-ctl` in the same pass. Overridden here
-     rather than edited there because networkly.css belongs to another
-     workstream this round; fold this rule into L1767 when that lands. */
-  .meta-read { border-radius: var(--r-ctl); }
-
-  /* THE 3,800-CHARACTER PARAGRAPH, FOLDED.
-
-     `facts.paragraphs()` splits a description on its own section headings,
-     and most scraped postings have none — so the median drawer opened onto
-     one unbroken wall of prose (2,741 characters in two blocks on the
-     founder's first row, 651px of solid text) with the apply link and the
-     provenance note pushed under it. A student opens this to DECIDE, and
-     the first 600 characters is where the deciding happens.
-
-     A CSS clamp, not a template cut. Cutting at 600 characters would need a
-     new filter and would put a hard "…" in the middle of a sentence; the
-     clamp folds at a line boundary, keeps the whole text in the DOM (so
-     find-in-page and a screen reader still reach all of it), and degrades
-     to today's behaviour — the full text, no fold — anywhere `:has()` is
-     missing. `_role_drawer.html` renders the fold only when the text is
-     long enough to need one, so a short posting is untouched.
-
-     The `<details>` sits AFTER the prose and clamps it with `:has()`,
-     because a `<summary>` must be the first child of its own element and
-     the control belongs under the text it reveals. */
-  .drawer-prose { position: relative; }
-  .drawer-body:has(> .drawer-fold:not([open])) > .drawer-prose {
-    max-height: 11.5em; overflow: hidden; }
-  /* The fade is what says "cut", not "ended". Painted rather than masked so
-     it lands on the drawer's own surface in both themes. */
-  .drawer-body:has(> .drawer-fold:not([open])) > .drawer-prose::after {
-    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3.2em;
-    background: linear-gradient(transparent, var(--surface)); pointer-events: none; }
-  .drawer-fold > summary { list-style: none; display: inline-flex;
-    align-items: center; gap: var(--s1); cursor: pointer;
-    color: var(--accent-ink); font-size: var(--fs-xs); font-weight: var(--w-med);
-    border: 1px solid var(--accent-line); border-radius: var(--r-ctl);
-    background: var(--accent-soft); padding: var(--s1) 12px;
-    transition: border-color var(--t-fast); }
-  .drawer-fold > summary::-webkit-details-marker { display: none; }
-  .drawer-fold > summary:hover { border-color: var(--accent); }
-  .drawer-fold > summary:focus-visible { outline: 2px solid var(--accent);
-    outline-offset: 2px; }
-  .drawer-fold:not([open]) .df-less, .drawer-fold[open] .df-more { display: none; }
-  @media (pointer: coarse) { .drawer-fold > summary { min-height: 44px; } }
-</style>
-<dialog class="drawer" id="role-drawer" aria-label="Posting">
+<dialog class="drawer directory-drawer" id="role-drawer" aria-label="Posting">
   <button type="button" class="drawer-x" data-drawer-close aria-label="Close">{% include "_icon.html" with name="close" %}</button>
   <div id="role-drawer-body"></div>
 </dialog>

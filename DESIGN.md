@@ -1,68 +1,92 @@
 ---
-name: Networkly
-description: A clear recruiting workspace with restrained color and visible actions.
+name: "Networkly"
+description: "A personal recruiting index with editorial headings, open records, and clear actions."
 colors:
-  paper: "#f6f8fb"
+  paper: "#f7f7f2"
   surface: "#ffffff"
-  ink: "#202939"
-  ink-2: "#536174"
-  ink-3: "#647185"
-  line: "#e1e7ef"
-  line-strong: "#a4afbf"
+  ink: "#252b2e"
+  ink-2: "#596365"
+  ink-3: "#697371"
+  line: "#dedfd8"
+  line-strong: "#a6afaa"
   accent: "#2857c7"
   accent-ink: "#214ba9"
-  accent-soft: "#edf2ff"
-  accent-line: "#c7d5f7"
+  accent-soft: "#eef2fc"
+  accent-line: "#c8d5f4"
   on-accent: "#ffffff"
   on-accent-2: "#e0e9ff"
-  dark-paper: "#131923"
-  dark-surface: "#1b2432"
-  dark-ink: "#edf2fa"
-  dark-ink-2: "#b5c1d3"
-  dark-ink-3: "#9baac0"
-  dark-line: "#303e52"
-  dark-line-strong: "#62748e"
-  dark-accent: "#9dbaff"
-  dark-accent-ink: "#c0d2ff"
-  dark-accent-soft: "#263655"
-  dark-accent-line: "#435b89"
+  dark-paper: "#191e20"
+  dark-surface: "#22282b"
+  dark-ink: "#edf0ec"
+  dark-ink-2: "#b6c0bf"
+  dark-ink-3: "#a6b1ae"
+  dark-line: "#3b4446"
+  dark-line-strong: "#6e7c78"
+  dark-accent: "#a4bbff"
+  dark-accent-ink: "#c6d5ff"
+  dark-accent-soft: "#2b374d"
+  dark-accent-line: "#526589"
   dark-on-accent: "#14223f"
   dark-on-accent-2: "#273f6b"
+  ok: "#2f6a45"
+  ok-soft: "#e6f0e9"
+  ok-line: "#cbdfd2"
+  danger: "#9d2b23"
+  danger-ink: "#841f18"
+  danger-soft: "#f7e8e6"
+  danger-line: "#e9c8c4"
+  w-replied-t: "#7d5410"
+  w-replied-s: "#f6ecd6"
+  w-replied-l: "#e8d7ad"
 typography:
   headline:
-    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    fontSize: "30px"
-    fontWeight: 650
-    lineHeight: 1.2
+    fontFamily: "Fraunces, Georgia, Times New Roman, serif"
+    fontSize: "38px"
+    fontWeight: 400
+    lineHeight: 1.15
+    letterSpacing: "-.025em"
+  headline-phone:
+    fontFamily: "Fraunces, Georgia, Times New Roman, serif"
+    fontSize: "34px"
+    fontWeight: 400
+    lineHeight: 1.15
     letterSpacing: "-.025em"
   title:
     fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    fontSize: "17px"
+    fontSize: "18px"
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: "normal"
   body:
     fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    fontSize: "15px"
+    fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: "normal"
-  description:
+  detail:
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "13px"
+    fontWeight: 400
+    lineHeight: 1.6
+    letterSpacing: "normal"
+  button:
     fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "14px"
-    fontWeight: 400
-    lineHeight: 1.5
+    fontWeight: 550
+    lineHeight: 1.2
     letterSpacing: "normal"
   label:
     fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    fontSize: "13px"
-    fontWeight: 600
-    lineHeight: 1.2
+    fontSize: "12px"
+    fontWeight: 500
+    lineHeight: 1.45
     letterSpacing: "normal"
 rounded:
   r-ctl: "8px"
   r-panel: "12px"
   r-badge: "999px"
+  menu: "10px"
+  utility: "6px"
 spacing:
   s1: "4px"
   s2: "8px"
@@ -76,163 +100,176 @@ components:
   button-primary:
     backgroundColor: "{colors.accent}"
     textColor: "{colors.on-accent}"
-    typography: "{typography.label}"
+    typography: "{typography.button}"
     rounded: "{rounded.r-ctl}"
-    padding: "8px 14px"
+    padding: "9px 16px"
   button-primary-hover:
     backgroundColor: "{colors.accent-ink}"
     textColor: "{colors.on-accent}"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    typography: "{typography.label}"
+    typography: "{typography.button}"
     rounded: "{rounded.r-ctl}"
-    padding: "8px 14px"
+    padding: "9px 16px"
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.r-ctl}"
     padding: "9px 14px"
   nav-active:
-    backgroundColor: "{colors.accent-soft}"
+    backgroundColor: "transparent"
     textColor: "{colors.accent-ink}"
-    rounded: "{rounded.r-ctl}"
-    padding: "11px 12px"
+    rounded: "0"
+    padding: "0"
   status-chip:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-2}"
+    typography: "{typography.label}"
     rounded: "{rounded.r-badge}"
     padding: "4px 9px"
-  application-filter:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.r-ctl}"
-    padding: "16px"
   application-filter-selected:
     backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
-  contact-roster-row:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "0"
-    padding: "17px 22px"
-  assistant-prompt:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink}"
-    rounded: "0"
-    padding: "16px 18px"
-  work-authorization-choice:
-    textColor: "{colors.ink-2}"
     rounded: "{rounded.r-ctl}"
-    padding: "9px 10px"
-  work-authorization-choice-selected:
-    backgroundColor: "{colors.accent-soft}"
-    textColor: "{colors.accent-ink}"
-  panel:
+    padding: "9px 14px"
+  record-row:
+    backgroundColor: "transparent"
+    textColor: "{colors.ink}"
+    rounded: "0"
+    padding: "22px 0"
+  capture-surface:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.r-panel}"
+    padding: "20px"
 ---
 # Design System: Networkly
 
 ## Overview
 
-**Creative North Star: "A Clear Recruiting Workspace"**
+**Creative North Star: "The Personal Recruiting Index"**
 
-Networkly presents a clear recruiting workspace: destinations on the left, the current task in front, supporting context beside it. Cool surfaces, slate text, precise blue selection, and quiet borders make dense recruiting records easy to scan.
+Networkly uses the order and reading comfort of a contemporary university library catalogue. Warm neutral ground, editorial page titles, cobalt actions, and open ruled records give recruiting information a clear place. The material is digital: flat fills, real evidence, and familiar controls.
 
-This records the implemented September 2026 shell, widget, and element refurbishment. In `coverage_web/templates/base.html`, `coverage_web/static/css/networkly.css` supplies base primitives, semantic status palettes, and self-hosted fonts; route styles load through the head block; `coverage_web/static/css/workspace.css` then establishes the shared shell and principal widgets; `coverage_web/static/css/elements.css` loads last and supplies the small-control and secondary-surface refinements. Read the final cascade, including selector specificity, before copying a route rule. Route-specific structure still belongs to its templates. Historical visual prescriptions in `docs/design-spec.md` and `design-system/coverage/MASTER.md` are subordinate; their product and functional contracts are not replaced.
+The built system gives records more space than their containers. Identity, context, timing, and actions form readable groups; supporting information sits beside the work on wide screens and follows it on phones. Forms and floating menus retain useful boundaries. Clear status wording carries meaning alongside color.
 
-The approved Networkly identity uses a connected two-person N symbol beside the custom lowercase wordmark, with a blue initial n and slate lettering. The shared wordmark preserves the approved source silhouette using an SVG luminance mask and theme tokens; compact marks and browser/install icons use native geometry. Header and footer links carry the accessible name Networkly home. Use the full lockup where space permits and the symbol for assistant avatars, brief markers, and icons. Email headers use a raster export of the same lockup.
+This document records the implemented September 2026 redesign. The visual cascade in `coverage_web/templates/base.html` is `networkly.css`, route styles, `workspace.css`, `elements.css`, then `presentation-crm.css`, `presentation-directory.css`, and `presentation-support.css`. Base styles own self-hosted fonts, semantic palettes, and control behavior; the later layers own the shell and page compositions. Read specificity as well as load order. This file supersedes historical visual prescriptions in `docs/design-spec.md` and `design-system/coverage/MASTER.md`; their functional contracts still apply. The build is code-led; no external comp is a pixel authority.
+
+The approved Networkly lockup is binding. `_wordmark.html` preserves the original raster silhouette through a luminance mask with unique IDs per placement; theme-aware blue and ink fill its original color regions. Preserve the connected two-person N symbol, custom lettering, source asset, and full-lockup proportions. Header and footer links expose the accessible name Networkly home. Compact marks and email raster exports remain the same identity.
 
 **Key Characteristics:**
 
-- Sans-serif page hierarchy and sentence-case controls.
-- Blue selection and actions; separate semantic status colors.
-- Flat bordered surfaces with persistent row actions.
-- Responsive navigation and both color schemes.
+- Normal-weight serif page titles with a quiet sans-serif working hierarchy.
+- Warm neutral surfaces, cobalt interaction, and distinct semantic states.
+- Open ruled records with visible actions and restrained form enclosures.
+- Horizontal navigation, responsive reading order, and paired light and dark themes.
 
 ## Colors
 
 ### Primary
 
-Precise blue (`accent`) fills primary actions; `accent-ink` supplies their hover state and selected text. `accent-soft` and `accent-line` mark selection without competing with record content. Pair fills with `on-accent`, never a fixed white label.
+Cobalt (`accent`) identifies primary actions and active navigation. `accent-ink` supplies selected text and primary hover; `accent-soft` and `accent-line` identify selected filters and choices. Text on accent fills uses `on-accent`, which changes with the theme. Secondary text on the same fill uses `on-accent-2`.
 
 ### Neutral
 
-Cool ground (`paper`), white panels (`surface`), slate text (`ink`, `ink-2`, `ink-3`), and two border strengths (`line`, `line-strong`) establish hierarchy. Frontmatter lists light values and their `dark-` counterparts; runtime CSS retains the same variable names in both themes. System preference applies unless an explicit theme is selected. Semantic status families remain defined in the base stylesheet, including their dark counterparts; they are not additional brand accents.
+Warm paper (`paper`) grounds the page; `surface` provides white form and overlay areas. Ink, secondary ink, and quiet ink establish three text roles. Fine lines divide records; strong lines define controls or section boundaries. Frontmatter records light tokens and their `dark-` counterparts. Runtime CSS reuses the same variable names for both themes.
 
-**The Semantic Color Rule.** Use the accent for navigation, selection, and actions. Preserve the existing warmth, confidence, sponsorship, and outcome tokens for their named states.
+Explicit theme selection and system preference both set native `color-scheme`, so date/time picker affordances match the page. The persisted `coverage-theme` key and `data-theme` contract remain compatible. The base stylesheet owns the full light/dark semantic families for warmth, score, confidence, sponsorship, freshness, success, and danger; the frontmatter's semantic samples do not replace those families.
+
+**The Semantic Color Rule.** Use cobalt for interaction. Preserve the existing domain colors and visible labels for their named states, including unknown and unverified facts.
 
 ## Typography
 
-Instrument Sans is the shared workspace heading, body, and control face, with the fallback stack recorded above. The hierarchy is compact: page headline, section title, body, description, and control label. Page descriptions cap at (65ch). Ordinary workspace headlines reduce to (28px) at the intermediate layout and (27px) on phones; the compact header retains its more specific desktop size until the phone override.
+**Display Font:** Fraunces, with Georgia and Times New Roman fallbacks.
+**Body Font:** Instrument Sans, with the platform sans-serif stack.
+**Data Font:** Spline Sans Mono remains available for explicit code and numeric treatments.
 
-The three vendored families remain available. The refined public, authentication, onboarding, pricing, and workspace headings use Instrument Sans; remaining route-specific Fraunces declarations do not establish a new shared default. Spline Sans Mono remains for explicit numeric/data treatments. Summary figures and recurring counts use tabular numerals with the sans-serif face. Authentication titles use (28px); the public desk headline uses (clamp(36px, 4vw, 56px)), reducing to (36px) on phones. Hints and secondary explanations use (13px/1.6).
+All three families are self-hosted variable WOFF2 fonts declared in the base stylesheet with swap loading. Serif titles establish page identity; sans-serif labels, facts, and actions support scanning. The approved logo is an asset, not a typeset approximation.
 
-**The Readable Label Rule.** Navigation, small labels, chips, and actions use normal or sentence case without forced uppercase or tracking. Proper names retain their established casing. Relationship display labels describe their categories; stored values and quoted evidence retain their meaning.
+The primary CRM and directory title role uses the frontmatter headline. CRM titles reduce to the phone headline at (600px); directory titles do so at (720px). Supporting page titles use (38px/1.13) and usually reduce to (32px) at (680px). Authentication retains its local (38px) phone title. Public hero headings have their own larger responsive scale. These are route variants, not a universal display-size clamp.
+
+Section titles generally use (17–18px), weight (600); settings section titles use (22px). Working body text follows the frontmatter body role. Secondary explanations use the detail role; chips use the label role. Native field text starts at (15px/1.4), with directory filter fields at (14px/1.4). Phone field rules raise common inputs to (16px), with some route-specific composer styles retained. Descriptions typically constrain reading width to (65–72ch). Counts use tabular numerals; they do not require a monospace face.
+
+**The Readable Label Rule.** Navigation, labels, chips, and actions use normal or sentence case without forced uppercase or tracking. Proper names, stored values, and quoted evidence preserve their original meaning.
 
 ## Layout
 
-Above (1100px), a fixed (208px) navigation rail offsets main content. Workspace pages cap at (1600px); ordinary pages excluding wide, full, and assistant layouts cap at (1120px). Base narrow forms retain their own rules outside that workspace override. Default page padding is (36px 32px 48px).
+The sticky horizontal masthead has an (80px) desktop height, a bottom divider, and a (1440px) maximum inner width. The logo, six destinations, search, and account controls share one line. At (1050px), the workspace uses a compact (72px) header with a Menu control and three-column destination grid; at (640px), destinations use two columns. Without JavaScript the grid stays visible. Public navigation instead becomes a horizontal scrollable destination row below the logo and account actions.
 
-At (1100px) and below, navigation becomes a sticky top bar with an expandable destination grid. Without JavaScript, destinations remain visible. At (820px), Today and settings become single-column layouts and page padding becomes (24px 20px 40px). At (640px), padding is (24px 16px 36px), navigation uses two columns, headers wrap, and record cards stack. Reuse the base spacing steps; recurring panel insets also use (20px) and gaps use (28px).
+Default page padding is (40px 40px 64px), with ordinary workspace pages capped at (1200px) and wide pages at (1440px) above (1100px). Shared padding becomes (24px 20px 40px) at (820px) and (28px 20px 44px) at (640px), with deliberate page-local exceptions. Spacing uses the base scale and recurring (20px), (28px), and (40px) gaps.
 
-Firm collections use an auto-fitting grid with a preferred minimum width of (430px), a (570px) reading height, and an explicit expansion to natural height. On phones, the collapsed reading height is (540px). Role facts sit above persistent actions. Today pairs an action column with a (300px) supporting rail on wider screens. Its four summaries become a compact two-column grid on phones, with (60px) minimum-height cells; the reviewed weekday (390px) viewport shows the first task and its actions. This is a first-viewport target, not a guarantee for arbitrarily long records.
+Today has a ruled factual summary followed by open action records and a (290px) supporting column, separated by a vertical rule. At (900px), that support moves below the main work. Phone action records stack identity, evidence, and actions; the final phone spacing uses compact section gaps while retaining (44px) primary targets. This places the first action group in the reviewed phone arrival view; arbitrary content length can extend it.
 
-Network uses an aligned roster with identity, firm context, and recency/actions across each row. At (1200px) the action area moves below the two main columns; at (640px) rows stack. Applications uses six count filters in one row, becoming three columns on phones, above one authoritative list. Settings explanations sit beside a single controls surface and stack at (1200px); its destination index becomes a disclosure at (820px). Respect each route's actual grid rather than imposing one universal card layout.
+Opportunities groups each firm in one horizontal band: a (250px) identity column and a broad role column with a (36px) gap. The role area has a (408px) collapsed maximum scroll height and expands to natural height. At (720px), firm identity sits above roles. Applications uses wrapping labeled count filters above ruled rows, not boxed metric tiles. Network is a roster whose firm context and actions reflow beneath identity as space narrows. Contact records use open journal sections, a separate capture form, and supporting facts beside them.
 
-Work-authorization choices align beside each region on wide screens. At (640px), each region sits above three equal-height choices with a (54px) minimum height. Target-firm columns stack at (820px); archived-contact rows preserve the action beside identity and move timing below it. Cadence stages are adjacent text blocks, with visible timing and explanatory sentences at phone widths as well as desktop. Public firm marks form a static wrapping list. Legal reading content caps at (760px).
+Settings has a (200px) section index beside open ruled sections, with a (64px) gap at wide sizes. The index becomes a disclosure and the layout becomes one column at (820px). Assistant keeps an open reading area with divided starters and an enclosed composer. Calendar uses time-based grids and agenda rows; responsive forms and day views retain their own geometry. Legal reading content caps at (760px).
 
 ## Elevation & Depth
 
-The workspace is flat at rest. Surface contrast and fine borders separate content; the raised panel uses the second shadow token for floating content. The sidecar records the light and dark shadow pair. Inputs retain their focus glow. Shared page entrances and decorative title strokes are suppressed. Widget controls respond locally: press (120ms), color/border state (180ms), and overlay opening (240ms). Small menus open over (180ms); small utility actions use a (.96) press scale. Selected theme and segmented choices use a restrained local shadow (0 1px 3px rgb(0 0 0 / 8%)). User-opened disclosures and changed controls reveal over (200ms) with (5px) travel; overlay opening uses (8px) travel and a slight scale. The sidecar distinguishes these extracted CSS and JavaScript values. Reduced motion suppresses these spatial effects and leaves functional state changes intact.
+Page content is flat at rest. Warm ground, white working surfaces, spacing, and single-pixel rules establish depth. Menus, dialogs, drawers, and the raised panel use the second shadow token; the sidecar records both theme pairs. Inputs retain their soft accent focus glow. Selected theme and segmented choices have a small local shadow.
 
-**The Stable Surface Rule.** Shared panels and the refurbished cards do not lift on hover. Use border emphasis for inspection and the raised panel treatment for floating surfaces.
+Shared page entrances are disabled. Feedback is local: press (120ms), color/border state (180ms), and overlay reveal (240ms), with shorter menu reveals. A pending mutation uses a slim progress mark; failure uses a danger outline. Reduced motion removes spatial transitions and leaves a static pending mark. This feedback describes actual activity, not decoration.
+
+**The Stable Surface Rule.** Record collections and page sections stay still on hover. Use color or border emphasis for interaction and reserve substantial shadow for floating content.
 
 ## Shapes
 
-Controls use the control radius and shared panels use the panel radius. Status badges remain fully rounded. Menus use (10px) corners; their individual choices and several utility actions use (6px). Contact roster rows and firm relationship rows have square corners and a bottom divider within their collection. Compact role actions use (6px); these local variants do not replace the shared radii. Use a single-pixel border by default; semantic marks remain where the domain component requires them.
+Controls have gently curved corners through `r-ctl`; grouped form surfaces use `r-panel`. Status badges keep rounded ends through `r-badge`. Menus use their smaller local radius and utility choices use the utility radius. Most recurring records have square corners with a bottom rule and transparent fill. These open records are the default reading structure; capture forms, composers, and overlays have their own bounded shape. Calendar event labels retain compact local corners.
 
 ## Components
 
-- **Buttons:** compact, filled primary or bordered secondary, with shared control typography and a (38px) minimum desktop height; the phone default is (42px). Hover changes border or fill without a lift; pressing widget controls scales them to (.975), except with reduced motion. Focus uses an accent outline (2px) with a (3px) offset. Disabled buttons retain their existing muted state. Destructive actions use the danger family.
-- **Inputs:** surface fill, strong border, control corners, and (15px/1.4) text. Hover emphasizes the border; keyboard focus uses a (2px) accent outline at zero offset plus the existing soft glow. Enhanced selects retain their native form behavior and matching visual treatment.
-- **Small controls:** search and menu/disclosure rows share a (40px) minimum, increasing to (44px) on phones. Compact calendar, assistant, target-firm, and drawer actions use (36px) minimum targets, with the listed phone variants growing to (44px). Native checkbox and radio indicators use the accent; invalid fields and field errors use the danger family. Phone text fields, selects, and textareas use (16px) type. Menus use divided-choice logic with soft accent selection; native summaries retain their disclosure marker. Theme and segmented choices keep visible selected and keyboard states.
-- **Navigation:** normal-case labels with inline SVG icons, a soft blue active fill, and stronger active weight. Mobile Menu exposes its expanded state; Escape closes it and restores focus. Settings uses a separate disclosure on smaller screens.
-- **Status chips:** readable normal-case labels at (12px/1.45), weight (500), with rounded ends, semantic text/surface/border pairings, and visible state wording. Filter selections instead use the control shape and soft accent fill.
-- **Panels and cards:** surface fill, fine border, no default shadow. Padding belongs to the content component; supporting rail panels use (22px). Hoverable task and firm cards emphasize borders. Roster rows instead use a quiet ground-color hover. Use raised surfaces for overlays rather than lifting the page content.
-- **Record actions:** role and contact actions remain visible. Role actions expand to a (44px) minimum height on phones; contact actions expand to (40px). Do not hide facts behind an action overlay.
+### Buttons
 
-- **Today task:** identity and evidence occupy the main body, with a separate ground-color action footer and top divider. The action footer wraps, never overlays the evidence. Weekly outreach uses actual completed/goal values in a labeled native progress bar; supporting agenda and activity remain secondary.
-- **Application filters:** six labeled count buttons, including All roles, expose selection with `aria-pressed` and soft accent fill. Counts refer to the authoritative rows. Selected stages hide other rows and empty groups; zero results show guidance and a reset. The live status announces the visible count. After an HTMX replacement, preserve the selected stage and restore focus to its filter when replacement removed the focused control. Without JavaScript, filters stay disabled and all rows remain available.
-- **Firm collection expansion:** a native button exposes Expand/Collapse wording and `aria-expanded`, including keyboard activation and phone use. Expansion removes the fixed reading height and internal clipping. Collapse keeps the collection reachable if its header moved above the viewport. Without JavaScript, hide the enhancement and retain the scrollable role list.
-- **Contact roster and capture:** direct profile links, explicit selection, and persistent actions occupy border-separated rows. On a contact record, interaction capture uses visible field labels, explicit optional wording, and a two-column form that stacks on phones; history is chronological and visually separate from capture.
-- **Calendar:** date-led agenda rows place the date beside events on wide screens and above them on narrow screens. Add-event controls remain visible. The creation disclosure opens inline on the toolbar's existing surface, separated by a top divider; do not nest another bordered card around this form. Native disclosure state remains visible to keyboard and assistive technology.
-- **Settings:** group explanations sit outside the bordered control surface; save actions stay with the fields they affect. Danger groups retain the semantic danger border. Smaller screens stack explanations and controls. The weekly outreach goal is a labeled number input with a per-week unit, adjacent Save, and a live descriptive weekday average; it is separate from the actual completed/goal progress shown on Today. Target-firm tiers use divided records inside subdued columns, with visible removal controls.
-- **Work authorization:** each region is a labeled native radio group. All three choices have visible radio indicators and text, equal-height label surfaces, soft accent selected fill, and an outline when the native radio receives keyboard focus. The region eligibility explanation remains visible. The same pattern serves settings and onboarding.
-- **Relationship stages:** New, Replied, Had a chat, and Advocate form a wrapping ordered list of categories. The current item uses `aria-current="step"`, soft accent fill, and a small text-colored dot. This is not a numeric progress bar and does not imply equal distances between stages.
-- **Outreach schedule:** new-contact, existing-relationship, and deadline schedules are flat sections with bordered stage blocks. Each block shows its event and timing; disabled stages disappear. Dynamic explanatory sentences remain visibly rendered on phones and carry the accessible schedule text while duplicate blocks are hidden from assistive technology. Timing is stated in days or weeks; block widths do not encode elapsed duration.
-- **Assistant:** starter prompts form a single divided list with full-row buttons, followed by a focused composer. The prompt arrow shifts locally on hover, suppressed with reduced motion. Draft subject, body, and actions have distinct areas separated by dividers.
-- **Dialogs and drawers:** raised, bordered dialogs constrain scrolling to (100dvh - 32px), use (24px) padding, and group wrapping actions at the end. Role drawers present facts as divided rows. Confirmation actions use the initiating action’s wording where supplied. Command search has an explicit accessible label and spacious result rows.
-- **Public and account surfaces:** authentication and onboarding cards are flat, with sans-serif headings and no decorative card entrance. Sign-in providers have (44px) minimum height. Public examples and firm marks remain static and readable; pricing emphasizes the featured border without added depth. Legal pages use (15px/1.8) body text; staff tables use normal-case headings and tabular counts.
-- **Assistant utilities:** message actions, history menus, memory dialogs, attachment labels, and draft divisions use the same control, surface, and focus families. Keep draft subject, body, and actions distinct.
-- **Copy:** labels distinguish Draft email from Log sent email, and Pause outreach from Resume outreach. Finished is a personal application state; a closed posting is separate. Unknown deadlines read Deadline not listed. The conversation destination is Assistant. Preserve source-quoted text and user-authored records.
-- **Request feedback:** only POST requests mark the containing widget busy with `aria-busy` and a slim progress mark. Concurrent requests retain busy state until the last completes. GET search and polling do not animate entire panels. Failed requests clear busy state when settled, preserve authoritative content, and apply a temporary danger outline; success acknowledgment follows the server response. Reduced motion keeps a static progress mark.
+Primary buttons pair accent fill with on-accent text; secondary buttons use surface fill, ink text, and a strong border. Shared buttons have a (40px) desktop minimum and (44px) phone minimum. Page-local compact controls retain their explicit variants. Hover changes fill or border without lift. Keyboard focus uses a (2px) accent outline with a (3px) offset; press feedback scales widget buttons to (.975) unless reduced motion is enabled. Disabled state remains visible and noninteractive. Destructive actions retain the danger palette.
+
+### Inputs / Fields
+
+Fields use surface fill, strong borders, control corners, visible labels, and separate explanatory or error text. Focus uses an accent outline at zero offset and a soft (3px) accent glow. Native and enhanced selects retain form submission and keyboard contracts. Checkbox and radio indicators remain visible; invalid fields use danger. Date and time affordances follow the root color scheme. Native textareas remain vertically resizable.
+
+### Navigation
+
+Desktop destinations are plain text with an accent bottom rule and stronger weight on the active page. Navigation icons appear in the compact menu. Menu exposes expanded state; Escape closes it and restores focus. Directory scope tabs use soft selected fills, while shared scope tabs use an underline. Preserve the actual route variant and its accessible current-page state. Search and account affordances remain separate from destinations.
+
+### Chips and choices
+
+Status chips use normal-case wording, semantic text/surface/border pairings, and rounded ends. Selected filters use control corners, accent tint, and explicit pressed or checked state. Relationship stages are wrapping categorical labels with the current category highlighted; the contact record does not render them as a numerical progress bar. Work-authorization choices retain native radio indicators and equal-height labeled targets.
+
+### Records and grouped surfaces
+
+Today tasks, firm bands, application rows, roster entries, and settings sections use open dividers. Identity and evidence remain separate from actions, and actions wrap without overlaying facts. Role and contact actions are persistently visible. Forms, composers, dialogs, and selected supporting widgets use bounded surfaces where they help users act. Avoid carrying obsolete card padding or hover lifts into open page sections.
+
+### Collection controls
+
+Application stage filters expose `aria-pressed` and operate on the authoritative rows. Preserve the live visible-count announcement, empty-filter guidance, focus restoration after replacement, and disabled enhancement when JavaScript is unavailable. Firm expansion uses a real button with Expand/Collapse wording and `aria-expanded`; it removes internal clipping while keeping the header reachable on collapse. Preserve the scrollable fallback when the enhancement is unavailable.
+
+### Calendar and capture
+
+Calendar categories retain their colors and text. Month-cell add controls appear on hover or focus and remain available for coarse pointers. Agenda events and form actions use larger targets. Contact capture has a white, rounded form surface with visible labels and optional wording; its history remains a separate open section. Outreach schedules state timing in text, and native progress represents actual completed/goal values only.
+
+### Assistant and overlays
+
+Assistant starters form an open divided list. The bordered composer marks the editing area; draft subject, body, and actions remain distinct. Dialogs and drawers use the raised shadow, clear headings, constrained scrolling, and grouped wrapping actions. Dialogs have (24px) padding and a maximum height of (100dvh - 32px). Command-search results retain visible labels and keyboard focus.
+
+### Identity and compatibility
+
+Preserve the approved lockup and mark, asset paths, per-placement mask IDs, accessible link names, and theme-aware fills. Styling changes keep existing URLs, field names, named IDs, data attributes, htmx targets, stored categories, and browser persistence keys. Product facts and uncertainty remain literal; examples on public pages stay labeled. These contracts allow the recorded visual system to evolve without changing user data or behavior.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- Do use the current CSS variables so explicit and system-selected dark themes stay paired.
-- Do keep role and contact actions visible without hover, with the existing larger mobile targets.
-- Do preserve keyboard focus, native controls, disclosure state, and reduced-motion behavior.
-- Do use the shared panel and button primitives before adding route-specific styling.
-- Do keep choices, timing, numeric goals, and relationship categories explicit in text.
+- Do use runtime CSS variables so explicit and system-selected dark themes remain paired.
+- Do use Fraunces for page identity and Instrument Sans for working information and controls.
+- Do organize records with spacing and dividers, retaining useful boundaries around forms and overlays.
+- Do keep role and contact actions visible, with their larger phone targets.
+- Do preserve native controls, keyboard focus, disclosure state, reduced motion, and persistence compatibility.
+- Do preserve the approved Networkly logo and explicit wording for categorical or uncertain facts.
 
 ### Don't:
 
-- Don't reintroduce the historical masthead rule, serif workspace titles, or page-header eyebrows.
-- Don't replace state labels with color alone or restyle unknown facts as confirmed outcomes.
-- Don't copy old palette values or hover lifts from historical documentation into new screens.
-- Don't revive uppercase small labels, hidden radio indicators, numeric relationship meters, or decorative schedule rails from earlier route styles.
+- Don't reintroduce the discarded vertical navigation rail, cool blue page ground, boxed summary tiles, or page-header eyebrows.
+- Don't replace semantic labels with color alone or style unknown facts as confirmed outcomes.
+- Don't revive uppercase small labels, hover lifts, decorative page entrances, or literal paper textures.
+- Don't copy historical CSS fragments without checking the final page-family cascade.
+- Don't turn relationship categories into a numerical meter or use decorative progress to imply activity.

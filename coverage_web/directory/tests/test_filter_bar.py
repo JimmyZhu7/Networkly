@@ -78,6 +78,16 @@ def _checked_roles(html):
     )
 
 
+def _assert_segment_count(html, key, label, count):
+    """The visible label owns its live count, regardless of layout wrappers."""
+    segment = re.search(
+        rf'<label[^>]*for="seg-role-{key}"[^>]*>(.*?)</label>', html, re.S
+    )
+    assert segment, f"Missing labeled segment {key}"
+    assert label in re.sub(r"<[^>]+>", "", segment.group(1))
+    assert f'<span id="cnt-role-{key}">{count}</span>' in segment.group(1)
+
+
 # ---------------------------------------------------------------------------
 # The segmented control, and the mode-reset bug it exists to prevent.
 # ---------------------------------------------------------------------------
@@ -93,8 +103,8 @@ def test_the_four_campus_segments_render_with_live_counts(client, bar):
     counts = {s["value"]: s["count"] for s in resp.context["role_segments"]}
     assert counts == {"": 4, "insight": 1, "internship": 3, "entry_level": 0, "all": 5}
     html = resp.content.decode()
-    assert "All Campus (<span id=\"cnt-role-campus\">4</span>)" in html
-    assert "Everything (<span id=\"cnt-role-all\">5</span>)" in html
+    _assert_segment_count(html, "campus", "All Campus", 4)
+    _assert_segment_count(html, "all", "Everything", 5)
 
 
 def test_other_is_not_drawn_as_a_sibling_option(client, bar):
@@ -146,7 +156,7 @@ def test_optin_deep_link_renders_the_conditional_fifth_segment(client, bar):
     seg = resp.context["role_optin_segment"]
     assert seg is not None and seg["value"] == "other" and seg["count"] == 1
     html = resp.content.decode()
-    assert 'Other / Experienced (<span id="cnt-role-other">1</span>)' in html
+    _assert_segment_count(html, "other", "Other / Experienced", 1)
     # And it is the checked one, so the bar states its own mode.
     assert _checked_roles(html) == ("other",)
 

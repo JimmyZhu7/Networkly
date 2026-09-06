@@ -7,14 +7,14 @@
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
 {% block content %}
-<div class="page page--full">
+<div class="page page--full crm-page network-page">
   {% url 'crm:contact_new' as add_contact_url %}
   {% comment %}
   "and who's next" came off this line: the queue it named moved to Today
   (see the note above Covered Firms below), so the board was promising a
   panel it no longer has.
   {% endcomment %}
-  {% include "_pagehead.html" with eyebrow="Your relationships" title="Network" sub="Everyone you know at each firm, and how warm they are." action_url=add_contact_url action_label="＋ Add Contact" %}
+  {% include "_pagehead.html" with title="Network" sub="People, conversations, and the firms you’re building relationships with." action_url=add_contact_url action_label="Add contact" %}
   {% comment %}
   2026-08-27: cut down from eight tabs (nine with the campaign one showing)
   to the four that are actually a lens on the board — All, the regions, and
@@ -616,7 +616,7 @@
     (the actual drag target). A third copy on this header explained nothing
     those two don't already cover before you reach a single tier section.
     {% endcomment %}
-    <h2 class="strip-title strip-title-lg">Covered Firms</h2>
+    <h2 class="strip-title strip-title-lg">Firm network</h2>
       <div class="net-panel panel">
       {% comment %}
       THE LEGEND that used to open this panel is gone. Four warmth dots and
@@ -1213,7 +1213,9 @@
       );
     }
 
-    // ---- The contact bands take the same cap, for the same reason.
+    // Contact bands use eight record rows in the catalogue layout. The
+    // boundary is measured from real content so a long name or wrapped
+    // mobile action never leaves a partially clipped record.
     //
     // `.contact-scroll` carried a flat `max-height: 416px`. Measured on the
     // founder's board at 1440px with the card at its post-2026-09-03 height:
@@ -1264,10 +1266,10 @@
         if (!row) { row = { top: top, bottom: bottom }; rows.push(row); }
         row.bottom = Math.max(row.bottom, bottom);
       });
-      if (rows.length <= 2) return; // Fits already — no cap, no tab stop.
+      if (rows.length <= 8) return; // Fits already — no cap, no tab stop.
 
       var gapPx = parseFloat(getComputedStyle(grid).rowGap) || 0;
-      var cap = rows[1].bottom + gapPx / 2;
+      var cap = rows[7].bottom + gapPx / 2;
       scroll.style.setProperty("--band-cap", cap + "px");
       scroll.setAttribute("tabindex", "0");
       scroll.setAttribute("role", "region");

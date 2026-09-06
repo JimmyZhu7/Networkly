@@ -32,7 +32,7 @@ there: an `hx-swap-oob` element sitting in the initial document is inert noise.
     neighbours read `<article class="firmcol firmcol--picked`), and an
     attribute inserted ahead of the class silently makes them stop finding the
     column they are about.{% endcomment %}
-    <article class="firmcol firmcol--picked{% if not pick_cluster.roles %} is-empty{% endif %} kin-reveal panel" id="cov-pickcol"{% if oob %} hx-swap-oob="true"{% endif %} style="--i:0" aria-labelledby="pickcol-h">
+    <article class="firmcol firmcol--picked{% if not pick_cluster.roles %} is-empty{% endif %}" id="cov-pickcol"{% if oob %} hx-swap-oob="true"{% endif %} aria-labelledby="pickcol-h">
       {% comment %}
       The two cycle sentences live here now (2026-09-02) rather than as
       two italic lines inside the card. `title` on the header, so the

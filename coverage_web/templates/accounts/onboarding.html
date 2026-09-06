@@ -38,7 +38,7 @@ Per-step htmx wiring, and why it is per-step:
 `--ob-i` / `--ob-n` drive the rail's geometry from CSS alone (see
 _welcome_head.html §2); nothing here hardcodes the step count.
 {% endcomment %}
-<div class="page ob">
+<div class="page ob support-account">
 
   {% if unverified_email %}
     {% comment %}
@@ -86,7 +86,6 @@ _welcome_head.html §2); nothing here hardcodes the step count.
 
   {% if step == "profile" %}
     <header class="ob-head">
-      <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
       <h1>Tell us about your search</h1>
       {% comment %}Names the surfaces that exist NOW. This line said "the
       weekly list" months after that page was retired for Today — the first
@@ -129,7 +128,6 @@ _welcome_head.html §2); nothing here hardcodes the step count.
 
   {% elif step == "work_auth" %}
     <header class="ob-head">
-      <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
       <h1>Where can you work?</h1>
       {% comment %}Two sentences, not three. The cut one ("Networkly scores
       unknown as neutral, never as a guess") is said again, verbatim in
@@ -161,7 +159,6 @@ _welcome_head.html §2); nothing here hardcodes the step count.
 
   {% elif step == "firms" %}
     <header class="ob-head">
-      <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
       <h1>Choose your target firms</h1>
       {% comment %}The opening "Choose the firms you're recruiting for" was
       the h1 again in a longer sentence. Dropped; the lede now only says what
@@ -201,8 +198,7 @@ _welcome_head.html §2); nothing here hardcodes the step count.
 
   {% elif step == "import" %}
     <header class="ob-head">
-      <p class="ob-eyebrow">Step {{ step_number }} of {{ step_total }}</p>
-      <h1>Bring Your Contacts In</h1>
+      <h1>Bring your contacts in</h1>
       {% comment %}THE ARGUMENT THIS STEP MAKES CHANGED, BECAUSE THE FACT
       UNDER IT DID. It used to say "import that list before you connect
       Gmail", and it was right at the time: the historical Gmail pass
@@ -275,7 +271,7 @@ _welcome_head.html §2); nothing here hardcodes the step count.
         Not a primary button: Gmail still leads, because on an account that
         HAS the history it fills the board in one click.
         {% endcomment %}
-        <a class="btn" href="{% url 'crm:contact_new' %}?from=welcome">Add One by Hand</a>
+        <a class="btn" href="{% url 'crm:contact_new' %}?from=welcome">Add one by hand</a>
         <a class="btn" href="{% url 'accounts:import_template' %}">Download template</a>
       </div>
       {% comment %}Said in plain text rather than left to the flow diagram
@@ -292,7 +288,7 @@ _welcome_head.html §2); nothing here hardcodes the step count.
       {% csrf_token %}
       <input type="hidden" name="step" value="import">
       <div class="ob-actions">
-        <button type="submit" class="btn btn-primary">Finish Setup</button>
+        <button type="submit" class="btn btn-primary">Finish setup</button>
       </div>
     </form>
   {% endif %}

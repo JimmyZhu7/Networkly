@@ -396,9 +396,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="page">
-  <header class="kin-hero panel">
-    <span class="kin-hero-icon">{% include "_icon.html" with name="home" %}</span>
+<div class="page support-public support-pricing">
+  <header class="support-pricing-head">
     <h1 class="kin-hero-title">Find the plan for your recruiting search.</h1>
     <p class="kin-hero-sub">Browse the campus roles we track for free.
       Pro is planned to add more frequent sync and higher assistant limits.</p>
@@ -436,7 +435,7 @@
   <div class="aud">
     <input type="radio" name="aud" id="aud-ind" checked>
     <input type="radio" name="aud" id="aud-team">
-    <div class="seg" role="tablist" aria-label="Plan audience">
+    <div class="seg" role="group" aria-label="Plan audience">
       <label for="aud-ind">Individual</label>
       <label for="aud-team">Team &amp; Enterprise</label>
     </div>

@@ -717,7 +717,7 @@ def test_the_bar_names_exactly_one_primary_action(client, logged_in):
     assert bar.count("btn-primary") == 1, (
         "one filled control on the control line, and it is Add"
     )
-    assert '<summary class="btn btn-primary">Add</summary>' in bar
+    assert '<summary class="btn btn-primary">Add event</summary>' in bar
 
 
 def test_subscribe_recedes_to_a_link_without_leaving_the_bar(client, logged_in):
@@ -770,7 +770,7 @@ def test_the_bars_labels_say_their_object_without_saying_the_page(
     body = client.get(reverse("crm:calendar")).content.decode()
     bar = _bar_markup(body)
 
-    assert ">Add</summary>" in bar
+    assert ">Add event</summary>" in bar
     assert "Add to the calendar" not in bar
     # The commit still names what it commits to.
     assert ">Add to calendar</button>" in body

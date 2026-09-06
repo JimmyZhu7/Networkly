@@ -31,6 +31,8 @@ name's position depends on it at all.
 
 from __future__ import annotations
 
+from .presentation_helpers import presentation_css, rule as presentation_rule, rules as presentation_rules, media_blocks
+
 import re
 
 import pytest
@@ -42,16 +44,11 @@ _STYLE_RE = re.compile(r"<style>(.*?)</style>", re.S)
 
 
 def _feed_css() -> str:
-    html = Client().get("/opportunities/").content.decode()
-    blocks = _STYLE_RE.findall(html)
-    assert blocks, "the feed should render its own <style> block"
-    return "\n".join(blocks)
+    return presentation_css(Client().get("/opportunities/").content.decode())
 
 
 def _rule(css: str, selector: str) -> str:
-    match = re.search(r"^\s*" + re.escape(selector) + r"\s*\{(.*?)\}", css, re.S | re.M)
-    assert match, f"no rule found for {selector}"
-    return " ".join(match.group(1).split())
+    return presentation_rule(css, selector)
 
 
 @pytest.fixture
@@ -98,81 +95,25 @@ def feed_with_both_columns(db):
     return client
 
 
-def test_the_header_puts_the_name_in_a_row_nothing_below_it_can_move():
-    """REWRITTEN 2026-09-02. The old assertions were `align-items:
-    flex-start`, no `align-items: center`, and `min-height: 92px` — three
-    declarations that made a FLEX row keep the name's y independent of the
-    stack under it. The header is a grid now, so the same promise is kept by
-    structure instead: the name is in row one and everything else is in row
-    two, and a grid row's position cannot depend on a later row's content.
-
-    `align-items: center` is not only allowed now, it is required — it is
-    what levels the 38px tile with the name beside it, which is the alignment
-    complaint that prompted the change. Under the old flex shape that same
-    declaration was the bug; under the grid it applies per row, and row one
-    holds nothing but the tile and the name."""
+def test_the_header_keeps_name_and_metadata_in_distinct_rows():
     css = _feed_css()
-    rule = _rule(css, ".firmcol-head")
-    assert "display: grid" in rule, rule
-    # THE FLOOR MOVED, THE INVARIANT DID NOT (2026-09-03). Row one was
-    # floored at 38px, the tile's own height, so the header could never be
-    # shorter than the mark. But the tile spans BOTH rows, so it was already
-    # holding the header open by itself; all the floor did was inflate the row
-    # the NAME sits in — an 18px title in a 38px row, putting 14px between the
-    # name and the stats line that belongs to it against a declared 4px
-    # row-gap. The equal-height guarantee now rests on `min-height` alone.
-    # Measured after: all 13 headers 76px, name-to-stats 8.9px.
-    assert "grid-template-rows: auto auto" in rule, rule
-    assert "min-height: 76px" in rule, "the fixed header height is still half of it"
-    name = _rule(css, ".firmcol-h")
-    assert "grid-row: 1" in name, name
-    stats = _rule(css, ".firmcol-stats")
-    assert "grid-row: 2" in stats, stats
-
-
-def test_the_logo_spans_the_header_and_stays_in_its_own_column():
-    """REWRITTEN 2026-09-02, because its premise was retired by the thing it
-    was guarding against.
-
-    It was `test_the_logo_sits_in_the_name_row_and_nowhere_else`, and row one
-    was the right answer to the question it was asked: the header had been a
-    tile beside a THREE-row text block, so a tile centred on the block landed
-    beside the middle row, which was the category line rather than the firm
-    name. Pinning the tile to row one fixed that.
-
-    The header lost its third row in the same pass that wrote this test, and
-    with two rows the original reasoning inverts. A tile centred on row one
-    now sits 13.6px above the centre of the block beside it — measured on all
-    13 columns of the founder's board at 1280px and 375px, and his own reading
-    of it was that the logo needed to come down. So the tile spans the header
-    and centres on the whole block, which is what the retired test's own
-    sentence was reaching for when only one row was worth centring against.
-
-    `grid-column: 1` is the half of the old assertion that never depended on
-    the row count, and it is kept verbatim."""
-    css = _feed_css()
-    rule = _rule(css, ".firmcol-logo")
-    assert "grid-row: 1 / -1" in rule, rule
-    assert "grid-column: 1" in rule, rule
-    # Two rows, so "both of them" and "all of them" are the same span. A third
-    # row would silently change what `-1` means, and the header must not grow
-    # one — see `test_the_picked_columns_header_spends_the_same_two_rows_a_firms_does`.
-    # `auto auto` since 2026-09-03. The 38px floor was the logo's own height
-    # and the logo spans both rows, so it held the header open without help —
-    # all the floor did was inflate the title's row, opening 14px between the
-    # name and the stats line under it against a declared 4px row-gap. The
-    # header now rests on its `min-height: 76px` instead, which is the number
-    # the Picked column's own comment calls the one that lands it level with
-    # its neighbours; measured, all 13 headers are 76px and the title/stats
-    # pair closed to 8.9px.
+    assert "display: grid" in _rule(css, ".firmcol-head")
+    assert "grid-row: 1" in _rule(css, ".firmcol-h")
+    assert "grid-row: 2" in _rule(css, ".firmcol-stats")
     assert "grid-template-rows: auto auto" in _rule(css, ".firmcol-head")
 
 
-def test_the_logo_tile_keeps_its_own_centring():
-    """The tiles were already level; the fix must not move them. Under the
-    grid this centres the tile inside the ROWS IT SPANS, which is both of
-    them — see the test above for why that stopped being row one alone."""
-    assert "align-self: center" in _rule(_feed_css(), ".firmcol-logo")
+def test_the_logo_spans_identity_rows_and_stays_in_its_own_column():
+    body = _rule(_feed_css(), ".firmcol-logo")
+    assert "grid-column: 1" in body
+    assert "grid-row: 1 / 3" in body
+    assert "align-self: start" in body
+
+
+def test_the_logo_image_is_contained_without_distortion():
+    css = _feed_css()
+    assert "object-fit: contain" in _rule(css, ".firmcol-logo img")
+    assert "overflow: hidden" in _rule(css, ".firmcol-logo")
 
 
 def test_the_heading_carries_no_margin_of_its_own():
@@ -184,22 +125,12 @@ def test_the_heading_carries_no_margin_of_its_own():
     assert "margin: 0" in _rule(_feed_css(), ".firmcol-h")
 
 
-def test_the_picked_columns_shared_reasons_are_one_nowrap_line_not_wrapping_pills():
-    """Measured live at 1440px: the Picked header rendered its two shared
-    reasons as `.why-chip` pills (89px + 169px in a 236px stats row), which
-    wrapped to a second line and made that header 122px against every firm
-    column's 92px — pushing all of Picked's cards 30px below the row they
-    sit in. The reasons now render as one `.firmcol-why` text line in the
-    same voice as a firm's "TIER 1 · 56 CLOSING", which must be forbidden
-    from wrapping and must ellipsise instead, with the full sentences kept
-    in the tooltip."""
+def test_shared_reasons_can_wrap_without_displacing_firm_identity():
     css = _feed_css()
-    rule = _rule(css, ".firmcol-why")
-    assert "white-space: nowrap" in rule, rule
-    assert "text-overflow: ellipsis" in rule, rule
-    assert "overflow: hidden" in rule, rule
-    assert "min-width: 0" in rule, "a flex child can't shrink below its content without this"
-    assert ".why-chip" not in css, "the wrapping pills are gone from the header for good"
+    assert "flex-wrap: wrap" in _rule(css, ".firmcol-stats")
+    reasons = _rule(css, ".firmcol-why")
+    assert "nowrap" not in reasons and "overflow: hidden" not in reasons
+    assert ".why-chip" not in css
 
 
 def test_the_picked_column_renders_shared_reasons_in_the_firmcol_why_line(db):
@@ -306,59 +237,23 @@ def test_both_columns_spend_the_same_two_rows_on_their_identity(feed_with_both_c
 # ---------------------------------------------------------------------------
 
 
-def test_the_picked_column_shares_its_neighbours_surface():
-    """No wash, and specifically no `--accent-soft`: the column that is meant
-    to look calm must not be the one column painted a different hue from the
-    page it sits in, and it must not seam against its own scroll body."""
-    rule = _rule(_feed_css(), ".firmcol--picked")
-    assert "background: var(--surface)" in rule, rule
-    assert "accent-soft" not in rule, (
-        "the accent wash is back. It measures 1.144:1 against the --surface "
-        "its own scroll window paints, so it reads as a hue change rather "
-        "than a level, and the seam between the two is inside the column."
-    )
+def test_firm_collections_use_open_bands_without_nested_card_surfaces():
+    body = _rule(_feed_css(), ".firmcol")
+    assert "background: transparent" in body
+    assert "box-shadow: none" in body and "border-radius: 0" in body
+    assert "border-bottom: 1px solid var(--line)" in body
 
 
-def test_the_picked_column_still_says_it_is_not_a_firm_without_the_wash():
-    """Three structural signals, none of them a fill: the accent top edge,
-    the accent hairline border, and the star tile. Removing the wash removed
-    a fourth, so the survivors are load-bearing and pinned here."""
+def test_picks_have_a_distinct_named_identity_without_a_card_wash():
     css = _feed_css()
-    rule = _rule(css, ".firmcol--picked")
-    assert "inset 0 3px 0 0 var(--accent)" in rule, (
-        "the heavier accent top edge is the strongest remaining signal that "
-        "this column is a view and not a company")
-    assert "border-color: var(--accent-line)" in rule, rule
     assert "var(--accent-ink)" in _rule(css, ".firmcol--picked .firmcol-name")
+    assert "var(--accent-soft)" in _rule(css, ".firmcol-logo.firmcol-logo--picked")
 
 
-def test_the_star_tile_actually_wins_the_cascade():
-    """It did not, for as long as the wash was there to hide it.
-
-    `.firmcol-logo--picked` is ONE class and `.firmcol-logo` is one class,
-    and the generic rule sits ~46 lines later in the file, so source order
-    handed the star the default monogram tile: measured live in light, the
-    tile rendered rgb(216, 230, 243) — `hsl(210 52% 90%)` — instead of
-    `--accent`, and the inset hairline this rule asks to drop came back too.
-    All three declarations were dead.
-
-    Pinned by SPECIFICITY rather than by source order, so re-sorting this
-    stylesheet cannot silently kill the star again. That matters more now
-    than it did: the tile is the one signal on this founder's board that no
-    firm column shares."""
+def test_picked_icon_uses_a_more_specific_theme_aware_rule():
     css = _feed_css()
-    generic = css.index("\n  .firmcol-logo {")
-    picked = css.index(".firmcol-logo.firmcol-logo--picked {")
-    assert picked < generic, (
-        "if the picked rule ever moves BELOW the generic one this test stops "
-        "proving anything — it is the compound selector that must win, not "
-        "the position"
-    )
-    rule = _rule(css, ".firmcol-logo.firmcol-logo--picked")
-    assert "background: var(--accent)" in rule, rule
-    assert "color: var(--on-accent)" in rule, (
-        "the star sits ON the accent fill, so it takes the token measured "
-        "against it — dark mode's accent is a LIGHT blue")
-    assert "box-shadow: none" in rule, (
-        "the generic tile's inset hairline reads as a monogram chip, which "
-        "is the thing this tile exists not to look like")
+    generic = _rule(css, ".firmcol-logo")
+    picked = _rule(css, ".firmcol-logo.firmcol-logo--picked")
+    assert "background: var(--surface)" in generic
+    assert "background: var(--accent-soft)" in picked
+    assert "color: var(--accent-ink)" in picked

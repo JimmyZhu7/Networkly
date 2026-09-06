@@ -1,6 +1,6 @@
 # Coverage — Visual Identity & Layout System Specification
 
-> **Current visual authority — 2026-09-05:** [DESIGN.md](../DESIGN.md) records the current workspace system. [workspace.css](../coverage_web/static/css/workspace.css), loaded after base and route styles by [base.html](../coverage_web/templates/base.html), is the shared visual implementation. This document retains historical aesthetic descriptions, typeface inventory, page index, and functional contracts. Its old palette, serif workspace display, masthead, spacing, and motion prescriptions do not override the current system. Read the full cascade before applying a historical CSS example.
+> **Current visual authority — 2026-09-05:** [DESIGN.md](../DESIGN.md) records the implemented personal-index system, including serif page titles and horizontal navigation. [base.html](../coverage_web/templates/base.html) loads the shared [workspace.css](../coverage_web/static/css/workspace.css) and elements layer, followed by the three page-family presentation stylesheets. This document retains historical aesthetic descriptions, typeface inventory, page index, and functional contracts. Historical palette, masthead, spacing, type hierarchy, and motion prescriptions do not override the current system. Read the final cascade before applying a historical CSS example.
 
 *Section 0 was rewritten on 2026-09-01 to describe the system that ships, not
 the system the 2026-07-23 planning pass committed to. Five of its statements had

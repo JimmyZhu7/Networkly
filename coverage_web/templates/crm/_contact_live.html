@@ -54,7 +54,7 @@ values.
     </p>
 
     {# ---- Reach them ---- #}
-    <div class="cd-card kin-reveal panel" style="--i:0">
+    <div class="cd-card cd-correspondence kin-reveal panel" style="--i:0">
       {% if contact.email %}
         <div class="cd-reach">
           <a class="btn btn-primary" href="{{ mailto }}">Draft email</a>
@@ -165,7 +165,7 @@ values.
     {# --i renumbered after the relationship summary folded into the card #}
     {# above: the stagger counts CARDS, so a gap here would have delayed #}
     {# the whole left column by one step for a card that no longer exists. #}
-    <div class="cd-card kin-reveal panel" style="--i:1">
+    <div class="cd-card cd-relationship kin-reveal panel" style="--i:1">
       <div class="cd-state">
         <h2 class="cd-h">Relationship</h2>
         {% comment %}state_line is the WHOLE sentence — the view already
@@ -235,7 +235,7 @@ values.
     </div>
 
     {# ---- History, newest first ---- #}
-    <div class="cd-card kin-reveal panel" style="--i:2">
+    <div class="cd-card cd-history kin-reveal panel" style="--i:2">
       <h2 class="cd-h">History <span class="cd-count">{{ touch_rows|length }}</span></h2>
       {% if touch_rows %}
         <ol class="cd-log">

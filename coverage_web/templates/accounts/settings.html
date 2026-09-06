@@ -909,7 +909,7 @@ app had to change. An element with its OWN hx-* attributes (Profile's
 form) is untouched by an ancestor's hx-boost; htmx only boosts elements
 that don't already declare explicit htmx behaviour.
 {% endcomment %}
-<div class="page" hx-boost="true">
+<div class="page support-account support-settings" hx-boost="true">
   {% include "_pagehead.html" with title="Settings" sub="Manage your profile, target firms, and account." %}
   {% comment %}
   Messages render ONCE, here, not a second time on this page -- see
@@ -939,7 +939,6 @@ that don't already declare explicit htmx behaviour.
     <details class="settings-index" open>
     <summary>Settings sections</summary>
     <nav class="settings-nav" aria-label="Settings sections">
-      <p class="settings-nav-title">Sections</p>
       <p class="settings-nav-group">You</p>
       <a href="#profile" class="is-active" aria-current="true">Profile</a>
       <a href="#work-auth">Work authorization</a>

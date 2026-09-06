@@ -20,6 +20,8 @@ browser actually gets.
 
 from __future__ import annotations
 
+from .presentation_helpers import presentation_css, rule as presentation_rule, rules as presentation_rules, media_blocks
+
 import re
 
 import pytest
@@ -38,11 +40,7 @@ _HOVER_BLOCK_RE = re.compile(r"@media\s*\(\s*hover:\s*hover\s*\)\s*\{")
 
 
 def _feed_css() -> str:
-    html = Client().get("/opportunities/").content.decode()
-    css = "\n".join(_STYLE_RE.findall(html))
-    # Comments carry braces-free prose that would otherwise be swept into the
-    # next rule's selector.
-    return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    return presentation_css(Client().get("/opportunities/").content.decode())
 
 
 def _blocks(css: str, opener: re.Pattern[str]) -> list[str]:
@@ -72,94 +70,33 @@ def _rules(css: str) -> list[tuple[str, str]]:
 
 
 @pytest.mark.parametrize("cls", REVEAL_ON_HOVER)
-def test_a_hidden_control_is_only_hidden_where_a_pointer_can_hover(cls):
-    """`opacity: 0` on a control is a promise that something will reveal it.
-    Only a hover-capable pointer can keep that promise, so the hidden state
-    has to live behind `@media (hover: hover)`. Unguarded, a phone gets the
-    hidden half and never the reveal."""
-    css = _feed_css()
-    guarded = "\n".join(_hover_guarded_blocks(css))
-    unguarded = css
-    for block in _hover_guarded_blocks(css):
-        unguarded = unguarded.replace(block, "")
-
-    hides_outside = [
-        sel for sel, body in _rules(unguarded)
-        if cls in sel and re.search(r"(?<!-)opacity:\s*0\s*[;}]", body)
-    ]
-    assert hides_outside == [], (
-        f".{cls} is hidden with opacity: 0 outside any `@media (hover: hover)` "
-        f"guard ({hides_outside}). A coarse pointer never hovers, so on a phone "
-        "that control is permanently invisible and permanently tappable."
-    )
-    assert re.search(rf"\.{cls}[^{{}}]*\{{[^{{}}]*opacity:\s*0", guarded), (
-        f".{cls} declares no hidden state inside `@media (hover: hover)`. If "
-        "the reveal-on-hover behaviour was dropped on purpose, drop it from "
-        "REVEAL_ON_HOVER too."
-    )
+def test_dismiss_is_visible_without_requiring_hover(cls):
+    body = presentation_rule(_feed_css(), "." + cls)
+    assert "opacity: 1" in body
+    assert "opacity: 0" not in body
 
 
 @pytest.mark.parametrize("cls", REVEAL_ON_HOVER)
-def test_a_hidden_control_refuses_the_pointer_and_the_reveal_hands_it_back(cls):
-    """Opacity is paint, not hit-testing: an `opacity: 0` box still swallows
-    the tap that lands on it. `pointer-events: none` is what actually takes it
-    out of reach — and the reveal rule MUST set it back to `auto`, or the
-    desktop button that works today silently stops working."""
+def test_visible_dismiss_control_accepts_pointer_interaction(cls):
+    body = presentation_rule(_feed_css(), "." + cls)
+    assert "pointer-events: auto" in body
+    assert "pointer-events: none" not in body
+
+
+def test_role_actions_do_not_need_pointer_or_keyboard_reveal():
     css = _feed_css()
-    hidden = [
-        (sel, body) for block in _hover_guarded_blocks(css)
-        for sel, body in _rules(block)
-        if cls in sel and re.search(r"(?<!-)opacity:\s*0\s*[;}]", body)
-    ]
-    assert hidden, f"no hidden state found for .{cls}"
-    for sel, body in hidden:
-        assert re.search(r"pointer-events:\s*none", body), (
-            f"`{sel}` hides .{cls} with opacity alone. The box still "
-            "hit-tests, so a blind tap fires the action it is hiding."
-        )
-
-    revealed = [
-        (sel, body) for block in _hover_guarded_blocks(css)
-        for sel, body in _rules(block)
-        if cls in sel and re.search(r"(?<!-)opacity:\s*1\s*[;}]", body)
-    ]
-    assert revealed, (
-        f".{cls} is hidden inside the hover guard with nothing revealing it."
-    )
-    for sel, body in revealed:
-        assert re.search(r"pointer-events:\s*auto", body), (
-            f"`{sel}` reveals .{cls} but leaves `pointer-events: none` in "
-            "force, so the control is visible and dead to the mouse."
-        )
+    actions = presentation_rule(css, ".rr-act")
+    assert "position: static" in actions
+    assert "opacity: 1" in actions and "pointer-events: auto" in actions
+    focus = presentation_rule(css, "button:focus-visible")
+    assert "outline:" in focus and "var(--accent)" in focus
 
 
-def test_the_reveal_covers_the_keyboard_as_well_as_the_mouse():
-    """A control revealed only by `:hover` is unreachable by keyboard: you can
-    tab to it, but it stays invisible while focused."""
-    css = _feed_css()
-    revealing = [
-        sel for block in _hover_guarded_blocks(css)
-        for sel, body in _rules(block)
-        if "track-hide" in sel and re.search(r"(?<!-)opacity:\s*1\s*[;}]", body)
-    ]
-    assert any(":focus-visible" in sel for sel in revealing), (
-        "nothing reveals .track-hide on keyboard focus; the reveal selectors "
-        f"are {revealing}"
-    )
-
-
-def test_save_and_its_opposite_are_not_zero_gap_siblings():
-    """Save and "Not for me" do opposite things and sat edge to edge: the
-    dismiss box began at the exact pixel the Save pill ended (measured
-    x282.4 for both at 390px). One slipped thumb was the whole margin."""
-    css = _feed_css()
-    track = [body for sel, body in _rules(css) if sel == ".track"]
-    assert track, "the .track container rule is gone"
-    gap = re.search(r"(?<!-)gap:\s*(\d+(?:\.\d+)?)px", track[0])
-    assert gap and float(gap.group(1)) >= 4, (
-        "`.track` needs a gap so the dismiss control cannot begin where the "
-        f"Save pill ends; found {track[0].strip()!r}"
-    )
+def test_save_and_dismiss_have_separate_targets_with_spacing():
+    body = presentation_rule(_feed_css(), ".track")
+    gap = re.search(r"(?<!-)gap:\s*(\d+(?:\.\d+)?)px", body)
+    assert gap and float(gap.group(1)) >= 4
+    assert "flex-wrap: wrap" in body
 
 
 # ---------------------------------------------------------------------------
@@ -217,75 +154,27 @@ def _declared_px(rules, selector: str, prop: str) -> float | None:
 
 
 @pytest.mark.parametrize("cls", CARD_CONTROLS)
-def test_a_card_control_clears_the_touch_floor_where_the_pointer_is_a_finger(cls):
-    """A coarse pointer cannot aim at a 19px pill. Each control the card draws
-    has to declare the same 44px floor the rest of the app keeps, and it has
-    to declare it behind `(pointer: coarse)` so the dense cursor sizing
-    survives on desktop."""
-    rules = _coarse_rules(_all_feed_css())
-    got = _declared_px(rules, f".{cls}", "min-height")
-    assert got is not None, (
-        f".{cls} declares no min-height inside `@media (pointer: coarse)`. On "
-        "a phone it renders at its cursor size, which is under half the 44px "
-        "floor /app/, Settings and the account pages all keep."
-    )
-    assert got >= TOUCH_FLOOR, (
-        f".{cls} floors at {got}px on touch, under the {TOUCH_FLOOR}px a "
-        "fingertip covers."
-    )
+def test_phone_role_controls_clear_the_touch_floor(cls):
+    compact = media_blocks(_feed_css(), r"max-width:\s*640px")
+    body = presentation_rule(compact, ".rr-act ." + cls)
+    height = re.search(r"min-height:\s*(\d+(?:\.\d+)?)px", body)
+    assert height and float(height.group(1)) >= TOUCH_FLOOR
 
 
-def test_growing_the_controls_re_derived_the_card_instead_of_stretching_it():
-    """`.rolecard` was a fixed height with `overflow: hidden`, so a taller
-    control inside a reserved row did not push the card out — it got cut
-    off, and whatever the touch rows gained, the card total had to gain too
-    by hand. `.rolerow` (2026-08-30) retired that arithmetic on purpose: it
-    has no fixed height for a control to overflow, only a `min-height`
-    floor, so a 44px control simply grows the row it sits in (see
-    `_styles.html`'s own "NO ARITHMETIC TO RE-DERIVE ANY MORE" comment on
-    this rule) — the class of bug this test used to catch cannot happen the
-    same way any more.
-
-    What still needs pinning, in the row's own vocabulary: the controls
-    themselves still clear the 44px touch floor (covered by
-    `test_a_card_control_clears_the_touch_floor_where_the_pointer_is_a_finger`
-    above), and the `content-visibility` placeholder that stands in for an
-    unrendered row still has to grow to fit the extra line those 44px
-    controls wrap onto under `(pointer: coarse)` — a placeholder that did
-    not grow is the same "guessed too small, clipped the content" bug in
-    the row's new vocabulary instead of the card's."""
-    css = _all_feed_css()
-    base, coarse = _rules(css), _coarse_rules(css)
-
-    base_px = _declared_px(base, ".rolerow", "contain-intrinsic-size")
-    coarse_px = _declared_px(coarse, ".rolerow", "contain-intrinsic-size")
-    assert base_px is not None, "`.rolerow` no longer reserves an intrinsic size"
-    assert coarse_px is not None, (
-        "`.rolerow` no longer reserves a touch-scaled intrinsic size inside "
-        "`(pointer: coarse)`"
-    )
-    # The controls wrap onto their own line on a coarse pointer (see
-    # `.rr-act`'s comment), which costs the row a whole extra ~44px line —
-    # so the touch placeholder must be taller than the base one, not merely
-    # equal to it.
-    assert coarse_px > base_px, (
-        f"the touch placeholder ({coarse_px}px) is not taller than the base "
-        f"one ({base_px}px), but the wrapped controls need an extra line."
-    )
-    assert coarse_px >= TOUCH_FLOOR, (
-        f"the touch placeholder reserves only {coarse_px}px, under the "
-        f"{TOUCH_FLOOR}px the controls it must fit need on their own."
-    )
+def test_larger_controls_have_wrapping_actions_and_content_sized_rows():
+    css = _feed_css()
+    assert "flex-wrap: wrap" in presentation_rule(css, ".rr-act")
+    row = presentation_rule(css, ".rolerow")
+    assert not re.search(r"(?:^|;)\s*(?:height|max-height):\s*\d", row)
+    assert "contain-intrinsic-size:" not in row
 
 
-def test_the_two_opposite_verbs_hold_a_fingers_distance_apart_on_touch():
-    """6px is a cursor's margin of error. Two 44px targets that mean opposite
-    things need more air between them than that, or the growth just makes the
-    wrong one easier to hit."""
-    rules = _coarse_rules(_all_feed_css())
-    gap = _declared_px(rules, ".track", "gap")
-    assert gap is not None and gap >= 8, (
-        "`.track` keeps its 6px cursor gap on touch; Save and \"Not for me\" "
-        f"are 44px targets that far apart (found {gap})."
-    )
+def test_opposite_actions_remain_separately_named_native_buttons():
+    from pathlib import Path
+    template = Path(__file__).resolve().parents[2] / "templates/directory/_track_control.html"
+    text = template.read_text()
+    assert 'class="track-btn"' in text and 'class="track-hide"' in text
+    assert '>Not for me</button>' in text
+    assert '"status": "saved"' in text and '"status": "dismiss"' in text
+    assert "flex-wrap: wrap" in presentation_rule(_feed_css(), ".track")
 

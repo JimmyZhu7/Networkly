@@ -366,7 +366,7 @@ def test_talk_wears_the_shared_page_header():
     assert '<p class="pagehead-eyebrow">' not in html, (
         "Talk is the only nav page with no eyebrow, by decision; one came back"
     )
-    assert '<h1 class="pagehead-title">Talk to Networkly</h1>' in html
+    assert '<h1 class="pagehead-title">Assistant</h1>' in html
     assert "pagehead-sub" not in html, "the chat keeps its vertical room"
 
 

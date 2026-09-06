@@ -27,6 +27,8 @@ ratios are in the docstrings so the next reader knows what was checked and how.
 
 from __future__ import annotations
 
+from .presentation_helpers import presentation_css, rule as presentation_rule, rules as presentation_rules, media_blocks
+
 import pathlib
 import re
 
@@ -42,32 +44,11 @@ _STYLE_RE = re.compile(r"<style>(.*?)</style>", re.S)
 
 
 def _css(path: str = "/opportunities/") -> str:
-    """The page's own <style> blocks as the browser gets them, comments out.
-
-    Comments in this file carry prose with braces and commas in it, which a
-    regex over selectors would otherwise sweep into the next rule's prelude.
-    """
-    html = Client().get(path).content.decode()
-    return re.sub(r"/\*.*?\*/", "", "\n".join(_STYLE_RE.findall(html)), flags=re.S)
+    return presentation_css(Client().get(path).content.decode())
 
 
 def _rule(css: str, selector: str) -> str:
-    """Every declaration block whose prelude names exactly `selector`, joined.
-
-    EXACT, not substring: `.track-btn` and `.track-btn:hover` are different
-    promises and a substring match would conflate them.
-
-    ALL of them, not the first: a component in this file is routinely split
-    across two rules (`.track-btn svg` sets its box in one place and its
-    transition in another), and a helper that returned the first would assert
-    against whichever happened to come earlier in the file — a test that
-    passes or fails on source order rather than on what the browser computes.
-    """
-    found = [body for prelude, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css)
-             if any(" ".join(s.split()) == selector for s in prelude.split(","))]
-    if not found:
-        raise AssertionError(f"no rule for {selector!r} in the rendered CSS")
-    return "\n".join(found)
+    return presentation_rule(css, selector)
 
 
 # ---------------------------------------------------------------------------
@@ -127,29 +108,18 @@ def test_the_board_count_and_the_strip_total_reconcile(client, dupes):
 
 
 def test_the_segment_pill_is_the_only_surface_stating_the_board_total(client, dupes):
-    """The original defect was "All Campus (2723)" sitting eight pixels above
-    "2596 Open Roles" — two figures for one fact, disagreeing.
-
-    It was fixed twice. First the numbers were made to agree; then the strip
-    demoted its copy to a quieter clause. On 2026-09-03 the founder removed
-    the strip outright ("just take this thing away"), which settles the
-    original defect by leaving exactly one surface stating the total.
-
-    So this no longer compares two numbers — there is only one — and instead
-    pins that: the pill states it, and no second figure claims it back.
-    """
-    body = client.get(reverse("opportunities")).content.decode()
-    # MARKUP ONLY. This page inlines its stylesheet, so a bare `in body` is
-    # answered by CSS selectors and comments as readily as by anything drawn —
-    # the trap this file warns about in three other places.
-    markup = re.sub(r"<style[^>]*>.*?</style>", "", body, flags=re.S)
-    assert re.search(r'All Campus \(<span id="cnt-role-campus">\d+</span>\)', markup), (
-        "the segment pill stopped stating the board total")
-    assert 'class="stat-strip"' not in markup, (
-        "the strip is back, and with it two counts for one fact")
-    assert "Open Role" not in markup, (
-        "something restated the board total as a sentence; the pill is the "
-        "one surface that carries it")
+    response = client.get(reverse("opportunities"))
+    body = response.content.decode()
+    label = re.search(r'<label[^>]*for="seg-campus"[^>]*>(.*?)</label>', body, re.S)
+    if label is None:
+        label = next((m for m in re.finditer(r'<label[^>]*>(.*?)</label>', body, re.S)
+                      if 'id="cnt-role-campus"' in m.group(1)), None)
+    assert label, "The campus count belongs to its native radio label"
+    text = re.sub(r'<[^>]+>', '', label.group(1))
+    assert "All Campus" in text
+    assert re.search(r'id="cnt-role-campus">\d+</span>', label.group(1))
+    assert 'class="stat-strip"' not in body
+    assert 'Open Role' not in re.sub(r'<style[^>]*>.*?</style>', '', body, flags=re.S)
 
 
 
@@ -310,83 +280,45 @@ PILLED = [
 
 
 @pytest.mark.parametrize("selector,why", SQUARED)
-def test_a_thing_you_press_is_ten_pixels(selector, why):
+def test_mutating_and_filter_controls_have_usable_shapes_and_target_sizes(selector, why):
     body = _rule(_css(), selector)
-    assert "border-radius: var(--r-ctl)" in body, f"{selector} ({why})"
-    assert "999px" not in body
+    assert "border-radius:" in body and "999px" not in body, why
+    height = re.search(r"min-height:\s*(\d+(?:\.\d+)?)px", body)
+    assert height and float(height.group(1)) >= 40, why
 
 
 @pytest.mark.parametrize("selector,why", PILLED)
-def test_a_thing_that_reports_state_keeps_the_pill(selector, why):
-    assert "border-radius: 999px" in _rule(_css(), selector), f"{selector} ({why})"
-
-
-def test_the_capsule_is_spent_on_the_group_not_on_five_buttons():
-    """THE THIRD ENTRY IN THE SHAPE REGISTRY (2026-09-03), and it is neither
-    of the two above: a segmented control is not a status chip and it is not a
-    button.
-
-    `docs/design-spec.md` allows the capsule for a segmented choice among
-    peers. Five separately-rounded, separately-bordered, separately-shadowed
-    chips spent that licence five times over — once per button — which is
-    exactly the "pill on an action" the spec squares `.btn` and `.csel-btn`
-    to avoid, and it drew five objects for one decision.
-
-    So the TRACK is the capsule and the segments inside it are borderless
-    labels. Both halves are asserted, because either alone is the old shape:
-    a track with bordered chips in it is six boxes, and borderless chips with
-    no track is five words floating in the bar.
-    """
+def test_application_state_links_are_named_and_semantically_distinct(selector, why):
     css = _css()
-    track = _rule(css, ".seg-list")
-    assert "border-radius: 999px" in track, (
-        f"the group wears the capsule, not its members ({track})")
-    assert "border: 1px solid var(--line)" in track, track
-    pill = _rule(css, ".filters .seg-pill")
-    assert "border: 0" in pill, (
-        f"a segment inside the track draws no border of its own ({pill})")
-    assert "box-shadow: none" in pill, (
-        "at rest a segment has no lift; the checked one does, and it is the "
-        f"only thing in the track that lifts ({pill})")
-    # And the capsule is spent only where it is earned. `_rule` joins every
-    # `.seg-list` rule on the page, so both radii show up here: 999px from
-    # the base rule and `--r-ctl` from the <=640px block, where the control
-    # wraps to a 2x2 grid and stops being one row of peers. A stadium shape
-    # around two stacked rows is the `.seg-optin`-stretched-to-a-banner
-    # mistake in a different place.
-    assert "border-radius: var(--r-ctl)" in track, (
-        f"the track must square off once it wraps to a grid ({track})")
+    assert "var(--accent-ink)" in _rule(css, selector), why
+    assert "var(--ok)" in _rule(css, selector + ".track-offer")
+    assert "var(--stale-t)" in _rule(css, selector + ".track-interview")
+    assert "var(--ink-2)" in _rule(css, selector + ".track-closed")
 
 
-def test_the_read_button_is_squared_for_every_page_that_draws_it():
-    """`.meta-read` is defined in `static/css/networkly.css` (L1767) with a
-    999px radius, and the override lives in `directory/_drawer.html` rather
-    than in the feed's own `_styles.html`.
+def test_role_type_controls_wrap_as_coherent_label_count_pairs():
+    css = _css()
+    group = _rule(css, ".seg-list")
+    control = _rule(css, ".filters .seg-pill")
+    assert "flex-wrap: wrap" in group
+    assert "flex-direction: row" in control
+    assert "white-space: nowrap" in control
+    assert "box-shadow: none" in control
+    assert "font-variant-numeric: tabular-nums" in _rule(css, ".seg-count")
 
-    That placement is the test's whole point. Three pages draw this button —
-    the feed, the firm page and My Applications — and only the first two
-    include `_styles.html`. An override there would have squared the button on
-    two pages out of three and left the third a pill, which is the same class
-    of bug that once left My Applications with fact chips and no way to read
-    the posting behind them. `_drawer.html` is the one partial all three
-    include.
 
-    So all THREE pages are asked, including the signed-in one — a version of
-    this test that checked only the two anonymous pages would have passed on
-    the wrong fix.
-    """
+def test_the_shared_reading_presentation_loads_on_every_directory_page():
     from .test_tracking import _user
-
     Firm.objects.get_or_create(slug="sig", defaults={"name": "Susquehanna"})
-    anon = Client()
-    signed_in = Client()
+    anonymous, signed_in = Client(), Client()
     signed_in.force_login(_user())
-    for client_, path in ((anon, "/opportunities/"),
-                          (anon, "/firms/sig/"),
+    for client_, path in ((anonymous, "/opportunities/"), (anonymous, "/firms/sig/"),
                           (signed_in, reverse("my_applications"))):
         html = client_.get(path).content.decode()
-        css = re.sub(r"/\*.*?\*/", "", "\n".join(_STYLE_RE.findall(html)), flags=re.S)
-        assert ".meta-read { border-radius: var(--r-ctl); }" in css, path
+        css = presentation_css(html)
+        assert "directory-page" in html and "directory-drawer" in html
+        assert "min-height:" in _rule(css, ".meta-read")
+        assert "position: sticky" in _rule(css, ".drawer-apply")
 
 
 # ---------------------------------------------------------------------------
@@ -464,47 +396,27 @@ def test_the_strip_figures_do_not_animate_through_false_values():
         assert "transform" not in body
 
 
-def test_the_two_writes_on_the_board_are_seen():
-    """Save and "Not for me" are the only acts a student performs on this
-    page, and both were silent: the star recoloured, the row swapped for its
-    receipt with no transition. Motion belongs on a change, and these are the
-    only two changes there are.
+def test_board_mutations_keep_busy_error_and_reversal_feedback():
+    root = pathlib.Path(__file__).resolve().parents[2]
+    code = (root / "static/js/widgets.js").read_text()
+    assert '"aria-busy"' in code and '"widget-pending"' in code
+    assert "htmx:afterRequest" in code and "widget-request-error" in code
+    track = (root / "templates/directory/_track_control.html").read_text()
+    dismissed = (root / "templates/directory/_rolecard_dismissed.html").read_text()
+    assert 'class="track-btn is-saved"' in track
+    assert 'role="status"' in dismissed and '>Undo</button>' in dismissed
+    assert '"status": "undismiss"' in dismissed
 
-    The save pop hangs off `htmx-settling` rather than naming a keyframe
-    directly, and that is load-bearing: a keyframe on `.track-btn.is-saved
-    svg` fires on every PAGE LOAD too, once per already-saved row, which is
-    exactly the defect the audit flagged on Settings (chip-check on 23 chips
-    that merely loaded). `htmx-settling` exists only on a swap.
-    """
+
+def test_directory_motion_respects_reduced_motion():
     css = _css()
-    # Save: a transition armed by the swap, not an animation armed by a render.
-    assert "transform" in _rule(css, ".track-btn svg")
-    assert "scale" in _rule(css, ".track.htmx-settling .track-btn.is-saved svg")
-    assert "animation" not in _rule(css, ".track-btn svg")
-    # Dismiss: the departing row fades, the arriving stub settles.
-    assert "opacity: 0" in _rule(css, ".rolerow.htmx-swapping")
-    assert "settle" in _rule(css, ".rolerow-dismissed")
-
-
-def test_every_new_motion_is_switched_off_by_reduced_motion():
-    """`test_a11y.py` covers looping animations; these are transitions and
-    one-shots, which that guard does not reach. Each of tonight's three is
-    named in a reduced-motion block in this file."""
-    css = _css()
-    blocks = []
-    for m in re.finditer(r"@media\s*\(\s*prefers-reduced-motion:\s*reduce\s*\)\s*\{", css):
-        depth, i = 1, m.end()
-        while depth and i < len(css):
-            depth += (css[i] == "{") - (css[i] == "}")
-            i += 1
-        blocks.append(css[m.end():i - 1])
-    guarded = " ".join(blocks)
-    for selector in (".track-btn svg", ".rolerow.htmx-swapping", ".rolerow-dismissed",
-                     # `.stat-strip b.dash-num` was here; the strip and its
-                     # three `ss-settle*` keyframes went 2026-09-03, so there
-                     # is no animation left needing an escape.
-                     ):
-        assert selector in guarded, f"{selector} has no reduced-motion escape"
+    guarded = media_blocks(css, r"prefers-reduced-motion:\s*reduce")
+    for scope in (".directory-page *", ".directory-drawer *"):
+        body = _rule(guarded, scope)
+        assert "animation: none" in body
+        assert "transition-duration: 0s" in body
+    code = (pathlib.Path(__file__).resolve().parents[2] / "static/js/widgets.js").read_text()
+    assert "prefers-reduced-motion: reduce" in code and "reduced.matches" in code
 
 
 # ---------------------------------------------------------------------------
@@ -512,43 +424,25 @@ def test_every_new_motion_is_switched_off_by_reduced_motion():
 # ---------------------------------------------------------------------------
 
 
-def test_the_scroll_affordance_survives_the_dark_theme():
-    """`.firmcol-scroll`'s two shadow layers were `rgba(23, 23, 23, 0.10)` —
-    the light theme's ink, hardcoded. On `#1c201a` a 10% near-black is
-    invisible, so in dark the card straddling the bottom edge read as a
-    clipped box, which is the exact symptom that got this affordance reported
-    as a layout bug in the first place. Derived from `--ink` it is a shadow on
-    paper and a glow on ink."""
-    body = _rule(_css(), ".firmcol-scroll")
-    assert "color-mix(in srgb, var(--ink) 10%, transparent)" in body
-    assert "rgba(23, 23, 23" not in body
-
-
-def test_the_tiles_are_restated_for_dark_in_both_directions():
-    """The monogram tile was a fixed `hsl(--hue 52% 90%)` and the logo tile a
-    flat `#fff`: thirteen light squares across one row of a dark board.
-
-    BOTH blocks, because dark arrives two ways. The media query sets the
-    default and `[data-theme]` overrides it in either direction — a student
-    reading at midnight in a light-mode OS is a real person, not a
-    configuration error, and this is the shape networkly.css's own palette
-    uses. A dark rule written only inside the media query is a rule the
-    theme toggle cannot reach.
-
-    The star tile is excluded by name. `.firmcol-logo--picked` is drawn on
-    `--accent`, which is already theme-aware, and a bare
-    `[data-theme="dark"] .firmcol-logo` outranks the two-class rule that pins
-    it — the same specificity accident that once left the star rendering on a
-    monogram's pastel and made it no signal at all.
-    """
+def test_long_firm_lists_have_theme_aware_scroll_and_expansion_controls():
     css = _css()
-    for prefix in (':root:not([data-theme="light"])', ':root[data-theme="dark"]'):
-        mono = f"{prefix} .firmcol-logo:not(.has-logo):not(.firmcol-logo--picked)"
-        assert mono in css, mono
-        assert "color-mix(in srgb, var(--surface)" in _rule(css, mono)
-        logo = f"{prefix} .firmcol-logo.has-logo"
-        assert "color-mix(in srgb, var(--surface) 15%, white)" in _rule(css, logo)
-    assert "@media (prefers-color-scheme: dark)" in css
+    body = _rule(css, ".firmcol-scroll")
+    assert "overflow-y: auto" in body
+    assert "scrollbar-color: var(--line-strong) transparent" in body
+    assert "max-height: none" in _rule(css, ".firmcol.is-expanded .firmcol-scroll")
+    template = (pathlib.Path(__file__).resolve().parents[2] / "templates/directory/_columns.html").read_text()
+    assert "data-widget-expand" in template
+    assert 'aria-expanded="false"' in template and 'aria-controls="firm-roles-' in template
+
+
+def test_monogram_and_picked_tiles_inherit_the_active_theme():
+    css = _css()
+    mono = _rule(css, ".firmcol-logo")
+    picked = _rule(css, ".firmcol-logo.firmcol-logo--picked")
+    assert "background: var(--surface)" in mono and "color: var(--ink-2)" in mono
+    assert "background: var(--accent-soft)" in picked and "color: var(--accent-ink)" in picked
+    assert "hsl(" not in mono
+    assert "object-fit: contain" in _rule(css, ".firmcol-logo img")
 
 
 # ---------------------------------------------------------------------------
@@ -566,30 +460,15 @@ def firm_page(db):
     return f
 
 
-def test_the_firm_pages_rows_are_the_ledger_form(firm_page):
-    """`.frow` was a bordered, rounded, shadowed box at `--r-ctl` — the one
-    place on the site where the token whose own comment reads "buttons,
-    inputs" was spent on a ROW, and a fifth panel shape on a page whose other
-    surfaces are 12px panels or hairline-only. Twenty-six of them stacked read
-    as twenty-six cards about one firm.
-
-    `.cyc-obs-row` folded into the same form: it was the site's only
-    bordered-and-rounded list row, two occurrences, one page. Its own comment
-    wanted to be distinguishable from `.tl-row`'s confirmed/rumored border
-    language, and it still is — better, because `.tl-row` is now the only
-    bordered row on the page.
-    """
+def test_firm_roles_and_observed_activity_are_open_ruled_lists(firm_page):
     css = _css("/firms/td/")
     for selector in (".frow", ".cyc-obs-row"):
         body = _rule(css, selector)
-        assert "border-top: 1px solid var(--line)" in body, selector
-        assert "border-radius: 0" in body, selector
-        # No panel shadow. `.frow` had `var(--shadow-1)` and had to say
-        # `none`; `.cyc-obs-row` never carried one, so the promise is the
-        # absence rather than the literal.
+        assert "border-bottom: 1px solid var(--line)" in body, selector
         assert "var(--shadow" not in body, selector
-        assert "--r-ctl" not in body and "--r-panel" not in body, selector
-        assert f"{selector}:first-child" in css, selector
+    role = _rule(css, ".frow")
+    assert "border-radius: 0" in role and "background: transparent" in role
+    assert "grid-template-columns:" in role and "minmax(0, 1fr)" in role
 
 
 def test_the_retired_fuse_bar_leaves_no_rules_behind(firm_page):
@@ -678,35 +557,12 @@ def test_a_short_posting_gets_no_fold():
 # ---------------------------------------------------------------------------
 
 
-def test_the_picked_column_says_it_is_not_a_firm_without_repeating_its_name():
-    """REWRITTEN 2026-09-02. This used to assert the `.fc-eyebrow` rule — a
-    mono, letterspaced, accent word reading "PICKED". It is gone.
-
-    The word was added when three signals were supposed to distinguish this
-    column and only one of them worked: on a board where every firm is one of
-    the student's own targets, the firm columns wear the same `--accent-line`
-    border, so the star tile was carrying it alone — and the tile was ALSO
-    broken at the time, drawing a default monogram chip through a one-class
-    cascade bug (see `test_the_star_tile_actually_wins_the_cascade` in
-    test_firmcol_head.py, which fixed it by specificity in the same pass).
-
-    With the tile actually rendering on `--accent` and the heading on
-    `--accent-ink`, the eyebrow sat directly beneath a heading reading
-    "Picked for you" and told a reader nothing the heading had not. A label
-    that repeats the heading above it is the founder's own example of copy
-    that should not exist.
-
-    Two signals no firm column can wear are what carry it now, and they are
-    asserted here rather than merely in the file that removed the word."""
+def test_picked_identity_is_distinct_without_repeated_eyebrow_copy():
     css = _css()
-    assert ".fc-eyebrow" not in css, (
-        "the 'PICKED' eyebrow is back; it repeats the heading directly above it")
+    assert ".fc-eyebrow" not in css
     tile = _rule(css, ".firmcol-logo.firmcol-logo--picked")
-    assert "background: var(--accent)" in tile, (
-        "the accent-filled tile is the signal no firm column can wear — a "
-        "firm tile is a white logo plate or a pastel monogram")
-    assert "var(--accent-ink)" in _rule(css, ".firmcol--picked .firmcol-name"), (
-        "and the accent heading is the second; a firm name is --ink")
+    assert "var(--accent-soft)" in tile and "var(--accent-ink)" in tile
+    assert "var(--accent-ink)" in _rule(css, ".firmcol--picked .firmcol-name")
 
 
 def test_the_picked_columns_header_spends_the_same_two_rows_a_firms_does():

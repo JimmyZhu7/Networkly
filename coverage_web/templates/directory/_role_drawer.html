@@ -13,10 +13,10 @@ last and unmissable — this drawer is for deciding, not for applying.
 <header class="drawer-head">
   {% comment %}`place`, not `o.location` — the same resolver the card that
   opened this drawer reads. See `views._place`.{% endcomment %}
-  <p class="drawer-firm">{{ firm.name|smart_title }}{% if place.text %} · <span{% if not place.exact %} class="is-market"{% endif %}{% if place.why %} title="{{ place.why }}"{% endif %}>{{ place.text|smart_location }}{% if place.more %} +{{ place.more }} more{% endif %}</span>{% endif %}</p>
   <h2 class="drawer-title">{{ o.title|smart_title }}</h2>
+  <p class="drawer-firm">{{ firm.name|smart_title }}{% if place.text %} · <span{% if not place.exact %} class="is-market"{% endif %}{% if place.why %} title="{{ place.why }}"{% endif %}>{{ place.text|smart_location }}{% if place.more %} +{{ place.more }} more{% endif %}</span>{% endif %}</p>
   <p class="drawer-meta">
-    {% if deadline %}<span class="drawer-deadline{% if reported %} is-reported{% endif %}"
+    {% if deadline %}<span class="drawer-deadline{% if not deadline.posted %} is-undated{% endif %}{% if reported %} is-reported{% endif %}"
       {% if reported %}title="{{ reported.why }}"{% endif %}>{{ deadline.label }}{% if reported %} <span class="drawer-reported">{{ reported.label }}</span>{% endif %}</span>{% endif %}
     {% if o.cohort %}<span>{{ o.cohort }} intake</span>{% endif %}
     {% if o.bucket %}<span>{{ bucket_label }}</span>{% endif %}

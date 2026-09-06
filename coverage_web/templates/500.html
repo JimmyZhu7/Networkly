@@ -19,36 +19,37 @@ a reader whose whole OS is dark).
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1f4e79">
-  <meta name="theme-color" content="#141712" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#2857c7">
+  <meta name="theme-color" content="#191e20" media="(prefers-color-scheme: dark)">
   <title>Something broke · Networkly</title>
   <style>
     :root {
       color-scheme: light dark;
-      --paper: #f2f4ee;
-      --ink: #191b16;
-      --ink-2: #4e5248;
-      --accent: #1f4e79;
+      --paper: #f7f7f2;
+      --ink: #252b2e;
+      --ink-2: #596365;
+      --accent: #2857c7;
       /* Copied from the shared display scale for the same reason the palette
          above is copied: the token is the NAME of the size, and a page that
          cannot load a stylesheet still has to sit on the scale. */
-      --fs-display-3: 22px;
+      --fs-display-3: 38px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --paper: #141712;
-        --ink: #eaece5;
-        --ink-2: #b2b5a8;
-        --accent: #7aa7d4;
+        --paper: #191e20;
+        --ink: #edf0ec;
+        --ink-2: #b6c0bf;
+        --accent: #a4bbff;
       }
     }
     body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
       background: var(--paper); color: var(--ink); display: grid;
       place-items: center; min-height: 100vh; }
-    main { text-align: center; padding: 24px; }
-    h1 { font-size: var(--fs-display-3); margin: 0 0 8px; }
-    p { color: var(--ink-2); margin: 0 0 16px; }
-    a { color: var(--accent); }
+    main { width: min(660px, calc(100% - 48px)); padding: 48px 0; }
+    h1 { font: 400 var(--fs-display-3)/1.15 Georgia, serif; letter-spacing: -.02em; margin: 0 0 20px; }
+    p { color: var(--ink-2); font-size: 15px; line-height: 1.7; margin: 0 0 20px; }
+    a { color: var(--accent); display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 5px; }
+    a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
   </style>
 </head>
 <body>

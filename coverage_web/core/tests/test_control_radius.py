@@ -112,29 +112,20 @@ def test_the_filter_bar_no_longer_re_rounds_the_dropdown_it_restyles(settings):
 
 
 def test_the_filter_bars_own_stylesheet_does_not_re_pill_its_controls(settings):
-    """The filter bar keeps some of its styling in a template `<style>` block,
-    and that is where the last pill hid: `.filters select, .filters
-    input[type="search"]` and the mobile `Filters` disclosure each re-rounded
-    to 999px where a grep of networkly.css could not see them. The search box
-    and the disclosure are the two controls the custom dropdown does NOT
-    replace, so on Opportunities they were the ones left rounded after the
-    stylesheet was swept — one on desktop, one on the phone."""
-    styles = (
-        settings.BASE_DIR / "templates" / "directory" / "_styles.html"
-    ).read_text()
+    """Search and refinement controls must not regain badge-shaped pills.
 
-    for selector in ('.filters select, .filters input[type="search"]',
-                     ".filters-more > summary"):
-        block = _rule(styles, selector, indent="  ")
-        radius = re.search(r"border-radius:\s*([^;]+);", block)
-        if radius is None:
-            continue  # inherits --r-ctl from the base input/select rule
-        assert "999px" not in radius.group(1), (
-            f"{selector} hardcodes a pill again. It is drawn as one of the "
-            "filter bar's controls — same border, surface and lift — so it "
-            "takes --r-ctl with the rest of them; leaving it round puts two "
-            "shape families back in one row."
-        )
+    The presentation now ships as an external page-family stylesheet. Check
+    its actual control declarations rather than an empty template include.
+    """
+    styles = (settings.BASE_DIR / "static" / "css" / "presentation-directory.css").read_text()
+    declarations = re.findall(r"([^{}]+)\{([^{}]+)\}", styles)
+    control_rules = [block for selectors, block in declarations
+                     if any(name in selectors for name in
+                            (".filters-search", ".csel-btn", ".cmulti-btn", ".filters-more-summary"))]
+    assert control_rules, "the filter controls need their presentation stylesheet"
+    for block in control_rules:
+        for value in re.findall(r"border-radius:\s*([^;]+);", block):
+            assert "999px" not in value, "filter controls must remain distinct from state badges"
 
 
 def test_the_breadcrumb_and_its_segmented_tabs_keep_the_pill_on_purpose(settings):

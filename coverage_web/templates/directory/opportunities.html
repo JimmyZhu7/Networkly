@@ -7,18 +7,7 @@
 {% block head %}{% include "directory/_styles.html" %}{% endblock %}
 
 {% block content %}
-<div class="page page--full">
-  {% comment %}
-  Written out rather than {% include %}d, per _pagehead.html's own note: a
-  page needing richer content on one side writes the same title class
-  instead of growing the include a parameter per case.
-
-  The Browse/My-Applications toggle used to sit BELOW the header as a
-  standalone band, costing 42px plus a 24px gap for two links. It is a
-  page-level scope switch — which of two views of this page you are on —
-  so it belongs beside the title, in the slot every other page uses for its
-  page-level action. Same nav, same aria-current, same links.
-  {% endcomment %}
+<div class="page page--full directory-page directory-browse">
   <header class="pagehead">
     <div class="pagehead-text">
       <h1 class="pagehead-title">Opportunities</h1>
@@ -34,30 +23,8 @@
     {% endif %}
   </header>
 
-  {% comment %}
-  The recommendation bar sits below the hero and above the stat line / firm
-  cards, and deliberately OUTSIDE #cov-results: it is scored over the whole
-  open campus set, not the filtered one, so leaving it inside the htmx swap
-  would re-render it on every filter change and make it look like it responds
-  to filters when it does not.
-  {% endcomment %}
   {% include "directory/_recommend_bar.html" %}
 
-  {% comment %}
-  THE FILTER BAR. Two rows with two different jobs: row 1 answers "what is this
-  page", row 2 narrows it. That split is the redesign — the six controls used
-  to sit at equal weight in one row, which gave the page's single most
-  important scoping decision (campus roles vs the whole scrape) the same
-  billing as a track dropdown, and hid it inside a closed <select>.
-
-  The htmx contract is UNCHANGED and load-bearing: same URL, same target, same
-  swap, same triggers, still a plain GET form that works with JS off. The new
-  controls are all real form inputs with the same names, so serialization and
-  URL round-tripping cost zero new JS.
-  {% endcomment %}
-  {% comment %}Zero-height sentinel: when it leaves the viewport under the
-  sticky masthead, the filter bar is stuck and earns its panel skin.
-  {% endcomment %}
   <div data-filters-sentinel aria-hidden="true"></div>
   <form class="filters"
         hx-get="{% url 'opportunities' %}"
@@ -68,96 +35,20 @@
         method="get"
         action="{% url 'opportunities' %}">
 
-    {% comment %}
-    ROW 1 — Role Type as a segmented control.
-
-    A <fieldset> of visually-hidden radios plus styled labels. Native radio
-    semantics are the whole point: one Tab stop for the group, arrow keys to
-    move within it, a single serialized value — all for free, with no ARIA
-    re-implementation and no JS. The radios are clipped rather than
-    `display:none`d, because display:none removes them from the keyboard order
-    and would take the arrow-key behaviour with it.
-
-    The <legend> is visible, styled like the uppercase micro-captions on row 2.
-    It replaces the old "Role Type" caption rather than hiding beside it.
-
-    `other` is NOT drawn here — it stays an opt-in mode, reachable only by a
-    ?role= deep link, see the conditional fifth segment below. `all`
-    ("Everything") IS drawn here, as a real fifth pill with its own live
-    count: it used to be the same kind of deep-link-only opt-in, reachable
-    through the header's subset sentence, but that sentence was removed
-    (2026-08-27) and its escape hatch had to stay one action away — so it is
-    now a normal, always-checkable segment like the four campus buckets
-    beside it (`.seg-all`, muted rather than accent-tinted, because choosing
-    it is not a recommendation).
-    {% endcomment %}
     <fieldset class="seg">
       <legend>Role type</legend>
       <div class="seg-list">
         {% for s in role_segments %}
           <input class="seg-input" type="radio" name="role" id="{{ s.input_id }}" value="{{ s.value }}"{% if s.checked %} checked{% endif %}>
-          {% comment %}The count is plain text inside the label, not ::after
-          content, so a screen reader announces "Internship 639" as part of the
-          option's own name. The <span> exists only to give the out-of-band
-          swap something to address.{% endcomment %}
-          <label class="seg-pill {{ s.css }}" for="{{ s.input_id }}">{{ s.label }} (<span id="{{ s.count_id }}">{{ s.count }}</span>)</label>
+          <label class="seg-pill {{ s.css }}" for="{{ s.input_id }}"><span>{{ s.label }}</span><span class="seg-count">(<span id="{{ s.count_id }}">{{ s.count }}</span>)</span></label>
         {% endfor %}
         {% if role_optin_segment %}
-          {% comment %}
-          The conditional fifth segment, for `other` alone now (`all` graduated
-          to a normal segment in the loop above). It exists for deep-link
-          honesty — with ?role=other the bar must not draw five pills, none
-          checked, over a feed of experienced rows — but its structural job
-          matters more: A RADIO GROUP WITH NO CHECKED MEMBER SERIALIZES
-          NOTHING. Without a checked radio here, the next htmx GET (the moment
-          the student touches Region or Search) would carry no `role` at all,
-          silently resetting the mode to campus and dropping the roles the
-          user explicitly asked to see. Muted grey, full width, and never a
-          sibling of the campus options.
-          {% endcomment %}
           <input class="seg-input" type="radio" name="role" id="{{ role_optin_segment.input_id }}" value="{{ role_optin_segment.value }}" checked>
-          <label class="seg-pill seg-optin" for="{{ role_optin_segment.input_id }}">{{ role_optin_segment.label }} (<span id="{{ role_optin_segment.count_id }}">{{ role_optin_segment.count }}</span>)</label>
+          <label class="seg-pill seg-optin" for="{{ role_optin_segment.input_id }}"><span>{{ role_optin_segment.label }}</span><span class="seg-count">(<span id="{{ role_optin_segment.count_id }}">{{ role_optin_segment.count }}</span>)</span></label>
         {% endif %}
       </div>
     </fieldset>
 
-    {% comment %}
-    ROW 2 — the narrowing controls.
-
-    Below 640px these four collapse behind one disclosure; at every wider width
-    `.filters-more` is `display: contents` and its children sit directly in the
-    bar's flex row, exactly as if the <details> were not there.
-
-    `open` is server-rendered ON, always. Three reasons, in order of
-    importance: with JS off (or before the script runs) a mobile visitor sees
-    the controls rather than nothing; a deep-linked filter is never invisible;
-    and `display: contents` on a CLOSED <details> would hide the whole of row 2
-    on desktop. The script below only ever CLOSES it, and only under 640px with
-    no active filter.
-
-    The controls stay inside the form. A <details> does not affect form
-    serialization and collapsed inputs still submit — which is precisely why
-    this is a <details> and not conditional rendering.
-    {% endcomment %}
-    {% comment %}Search never hides and now LEADS the band — it is the
-    highest-value control over 886 scraped titles. Moved in the DOM rather
-    than reordered with CSS `order`, so the visual order, the focus order,
-    and the serialized order all agree. It is open-ended, so it carries no
-    count.{% endcomment %}
-    {% comment %}
-    `is-set` — the class that separates a filter the student narrowed from one
-    still reading "Any X". Six controls drawn identically is what it fixes;
-    see the THREE WEIGHTS block in _styles.html for the weights it keys.
-
-    Rendered here rather than derived in script, for the two reasons the
-    disclosure's `open` attribute is: a deep-linked filter must be lit on
-    first paint, and the bar must still say what it is doing with JS off.
-
-    It does NOT survive an htmx swap — this bar sits outside `#cov-results`,
-    so nothing re-renders these labels — which is why there is also a sync at
-    the bottom of this file. Server render is the source of truth on arrival;
-    the script keeps it true for the rest of the session.
-    {% endcomment %}
     <label class="filters-search{% if selected.q %} is-set{% endif %}"><span class="f-cap">Search</span>
       <svg class="filters-search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       <input type="search" name="q" value="{{ selected.q }}" placeholder="Search firm, role, city" autocomplete="off">
@@ -166,34 +57,10 @@
     <details class="filters-more" data-filters-more open>
       <summary class="filters-more-summary">Filters{% if filters_more_active %} · {{ filters_more_active }}{% endif %}</summary>
 
-      {% comment %}
-      "Programme Year", NOT "Class". The value behind this select is the intake
-      year printed in the posting ("2027 Summer Internship"), which is a cycle,
-      not a graduation year — only a handful of postings state a class year, and
-      those are matched here too. The hint carries that distinction to the
-      student; drop it and the control starts telling ~4,000 roles' worth of
-      lies. It travels with its control into the mobile disclosure, so it is
-      present at every breakpoint. "No Year Stated" is a real option because
-      most roles say nothing.
-      {% endcomment %}
-      {% comment %}
-      Captions are wrapped in .f-cap and visually hidden: the controls
-      self-label ("Any Year (879)", "All Companies"), so five uppercase
-      captions at five x positions were pure noise. The text stays in the
-      DOM — screen readers still get "Programme Year", and the string is
-      pinned by test_the_programme_year_hint_ships_verbatim.
-      {% endcomment %}
       <label{% if selected.year %} class="is-set"{% endif %}><span class="f-cap">Programme year</span>
         <select name="year" id="f-year">{% include "directory/_facet_options.html" with options=year_facet current=selected.year %}</select>
       </label>
 
-      {% comment %}
-      Region now carries counts AND an "Other / Unstated" option. 297 of the
-      886 open campus roles resolve to no region, and picking "Hong Kong" used
-      to delete them with no trace. "Any Region" still means everything,
-      including unstated. See views.py's REGION_NONE for why the label is not
-      "No Region".
-      {% endcomment %}
       <label{% if selected.region %} class="is-set"{% endif %}><span class="f-cap">Region</span>
         <select name="region" id="f-region">{% include "directory/_facet_options.html" with options=facets.regions current=selected.region %}</select>
       </label>
@@ -202,44 +69,10 @@
         <select name="track" id="f-track">{% include "directory/_facet_options.html" with options=facets.tracks current=selected.track %}</select>
       </label>
 
-      {% comment %}
-      Sponsorship. First question an international student asks about a US
-      posting, and the page could not answer it until `enrich_postings` began
-      reading the postings' own pages. "Not stated" is offered rather than
-      hidden because it is the honest majority here and "show me the ones
-      nobody has answered" is a real question — the same reasoning that gave
-      Region its "Other / Unstated" option after a filter silently deleted 297
-      rows.
-      {% endcomment %}
       <label{% if selected.sponsorship %} class="is-set"{% endif %}><span class="f-cap">Sponsorship</span>
         <select name="sponsorship" id="f-sponsorship">{% include "directory/_facet_options.html" with options=facets.sponsorship current=selected.sponsorship %}</select>
       </label>
 
-      {% comment %}
-      The fit toggle. Signed-in only, and only when Settings has stated
-      enough for a verdict to exist. It hides roles whose own text BLOCKS
-      this user — a stated graduation window without their year, or a
-      refused visa in a market where they need one. Silence never hides:
-      a role that states nothing always shows. Deliberately uncounted (it
-      is per-user, and the facet counts are shared); the scope line inside
-      the results owns its honesty instead.
-
-      Labelled "Eligible only", not "Fits me": on a 2,295-row feed this
-      toggle clears roles you are structurally BLOCKED from (~5% of them),
-      not roles that suit you — "Fits me" promised a shortlist and handed
-      back a slightly smaller haystack. A real "matches me" shortlist would
-      need to score year + region + track + eligibility together, which is
-      what `directory.recommend.recommend()` already does for Picked for
-      You; that's a second control, not a rename of this one.
-
-      Unchecking IS the "board says what it's not showing" guarantee here:
-      the control that hides these rows is the control that brings them
-      back, with the same click, so the count is stated once — by the scope
-      line in `_results.html`, which since 2026-09-02 is the only thing that
-      line says — and the reversal stays here, on the switch that caused it.
-      Nothing links it from there; that would be a second control for one
-      decision.
-      {% endcomment %}
       {% if fit_available %}
         <label class="fit-toggle" title="Hide roles whose own text states a requirement you don't meet. Roles that state nothing always show.">
           <input type="checkbox" name="fit" value="1"{% if fit %} checked{% endif %}>
@@ -247,32 +80,6 @@
         </label>
       {% endif %}
 
-      {% comment %}
-      Repeat listings fold silently now (see directory.dupes.fold_duplicates)
-      — no toggle, no count, no route back. Cut on request, pointing at the
-      filter bar wrapping onto a second row for one lone "All Companies":
-      "this needs to be reduced to one bar... can we take away the show
-      repeated listing button?" (2026-08-28).
-
-      This is a genuine narrowing, not a relocation like its three siblings
-      (fit, region, campaign, each of which still states its own count at the
-      control that causes it) — there is nowhere left for a folded-duplicate
-      student to see the fold or reverse it. That is a
-      deliberate call, not an oversight: a firm re-filing one job as several
-      requisitions is noise on every reading of this page, never a role a
-      student was trying to reach, unlike the other three hides (fit,
-      region, campaign) which can each hide a role someone actually wants.
-      `?dupes=1` still works as a URL fallback (`directory/views.py`'s
-      `dupes_shown`) — nothing downstream broke — it is simply no longer
-      advertised.
-      {% endcomment %}
-
-      {% comment %}
-      Companies shows an ACTIVE-SELECTION count ("3 selected"), not a result
-      count — it is an identity control over 100+ firms, and a per-option
-      result count would be a promise made about a list nobody reads
-      exhaustively. Deliberately uncounted, per the bar's consistency rule.
-      {% endcomment %}
       <label{% if selected.firm %} class="is-set"{% endif %}><span class="f-cap">Firms</span>
         <div class="cmulti" data-cmulti>
           <button type="button" class="cmulti-btn" aria-haspopup="true" aria-expanded="false">
@@ -293,20 +100,6 @@
     {% if has_filters %}<a class="filters-clear" href="{% url 'opportunities' %}">Clear</a>{% endif %}
   </form>
 
-  {% comment %}
-  THE RESULT COUNT'S LIVE REGION. Outside `#cov-results`, and that placement
-  is the whole point: a live region announces CHANGES to its own contents, so
-  it has to survive the change. The stat strip's headline figure carried
-  `role="status"` inside the swap target, where every filter keystroke
-  destroyed the node and built a new one — a sighted user watched the count
-  move and a screen-reader user heard nothing at all.
-
-  Empty on first render (there is no change to announce when a page loads;
-  the strip itself is the answer, and it is read in document order).
-  `_filter_counts.html` fills this out of band on every swap, alongside the
-  facet counts, so the sentence and the numbers on screen come from one
-  render and cannot disagree.
-  {% endcomment %}
   <span class="vh" id="cov-live" aria-live="polite" aria-atomic="true"></span>
 
   <div id="cov-results">
@@ -314,16 +107,6 @@
   </div>
 </div>
 
-{% comment %}
-The read-it-here drawer. ONE dialog for the whole page rather than one per
-card: 900 cards would otherwise ship 900 empty dialogs, and the content is
-fetched on click anyway.
-
-A native <dialog>, so the browser owns the focus trap, Escape, inertness of
-the page behind it and the top layer — the same reason the Cmd-K palette is
-one. The only script here is what opens it and what clears it; everything
-else is htmx and the platform.
-{% endcomment %}
 {% include "directory/_drawer.html" %}
 
 {% script %}

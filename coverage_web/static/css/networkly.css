@@ -1,31 +1,6 @@
-/* ==========================================================================
-   Networkly design system — static/css/networkly.css  (v2)
-   "An instrument, not a movement." Ledger look: paper, ink, hairlines,
-   one navy accent, pill badges, mono tabular figures for numbers. Both
-   colour schemes ship (see design spec §0).
-
-   v2 elevation (founder-directed, 2026-07-23): sticky translucent masthead,
-   one soft shadow token for lift-on-hover, a stat-strip component, larger
-   display type, and a wide page variant for the heat-mapped calendar. The
-   identity is unchanged — same paper, ink, navy, hairlines.
-
-   Three of this header's claims were false and are corrected above rather
-   than left to be read as the spec: it said light mode only (dark landed in
-   `76f0e8a`), squared badges (`--r-badge` is 999px by decision) and system
-   fonts (three self-hosted variable families since `471b2f7`). The design
-   spec's §0 was rewritten on 2026-09-01 for the same three; this file is
-   the one a reader opens first.
-   ========================================================================== */
-
-/* ---- 0. Typefaces — the "research desk" set, self-hosted ------------------
-   Three voices, one identity ("initiating coverage" is an equity-research
-   term, and the type says so):
-     display  Fraunces          — editorial serif masthead; authority.
-     ui/body  Instrument Sans   — quiet modern grotesque; stays out of the way.
-     data     Spline Sans Mono  — every number, eyebrow, and label; the ledger.
-   All vendored woff2 variable fonts, no CDN (same posture as htmx). Fraunces
-   carries an optical-size axis: browsers auto-select display cuts at big
-   sizes (font-optical-sizing is on by default). */
+/* Networkly foundations. Typefaces, semantic tokens, accessible controls,
+   and baseline component behavior. workspace.css owns the shared presentation;
+   presentation-*.css owns the three page families. See docs/networkly-visual-redesign.md. */
 @font-face {
   font-family: "Fraunces";
   font-style: normal;
@@ -2286,14 +2261,6 @@ select:focus-visible, input:focus-visible {
    this rule is stale-cached). */
 /* ONE site: the pricing hero's mark (`core/pricing.html`). The home hero
    carries a product mock instead, which is why this is not two uses. */
-.kin-hero-icon {
-  position: absolute; top: var(--s5); right: var(--s5); z-index: 0;
-  width: 40px; height: 40px;
-  color: color-mix(in srgb, var(--accent) 24%, transparent);
-  pointer-events: none;
-}
-.kin-hero-icon svg { width: 40px; height: 40px; display: block; }
-@media (max-width: 640px) { .kin-hero-icon { display: none; } }
 .kin-hero-stats {
   display: flex; gap: var(--s7); flex-wrap: wrap; margin-top: var(--s5);
 }

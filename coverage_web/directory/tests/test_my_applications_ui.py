@@ -19,6 +19,8 @@ be occupied.
 
 from __future__ import annotations
 
+from .presentation_helpers import presentation_css, rule as presentation_rule, rules as presentation_rules, media_blocks
+
 import re
 from datetime import timedelta
 
@@ -463,14 +465,10 @@ def test_progressed_stage_wins_the_fold_over_the_untouched_copy(client, duplicat
 # ---------------------------------------------------------------------------
 
 def _rendered(client):
-    """The page's BODY, with the inlined <style> block cut off.
-
-    Every negative assertion below needs this: the page ships its stylesheet
-    inline, and a CSS comment mentioning a class or a rule is not the page
-    saying anything to a student. The existing suite hit the same trap and
-    solved it by slicing around one element (see the apps-lens-empty test)."""
     body = client.get(reverse("my_applications")).content.decode()
-    return body[body.index("</style>"):]
+    main = re.search(r"<main\b[^>]*>(.*?)</main>", body, re.S)
+    assert main, "Application facts must render inside the main landmark"
+    return main.group(1)
 
 
 def _shut(user, *, n=90, days=3, stage="saved", status="closed", firm=None):
@@ -638,17 +636,7 @@ _STYLE_BLOCK_RE = re.compile(r"<style[^>]*>(.*?)</style>", re.S)
 
 
 def _page_css(client):
-    """Every <style> block the page renders, joined, comments stripped.
-
-    ALL of them, not the first: this page carries its own block and the base
-    template carries others, and a helper that took the first would assert
-    against whichever the layout happened to emit earliest. Comments go
-    because they are prose with braces and commas in it, which a regex over
-    selectors would otherwise sweep into the next rule's prelude.
-    """
-    html = client.get(reverse("my_applications")).content.decode()
-    return re.sub(r"/\*.*?\*/", "",
-                  "\n".join(_STYLE_BLOCK_RE.findall(html)), flags=re.S)
+    return presentation_css(client.get(reverse("my_applications")).content.decode())
 
 
 def _hidden_section(client):
@@ -668,51 +656,33 @@ def _hide(user, *, firm, title, location="", n=0):
 
 
 @pytest.mark.django_db
-def test_the_reversal_lists_rows_are_the_ledger_form(client):
-    """`.frow`'s form, on the last list still shaped as boxes: a hairline
-    between rows, a flat ground, the content in one column and the single
-    action in the other.
-
-    The `_rule` lookups are the load-bearing half. They read the page's own
-    rendered stylesheet, so they fail if these rules go back to living in a
-    stylesheet this page does not include — which is what had the row
-    rendering as stacked blocks.
-    """
+def test_the_reversal_lists_rows_are_open_records_with_separate_actions(client):
     user = _user()
     firm = Firm.objects.create(name="Optiver", slug="optiver")
     _hide(user, firm=firm, title="Quantitative Intern", n=1)
     client.force_login(user)
-
-    css = _page_css(client)
-    row = _rule(css, ".apps-hidden-row")
+    row = _rule(_page_css(client), ".apps-hidden-row")
     assert "grid-template-columns: minmax(0, 1fr) auto" in row
-    assert "border-top: 1px solid var(--line)" in row
-    # Not a box any more: no panel lift, and neither the panel corner nor the
-    # control corner.
+    assert "border-bottom: 1px solid var(--line)" in row
     assert "var(--shadow" not in row
-    assert "--r-panel" not in row and "--r-ctl" not in row
-    assert ".apps-hidden-row:first-child" in css
-    # Nor a box in the markup. Anchored on the class NAME rather than on the
-    # whole attribute, which would break the moment the row takes any further
-    # class.
     classes = re.findall(r'class="(apps-hidden-row[^"]*)"', _hidden_section(client))
     assert classes and all("panel" not in c.split() for c in classes)
+    assert "Restore role" in _hidden_section(client)
 
 
 @pytest.mark.django_db
-def test_put_back_is_toned_as_a_reversal_not_a_deletion(client):
-    """It shared `.apps-remove` with the control that deletes a saved row, and
-    inherited that control's red hover. Restoring a row the student hid is not
-    a warning — the same call `.apps-undo` and the feed's own undo control
-    already make."""
+def test_restore_is_a_named_reversal_with_a_reachable_target(client):
     user = _user()
     firm = Firm.objects.create(name="SIG", slug="sig")
-    _hide(user, firm=firm, title="Discovery Program", n=1)
+    opp = _hide(user, firm=firm, title="Discovery Program", n=1)
     client.force_login(user)
-
-    hover = _rule(_page_css(client), ".apps-putback:hover")
-    assert "var(--accent" in hover
-    assert "var(--danger" not in hover
+    section = _hidden_section(client)
+    assert 'name="status" value="undismiss"' in section
+    assert reverse("track_opportunity", args=[opp.id]) in section
+    assert "Restore role" in section
+    body = _rule(_page_css(client), ".apps-putback")
+    assert "var(--danger" not in body
+    assert "min-height:" in body
 
 
 @pytest.mark.django_db
@@ -862,9 +832,6 @@ def test_a_lens_note_earns_its_line_or_does_not_get_one(client, db):
     assert "Taken down by the firm" not in body, (
         '"Posting Closed" says that, and each row says it in full with a time')
     assert '<p class="apps-lens-note"></p>' not in body
-    # A lens with no note must not lose the gap the note used to hold.
-    assert "margin-top: var(--s3)" in _rule(
-        _page_css(client), ".apps-lens h3 + .apps-lens-list")
 
 
 @pytest.mark.django_db
