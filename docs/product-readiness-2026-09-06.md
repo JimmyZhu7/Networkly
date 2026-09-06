@@ -255,6 +255,39 @@ copy that counts planned cards. Verified per app from the agent's worktree:
 capture 1,187, crm 2,869, assistant/billing/directory 5,469, domain 612 on a
 disposable PostgreSQL database.
 
+**Local user journeys — 111 automated journey tests, all green, plus a
+browser matrix.** Invitation acceptance, uninvited rejection and the cap
+(walking allauth's real Google callback with only the two network calls
+mocked); onboarding into Settings; find, save, apply, revisit and remove a
+role; add a contact and import a five-row CSV with a duplicate and an
+unmatched firm without creating duplicates; reply, chat and referral moving
+warmth and Today's next action, with pause and resume, for a Los Angeles user
+and a Hong Kong user; calendar create and the ICS subscription; assistant
+failure from the outside with the reservation refunded and the conversation
+usable afterwards; export scoped to the caller and deletion consuming the
+seat; two strangers trying every route against each other. Chromium and
+WebKit (the closest available engine to Safari; Safari's own chrome remains a
+manual check) at 1280x900 and 375x812: fourteen authenticated surfaces with
+zero horizontal overflow, controls reachable and enabled, no console errors,
+and the Opportunities save verified by reading the row back from the
+database. Mocked and named as such: Google token exchange, the AI client, and
+Google revocation. Two defects fixed: the delete confirmation page listed five
+categories where deletion removes about thirty tables' worth (it now names the
+connected Google account, conversations and memories, the uploaded photo,
+calendar events and credit history), and the assistant's scrolling regions
+were unreachable from a keyboard on a phone.
+
+**Found by the journeys and still open at this checkpoint:** acceptance step 5
+asks the user to reschedule and cancel a meeting, and no user action can do
+either. There is no reschedule route (moving a meeting is delete-then-add,
+which mints a new ICS UID so subscribers see it vanish rather than move), and
+delete is a hard delete, so the feed never emits `STATUS:CANCELLED` for a
+self-cancelled meeting. A bounded fix (reschedule keeping the UID with a
+SEQUENCE bump; cancel setting `cancelled_at`; ownership rules unchanged for
+Google and mail-owned rows) is in progress on its own branch and will be
+recorded here when merged. The search throttle from the security review is
+applied.
+
 **Suite hygiene fixed in this pass:** the suite's verdict no longer depends
 on the developer's `.env`. `BETA_ENABLED=true` had made every account read as
 Pro and failed twenty free-tier tests on the founder's laptop only; the root
