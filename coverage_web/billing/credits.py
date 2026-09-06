@@ -147,10 +147,38 @@ def _period_for(user) -> str:
     return _user_localdate(user).strftime("%Y-%m")
 
 
+def _local_midnight(day: date):
+    """Midnight on `day`, in whatever zone is active RIGHT NOW.
+
+    Only ever called from inside a `timezone.override(_resolved_zone(user))`
+    block — `make_aware` with no explicit zone reads
+    `get_current_timezone()`, so calling it outside one silently anchors the
+    student's local date to the project zone instead of theirs.
+    """
+    return timezone.make_aware(datetime.combine(day, time.min))
+
+
 def _day_window(user):
-    today = _user_localdate(user)
-    start = timezone.make_aware(datetime.combine(today, time.min))
-    return start, start + timedelta(days=1)
+    """`[midnight, next midnight)` in the STUDENT's zone.
+
+    Both edges are built inside the override, not just the date. Reading
+    `_user_localdate` and then calling `make_aware` outside gets the right
+    calendar day and the wrong instant: from a cron tick nothing is
+    activated, so midnight resolves in UTC, and a Los Angeles account's
+    "today" slides seven hours early. Every spend between 5pm and midnight
+    local then lands on tomorrow's burst allowance and the abuse backstop
+    is off for the busiest hours of a student's evening.
+
+    The end is midnight of the NEXT LOCAL DATE rather than `start +
+    timedelta(days=1)`. On a US fall-back day (1 November 2026) the local
+    day is twenty-five hours long; adding a fixed twenty-four would orphan
+    its last hour, and on the spring-forward day it would spill an hour
+    into the next.
+    """
+    zone = _resolved_zone(user)
+    with timezone.override(zone):
+        today = timezone.localdate()
+        return _local_midnight(today), _local_midnight(today + timedelta(days=1))
 
 
 def next_refill_date(user) -> date:
@@ -220,8 +248,11 @@ def month_usage(user) -> int:
     nightly. Powers the Settings page's "used N so far this month" line,
     which must reconcile with the balance shown right next to it — a
     refunded turn changes neither."""
-    today = _user_localdate(user)
-    start = timezone.make_aware(datetime.combine(today.replace(day=1), time.min))
+    zone = _resolved_zone(user)
+    with timezone.override(zone):
+        # Same rule `_day_window` documents: the first of the month is the
+        # student's own midnight, not the project zone's.
+        start = _local_midnight(timezone.localdate().replace(day=1))
     total = (
         CreditLedger.objects.for_user(user)
         .filter(kind__in=_NET_SPEND_KINDS, created__gte=start)
