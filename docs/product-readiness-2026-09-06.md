@@ -173,9 +173,83 @@ quota, bucket policy, delivery or scheduled execution.
   matching actual data processing, remain required before a public launch. No
   legal identity or approval is inferred.
 - **Backup evidence:** the [restore report](audits/backup-restore-2026-09-06.json)
-  records a consistent snapshot of 60 tables with matching row counts and exact
-  contents. The temporary restore database was removed. This predates the newest
-  migrations and does not establish production backup scheduling.
+  now records the second drill of 6 September, run on the current schema: a
+  12.5 MB `backup_db` snapshot restored twice into fresh drill databases, all
+  **62 tables** matching the dump in row count and row contents (five tables
+  differ only in physical heap order, which a restore does not preserve), id
+  sequences ahead of their tables, `migrate --check` and the system check clean
+  on the restore, a forced login served Today, Settings and Opportunities, one
+  user's contacts stayed invisible to another, and the stored Gmail refresh
+  token decrypted under the key ring. Every drill database was dropped. This
+  proves the local restore path, not production scheduling or recovery time on
+  the hosting provider.
+
+## Backup and Recovery Plan
+
+Prepared 6 September. Everything here is executable without payment except the
+step marked as needing the hosting service to be resumed.
+
+| Element | Decision | Status |
+|---|---|---|
+| Command | `manage.py backup_db --dest <dir> --keep 14` (pg_dump custom format, private 0600 file, partial files never exposed). | Verified locally today. |
+| Client tools in the image | The Dockerfile has no Postgres client, so the command cannot run inside the current image; `pg_dump` must be at least the server's major version. Adding the PostgreSQL 18 client from the PGDG repository to the image is in the release workstream. | In progress. |
+| Destination | Private Supabase bucket `networkly-backups` in the existing free `networkly-media` project (created today with the saved S3 credentials; anonymous read returns 400; probe object removed; bucket empty). Dumps are about 12.5 MB, so a 14-snapshot ring is under 200 MB, inside the free allowance. | Ready. |
+| Schedule | A suspended Blueprint cron `coverage-db-backup` at 04:15 UTC daily, before the 05:00 trial-expiry and 05:30 watch-renewal block and clear of the 6-hourly scrape, uploading to the bucket with the same `--keep` ring applied there. Defining it is preparation; resuming it is a hosting cost. | In progress; resume after payment. |
+| Retention | 14 daily snapshots on the ring (a count, not a time guarantee), plus one manual pre-migration snapshot taken by the operator before every release that carries a migration, kept until the release is accepted. Provider-held copies and the hosting database's own point-in-time recovery are separate and must be read from the Render dashboard once resumed. `[BACKUP RETENTION PERIOD]` on the privacy page stays a placeholder until the founder confirms the number. | Decided. |
+| Restore drill cadence | Repeat the local drill after any migration and at least monthly: dump, restore into a new `drill_*` database, compare every table against the dump, run `migrate --check`, force a login, check a tenant boundary, decrypt one stored token, drop the drill database. Never restore into the application or maintenance database. | Procedure verified today. |
+| Encryption-key recovery | A dump without `GMAIL_LIVE_TOKEN_KEY` (the Fernet ring, newest key first) cannot decrypt any stored Gmail or Calendar refresh token; users would have to reconnect. The ring lives only in Render's environment and the founder's local `.env`. Store the current ring value in a password manager or sealed offline record that does not depend on Render or this laptop, note the date, and add every new key to that record before it is deployed. `DJANGO_SECRET_KEY` is Render-generated; losing it invalidates sessions and password-reset links but no data, so record it too. Never rotate keys as part of a release. | Owner action; procedure written. |
+| Avatars | The database dump does not contain avatar bytes. The private `networkly-avatars` bucket is its own durable store; nothing has been migrated into it yet. When avatars exist, add a weekly object listing plus copy to `networkly-backups/avatars/` to the backup cron, or rely on Supabase's project-level backups once their terms are read. | Decided; depends on the first real avatar. |
+| Alerting | The backup cron is a tracked job with a Healthchecks check (`db-backup`, cron `15 4 * * *`, grace 30 minutes, success ping only) and Render's own cron-failure notification. A missed or failed backup therefore alerts on two channels once the check is started. Owner must confirm the Healthchecks and Sentry destination inboxes actually receive mail; see the monitoring section. | Prepared; depends on resumed hosting and inbox confirmation. |
+| Recovery time | Local restore of 12.5 MB took about two seconds. On Render, a full recovery is: create a new database, restore beside the live one, verify as above, switch `DATABASE_URL` on every service, redeploy. Expect the switch and redeploy, not the restore, to dominate; measure it once on the deployed environment and record it here. | Unmeasured until deployment. |
+
+## Monitoring Plan
+
+Prepared 6 September from `render.yaml`, `ops/tracking.py` and the local job
+history. Jobs ping Healthchecks on **success only**: there is no `/start` or
+`/fail` signal in the code, so a check's grace window must cover the whole run
+plus scheduler jitter, and a failing job is detected by silence rather than by
+a failure ping. Local settings ignore every heartbeat URL (verified today by
+the two tests in `ops/tests/test_healthcheck_settings.py`), so nothing here can
+be triggered from a laptop.
+
+Apply these in Healthchecks (cron mode, timezone UTC, matching the Blueprint):
+
+| Check | Schedule | Grace | Basis |
+|---|---|---|---|
+| `scrape` | `0 */6 * * *` | 4 h | Measured locally over 23 runs: median 9 min, p95 2.97 h, max 3.37 h. A one-hour grace would page on a normal run. |
+| `gmail-poll` (worker) | simple, period 10 min | 5 min | `EXPECTED_INTERVALS` allows five missed 120 s ticks. |
+| `gmail-backfill` | `*/5 * * * *` | 6 min | `TICK_BUDGET` is 300 s; max observed 167 s. |
+| `autopilot` | `2-59/5 * * * *` | 6 min | Max observed 17 s; runs are budget-bounded. |
+| `gcal-sync` | `4-59/5 * * * *` | 5 min | New job; no history. |
+| `assistant-reconcile` | `*/10 * * * *` | 10 min | `EXPECTED_INTERVALS` is 20 min. |
+| `weekly-digest` | `0 13 * * 1` | 30 min | At most 100 sends. |
+| `push-alerts` | `0 13 * * *` | 30 min | |
+| `pro-trial-expire` | `0 5 * * *` | 30 min | |
+| `gmail-watch-renew` | `30 5 * * *` | 30 min | Optional job; polling does not depend on it. |
+| `db-backup` (new) | `15 4 * * *` | 30 min | Dump is seconds; upload is small. |
+
+That is 11 of the free plan's 20 checks. Keep every check paused or unstarted
+until its service is resumed; never send a success ping from outside the
+deployed job.
+
+**What is verified and what is not.**
+
+- The Sentry alert "Networkly — New Issues and Regressions" reported
+  "Notification fired!" in the UI on the earlier pass. A search of the founder's
+  Gmail (`zhujimmy123@gmail.com`) over the last ten days, including spam, found
+  **no message from sentry.io**. Either the Sentry account's notification
+  address is a different mailbox or the notification did not deliver. Owner:
+  open Sentry → Settings → Account → Notifications, confirm the address, and
+  check that inbox; re-fire the alert test if needed.
+- Missed-job alert delivery from Healthchecks is **untested**. The synthetic
+  check that would prove it needs the Healthchecks UI or a project API key;
+  this session has neither (the browser extension is not connected and no API
+  key is stored), so the test is an owner step: create a check "synthetic
+  alert test" with period 1 minute and grace 1 minute, ping it once, wait for
+  the down alert to arrive, then delete the check. Do not use any of the ten
+  real checks for this.
+- The ten real checks all show "Never pinged" and must stay that way until
+  production runs them.
 - **Source follow-up:** Sixth Street's endpoint was corrected and an EY GET
   recovered; Morgan Stanley's bot wall persists. See the historical audit for
   the earlier board snapshot and its limits.
