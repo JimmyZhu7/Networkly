@@ -53,6 +53,9 @@ jobs:
       - name: Install dependencies (whole workspace)
         run: uv sync --all-packages --locked
 
+      - name: Install the browsers the journey matrix drives
+        run: uv run --package coverage-web playwright install --with-deps chromium webkit
+
       - name: Django system check
         working-directory: coverage_web
         run: uv run python manage.py check

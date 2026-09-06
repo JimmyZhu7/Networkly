@@ -14,17 +14,18 @@ where a student will actually open this.
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 
 import pytest
 
-SHOTS = Path(
-    os.environ.get(
-        "JOURNEY_SHOTS",
-        "/private/tmp/claude-502/-Users-zhujimmy-Claude-Projects-Coverage/"
-        "a0e48397-0eb0-41aa-9bd8-52a8a4416378/scratchpad/journeys",
-    )
-)
+# Screenshots go to the system temp directory unless JOURNEY_SHOTS says
+# otherwise. This used to default to one developer's session scratchpad, an
+# absolute path that exists on exactly one machine; on CI the mkdir in
+# pytest_configure raised and took the entire collection down with it (exit 2,
+# zero tests run). A default must be creatable anywhere, and creating it must
+# never be able to fail collection.
+SHOTS = Path(os.environ.get("JOURNEY_SHOTS", str(Path(tempfile.gettempdir()) / "networkly-journeys")))
 
 # Name, width, height. 375x812 is the iPhone X class, which is the narrowest
 # screen the checklist asks about; 1280x900 is an ordinary laptop.
@@ -43,7 +44,12 @@ IGNORED_CONSOLE = (
 
 
 def pytest_configure(config):
-    SHOTS.mkdir(parents=True, exist_ok=True)
+    try:
+        SHOTS.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # An unwritable location must not stop the suite; the screenshot
+        # helper creates the directory again lazily and reports if it cannot.
+        pass
 
 
 @pytest.fixture(scope="session")
@@ -67,7 +73,10 @@ def playwright_instance(django_db_setup):
     browser test is affected: without a running loop the guard never fires, so
     the flag has nothing to relax.
     """
-    from playwright.sync_api import sync_playwright
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:  # pragma: no cover - depends on the environment
+        pytest.skip("playwright is not installed; the browser matrix needs it")
 
     key = "DJANGO_ALLOW_ASYNC_UNSAFE"
     previous = os.environ.get(key)
@@ -96,7 +105,12 @@ def viewport(request):
 @pytest.fixture
 def browser(playwright_instance, engine):
     launcher = getattr(playwright_instance, engine)
-    browser = launcher.launch(headless=True)
+    try:
+        browser = launcher.launch(headless=True)
+    except Exception as exc:  # Playwright raises its own Error when the binary is absent
+        if "Executable doesn't exist" in str(exc) or "playwright install" in str(exc):
+            pytest.skip(f"{engine} is not installed; run `playwright install --with-deps {engine}`")
+        raise
     yield browser
     browser.close()
 
