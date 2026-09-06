@@ -45,6 +45,7 @@ is charged exactly once per click that succeeds.
 
 from __future__ import annotations
 
+from django.contrib.auth import get_user_model
 from directory.ai_extract import complete_text, is_configured
 from directory.classify import TARGET_BUCKETS
 from directory.models import Opportunity
@@ -81,7 +82,8 @@ def credit_block_notice(user) -> str:
     from billing import credits as billing_credits
 
     plan = billing_credits.plan_config(user)["plan"]
-    label = "Pro" if plan == billing_credits.PRO else "Free"
+    from accounts.access import plan_label
+    label = plan_label(user)
     if billing_credits.balance(user) > 0:
         return (
             f"That's today's credit limit on the {label} plan — a safety "
@@ -189,6 +191,10 @@ def generate_coffee_chat_brief(contact) -> str | None:
     """A ready-to-read prep brief for `contact`, or `None` when the AI
     feature isn't configured or the API call failed -- see module docstring
     for the caller-facing contract."""
+    if not get_user_model().objects.filter(
+        pk=contact.user_id, is_active=True, deleted_at__isnull=True,
+    ).exists():
+        return None
     if not is_configured():
         return None
     prompt = build_prompt(contact)

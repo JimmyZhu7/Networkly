@@ -15,7 +15,7 @@ Two backends can back the `conn` fixture used by test_pipeline.py:
 - "postgres": a real psycopg (v3) connection against a live Postgres
   instance. Skips cleanly (pytest.skip) at fixture setup if psycopg isn't
   importable, or if no reachable Postgres is configured via
-  COVERAGE_DOMAIN_TEST_DATABASE_URL (default "postgresql:///postgres").
+  COVERAGE_DOMAIN_TEST_DATABASE_URL. No default database is ever opened.
   Running the same functional suite against a real engine is a genuine
   (if narrower) check that the %s/%(name)s SQL text is valid and behaves
   identically outside the shim — but it's still one connection, one
@@ -80,6 +80,9 @@ def _to_sqlite_params(sql: str, params):
     adapter is deprecated as of 3.12 and shouldn't be relied on) — this
     conversion is entirely the test shim's business; production code in
     pipeline.py never has to know SQLite exists."""
+    # SQLite's single-connection backend validates SQL/state semantics only.
+    # Row locking is exercised separately against real PostgreSQL.
+    sql = re.sub(r"\s+FOR UPDATE\s*$", "", sql, flags=re.IGNORECASE)
     if isinstance(params, dict):
         new_sql = _PARAM_RE.sub(lambda m: f":{m.group(1)}", sql)
         new_params = {
@@ -148,8 +151,11 @@ def sqlite_conn():
 
 
 def make_postgres_conn(dsn: str):
-    """Returns (connection, None) on success, or (None, reason) — never
-    raises, so callers can turn any failure into a clean pytest.skip."""
+    """Return a connection or an availability reason; reject unsafe databases.
+
+    Unavailable test services may skip. A configured non-test database is a
+    hard failure and must never reach schema setup.
+    """
     try:
         import psycopg
         from psycopg.rows import dict_row
@@ -158,7 +164,10 @@ def make_postgres_conn(dsn: str):
     try:
         conn = psycopg.connect(dsn, row_factory=dict_row, connect_timeout=2)
     except Exception as e:  # noqa: BLE001 - any connection failure means "skip"
-        return None, f"could not connect to Postgres ({dsn}): {e}"
+        return None, f"could not connect to the explicit PostgreSQL test database: {e}"
+    if not conn.info.dbname.startswith("test_"):
+        conn.close()
+        pytest.fail("Domain PostgreSQL tests require a disposable database whose name starts with test_.")
     return conn, None
 
 
@@ -189,7 +198,9 @@ def conn(request, sqlite_conn):
 
     import os
 
-    dsn = os.environ.get("COVERAGE_DOMAIN_TEST_DATABASE_URL", "postgresql:///postgres")
+    dsn = os.environ.get("COVERAGE_DOMAIN_TEST_DATABASE_URL", "").strip()
+    if not dsn:
+        pytest.skip("set COVERAGE_DOMAIN_TEST_DATABASE_URL to an isolated disposable database for real-PostgreSQL tests")
     pg, skip_reason = make_postgres_conn(dsn)
     if pg is None:
         pytest.skip(skip_reason)

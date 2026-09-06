@@ -23,6 +23,8 @@ _PROVIDERS: list[tuple[str, str]] = [
 def social_providers(request):
     configured = set(getattr(settings, "ENABLED_SOCIAL_PROVIDERS", []))
     return {
+        "beta_enabled": bool(getattr(settings, "BETA_ENABLED", False)),
+        "beta_max_users": getattr(settings, "BETA_MAX_USERS", 100),
         "social_providers": [
             {"id": pid, "label": label, "configured": pid in configured}
             for pid, label in _PROVIDERS

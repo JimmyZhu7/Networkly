@@ -103,7 +103,7 @@ def pricing(request):
     campus = Opportunity.objects.filter(status="open", bucket__in=TARGET_BUCKETS)
     return render(
         request,
-        "core/pricing.html",
+        "core/pricing_beta.html" if settings.BETA_ENABLED else "core/pricing.html",
         {
             "open_count": campus.count(),
             "firm_count": campus.values("firm_id").distinct().count(),
@@ -119,6 +119,8 @@ def pricing(request):
             "advisor_pro_cap": _advisor_daily_cap("pro"),
             "advisor_free_grant": _advisor_monthly_grant("free"),
             "advisor_pro_grant": _advisor_monthly_grant("pro"),
+            "beta_message_cost": billing_credits.plan_config(SimpleNamespace(plan="pro"))["message_cost"],
+            "beta_daily_burst": billing_credits.plan_config(SimpleNamespace(plan="pro"))["daily_burst"],
             # The two settings the page now quotes, read here for the same
             # reason as every count above: a number typed into a template
             # goes stale the day someone changes the setting, and this is a

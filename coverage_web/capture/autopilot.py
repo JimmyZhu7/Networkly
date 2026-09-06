@@ -135,6 +135,7 @@ import urllib.request
 from dataclasses import dataclass, field
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -638,6 +639,12 @@ def _skip_reason(
     return None
 
 
+def _active_user(user) -> bool:
+    return get_user_model().objects.filter(
+        pk=user.pk, is_active=True, deleted_at__isnull=True,
+    ).exists()
+
+
 def run_autopilot(
     user,
     *,
@@ -667,6 +674,10 @@ def run_autopilot(
     back an answer that skips the guards.
     """
     report = AutopilotReport(dry_run=dry_run)
+    if not _active_user(user):
+        report.ok = False
+        report.reason = "inactive_user"
+        return report
 
     proposals = list(
         ContactProposal.objects.for_user(user)
@@ -743,6 +754,8 @@ def run_autopilot(
     # a half-decided pass leaves the CRM exactly as it found it.
     try:
         for p in to_decide:
+            if not _active_user(user):
+                raise AutopilotError("This account is no longer active; review stopped.")
             context = _context_for(index, p.email, p.thread_id)
             text = evidence_text(p, context)
             raw = decide(text, model=model)
@@ -1076,6 +1089,8 @@ def start_run(user, *, source_label: str = "", model: str = DEFAULT_MODEL):
     returns. The spend happens in the worker, for the rows it actually
     decided, exactly as the CLI path always has.
     """
+    if not _active_user(user):
+        return "inactive_user", None
     reap_stale_runs(user)
     look = preview(user)
     if look.active_run is not None:
@@ -1104,7 +1119,8 @@ def claim_run(run: AutopilotRun) -> bool:
     whether THIS caller won it — two workers on the same tick cannot both
     get True, because the UPDATE's WHERE clause is the arbitration."""
     claimed = AutopilotRun.all_objects.filter(
-        pk=run.pk, status=AutopilotRun.STATUS_QUEUED
+        pk=run.pk, status=AutopilotRun.STATUS_QUEUED,
+        user__is_active=True, user__deleted_at__isnull=True,
     ).update(
         status=AutopilotRun.STATUS_RUNNING, started_at=timezone.now()
     )
@@ -1132,7 +1148,10 @@ def execute_run(run: AutopilotRun, *, decide=None) -> AutopilotReport:
         # An early return inside the decide pass never touched the row: it
         # found nothing pending (the user worked the cards himself while
         # this sat in the queue), or the AI is dark on this deploy.
-        if report.reason == "unconfigured":
+        if report.reason == "inactive_user":
+            run.status = AutopilotRun.STATUS_FAILED
+            run.failure_reason = "This account is no longer active. Nothing was decided or spent."
+        elif report.reason == "unconfigured":
             run.status = AutopilotRun.STATUS_FAILED
             run.failure_reason = (
                 "Autopilot's AI service isn't switched on for this deploy. "

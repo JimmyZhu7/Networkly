@@ -97,6 +97,50 @@ def test_log_touch_is_scoped_to_the_given_tenant(user, contact):
         services.log_touch(other.id, contact.id, "reply_received", "email")
 
 
+def test_touch_locks_contact_before_checking_event_order(user, contact):
+    """Two imports must not both pass the stale check before either writes.
+
+    Probe from an independent PostgreSQL transaction immediately after the
+    pipeline reads the contact. NOWAIT proves the lock is already held there,
+    before its newer-touch query, without relying on timing or thread sleeps.
+    """
+    from psycopg.errors import LockNotAvailable
+    from coverage_domain import pipeline
+
+    checked = []
+    with services._pipeline_connection() as owner:
+        class Cursor:
+            def __init__(self, cursor):
+                self.cursor = cursor
+
+            def execute(self, sql, params=None):
+                result = self.cursor.execute(sql, params)
+                if not checked and sql.startswith("SELECT warmth, thread_state FROM contacts"):
+                    with services._pipeline_connection() as competitor:
+                        with pytest.raises(LockNotAvailable):
+                            competitor.execute(
+                                "SELECT id FROM contacts WHERE id = %s AND user_id = %s FOR UPDATE NOWAIT",
+                                (contact.id, user.id),
+                            )
+                    checked.append(True)
+                return result
+
+            def __getattr__(self, name):
+                return getattr(self.cursor, name)
+
+        class Connection:
+            def cursor(self):
+                return Cursor(owner.cursor())
+
+            def __getattr__(self, name):
+                return getattr(owner, name)
+
+        pipeline.apply_touch(Connection(), user.id, contact.id, "reply_received", "email", None)
+    assert checked == [True]
+    contact.refresh_from_db()
+    assert contact.thread_state == "replied"
+
+
 def test_terminal_advocate_guard_blocks_further_ratchet_via_apply_touch(user, contact):
     """Once thread_state is the terminal 'advocate', a normal touch must
     not move it — only set_contact_state() (the manual override) can."""

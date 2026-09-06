@@ -922,8 +922,8 @@ that don't already declare explicit htmx behaviour.
                   <span class="tf-col-count" data-tf-count>{{ col.firms|length }}</span></h3>
                 <div class="tf-chips" data-tf-chips id="tf-list-{{ col.tier }}">
                   {% for f in col.firms %}
-                    <div class="tf-chip" draggable="true" data-firm="{{ f.id }}" data-firm-name="{{ f.name|lower }}" data-firm-logo="{% if f.logo %}{{ f.logo.url }}{% endif %}">
-                      <span class="tf-identity"><span class="tf-firm-mark" data-initial="{{ f.name|first|upper }}" aria-hidden="true">{% if f.logo %}<img src="{{ f.logo.url }}" alt="" loading="lazy" width="28" height="28">{% endif %}</span><span data-tf-name>{{ f.name|smart_title }}</span></span>
+                    <div class="tf-chip" draggable="true" data-firm="{{ f.id }}" data-firm-name="{{ f.name|lower }}" data-firm-logo="{{ f.logo_url }}">
+                      <span class="tf-identity"><span class="tf-firm-mark" data-initial="{{ f.name|first|upper }}" aria-hidden="true">{% if f.logo_url %}<img src="{{ f.logo_url }}" alt="" loading="lazy" width="28" height="28" data-firm-logo>{% endif %}</span><span data-tf-name>{{ f.name|smart_title }}</span></span>
                       {% comment %}
                       The native field keeps tier values and fallback behavior;
                       the shared menu supplies the same keyboard and touch
@@ -973,8 +973,8 @@ that don't already declare explicit htmx behaviour.
               <p class="tf-group-heading">Matches Your Profile</p>
             {% endif %}
             {% for f in matching_untracked_firms %}
-              <div class="tf-result" data-firm="{{ f.id }}" data-firm-name="{{ f.name|lower }}" data-firm-logo="{% if f.logo %}{{ f.logo.url }}{% endif %}">
-                <span class="tf-identity"><span class="tf-firm-mark" data-initial="{{ f.name|first|upper }}" aria-hidden="true">{% if f.logo %}<img src="{{ f.logo.url }}" alt="" loading="lazy" width="28" height="28">{% endif %}</span><span data-tf-name>{{ f.name|smart_title }}</span></span>
+              <div class="tf-result" data-firm="{{ f.id }}" data-firm-name="{{ f.name|lower }}" data-firm-logo="{{ f.logo_url }}">
+                <span class="tf-identity"><span class="tf-firm-mark" data-initial="{{ f.name|first|upper }}" aria-hidden="true">{% if f.logo_url %}<img src="{{ f.logo_url }}" alt="" loading="lazy" width="28" height="28" data-firm-logo>{% endif %}</span><span data-tf-name>{{ f.name|smart_title }}</span></span>
                 <button type="button" class="tf-add-btn" data-tf-add="{{ f.id }}" aria-label="Add {{ f.name|smart_title }} to selected tier">Add</button>
               </div>
             {% endfor %}
@@ -982,8 +982,8 @@ that don't already declare explicit htmx behaviour.
               <p class="tf-group-heading">All Firms</p>
             {% endif %}
             {% for f in other_untracked_firms|default:untracked_firms %}
-              <div class="tf-result" data-firm="{{ f.id }}" data-firm-name="{{ f.name|lower }}" data-firm-logo="{% if f.logo %}{{ f.logo.url }}{% endif %}">
-                <span class="tf-identity"><span class="tf-firm-mark" data-initial="{{ f.name|first|upper }}" aria-hidden="true">{% if f.logo %}<img src="{{ f.logo.url }}" alt="" loading="lazy" width="28" height="28">{% endif %}</span><span data-tf-name>{{ f.name|smart_title }}</span></span>
+              <div class="tf-result" data-firm="{{ f.id }}" data-firm-name="{{ f.name|lower }}" data-firm-logo="{{ f.logo_url }}">
+                <span class="tf-identity"><span class="tf-firm-mark" data-initial="{{ f.name|first|upper }}" aria-hidden="true">{% if f.logo_url %}<img src="{{ f.logo_url }}" alt="" loading="lazy" width="28" height="28" data-firm-logo>{% endif %}</span><span data-tf-name>{{ f.name|smart_title }}</span></span>
                 <button type="button" class="tf-add-btn" data-tf-add="{{ f.id }}" aria-label="Add {{ f.name|smart_title }} to selected tier">Add</button>
               </div>
             {% empty %}
@@ -1693,7 +1693,7 @@ that don't already declare explicit htmx behaviour.
               model name — Jimmy, 2026-08-20: keep it to "Pro".
               {% endcomment %}
               <span class="set-row-label">Plan
-                <span class="pill plan-{{ credits.plan_label|lower }}">{{ credits.plan_label }}</span>
+                <span class="pill {% if beta_enabled %}plan-pro{% else %}plan-{{ credits.plan_label|lower }}{% endif %}">{{ credits.plan_label }}</span>
                 {% if credits.trial_days_left %}&middot; Pro trial &middot; {{ credits.trial_days_left }} day{{ credits.trial_days_left|pluralize }} left{% endif %}
               </span>
               <div class="set-row-desc">
@@ -1762,16 +1762,18 @@ that don't already declare explicit htmx behaviour.
           {% endcomment %}
           <div class="set-row">
             <div class="set-row-main">
-              <span class="set-row-label">Credit top-ups</span>
+              <span class="set-row-label">{% if beta_enabled %}Included AI Credits{% else %}Credit top-ups{% endif %}</span>
               <div class="set-row-desc">
-                {% if credits.stripe_configured %}
+                {% if beta_enabled %}
+                  All individual features are free during the beta. AI credits refill monthly; daily limits apply. No payment needed.
+                {% elif credits.stripe_configured %}
                   One-time top-ups on top of your monthly refill. Never expire.
                 {% else %}
                   Top-ups aren't on yet. Your monthly refill is unaffected.
                 {% endif %}
               </div>
             </div>
-            {% if credits.stripe_configured %}
+            {% if credits.stripe_configured and not beta_enabled %}
             <div class="set-row-control">
               {% for pack_key, pack in credits.credit_packs.items %}
                 <form method="post" action="{% url 'billing:checkout' pack_key %}">
@@ -1870,7 +1872,8 @@ that don't already declare explicit htmx behaviour.
               {% if gmail_live.connected %}
                 <form method="post" action="{% url 'capture:gmail_disconnect' %}">
                   {% csrf_token %}
-                  <button type="submit" class="btn">Disconnect</button>
+                  <p class="set-row-copy" id="gmail-disconnect-note">Google shares this authorization with Calendar. If both use the same Google account, disconnecting Gmail also stops Calendar sync.</p>
+                  <button type="submit" class="btn" aria-describedby="gmail-disconnect-note">Disconnect</button>
                 </form>
               {% endif %}
               <a class="btn" href="{% url 'capture:gmail_connect' %}">
@@ -2029,7 +2032,8 @@ that don't already declare explicit htmx behaviour.
               {% if google_calendar.connected %}
                 <form method="post" action="{% url 'capture:gcal_disconnect' %}">
                   {% csrf_token %}
-                  <button type="submit" class="btn">Disconnect</button>
+                  <p class="set-row-copy" id="gcal-disconnect-note">Google shares this authorization with Gmail. If both use the same Google account, disconnecting Calendar also stops Gmail sync.</p>
+                  <button type="submit" class="btn" aria-describedby="gcal-disconnect-note">Disconnect</button>
                 </form>
               {% endif %}
               <a class="btn" href="{% url 'capture:gcal_connect' %}">

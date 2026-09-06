@@ -301,6 +301,22 @@ def test_run_residue_stage_is_a_noop_with_empty_residue(student):
     assert stats["residue_threads_processed"] == 0
 
 
+@override_settings(ANTHROPIC_API_KEY="sk-test-key")
+def test_provider_failure_is_not_counted_as_a_billable_classification(student):
+    residue = [
+        _residue_message(thread_id="failed", from_addr="a@x.com", subject="hi", snippet="first"),
+        _residue_message(thread_id="answered", from_addr="b@x.com", subject="hi", snippet="second"),
+    ]
+    with patch.object(gmail_residue, "_classify_one", side_effect=[
+        gmail_residue.ResidueClassifyError("offline"), ("ambiguous", None),
+    ]):
+        stats = run_residue_stage(FakeConnection(student), residue)
+    assert stats["residue_threads_seen"] == 2
+    assert stats["residue_threads_processed"] == 1
+    assert stats["residue_threads_failed"] == 1
+    assert stats["ambiguous"] == 1
+
+
 # ---------------------------------------------------------------------------
 # max_threads — the credit-metering clamp
 # (docs/credit-system-plan.md's enforcement point 2, capture/gmail_live.py)

@@ -15,6 +15,7 @@ step is the LAST one: dropping the old key before every row has moved.
 from __future__ import annotations
 
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
 from cryptography.fernet import Fernet
@@ -22,7 +23,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 
 from capture import gmail_live
-from capture.models import GmailConnection
+from capture.models import GmailConnection, GoogleCalendarConnection
 
 User = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -178,3 +179,89 @@ def test_a_malformed_key_names_itself(settings):
     with pytest.raises(gmail_live.GmailLiveError) as caught:
         gmail_live.encrypt_token("x")
     assert "GMAIL_LIVE_TOKEN_KEY" in str(caught.value)
+
+
+def _calendar(user, **overrides):
+    fields = dict(
+        user=user, google_email=user.email,
+        refresh_token_encrypted=gmail_live.encrypt_token("calendar-refresh"),
+        sync_token="keep-the-cursor", last_sync_stats={"created": 4},
+    )
+    fields.update(overrides)
+    return GoogleCalendarConnection.all_objects.create(**fields)
+
+
+def test_rotation_covers_both_grants_and_changes_only_ciphertext(connection, settings):
+    calendar = _calendar(connection.user, status="revoked")
+    before = GoogleCalendarConnection.all_objects.filter(pk=calendar.pk).values().get()
+    settings.GMAIL_LIVE_TOKEN_KEY = f"{KEY_B},{KEY_A}"
+
+    assert "re-encrypted 2 of 2 connection(s)" in _run()
+
+    after = GoogleCalendarConnection.all_objects.filter(pk=calendar.pk).values().get()
+    assert {key for key in before if before[key] != after[key]} == {"refresh_token_encrypted"}
+    settings.GMAIL_LIVE_TOKEN_KEY = KEY_B
+    connection.refresh_from_db()
+    assert gmail_live.decrypt_token(connection.refresh_token_encrypted) == "the-refresh-token"
+    assert gmail_live.decrypt_token(after["refresh_token_encrypted"]) == "calendar-refresh"
+
+
+def test_check_includes_calendar_without_writing_either_grant(connection, settings):
+    calendar = _calendar(connection.user)
+    original = (connection.refresh_token_encrypted, calendar.refresh_token_encrypted)
+    settings.GMAIL_LIVE_TOKEN_KEY = f"{KEY_B},{KEY_A}"
+
+    assert "would re-encrypt 2 of 2" in _run("--check")
+
+    connection.refresh_from_db()
+    calendar.refresh_from_db()
+    assert (connection.refresh_token_encrypted, calendar.refresh_token_encrypted) == original
+
+
+def test_an_unreadable_calendar_prevents_the_safe_retirement_claim(connection, settings):
+    lost = _calendar(connection.user, refresh_token_encrypted="unreadable-calendar-token")
+    settings.GMAIL_LIVE_TOKEN_KEY = f"{KEY_B},{KEY_A}"
+    out, err = StringIO(), StringIO()
+
+    call_command("rotate_gmail_tokens", stdout=out, stderr=err)
+
+    assert "1 unreadable" in out.getvalue()
+    assert "Safe to drop" not in out.getvalue()
+    assert f"Calendar connection {lost.pk}" in err.getvalue()
+    lost.refresh_from_db()
+    assert lost.refresh_token_encrypted == "unreadable-calendar-token"
+    connection.refresh_from_db()
+    settings.GMAIL_LIVE_TOKEN_KEY = KEY_B
+    assert gmail_live.decrypt_token(connection.refresh_token_encrypted) == "the-refresh-token"
+
+
+@pytest.mark.parametrize("grant", ["gmail", "calendar"])
+@pytest.mark.parametrize("change", ["reconnect", "disconnect"])
+def test_rotation_never_restores_a_grant_changed_after_the_scan(connection, settings, grant, change):
+    row = connection
+    if grant == "calendar":
+        row = _calendar(connection.user)
+        connection.delete()
+    model = type(row)
+    settings.GMAIL_LIVE_TOKEN_KEY = f"{KEY_B},{KEY_A}"
+    replacement = gmail_live.encrypt_token("newly-consented-grant")
+    original_rotate = gmail_live.rotate_token
+
+    def rotating(ciphertext):
+        if change == "disconnect":
+            model.all_objects.filter(pk=row.pk).delete()
+        else:
+            model.all_objects.filter(pk=row.pk).update(refresh_token_encrypted=replacement)
+        return original_rotate(ciphertext)
+
+    with patch.object(gmail_live, "rotate_token", side_effect=rotating):
+        out = _run()
+
+    assert "0 of 1" in out
+    assert "1 changed during rotation" in out
+    assert "Safe to drop" not in out
+    if change == "disconnect":
+        assert not model.all_objects.filter(pk=row.pk).exists()
+    else:
+        row.refresh_from_db()
+        assert row.refresh_token_encrypted == replacement

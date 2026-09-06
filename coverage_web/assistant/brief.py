@@ -72,6 +72,7 @@ import hashlib
 import re
 from datetime import date as _date, datetime as _datetime
 
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from core.templatetags.textstyle import smart_person_name, smart_title
@@ -872,6 +873,10 @@ def get_or_build(
     queue's own top contact, and the model gets to decide that with both
     facts in front of it at once, not two independent sentences stitched
     together afterward."""
+    if not get_user_model().objects.filter(
+        pk=user.pk, is_active=True, deleted_at__isnull=True,
+    ).exists():
+        return None
     today = timezone.localdate()
     existing = DailyBrief.objects.for_user(user).filter(date=today).first()
     # A cached row is only good while every contact it named is still in the

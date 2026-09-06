@@ -86,6 +86,8 @@ on real-time push needs the rest.
 
 from __future__ import annotations
 
+from accounts.access import has_individual_features, sync_user_filter, plan_label
+
 import base64
 import logging
 import re
@@ -96,8 +98,11 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Max, Q
 from django.utils import timezone
+from google.auth.exceptions import RefreshError
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
@@ -596,7 +601,7 @@ def connect_gmail(user, code: str, redirect_uri: str) -> GmailConnection:
     # when GMAIL_LIVE_PUBSUB_TOPIC names a topic that doesn't exist. Both are
     # config, both are fixable, and neither is a reason to throw the
     # connection away.
-    if user.plan == "pro":
+    if has_individual_features(user):
         try:
             register_watch(connection)
         except Exception:  # noqa: BLE001 - a watch is retried daily; a connect isn't
@@ -626,6 +631,15 @@ def _credentials(connection: GmailConnection) -> Credentials:
     )
 
 
+def _require_active_user(connection) -> None:
+    # Cached user instances can predate account deactivation. Check the DB
+    # before reading mail or sending private evidence to a provider.
+    if not get_user_model().objects.filter(
+        pk=connection.user_id, is_active=True, deleted_at__isnull=True,
+    ).exists():
+        raise GmailLiveError("This account is no longer active; sync was skipped.")
+
+
 def _gmail_client(connection: GmailConnection):
     return build("gmail", "v1", credentials=_credentials(connection))
 
@@ -644,6 +658,7 @@ def register_watch(connection: GmailConnection) -> None:
     whose deployment has no topic yet) already catches broad `Exception`
     around this call, so the message just needs to be clear when it lands in
     that log line."""
+    _require_active_user(connection)
     if not is_push_configured():
         raise GmailLiveError(
             "GMAIL_LIVE_PUBSUB_TOPIC is not set — real-time push needs a "
@@ -656,20 +671,32 @@ def register_watch(connection: GmailConnection) -> None:
             userId="me",
             body={"topicName": settings.GMAIL_LIVE_PUBSUB_TOPIC, "labelIds": ["INBOX"]},
         ).execute()
+    except RefreshError as exc:
+        if getattr(exc, "retryable", False):
+            raise
+        connection.status = "revoked"
+        connection.save(update_fields=["status"])
+        return
     except HttpError as exc:
-        if exc.resp.status in (401, 403):
+        if exc.resp.status == 401:
             connection.status = "revoked"
             connection.save(update_fields=["status"])
             return
         raise
 
-    # historyId as of watch registration — anchors the next history.list.
-    connection.history_id = str(response["historyId"])
+    # A watch's current historyId is not a processed checkpoint. Replacing
+    # an existing cursor here skips every change since the last sync. Seed
+    # only an actually empty database cursor, so a stale renewal instance
+    # also cannot overwrite a concurrent poll's progress.
+    GmailConnection.objects.for_user(connection.user).filter(
+        pk=connection.pk, history_id=""
+    ).update(history_id=str(response["historyId"]))
     connection.watch_expiration = datetime.fromtimestamp(
         int(response["expiration"]) / 1000, tz=dt_timezone.utc
     )
     connection.status = "active"
-    connection.save(update_fields=["history_id", "watch_expiration", "status"])
+    connection.save(update_fields=["watch_expiration", "status"])
+    connection.refresh_from_db(fields=["history_id"])
 
 
 def renew_watches() -> tuple[int, int]:
@@ -691,7 +718,7 @@ def renew_watches() -> tuple[int, int]:
     gate.
     """
     soon = timezone.now() + timedelta(days=1)
-    due = GmailConnection.all_objects.filter(status="active", user__plan="pro").filter(
+    due = GmailConnection.all_objects.filter(sync_user_filter(), status="active").filter(
         Q(watch_expiration__isnull=True) | Q(watch_expiration__lte=soon)
     )
     renewed = revoked = 0
@@ -726,7 +753,7 @@ def free_rescan_unlocks_at(connection: GmailConnection):
     button + unlock date), so the two can never quietly disagree about what
     "throttled" means.
     """
-    if connection.user.plan == "pro":
+    if has_individual_features(connection.user):
         return None
     last_scan = connection.rescan_completed_at or connection.rescan_requested_at
     if last_scan is None:
@@ -785,7 +812,7 @@ def process_notification(gmail_address: str, published_history_id: str) -> None:
     # watch's remaining 7-day life. Drop rather than sync so a downgraded
     # account doesn't keep getting real-time coverage until the stale watch
     # itself finally expires.
-    if connection.user.plan != "pro":
+    if not has_individual_features(connection.user):
         return
     # The shared per-mailbox lock (capture.locks) — the same one gmail_poll
     # and gmail_backfill take, because a push notification landing while a
@@ -816,6 +843,7 @@ def sync_connection(connection: GmailConnection):
     anywhere. `gmail_poll` prints the non-zero counters and detail lines
     per pass; the Pub/Sub path gets the same facts through the log line
     below."""
+    _require_active_user(connection)
     gmail = _gmail_client(connection)
     start_id = connection.history_id or None
 
@@ -823,21 +851,44 @@ def sync_connection(connection: GmailConnection):
         message_ids, latest_history_id = _list_new_messages(gmail, start_id)
     except HttpError as exc:
         if exc.resp.status == 404:
-            # startHistoryId too old (Gmail's own history retention window
-            # passed, ~7 days). No correct incremental answer exists — the
-            # gap is real lost coverage, but re-scanning "everything since
-            # the beginning" on every notification would be worse. Re-anchor
-            # to now; the twice-daily agent-run sync is the backstop for
-            # whatever fell in the gap.
+            # History has expired. Resume live capture at the current
+            # cursor and queue the existing FREE deterministic historical
+            # pass; no paid rescan is requested. Commit both together so a
+            # crash cannot acknowledge the gap without recording recovery.
+            _require_active_user(connection)
             profile = gmail.users().getProfile(userId="me").execute()
-            connection.history_id = str(profile["historyId"])
-            connection.save(update_fields=["history_id"])
+            with transaction.atomic():
+                _require_active_user(connection)
+                current = GmailConnection.objects.for_user(connection.user).select_for_update().get(pk=connection.pk)
+                # A stale caller must not rewind another sync or overwrite
+                # a disconnect that happened while Google was responding.
+                if current.status != "active" or current.history_id != connection.history_id:
+                    connection.refresh_from_db()
+                    return None
+                current.history_id = str(profile["historyId"])
+                fields = ["history_id"]
+                if current.backfill_status in ("none", "done"):
+                    current.backfill_status = "pending"
+                    current.backfill_started_at = None
+                    current.backfill_completed_at = None
+                    fields += ["backfill_status", "backfill_started_at", "backfill_completed_at"]
+                # pending/failed are already queued; running is protected
+                # by the shared mailbox lock and the worker's stale-run
+                # recovery. Preserve their state and queue priority.
+                current.save(update_fields=fields)
+            connection.refresh_from_db()
+            logger.warning(
+                "Gmail history expired for connection %s; deterministic backfill %s",
+                connection.pk, connection.backfill_status,
+            )
             return None
         raise
 
     findings = []
     for message_id in message_ids:
+        _require_active_user(connection)
         message = _fetch_message(gmail, message_id)
+        _require_active_user(connection)
         if message is None:
             continue
         findings.extend(
@@ -848,6 +899,7 @@ def sync_connection(connection: GmailConnection):
             )
         )
 
+    _require_active_user(connection)
     result = None
     if findings:
         result = apply_findings(connection.user, findings)
@@ -888,6 +940,7 @@ def preview_sync(connection: GmailConnection) -> dict:
     could not tell a working connection from a revoked one, which is the
     single most useful thing it reports.
     """
+    _require_active_user(connection)
     gmail = _gmail_client(connection)
     try:
         message_ids, latest = _list_new_messages(gmail, connection.history_id or None)
@@ -2144,12 +2197,12 @@ def backfill_connection(
     `update_backfill_status`: whether this run should write
     `backfill_status`/`backfill_completed_at`/`backfill_stats` on
     `connection`. Defaults to True, which is exactly the original
-    first-connect-backfill behavior (`gmail_backfill`'s pending/failed
-    sweep). Callers running a narrower or repeatable scan — the
+    historical-backfill behavior (`gmail_backfill`'s pending/failed
+    sweep), also used to recover expired Gmail history. Callers running a narrower or repeatable scan — the
     import-triggered scoped scan, or a user-triggered "Scan Now" rescan —
     pass `False`, because `backfill_status` means specifically "has the
-    ORIGINAL post-connect backfill ever completed" and must stay sticky at
-    `done` regardless of how many other scans run afterward. Those callers
+    latest queued historical backfill completed" and should not be reset
+    by an unrelated contact import or paid rescan. Those callers
     are responsible for recording their own run's outcome wherever it
     belongs.
 
@@ -2174,6 +2227,7 @@ def backfill_connection(
     the "Scan Now" rescan command opts in, feeding the result to
     `gmail_residue.run_residue_stage` afterward.
     """
+    _require_active_user(connection)
     gmail = _gmail_client(connection)
     user = connection.user
     own_email = connection.gmail_address.lower()
@@ -2202,6 +2256,7 @@ def backfill_connection(
 
         page_token = None
         while True:
+            _require_active_user(connection)
             response = gmail.users().messages().list(
                 userId="me", q=query, pageToken=page_token
             ).execute()
@@ -2220,12 +2275,14 @@ def backfill_connection(
 
     findings = []
     for message_id in message_ids:
+        _require_active_user(connection)
         # Same guard as the live path (`_fetch_message`): a per-contact
         # search matches the user's own DRAFTS to that contact, and a
         # message can be deleted between the list and the get. Neither is
         # correspondence, so neither reaches classification OR the residue
         # sink — a draft is not "mail we could not read".
         message = _fetch_message(gmail, message_id)
+        _require_active_user(connection)
         if message is None:
             continue
         message_findings = classify_message_findings(
@@ -2241,6 +2298,7 @@ def backfill_connection(
     findings = _suppress_stale_bounces(findings)
     findings.sort(key=lambda f: f.get("occurred_at") or "")
 
+    _require_active_user(connection)
     result = apply_findings(user, findings, dry_run=dry_run)
 
     if not dry_run and update_backfill_status:
@@ -2283,7 +2341,7 @@ def backfill_new_contacts(user, contacts) -> "object | None":
         if not is_configured():
             return None
         connection = GmailConnection.all_objects.filter(
-            user=user, status="active"
+            user=user, status="active", user__is_active=True, user__deleted_at__isnull=True,
         ).first()
         if connection is None:
             return None
@@ -2334,6 +2392,7 @@ def run_rescan(connection: GmailConnection, *, dry_run: bool = False) -> dict:
     `run_residue_stage`'s own stats. Callers store this whole dict as
     `GmailConnection.rescan_stats`.
     """
+    _require_active_user(connection)
     residue: list[dict] = []
     result = backfill_connection(
         connection,
@@ -2363,15 +2422,14 @@ def run_rescan(connection: GmailConnection, *, dry_run: bool = False) -> dict:
     # `affordable` is threads, already floored at 0 (a student with no
     # credits left still completes the free deterministic pass above; this
     # just means the residue stage below processes nothing).
+    _require_active_user(connection)
     affordable = billing_credits.affordable_residue_threads(connection.user, distinct_threads)
     residue_stats = gmail_residue.run_residue_stage(connection, residue, max_threads=affordable)
     billing_credits.spend_rescan(connection.user, residue_stats["residue_threads_processed"])
-    # Honest labeling (docs/credit-system-plan.md §6): whenever fewer
-    # threads got processed than were actually seen, say so, rather than
-    # letting "seen 87 / processed 40" speak for itself in a stats dict
-    # nobody but a template reads closely.
+    # Configuration/provider failures are not credit limits. The classifier
+    # reports those separately; this flag describes only the actual clamp.
     residue_stats["credit_limited"] = (
-        residue_stats["residue_threads_processed"] < residue_stats["residue_threads_seen"]
+        affordable < min(distinct_threads, gmail_residue.MAX_RESIDUE_THREADS)
     )
     stats["residue"] = residue_stats
     return stats

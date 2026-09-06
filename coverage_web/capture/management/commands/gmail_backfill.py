@@ -125,7 +125,9 @@ class Command(BaseCommand):
                 self.stdout.write("Gmail Live is not configured — nothing to backfill.")
                 return
 
-            base = GmailConnection.all_objects.filter(status="active")
+            base = GmailConnection.all_objects.filter(
+                status="active", user__is_active=True, user__deleted_at__isnull=True,
+            )
             if opts["email"]:
                 base = base.filter(user__email=opts["email"])
 
@@ -213,15 +215,19 @@ class Command(BaseCommand):
                 locks.unlock_mailbox(connection.pk)
 
     def _run_backfill_locked(self, connection, *, dry_run: bool, prefix: str) -> None:
+        try:
+            gmail_live._require_active_user(connection)
+        except gmail_live.GmailLiveError:
+            return
         if not dry_run:
             connection.backfill_status = "running"
             connection.backfill_started_at = timezone.now()
             connection.save(update_fields=["backfill_status", "backfill_started_at"])
 
         try:
-            # `sweep_sent=True` HERE and nowhere else. This selection is the
-            # one-time first-connect pass, and it is the only pass that can
-            # be running against an account with no contacts at all — the
+            # `sweep_sent=True` HERE and nowhere else. This selection covers
+            # first-connect and expired-history recovery; either can run
+            # against an account with no contacts at all — the
             # cold start the sweep exists for. The rescan selection below
             # and the import-triggered scan (`backfill_new_contacts`) both
             # run against an account that already has people in it, so they
@@ -280,6 +286,10 @@ class Command(BaseCommand):
                 locks.unlock_mailbox(connection.pk)
 
     def _run_rescan_locked(self, connection, *, dry_run: bool, prefix: str) -> None:
+        try:
+            gmail_live._require_active_user(connection)
+        except gmail_live.GmailLiveError:
+            return
         if not dry_run:
             connection.rescan_status = "running"
             connection.rescan_started_at = timezone.now()

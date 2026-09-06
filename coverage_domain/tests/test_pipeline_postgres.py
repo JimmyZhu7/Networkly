@@ -48,20 +48,26 @@ from psycopg.rows import dict_row  # noqa: E402
 
 from coverage_domain import pipeline  # noqa: E402
 
-DSN = os.environ.get("COVERAGE_DOMAIN_TEST_DATABASE_URL", "postgresql:///postgres")
+DSN = os.environ.get("COVERAGE_DOMAIN_TEST_DATABASE_URL", "").strip()
 
 
 def _connect():
-    return psycopg.connect(DSN, row_factory=dict_row, connect_timeout=2)
+    conn = psycopg.connect(DSN, row_factory=dict_row, connect_timeout=2)
+    if not conn.info.dbname.startswith("test_"):
+        conn.close()
+        pytest.fail("Domain PostgreSQL tests require a disposable database whose name starts with test_.")
+    return conn
 
 
 @pytest.fixture
 def two_connections():
+    if not DSN:
+        pytest.skip("set COVERAGE_DOMAIN_TEST_DATABASE_URL to an isolated disposable database for real-PostgreSQL tests")
     try:
         conn_a = _connect()
         conn_b = _connect()
     except Exception as e:  # noqa: BLE001 - any connection failure means "skip"
-        pytest.skip(f"Postgres not reachable at {DSN}: {e}")
+        pytest.skip(f"explicit PostgreSQL test database is not reachable: {e}")
         return
     # Explicit commit, not `with conn_a:` — psycopg v3 closes the connection
     # on `with` exit, which would kill conn_a before the test uses it.

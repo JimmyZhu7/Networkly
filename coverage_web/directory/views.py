@@ -2991,7 +2991,7 @@ def _urgency_item(o, *, now, today, my_firm_ids, profile=None, cutoffs=None):
         "firm_name": o.firm.name,
         "firm_slug": o.firm.slug,
         "monogram": _monogram(o.firm.name),
-        "logo_url": o.firm.logo.url if o.firm.logo else "",
+        "logo_url": o.firm.logo_url,
         "category": FIRM_CATEGORIES.get(o.firm.slug, ""),
         # Minus a trailing city the place line below already prints — see
         # `_title_without_place_echo`. Never minus anything else.
@@ -3897,7 +3897,7 @@ def opportunities(request, *, pick_only=False):
                 # board tells no third party which firms you are chasing.
                 # Blank for the ~7 firms whose only favicon is 16px, and the
                 # monogram remains the always-works fallback for them.
-                "logo_url": o.firm.logo.url if o.firm.logo else "",
+                "logo_url": o.firm.logo_url,
                 "monogram": _monogram(o.firm.name),
                 "category": category,
                 # No "sponsorship" key. It was `_sponsorship_tag(o)` computed

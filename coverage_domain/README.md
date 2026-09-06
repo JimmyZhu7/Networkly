@@ -30,8 +30,12 @@ uv pip install --python .venv/bin/python -e ".[dev]" --group dev
 
 The main suite (`tests/test_pipeline.py`) runs against an in-memory SQLite
 engine wrapped in a paramstyle-translating shim by default — no external
-services required — and additionally against real Postgres when reachable
-(`COVERAGE_DOMAIN_TEST_DATABASE_URL`, skipped cleanly otherwise). See
+services required — and additionally against an explicitly configured,
+disposable Postgres database. Its name must start with `test_`; set
+`COVERAGE_DOMAIN_TEST_DATABASE_URL` to its connection string. Never point
+it at the app or maintenance database: these tests recreate their own
+`contacts` and `touches` tables. With no explicit URL, Postgres cases skip.
+CI creates `test_coverage_domain` so those cases run there. See
 `tests/conftest.py` and `tests/test_pipeline_postgres.py` for exactly what
 each backend does and does not prove about the atomic update's concurrency
 safety.

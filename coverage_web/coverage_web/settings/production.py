@@ -127,8 +127,9 @@ DEFAULT_FROM_EMAIL = formataddr(("Networkly", parseaddr(
 
 # Serve compressed, hashed static files via WhiteNoise. Requires a
 # `collectstatic` at build time (the Dockerfile / render build step does this).
+from core.storage import media_storage_config
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": media_storage_config(env),
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
@@ -142,8 +143,19 @@ SENTRY_DSN = env("SENTRY_DSN", default="")
 if SENTRY_DSN:
     try:
         import sentry_sdk
+        from core.monitoring import scrub_sentry_event
 
-        sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=0.0, send_default_pii=False)
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=0.0,
+            send_default_pii=False,
+            # Errors can occur while processing private mail or CRM notes.
+            # Disabling default PII alone does not disable these snapshots.
+            include_local_variables=False,
+            max_request_body_size="never",
+            enable_logs=False,
+            before_send=scrub_sentry_event,
+        )
     except ImportError:
         import warnings
 

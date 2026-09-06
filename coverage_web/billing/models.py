@@ -198,22 +198,23 @@ class ProcessedStripeEvent(models.Model):
     """Idempotency record for `billing/stripe_gateway.py::handle_webhook_event`
     — Stripe's own docs guarantee at-least-once webhook delivery, so the
     same `checkout.session.completed` event can (and does, in practice)
-    arrive twice. This table is the guard: the webhook handler does a
-    `get_or_create(stripe_event_id=...)` inside `transaction.atomic()`
-    BEFORE granting credits, so a duplicate delivery — or two concurrent
-    deliveries racing each other — hits this row's unique constraint
-    instead of writing a second grant.
+    arrive twice. Different event IDs can also describe one paid Checkout
+    Session. Unique event and checkout keys, written in the same transaction
+    as the credit grant, prevent either kind of replay from granting twice.
 
     Deliberately NOT a `PrivateModel` like `CreditLedger` above: a webhook
     delivery has no request-time tenant context to scope against (Stripe
     calls this server-to-server, with no signed-in user at all) — the
-    event ID it carries is the only identity available, and it names no
+    event and checkout IDs name no
     user until the handler reads `session.metadata["user_id"]` out of the
     verified payload. A plain model with a global unique constraint is the
     right shape for "have we seen this event ID before," full stop.
     """
 
     stripe_event_id = models.CharField(max_length=255, unique=True)
+    # Different event IDs can describe the same paid Checkout Session.
+    # Keep this nullable for historical events and ignored event records.
+    stripe_checkout_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:

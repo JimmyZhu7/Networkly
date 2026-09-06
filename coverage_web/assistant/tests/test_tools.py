@@ -41,6 +41,19 @@ def _call(user, name, args=None, message_id="msg_test"):
     return json.loads(payload), is_error
 
 
+def _approved_setting(user, args):
+    """Tool validation tests with the server context the agent supplies.
+
+    Conversation ownership and the actual human handshake are exercised
+    separately in test_settings_confirmation.
+    """
+    payload, is_error = tools.execute(user, "update_settings", args, approved_settings=({
+        "field": args["field"], "value": args["value"],
+        "before": tools._setting_display(user, args["field"]),
+    },))
+    return json.loads(payload), is_error
+
+
 @pytest.fixture
 def user():
     return User.objects.create_user(
@@ -1599,8 +1612,8 @@ def test_an_important_setting_applies_only_on_the_second_confirmed_call(user):
     user.refresh_from_db()
     assert user.timezone == ""
 
-    second, is_error = _call(
-        user, "update_settings", {"field": "timezone", "value": "Europe/London", "confirmed": True}
+    second, is_error = _approved_setting(
+        user, {"field": "timezone", "value": "Europe/London", "confirmed": True}
     )
 
     assert not is_error
@@ -1616,8 +1629,8 @@ def test_confirming_a_timezone_of_auto_turns_following_back_on(user):
     user.timezone, user.timezone_auto = "Europe/London", False
     user.save(update_fields=["timezone", "timezone_auto"])
 
-    result, is_error = _call(
-        user, "update_settings", {"field": "timezone", "value": "auto", "confirmed": True}
+    result, is_error = _approved_setting(
+        user, {"field": "timezone", "value": "auto", "confirmed": True}
     )
 
     assert not is_error
@@ -1632,8 +1645,8 @@ def test_an_unknown_timezone_is_refused_even_when_confirmed(user):
     """Confirmation is about blast radius, not about validation. A zone
     `zoneinfo` does not know would make the middleware's read fail later,
     somewhere with no student in front of it."""
-    result, is_error = _call(
-        user, "update_settings", {"field": "timezone", "value": "Mars/Olympus", "confirmed": True}
+    result, is_error = _approved_setting(
+        user, {"field": "timezone", "value": "Mars/Olympus", "confirmed": True}
     )
 
     assert is_error
@@ -1651,18 +1664,18 @@ def test_regions_replace_the_whole_list_which_is_why_they_need_confirming(user):
     user.refresh_from_db()
     assert user.regions == ["us", "hk"]  # nothing dropped on the first call
 
-    confirmed, is_error = _call(
-        user, "update_settings", {"field": "regions", "value": "hk, us", "confirmed": True}
+    confirmed, is_error = _approved_setting(
+        user, {"field": "regions", "value": "hk", "confirmed": True}
     )
 
     assert not is_error
     user.refresh_from_db()
-    assert user.regions == ["hk", "us"]
+    assert user.regions == ["hk"]
 
 
 def test_an_unknown_region_token_is_refused_even_when_confirmed(user):
-    result, is_error = _call(
-        user, "update_settings", {"field": "regions", "value": "hk,atlantis", "confirmed": True}
+    result, is_error = _approved_setting(
+        user, {"field": "regions", "value": "hk,atlantis", "confirmed": True}
     )
 
     assert is_error

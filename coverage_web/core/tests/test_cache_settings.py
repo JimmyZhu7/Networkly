@@ -17,7 +17,9 @@ inverted.
 from __future__ import annotations
 
 import importlib
+import runpy
 
+import environ
 import pytest
 
 MODULE = "coverage_web.settings.base"
@@ -34,6 +36,9 @@ def load(monkeypatch):
     already-populated `django.conf.settings`, so nothing else in the suite
     sees a changed cache.
     """
+    # Django has already loaded the required environment for this process.
+    # A settings reload must not restore a deleted Redis URL from local .env.
+    monkeypatch.setattr(environ.Env, "read_env", lambda *args, **kwargs: None)
 
     def _load(value: str | None):
         if value is None:
@@ -67,6 +72,23 @@ def test_a_blank_redis_url_counts_as_absent(load):
     """
     base = load("")
     assert base.CACHES["default"]["BACKEND"] == LOCMEM
+
+
+def test_local_cache_never_uses_production_redis_or_mutates_base(load):
+    base = load("rediss://cache.example.invalid:6379/0")
+    original = dict(base.CACHES["default"])
+    local = runpy.run_module("coverage_web.settings.local")
+
+    assert local["CACHES"]["default"] == {
+        "BACKEND": LOCMEM,
+        "KEY_PREFIX": "coverage-local",
+    }
+    assert base.CACHES["default"] == original
+    assert base.CACHES["default"]["BACKEND"] == REDIS
+    assert base.CACHES["default"]["LOCATION"] == "rediss://cache.example.invalid:6379/0"
+    assert "KEY_PREFIX" not in base.CACHES["default"]
+    assert local["AXES_HANDLER"] == "axes.handlers.database.AxesDatabaseHandler"
+    assert base.AXES_HANDLER == "axes.handlers.cache.AxesCacheHandler"
 
 
 AXES_CACHE = "axes.handlers.cache.AxesCacheHandler"

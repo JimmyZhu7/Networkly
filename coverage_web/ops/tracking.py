@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 # alongside it is one more line in the same review, not a separate source of
 # truth silently drifting from a file this code doesn't parse.
 EXPECTED_INTERVALS: dict[str, timedelta] = {
+    "assistant-reconcile": timedelta(minutes=20),
     # render.yaml's cron is */5, not the */15 this said until the tick
     # budget (gmail_backfill.py's TICK_BUDGET) made a shorter interval safe.
     "gmail-backfill": timedelta(minutes=5),
@@ -58,6 +59,7 @@ EXPECTED_INTERVALS: dict[str, timedelta] = {
     # dead worker sits unflagged for the length of the old --interval-free
     # gap this dict used to leave for it entirely.
     "gmail-poll": timedelta(minutes=10),
+    "gcal-sync": timedelta(minutes=10),
     "gmail-watch-renew": timedelta(days=1),
     "scrape": timedelta(hours=6),
     "push-alerts": timedelta(days=1),

@@ -1,4 +1,4 @@
-"""rotate_gmail_tokens — re-encrypt every stored Gmail refresh token under
+"""rotate_gmail_tokens — re-encrypt stored Gmail and Calendar refresh tokens under
 the newest `GMAIL_LIVE_TOKEN_KEY`.
 
 WHY THIS EXISTS (`audit-security.md` finding 9). The refresh token is
@@ -12,7 +12,7 @@ THE PROCEDURE, four steps, also in `docs/gmail-live-setup.md`:
   1. Generate a new key: `python -c "from cryptography.fernet import Fernet;
      print(Fernet.generate_key().decode())"`.
   2. Set `GMAIL_LIVE_TOKEN_KEY="<new>,<old>"` — NEW FIRST — on every service
-     that talks to Gmail, and restart them. Everything written from now on
+     that talks to Gmail or Calendar, and restart them. Everything written from now on
      uses the new key; everything already stored still decrypts under the old.
   3. `python manage.py rotate_gmail_tokens`. Idempotent, so run it again if it
      is interrupted.
@@ -37,11 +37,11 @@ from __future__ import annotations
 from django.core.management.base import BaseCommand
 
 from capture import gmail_live
-from capture.models import GmailConnection
+from capture.models import GmailConnection, GoogleCalendarConnection
 
 
 class Command(BaseCommand):
-    help = "Re-encrypt stored Gmail refresh tokens under the newest key."
+    help = "Re-encrypt stored Gmail and Google Calendar refresh tokens under the newest key."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -71,16 +71,19 @@ class Command(BaseCommand):
         # run from a command line with no request and no user. This is the
         # shape the tenancy ratchet exists to make somebody look at, and this
         # comment is that look.
-        rows = list(
-            GmailConnection.all_objects.order_by("pk")
-            .values_list("pk", "refresh_token_encrypted")
-        )
+        rows = [
+            (label, model, pk, ciphertext)
+            for label, model in (("Gmail", GmailConnection), ("Calendar", GoogleCalendarConnection))
+            for pk, ciphertext in model.all_objects.order_by("pk").values_list(
+                "pk", "refresh_token_encrypted",
+            )
+        ]
         if not rows:
             self.stdout.write("0 connections stored — nothing to rotate.")
             return
 
-        rotated, already, failed = 0, 0, 0
-        for pk, ciphertext in rows:
+        rotated, already, failed, changed = 0, 0, 0, 0
+        for label, model, pk, ciphertext in rows:
             if not ciphertext:
                 continue
             try:
@@ -91,7 +94,7 @@ class Command(BaseCommand):
                 # and the answer is a reconnect, not an aborted rotation.
                 failed += 1
                 self.stderr.write(
-                    f"connection {pk}: could not re-encrypt ({exc}). That row "
+                    f"{label} connection {pk}: could not re-encrypt ({exc}). That row "
                     f"needs a reconnect; the rest are unaffected."
                 )
                 continue
@@ -103,16 +106,26 @@ class Command(BaseCommand):
                 already += 1
                 continue
             if not opts["check"]:
-                GmailConnection.all_objects.filter(pk=pk).update(
-                    refresh_token_encrypted=fresh)
+                # A reconnect can replace or delete the token after the
+                # initial scan. Never put the old grant back over it.
+                wrote = model.all_objects.filter(
+                    pk=pk, refresh_token_encrypted=ciphertext,
+                ).update(refresh_token_encrypted=fresh)
+                if not wrote:
+                    changed += 1
+                    self.stderr.write(
+                        f"{label} connection {pk}: changed during rotation; "
+                        "left untouched. Re-run before retiring the old key."
+                    )
+                    continue
             rotated += 1
 
         verb = "would re-encrypt" if opts["check"] else "re-encrypted"
         self.stdout.write(
             f"{verb} {rotated} of {len(rows)} connection(s); "
-            f"{already} unchanged, {failed} unreadable."
+            f"{already} unchanged, {failed} unreadable, {changed} changed during rotation."
         )
-        if not opts["check"] and not failed:
+        if not opts["check"] and not failed and not changed:
             self.stdout.write(
                 "Safe to drop the old key from GMAIL_LIVE_TOKEN_KEY once "
                 "every service has restarted on the new list."

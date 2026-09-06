@@ -351,8 +351,11 @@ def apply_touch(
 
     cur = conn.cursor()
     try:
+        # Serialize this contact's writers before testing event order. An
+        # older import must not pass the stale check while a newer event is
+        # still uncommitted, then overwrite its thread state after it lands.
         cur.execute(
-            "SELECT warmth, thread_state FROM contacts WHERE id = %s AND user_id = %s",
+            "SELECT warmth, thread_state FROM contacts WHERE id = %s AND user_id = %s FOR UPDATE",
             (contact_id, user_id),
         )
         before = cur.fetchone()

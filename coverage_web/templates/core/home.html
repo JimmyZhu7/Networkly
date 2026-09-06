@@ -19,7 +19,7 @@
         {% if user.is_authenticated %}
         <a class="mk-button mk-button-primary" href="/app/">Open Today <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
         {% else %}
-        <a class="mk-button mk-button-primary" href="/accounts/signup/">Get started free <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+        <a class="mk-button mk-button-primary" href="/accounts/signup/">{% if beta_enabled %}Join With an Invitation{% else %}Get started free{% endif %} <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
         {% endif %}
         <a class="mk-text-link" href="/opportunities/">Browse roles <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
       </div>
@@ -94,7 +94,7 @@
     <div class="mk-detail-grid">
       <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true">{% include "_nav_icon.html" with name="calendar" %}</div><h3>Your Dates, Together</h3><p>See scheduled conversations and recruiting dates in Calendar. Keep track of what is coming up.</p></article>
       <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true">{% include "_nav_icon.html" with name="talk" %}</div><h3>An Assistant With Context</h3><p>Ask questions about your own records and get help preparing your next outreach. You decide what to send.</p></article>
-      <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></div><h3>Connect Gmail, If You Want</h3><p>Gmail connection is optional and separate from sign-in. Gmail Live, planned for Pro, captures recruiting replies and calendar invites.</p><a class="mk-text-link" href="{% url 'core:pricing' %}">See plan details <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></article>
+      <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></div><h3>Connect Gmail, If You Want</h3><p>Gmail connection is optional and separate from sign-in. {% if beta_enabled %}Gmail Live captures recruiting replies and calendar invites, included in the free beta.{% else %}Gmail Live, planned for Pro, captures recruiting replies and calendar invites.{% endif %}</p><a class="mk-text-link" href="{% url 'core:pricing' %}">See plan details <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></article>
     </div>
   </section>
 
@@ -104,7 +104,7 @@
   </section>
 
   <section class="mk-close">
-    <div class="mk-wrap"><h2>Make Your<br>Next Move.</h2><div class="mk-close-copy"><p>Your next role starts with an opportunity.<br>Your next conversation starts here.</p><div class="mk-actions">{% if user.is_authenticated %}<a class="mk-button" href="/app/">Open Today <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>{% else %}<a class="mk-button" href="/accounts/signup/">Get started free <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>{% endif %}<a class="mk-text-link" href="{% url 'core:pricing' %}">View plans</a></div></div></div>
+    <div class="mk-wrap"><h2>Make Your<br>Next Move.</h2><div class="mk-close-copy"><p>Your next role starts with an opportunity.<br>Your next conversation starts here.</p><div class="mk-actions">{% if user.is_authenticated %}<a class="mk-button" href="/app/">Open Today <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>{% else %}<a class="mk-button" href="/accounts/signup/">{% if beta_enabled %}Join With an Invitation{% else %}Get started free{% endif %} <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>{% endif %}<a class="mk-text-link" href="{% url 'core:pricing' %}">View plans</a></div></div></div>
   </section>
 </div>
 {% endblock %}

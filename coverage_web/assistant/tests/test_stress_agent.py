@@ -310,7 +310,7 @@ def test_a_write_tool_handed_junk_writes_nothing(world, name, args):
 # on an unconfirmed call, whatever else is true about the call.
 # ===========================================================================
 @pytest.mark.parametrize("field", sorted(tools.SETTINGS_IMPORTANT))
-@pytest.mark.parametrize("confirmed", [None, False, "", 0, "false"])
+@pytest.mark.parametrize("confirmed", [None, False, "", 0, "false", True])
 def test_an_important_setting_never_applies_without_a_real_confirmation(
     world, field, confirmed
 ):
@@ -324,11 +324,10 @@ def test_an_important_setting_never_applies_without_a_real_confirmation(
     payload, is_error = tools.execute(user, field and "update_settings", args,
                                       message_id="m")
     user.refresh_from_db()
-    if confirmed in (None, False, "", 0):
-        # Falsy: the handshake has not happened, so nothing may move.
-        assert is_error, (field, confirmed, payload)
-        assert _snapshot(user) == before
-        assert "NOT CHANGED" in json.loads(payload)["error"]
+    # A model-supplied flag cannot substitute for the human handshake.
+    assert is_error, (field, confirmed, payload)
+    assert _snapshot(user) == before
+    assert "NOT CHANGED" in json.loads(payload)["error"]
 
 
 def test_every_important_field_carries_the_sentence_the_model_must_say(world):

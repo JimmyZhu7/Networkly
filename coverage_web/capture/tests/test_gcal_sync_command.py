@@ -155,6 +155,22 @@ class TestItDoesNotFailWhenThereIsNothingToDo:
 
 
 class TestFaultIsolation:
+    def test_applied_failure_is_recorded_and_exits_nonzero(self, configured, connection):
+        from ops.models import JobRun
+
+        with patch.object(gcal_live, "sync_connection", side_effect=gcal_live.GcalError("grant revoked")):
+            with pytest.raises(CommandError, match="calendar sync"):
+                call_command("gcal_sync", "--apply", stdout=StringIO(), stderr=StringIO())
+        run = JobRun.objects.get(name="gcal-sync")
+        assert run.status == "failed"
+        assert run.finished_at is not None
+
+    def test_applied_success_updates_job_health(self, configured, connection):
+        from ops.models import JobRun
+
+        _run("--apply", client=_client_with([]))
+        assert JobRun.objects.get(name="gcal-sync").status == "success"
+
     def test_one_broken_grant_does_not_stop_the_pass(self, configured, connection, db):
         """A student whose grant went away must not cost every other student
         their sync."""

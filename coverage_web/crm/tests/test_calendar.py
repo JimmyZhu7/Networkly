@@ -1577,6 +1577,32 @@ def test_a_cancelled_invite_adds_no_chat_and_logs_no_scheduled_touch(user):
     )
 
 
+def test_subscribed_cancellation_keeps_uid_and_releases_the_busy_slot(client, logged_in):
+    event = CalendarEvent.all_objects.create(
+        user=logged_in, title="Coffee chat", kind="chat", starts_at=_at(days=3),
+    )
+    feed = reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    uid = f"UID:coverage-ev-{event.pk}@coverage.app"
+    original = client.get(feed).content.decode()
+    assert uid in original
+    assert "STATUS:CANCELLED" not in original
+
+    event.cancelled_at = timezone.now()
+    event.save(update_fields=["cancelled_at"])
+    cancelled = client.get(feed).content.decode()
+    assert cancelled.count(uid) == 1
+    assert "STATUS:CANCELLED\r\n" in cancelled
+    assert "TRANSP:TRANSPARENT\r\n" in cancelled
+    assert "SUMMARY:Coffee chat" in cancelled
+
+    event.cancelled_at = None
+    event.save(update_fields=["cancelled_at"])
+    restored = client.get(feed).content.decode()
+    assert uid in restored
+    assert "STATUS:CANCELLED" not in restored
+    assert "TRANSP:TRANSPARENT" not in restored
+
+
 # ---------------------------------------------------------------------------
 # WHICH MARKET, AND WHETHER THE DATE HAS ALREADY GONE
 #

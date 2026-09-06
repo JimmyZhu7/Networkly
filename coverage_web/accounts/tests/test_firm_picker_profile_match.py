@@ -151,3 +151,5 @@ def test_settings_target_firms_search_uses_the_same_grouping(client, us_ib_stude
     for name in ("JPMorgan", "SIG", "Bain", "Mystery Co"):
         assert name in body
     assert body.index("JPMorgan") < body.index("SIG")
+    assert 'src="/static/img/firm-logos/sig.png"' in body
+    assert 'src="/static/img/firm-logos/bain.png"' in body

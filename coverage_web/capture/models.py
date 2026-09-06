@@ -541,9 +541,9 @@ class GmailConnection(PrivateModel):
 
     BACKFILL_CHOICES = [
         ("none", "Not started"),
-        # Set by connect_gmail() right after register_watch() — live coverage
-        # starts immediately either way; this just marks that a one-time
-        # historical pass is owed. The next gmail_backfill tick picks it up.
+        # Set on connect or expired-history recovery. Live capture resumes
+        # immediately; the next gmail_backfill tick handles the historical
+        # gap through the free deterministic scan.
         ("pending", "Queued"),
         ("running", "Running"),
         ("done", "Done"),
@@ -576,10 +576,9 @@ class GmailConnection(PrivateModel):
     # re-check of Gmail against ALL of the user's contacts, on demand,
     # repeatably. DELIBERATELY a separate set of fields from the
     # backfill_* ones above rather than reusing them: `backfill_status`
-    # means specifically "has the ORIGINAL post-connect backfill ever
-    # completed" and is sticky at "done" forever once true (see its own
-    # comment) — a rescan is a different, repeatable action that must be
-    # able to run again and again without disturbing that fact.
+    # means "has the latest queued historical backfill completed". Only
+    # connect/history recovery queues that work; a rescan is a separate,
+    # repeatable action that does not reset its status.
     RESCAN_CHOICES = [
         ("none", "Never run"),
         # Set the moment the "Scan Now" button is pressed; the same
@@ -627,10 +626,10 @@ class GoogleCalendarConnection(PrivateModel):
 
     A SEPARATE ROW FROM `GmailConnection`, DELIBERATELY, even though both
     grants come from the same OAuth client and are encrypted with the same
-    key. They are two consents and a student is entitled to give one and
-    refuse the other: disconnecting the calendar revokes the calendar token
-    and leaves mail sync running, and vice versa. Folding both refresh
-    tokens onto one row would make either disconnect a decision about both.
+    key. A student can consent to either service independently. Google
+    revocation spans all OAuth clients in the Cloud project for the same
+    Google account, so a confirmed revoke also invalidates the matching
+    local sibling connection. Separate clients do not isolate revocation.
 
     NOTHING HERE CAN WRITE TO GOOGLE. The stored token carries
     `calendar.readonly` (settings.GCAL_LIVE_SCOPES) and there is no call

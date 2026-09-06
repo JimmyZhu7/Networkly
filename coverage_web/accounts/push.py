@@ -28,6 +28,7 @@ from __future__ import annotations
 import json
 from urllib.parse import urlsplit
 
+from django.contrib.auth import get_user_model
 from django.conf import settings
 
 from pywebpush import WebPushException, webpush
@@ -107,7 +108,7 @@ def is_configured() -> bool:
 def send_notification(subscription, *, title: str, body: str, url: str) -> None:
     """Send one push message to one subscription.
 
-    `subscription` is anything with `.endpoint`, `.p256dh`, `.auth` —
+    `subscription` has `.user_id`, `.endpoint`, `.p256dh`, `.auth` —
     `accounts.models.PushSubscription` in production, a lightweight stand-in
     in tests. Raises `SubscriptionExpired` on a 404/410 (delete-and-move-on,
     per the caller's contract) and re-raises any other `WebPushException`
@@ -121,6 +122,11 @@ def send_notification(subscription, *, title: str, body: str, url: str) -> None:
     from raising a confusing crypto error instead of doing nothing.
     """
     if not is_configured():
+        return
+
+    if not get_user_model().objects.filter(
+        pk=subscription.user_id, is_active=True, deleted_at__isnull=True,
+    ).exists():
         return
 
     payload = json.dumps({"title": title, "body": body, "url": url})

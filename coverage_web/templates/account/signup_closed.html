@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Networkly · Join the Beta{% endblock %}
+{% block head %}{% include "account/_auth_styles.html" %}{% endblock %}
+{% block content %}
+<div class="auth-wrap support-auth">
+  <header class="auth-intro">
+    <h1 class="auth-title">Your Invitation.<br>Your Next Step.</h1>
+    <p class="auth-intro-copy">A private beta for up to {{ beta_max_users }} people. All individual features are included, with monthly AI credits.</p>
+    <a class="auth-browse" href="/opportunities/">Browse Open Roles {% include "_nav_icon.html" with name="arrow" %}</a>
+  </header>
+  <div class="auth-form-column"><div class="auth-card">
+    <h2 class="auth-form-title">Join the Free Beta</h2>
+    <p>Continue with the Google account on your invitation. New accounts are available by invitation only.</p>
+    {% include "account/_auth_providers.html" with google_only=True %}
+    <p>Already have an account? <a href="{% url 'account_login' %}">Sign In</a></p>
+    <p class="auth-scope-note">By continuing, you agree to our <a href="/terms/">Terms</a> and <a href="/privacy/">Privacy Policy</a>.</p>
+  </div></div>
+</div>
+{% endblock %}

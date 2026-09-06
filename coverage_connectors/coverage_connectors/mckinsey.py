@@ -84,9 +84,11 @@ def fetch(board: McKinseyBoard) -> FetchResult:
     closed-detection close live rows)."""
     seen: set[str] = set()
     docs: list[dict] = []
+    truncated = False
     every_keyword_said_zero = True
     for kw in board.keywords or ("",):
         start = 1
+        keyword_seen: set[str] = set()
         while True:
             try:
                 data = _page(kw, start)
@@ -121,13 +123,16 @@ def fetch(board: McKinseyBoard) -> FetchResult:
             every_keyword_said_zero = every_keyword_said_zero and not batch and stated_total == 0
             for doc in batch:
                 jid = str(doc.get("jobID") or "")
+                if jid:
+                    keyword_seen.add(jid)
                 if not jid or jid in seen:
                     continue
                 seen.add(jid)
                 docs.append(doc)
             total = int(data.get("numFound") or 0)
-            start += _PAGE_SIZE
+            start += len(batch)
             if not batch or start > min(total, _MAX_JOBS):
+                truncated = truncated or len(keyword_seen) < total
                 break
     try:
         # Its own try, separate from the per-page network try above — see
@@ -137,7 +142,7 @@ def fetch(board: McKinseyBoard) -> FetchResult:
     except Exception as e:  # noqa: BLE001
         return FetchResult(board=board, ok=False, opportunities=[], raw_count=0, error=str(e))
     return FetchResult(board=board, ok=True, opportunities=opportunities,
-                       raw_count=len(docs),
+                       raw_count=len(docs), truncated=truncated,
                        empty_state=not opportunities and every_keyword_said_zero)
 
 

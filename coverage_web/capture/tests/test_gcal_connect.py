@@ -199,9 +199,8 @@ class TestDisconnect:
         revoke.assert_called_once_with("1//token")
         assert not GoogleCalendarConnection.all_objects.filter(user=student).exists()
 
-    def test_disconnecting_the_calendar_leaves_gmail_connected(self, student, configured):
-        """The whole reason these are two rows. A student who disconnects one
-        must not lose the other."""
+    def test_disconnecting_the_calendar_marks_same_google_account_gmail_revoked(self, student, configured):
+        """Google revokes project authorization despite separate scope requests."""
         GmailConnection.all_objects.create(
             user=student, gmail_address="cal-connect@example.com",
             refresh_token_encrypted=gmail_live.encrypt_token("1//mail"),
@@ -214,10 +213,11 @@ class TestDisconnect:
         with patch("capture.google_revoke.revoke_token", return_value=True):
             gcal_live.disconnect(student)
 
-        assert GmailConnection.all_objects.filter(user=student).exists()
+        gmail = GmailConnection.all_objects.get(user=student)
+        assert gmail.status == "revoked" and gmail.refresh_token_encrypted == ""
         assert not GoogleCalendarConnection.all_objects.filter(user=student).exists()
 
-    def test_disconnecting_gmail_leaves_the_calendar_connected(
+    def test_disconnecting_gmail_marks_same_google_account_calendar_revoked(
         self, client, student, configured
     ):
         GmailConnection.all_objects.create(
@@ -234,7 +234,8 @@ class TestDisconnect:
             client.post(reverse("capture:gmail_disconnect"))
 
         assert not GmailConnection.all_objects.filter(user=student).exists()
-        assert GoogleCalendarConnection.all_objects.filter(user=student).exists()
+        calendar = GoogleCalendarConnection.all_objects.get(user=student)
+        assert calendar.status == "revoked" and calendar.refresh_token_encrypted == ""
 
     def test_a_failing_revoke_still_removes_the_row(self, student, configured):
         """`google_revoke` is best-effort and never raises: refusing to
@@ -275,8 +276,10 @@ class TestAccountDeletionHandsBackBothGrants:
         with patch("capture.google_revoke.revoke_token", return_value=True) as revoke:
             count = google_revoke.revoke_all_for_user(student)
 
-        assert count == 2
-        assert {c.args[0] for c in revoke.call_args_list} == {"1//mail", "1//cal"}
+        assert count == 1
+        revoke.assert_called_once_with("1//mail")
+        calendar = GoogleCalendarConnection.all_objects.get(user=student)
+        assert calendar.status == "revoked" and calendar.refresh_token_encrypted == ""
 
 
 # ---------------------------------------------------------------------------
@@ -302,6 +305,7 @@ class TestTheSettingsOption:
 
         assert reverse("capture:gcal_disconnect") in html
         assert "Disconnect" in html
+        assert "disconnecting Calendar also stops Gmail sync" in html
 
     def test_no_card_at_all_until_the_consent_screen_carries_the_scope(
         self, client, student, settings

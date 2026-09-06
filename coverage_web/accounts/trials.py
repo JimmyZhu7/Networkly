@@ -46,6 +46,7 @@ import logging
 import math
 
 from django.conf import settings
+from accounts.access import beta_enabled
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -89,6 +90,8 @@ def start_trial_if_eligible(user, *, trigger: str) -> bool:
     intentionally does not look at `pro_trial_ends_at` at all, so a trial
     that a student let lapse can't be restarted by reconnecting Gmail again.
     """
+    if beta_enabled():
+        return False
     if trigger != settings.PRO_TRIAL_TRIGGER:
         return False
     if user.plan == user.PLAN_PRO:
@@ -118,6 +121,8 @@ def trial_days_left(user) -> int | None:
     the trial started, not "6" — flooring would undercount from the first
     hour.
     """
+    if beta_enabled():
+        return None
     ends_at = getattr(user, "pro_trial_ends_at", None)
     if not ends_at:
         return None
@@ -145,6 +150,8 @@ def trial_ended_notice(user) -> dict | None:
     `pro_trial_ends_at` null forever (accounts/models.py), the same
     distinction `pro_trial_expire`'s selection query relies on.
     """
+    if beta_enabled():
+        return None
     if getattr(user, "plan", "") != getattr(user, "PLAN_FREE", "free"):
         return None
     started_at = getattr(user, "pro_trial_started_at", None)
@@ -185,7 +192,7 @@ def send_trial_ended_email(user) -> bool:
     lost send.
     """
     address = (getattr(user, "email", "") or "").strip()
-    if not address or not email_is_configured():
+    if beta_enabled() or not address or not email_is_configured():
         return False
 
     site_url = (getattr(settings, "SITE_URL", "") or "").rstrip("/")

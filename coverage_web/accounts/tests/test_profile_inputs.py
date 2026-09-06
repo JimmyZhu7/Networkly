@@ -740,4 +740,8 @@ def test_the_data_migration_rewrites_an_unparseable_stored_cycle():
     executor = MigrationExecutor(connection)
     executor.loader.build_graph()
     executor.migrate([_accounts_head(executor)])
+    # migrate() records the applied migration in the database, but this
+    # executor's loader still holds its pre-migration applied snapshot.
+    # Reload before checking the actual database against every app's head.
+    executor = MigrationExecutor(connection)
     assert executor.migration_plan(executor.loader.graph.leaf_nodes()) == []

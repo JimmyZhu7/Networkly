@@ -75,8 +75,8 @@ _DEFAULT_AUTOPILOT_ROWS_PER_CREDIT = 10
 
 
 def _plan_of(user) -> str:
-    plan = (getattr(user, "plan", "") or "").strip().lower()
-    return plan if plan in _DEFAULTS else FREE
+    from accounts.access import effective_plan
+    return effective_plan(user)
 
 
 def _plan_config(plan: str) -> dict:
@@ -423,11 +423,10 @@ def spend(user, cost: int, kind: str, **props) -> None:
     """One negative ledger row. `cost` is always given as a positive number
     of credits; this stores its negation. Deliberately does not check
     affordability itself — `can_spend` is a separate, earlier call, so a
-    debit always lands at the exact point the fairness rule requires: after
-    the metered work actually happened (a chat turn's round 0 succeeded, a
-    rescan's residue stage actually classified something), never before and
-    never speculatively. A non-positive `cost` is a no-op — nothing metered
-    ran, so nothing gets written.
+    caller owns the work/charge lifecycle. Chat reserves under the same
+    user-row lock before provider work and refunds unfinished turns; other
+    metered work records its completed usage. A non-positive `cost` is a
+    no-op, so nothing gets written.
 
     Written inside a transaction holding this user's row lock — the same
     single-row `select_for_update` `ensure_monthly_grant` takes, and for the

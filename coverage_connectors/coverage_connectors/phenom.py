@@ -64,55 +64,60 @@ def fetch(board: PhenomBoard) -> FetchResult:
     seen: set[str] = set()
     jobs: list[dict] = []
     start = 0
-    total = 0
-    while True:
-        try:
-            data = post_json(f"https://{board.host}/widgets", _payload(board, start))
-        except Exception as e:  # noqa: BLE001
-            return FetchResult(board=board, ok=False, opportunities=[], raw_count=0, error=str(e))
-        # PHENOM REPORTS ITS FAILURES IN THE BODY, WITH A 200. A rejected
-        # payload, an unknown ddoKey, a widget the tenant has turned off: all
-        # of them come back as `{"status": "failure"}` (sometimes with a
-        # `message`), never as a 4xx. `data.get("refineSearch", {})` turned
-        # every one into an empty batch and a clean zero, so a tenant that
-        # renamed a widget would read as a firm that stopped hiring.
-        status = str(data.get("status") or "").lower()
-        if status and status != "success":
-            note = str(data.get("message") or data.get("errorMessage") or "")[:120]
-            return FetchResult(
-                board=board, ok=False, opportunities=[], raw_count=0,
-                error=unreadable(
-                    f"phenom answered 200 with status={status!r}"
-                    + (f": {note}" if note else "")),
-            )
-        if "refineSearch" not in data:
-            return FetchResult(
-                board=board, ok=False, opportunities=[], raw_count=0,
-                error=unreadable(
-                    f"phenom response carries no 'refineSearch' block "
-                    f"(got {sorted(data)[:6]})"),
-            )
-        block = data.get("refineSearch") or {}
-        batch = (block.get("data") or {}).get("jobs", [])
-        for job in batch:
-            jid = str(job.get("jobId") or job.get("jobSeqNo") or "")
-            if not jid or jid in seen:
-                continue
-            seen.add(jid)
-            jobs.append(job)
-        total = int(block.get("totalHits") or 0)
-        start += _PAGE_SIZE
-        if not batch or start >= min(total, _MAX_JOBS):
-            break
+    total: int | None = None
+    truncated = False
     try:
-        # Its own try, separate from the per-page network try above — see
-        # greenhouse.py's fetch() for why a normalization failure must not
-        # propagate uncaught out of `fetch()`.
+        while start < _MAX_JOBS:
+            data = post_json(f"https://{board.host}/widgets", _payload(board, start))
+            if not isinstance(data, dict):
+                raise ValueError(unreadable("phenom response is not a JSON object"))
+            # Phenom reports rejected requests in the body with HTTP 200.
+            status = str(data.get("status") or "").lower()
+            if status and status != "success":
+                note = str(data.get("message") or data.get("errorMessage") or "")[:120]
+                raise ValueError(unreadable(
+                    f"phenom answered 200 with status={status!r}"
+                    + (f": {note}" if note else "")))
+            block = data.get("refineSearch")
+            if not isinstance(block, dict):
+                raise ValueError(unreadable("phenom response carries no 'refineSearch' block"))
+            content = block.get("data")
+            batch = content.get("jobs") if isinstance(content, dict) else None
+            if not isinstance(batch, list):
+                raise ValueError(unreadable("phenom refineSearch carries no readable 'jobs' list"))
+            if block.get("totalHits") is not None:
+                count = int(block["totalHits"])
+                if count < 0:
+                    raise ValueError(unreadable("phenom totalHits is negative"))
+                # A shrinking count mid-walk cannot prove omitted rows closed.
+                total = max(total or 0, count)
+            before = len(jobs)
+            for job in batch:
+                jid = str(job.get("jobId") or job.get("jobSeqNo") or "")
+                if not jid or jid in seen:
+                    continue
+                seen.add(jid)
+                jobs.append(job)
+            if not batch:
+                break
+            # Tenants can return fewer than the requested page size. Advancing
+            # by the request size would skip those intervening postings.
+            start += len(batch)
+            if total is not None and start >= total:
+                break
+            if len(jobs) == before:
+                truncated = True
+                break
+        else:
+            truncated = True
         opportunities = [o for o in (_normalize(j, board) for j in jobs) if o.url]
+        truncated = truncated or len(opportunities) < len(jobs) or (
+            total is not None and len(opportunities) < total
+        )
     except Exception as e:  # noqa: BLE001
         return FetchResult(board=board, ok=False, opportunities=[], raw_count=0, error=str(e))
     return FetchResult(board=board, ok=True, opportunities=opportunities,
-                       raw_count=len(jobs),
+                       raw_count=len(jobs), truncated=truncated,
                        # `totalHits: 0` inside a well-formed refineSearch block
                        # is the widget answering "nothing matches", which is a
                        # statement rather than a silence.

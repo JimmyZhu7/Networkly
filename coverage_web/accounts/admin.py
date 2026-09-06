@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django import forms
 
-from .models import User
+from .models import BetaInvitation, User
+from . import beta
 
 
 @admin.register(User)
@@ -112,3 +114,46 @@ class UserAdmin(DjangoUserAdmin):
             },
         ),
     )
+
+
+class BetaInvitationForm(forms.ModelForm):
+    class Meta:
+        model = BetaInvitation
+        fields = ("email",)
+
+    def clean_email(self):
+        email = beta.normalize_email(self.cleaned_data["email"])
+        beta.validate_invitation(email)
+        return email
+
+
+@admin.register(BetaInvitation)
+class BetaInvitationAdmin(admin.ModelAdmin):
+    form = BetaInvitationForm
+    list_display = ("email", "created_at", "redeemed_at", "user")
+    search_fields = ("email",)
+    actions = None
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def get_fields(self, request, obj=None):
+        return ("email", "created_at", "redeemed_at", "user") if obj else ("email",)
+
+    def get_readonly_fields(self, request, obj=None):
+        return self.get_fields(request, obj) if obj else ()
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        if request.method == "POST" and object_id is None:
+            # Form validation and persistence see one serialized capacity.
+            with beta.registry_lock():
+                return super().changeform_view(request, object_id, form_url, extra_context)
+        return super().changeform_view(request, object_id, form_url, extra_context)
+
+    def save_model(self, request, obj, form, change):
+        seat, _ = beta.invite_emails([form.cleaned_data["email"]])[0]
+        # Django's admin logs/redirects using the instance returned by save_form.
+        obj.__dict__.update(seat.__dict__)

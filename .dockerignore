@@ -5,6 +5,13 @@
 **/*.pyc
 **/.pytest_cache
 .env
+.env.*
+**/.env
+**/.env.*
+output
+**/*.dump
+**/*.dump.partial
+**/media
 *.sqlite3
 staticfiles
 docs

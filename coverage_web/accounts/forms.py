@@ -27,6 +27,7 @@ from zoneinfo import available_timezones
 
 from django import forms
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db import transaction
 from PIL import Image, ImageOps
 
 from coverage_domain.cadence import CADENCE_DEFAULTS
@@ -747,15 +748,23 @@ class ProfileForm(forms.Form):
         # would silently discard whichever loses, so ties go to the more
         # deliberate, explicitly-checked action rather than to whichever
         # `if` happened to run second.
+        old_avatar_name = user.avatar.name if user.avatar else ""
+        old_avatar_storage = user.avatar.storage if old_avatar_name else None
         if cd["remove_avatar"]:
-            if user.avatar:
-                user.avatar.delete(save=False)
             user.avatar = None
             update_fields.append("avatar")
         elif cd["avatar"]:
             user.avatar = cd["avatar"]
             update_fields.append("avatar")
         user.save(update_fields=update_fields)
+        if old_avatar_name and old_avatar_name != (user.avatar.name if user.avatar else ""):
+            def remove_unreferenced_avatar():
+                # Saving/replacing an avatar must commit before its old
+                # object is removed. Legacy shared references also survive.
+                if not type(user).objects.filter(avatar=old_avatar_name).exists():
+                    old_avatar_storage.delete(old_avatar_name)
+
+            transaction.on_commit(remove_unreferenced_avatar, robust=True)
 
 
 # ---------------------------------------------------------------------------

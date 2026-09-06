@@ -245,6 +245,24 @@ class TestRunRescan:
         assert billing_credits.balance(student) == 0
         assert not CreditLedger.objects.for_user(student).filter(kind=CreditLedger.KIND_SPEND_RESCAN).exists()
 
+    @override_settings(ANTHROPIC_API_KEY="sk-test-key")
+    def test_provider_outage_does_not_charge_or_claim_a_credit_limit(self, student, connection):
+        Contact.all_objects.create(
+            user=student, name="Jane Banker", email="jane@bank.example", source="manual"
+        )
+        before = billing_credits.balance(student)
+        message_ids, messages_by_id = self._residue_messages(connection, 3)
+        client = _fake_gmail_client(message_ids, messages_by_id)
+        with patch.object(gmail_live, "_gmail_client", return_value=client), \
+             patch.object(gmail_residue, "_post_json", side_effect=gmail_residue.ResidueClassifyError("offline")) as post:
+            stats = gmail_live.run_rescan(connection)
+        assert post.call_count == 3
+        assert stats["residue"]["residue_threads_failed"] == 3
+        assert stats["residue"]["residue_threads_processed"] == 0
+        assert stats["residue"]["credit_limited"] is False
+        assert billing_credits.balance(student) == before
+        assert not CreditLedger.objects.for_user(student).filter(kind=CreditLedger.KIND_SPEND_RESCAN).exists()
+
     def test_dry_run_makes_no_ai_call_even_if_configured(self, student, connection, settings):
         settings.ANTHROPIC_API_KEY = "sk-test-key"
         Contact.all_objects.create(

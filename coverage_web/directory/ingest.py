@@ -312,11 +312,6 @@ def _apply_opportunity(firm: Firm, opp: ConnOpportunity, now, stats: dict, *,
     # states outright. No `opp.class_year or …` fallback because no connector
     # has the field — the title is the only source, and it is usually silent.
     class_year = extract_class_year(opp.title or "")
-    # The convention-derived graduation year, only where the posting states
-    # none of its own. It is written to its own column and never to
-    # `class_year` — see classify.derive_class_year.
-    class_year_derived = "" if class_year else derive_class_year(
-        bucket, opp.title or "", cohort)[0]
     # Clip to the storage columns' width (CharField(255)). A few boards carry
     # multi-city locations or very long titles that overrun the column and
     # would 500 the whole scrape (EQT posts roles listing 3+ office cities).
@@ -331,7 +326,7 @@ def _apply_opportunity(firm: Firm, opp: ConnOpportunity, now, stats: dict, *,
     # and only for an entry `normalize_region` recognises as a place, so a
     # requisition code can never be shown as an office. See
     # `classify.location_from_bullets`.
-    location = ((opp.location or "") or location_from_bullets(opp.raw))[:255]
+    location = ((opp.location or "").strip() or location_from_bullets(opp.raw))[:255]
     # Canonical market (hk/us/sg/eu or "") derived from the location — a
     # connector never sets region, so the location text is the only signal.
     region = (opp.region or "").strip() or normalize_region(location)
@@ -366,6 +361,17 @@ def _apply_opportunity(firm: Firm, opp: ConnOpportunity, now, stats: dict, *,
         existing = _match_by_identity(firm, opp.url)
         if existing is not None:
             stats["deduped_by_identity"] = stats.get("deduped_by_identity", 0) + 1
+    merged_raw = _merge_raw(
+        opp.raw, existing.raw if existing is not None else None,
+        changed=existing is not None and existing.content_hash != h,
+    )
+    # Use the facts that survive this scrape, just as reclassify does. A
+    # stated graduation window outranks an internship-year heuristic, while
+    # facts invalidated by changed content no longer suppress derivation.
+    stated_grad = (merged_raw.get("facts") or {}).get("grad")
+    class_year_derived = "" if (class_year or stated_grad) else derive_class_year(
+        bucket, opp.title or "", cohort,
+    )[0]
     if existing is None:
         Opportunity.objects.create(
             firm=firm,
@@ -383,7 +389,7 @@ def _apply_opportunity(firm: Firm, opp: ConnOpportunity, now, stats: dict, *,
             class_year_derived=class_year_derived,
             sponsorship=final_sponsorship,
             confidence=final_confidence,
-            raw=opp.raw or {},
+            raw=merged_raw,
             posted_at=(opp.posted_at or "")[:64],
             content_hash=h,
             last_verified=now,
@@ -428,7 +434,9 @@ def _apply_opportunity(firm: Firm, opp: ConnOpportunity, now, stats: dict, *,
     if location:
         existing.location = location
     existing.source = opp.source or ""
-    if region:
+    if region or (location and location != prior_location):
+        # Silence preserves a recovered region. A newly stated place that
+        # cannot be classified no longer supports the previous region.
         existing.region = region
     existing.cohort = cohort
     existing.class_year = class_year
@@ -485,7 +493,7 @@ def _apply_opportunity(firm: Firm, opp: ConnOpportunity, now, stats: dict, *,
     elif changed:
         existing.sponsorship = "unknown"
 
-    existing.raw = _merge_raw(opp.raw, existing.raw, changed=changed)
+    existing.raw = merged_raw
     existing.posted_at = (opp.posted_at or "")[:64]
     existing.content_hash = h
     existing.status = "open"

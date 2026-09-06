@@ -64,7 +64,8 @@ class PlanLimits:
 
     @property
     def label(self) -> str:
-        return "Pro" if self.plan == PRO else "Free"
+        from accounts.access import beta_enabled
+        return "Free Beta" if beta_enabled() else ("Pro" if self.plan == PRO else "Free")
 
     @property
     def model_short(self) -> str:
@@ -72,8 +73,8 @@ class PlanLimits:
 
 
 def plan_of(user) -> str:
-    plan = (getattr(user, "plan", "") or "").strip().lower()
-    return plan if plan in _DEFAULTS else FREE
+    from accounts.access import effective_plan
+    return effective_plan(user)
 
 
 def limits_for(user) -> PlanLimits:

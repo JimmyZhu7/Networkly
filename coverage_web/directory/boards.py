@@ -438,7 +438,12 @@ BOARDS: list[tuple[str, BoardConfig]] = [
     # kept so it auto-populates when reqs open. CD&R (email-only) and Hellman &
     # Friedman (no careers API) are JS-gated — backlog.
     ("eqt", GreenhouseBoard(firm="EQT", token="eqtpartners")),
-    ("sixthstreet", GreenhouseBoard(firm="Sixth Street", token="sixthstreet")),
+    # Migrated from Greenhouse (404) to Workday: the official
+    # https://sixthstreet.com/current-opportunities/ embeds this exact site.
+    # GET-verified 2026-09-06: shell tenant/siteId match, and robots.txt
+    # explicitly allows /sixthstreetcareers/. Job counts not re-fetched here.
+    ("sixthstreet", WorkdayBoard(firm="Sixth Street", tenant_host="sixthstreet.wd1",
+                                site="sixthstreetcareers")),
     ("hps", GreenhouseBoard(firm="HPS Investment Partners", token="hpsinvestmentpartners")),
     ("golub", WorkdayBoard(firm="Golub Capital", tenant_host="wd501", tenant="golubcapital",
                            site="Golub_Capital_Careers", domain="myworkdaysite.com")),

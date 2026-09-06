@@ -2060,7 +2060,7 @@ element by the next turn.
             el.textContent = data.balance;
             var badge = document.getElementById("as-plan-badge");
             var label = document.getElementById("as-plan-label");
-            if (badge) badge.className = "pill plan-" + data.plan_label.toLowerCase();
+            if (badge) badge.className = "pill " + (data.plan_label === "Free" ? "plan-free" : "plan-pro");
             if (label) label.textContent = data.plan_label;
           })
           .catch(function () { /* a one-turn-stale credit count is not worth surfacing */ });
@@ -2119,6 +2119,16 @@ element by the next turn.
               typingText.textContent = "Reading " + event.label + "…";
             }
           } else if (event.type === "notice") {
+            if (event.kind === "busy") {
+              // The server did not accept this message or charge credits.
+              // Keep its text and files ready for an explicit retry.
+              if (pending) pending.turn.el.remove();
+              input.value = formData.get("message") || formData.get("text") || "";
+              autoSize(input);
+              selectedFiles = formData.getAll("file").filter(function (f) { return f && f.name; });
+              renderChips();
+              syncFileInput();
+            }
             var noticeTurn = buildTurn("assistant", true);
             noticeTurn.body.innerHTML = chatFormat(event.text);
             log.appendChild(noticeTurn.el);
@@ -2126,7 +2136,7 @@ element by the next turn.
             // as well: "try that again in a moment" is exactly when someone
             // wants to reword and retry. The notice itself gets no Copy —
             // Networkly talking about itself is not an answer.
-            if (pending) attachUserActions(pending.turn, event.user_message_id, pending.text);
+            if (pending && event.kind !== "busy") attachUserActions(pending.turn, event.user_message_id, pending.text);
             scrollLogToEnd();
           } else if (event.type === "done" && assistantTurn) {
             // The reply is whole — nothing left to pulse for.

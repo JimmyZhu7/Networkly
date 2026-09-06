@@ -7,6 +7,7 @@ that would dead-end at the OAuth redirect.
 <div class="auth-providers">
   {% for p in social_providers %}
     {% if p.configured %}
+    {% if not google_only or p.id == "google" %}
       <form method="post" action="{% provider_login_url p.id %}">
         {% csrf_token %}
         {% if redirect_field_value %}
@@ -17,6 +18,7 @@ that would dead-end at the OAuth redirect.
           <span>Continue with {{ p.label }}</span>
         </button>
       </form>
+    {% endif %}
     {% endif %}
     {% comment %}Unconfigured providers render NOTHING. They used to render
     as disabled buttons wearing "Setup Needed" chips, which put the owner's

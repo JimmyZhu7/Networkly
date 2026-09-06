@@ -150,3 +150,28 @@ def test_hitting_the_cap_reports_truncated(monkeypatch):
     assert result.ok is True
     assert result.truncated is True
     assert len(result.opportunities) == 40
+
+
+def test_empty_later_page_is_incomplete_when_count_says_more(monkeypatch):
+    pages = iter([{"count": 3, "positions": [_pos(0)]}, {"count": 3, "positions": []}])
+    monkeypatch.setattr(eightfold, "fetch_json", lambda *a, **k: next(pages))
+    result = eightfold.fetch(BOARD)
+    assert result.ok and result.raw_count == 1
+    assert result.truncated, "an empty partial page is not proof that the other roles closed"
+
+
+def test_repeated_positions_cannot_satisfy_the_reported_count(monkeypatch):
+    monkeypatch.setattr(eightfold, "fetch_json", lambda *a, **k: {"count": 4, "positions": [_pos(0), _pos(1)]})
+    result = eightfold.fetch(BOARD)
+    assert result.ok
+    assert result.truncated, "four returned rows containing only two jobs are not a complete four-job board"
+
+
+def test_later_higher_count_is_preserved_when_pagination_ends_early(monkeypatch):
+    pages = iter([{"count": 2, "positions": [_pos(0)]},
+                  {"count": 5, "positions": [_pos(1), _pos(2)]},
+                  {"count": 5, "positions": []}])
+    monkeypatch.setattr(eightfold, "fetch_json", lambda *a, **k: next(pages))
+    result = eightfold.fetch(BOARD)
+    assert result.ok and result.raw_count == 3
+    assert result.truncated

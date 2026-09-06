@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Networkly · Free Beta{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/pricing.css' %}">{% endblock %}
+{% block content %}
+<div class="networkly-pricing">
+  <header class="pricing-hero">
+    <h1>Your Whole Search.<br><span>One Free Beta.</span></h1>
+    <p class="pricing-intro">All individual features. No payment card.<br>A private beta for up to {{ beta_max_users }} invited users.</p>
+    <a class="pricing-text-link" href="/opportunities/">Explore Open Roles &rarr;</a>
+  </header>
+  <div class="pricing-inventory" aria-label="Current opportunities">
+    <p>One Workspace,<br><strong>Available Today</strong></p>
+    <div><strong>{{ open_count }}</strong><span>Open campus roles</span></div>
+    <div><strong>{{ firm_count }}</strong><span>Firms with open roles</span></div>
+    <div><strong>{{ market_count }}</strong><span>Markets tracked</span></div>
+  </div>
+  <div class="price-grid">
+    <article class="price-card featured">
+      <div class="plan-head"><h2 class="plan-name">Individual Beta</h2><span class="plan-badge">By Invitation</span></div>
+      <p class="plan-tagline">Find opportunities, build relationships, and keep your next step in view.</p>
+      <p class="plan-price"><span class="amount">$0</span><span class="per">throughout the beta</span></p>
+      <div class="plan-cta">{% if user.is_authenticated %}<a class="btn btn-primary" href="/app/">Open Your Workspace</a>{% else %}<a class="btn btn-primary" href="/accounts/login/">Continue With Your Invitation</a>{% endif %}</div>
+      <h3 class="plan-includes">Everything for Your Search</h3>
+      <ul class="plan-features">
+        <li>Role discovery, eligibility details, and saved applications</li>
+        <li>Contact management, follow-up planning, and firm priorities</li>
+        <li>Gmail sync and inbox scanning, with your permission</li>
+        <li>Google Calendar connection and deadline alerts</li>
+        <li>Assistant, meeting briefs, and optional inbox Autopilot</li>
+        <li>CSV import, data export, and account deletion</li>
+      </ul>
+    </article>
+    <article class="price-card">
+      <div class="plan-head"><h2 class="plan-name">Clear Limits</h2></div>
+      <p class="plan-tagline">The features are included. AI usage has an allowance so the beta stays sustainable.</p>
+      <ul class="plan-features">
+        <li><b>{{ advisor_pro_grant }} AI credits each month</b>, shared across Assistant, inbox AI, and briefs</li>
+        <li>Assistant uses {{ beta_message_cost }} credits per message</li>
+        <li>A daily limit of {{ beta_daily_burst }} credits across AI tools</li>
+        <li>Your balance and refill date are always in Settings</li>
+      </ul>
+      <p>No automatic charges, paid upgrades, or payment details. If we introduce paid plans later, you choose whether to subscribe.</p>
+      <details class="plan-detail"><summary>Connecting Google</summary><p>Sign in with the Google address on your invitation. Gmail and Calendar ask for separate permission. During Google's Testing mode, you may need to reconnect every seven days.</p></details>
+    </article>
+  </div>
+  <section class="pricing-credits">
+    <div><h2>Your Data.<br>Your Decisions.</h2></div>
+    <div><p>Connecting Gmail and Calendar is optional. Review AI suggestions before relying on them, and control Autopilot in Settings.</p><p>Read our <a href="/privacy/">Privacy Policy</a> and <a href="/terms/">Terms</a>. You can export your data or delete your account at any time.</p></div>
+  </section>
+</div>
+{% endblock %}

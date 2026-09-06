@@ -100,3 +100,6 @@ region_backfill_undo_*.json
 
 # Local UI review captures may contain tenant records. Never publish them.
 .impeccable/review/
+
+# Design explorations and rendered screenshots; kept on disk, not in the repo
+output/

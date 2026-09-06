@@ -13,29 +13,6 @@ databases:
     plan: basic-256mb # adjust; Render's smallest paid Postgres. Free tier expires.
 
 services:
-  # ---- Shared cache (Render Key Value, i.e. Redis) ------------------------
-  # DECLARED HERE, NOT CREATED BY HAND. This used to be a `sync: false`
-  # REDIS_URL with a comment telling you to make the store in the dashboard
-  # and paste its internal URL in — which meant that on every deploy so far
-  # there was no cache, and settings/base.py fell back to LocMemCache.
-  # That is not a performance footnote: what lives in this cache is
-  # security counters. allauth's failed-login limit (5 per 5 minutes),
-  # core.views' search throttle and billing.views' waitlist throttle are all
-  # counts that only mean anything if the three gunicorn workers agree on
-  # them. Per-process, "5 attempts" is really 15, and every deploy resets
-  # all three to zero. django-axes reads the same REDIS_URL.
-  #
-  # `ipAllowList: []` means no public access — the store is reachable only
-  # from this Blueprint's own services, over Render's private network, which
-  # is exactly the access pattern here. `allkeys_lru` because everything in
-  # it is a counter with a TTL: evicting the coldest key under pressure is
-  # correct, refusing writes is not.
-  - type: keyvalue
-    name: coverage-kv
-    plan: free # 25MB; these are short-TTL counters, not a data store
-    maxmemoryPolicy: allkeys_lru
-    ipAllowList: [] # private network only
-
   # ---- Web service -------------------------------------------------------
   - type: web
     name: coverage-web
@@ -45,6 +22,10 @@ services:
     healthCheckPath: /healthz
     preDeployCommand: "uv run --package coverage-web python coverage_web/manage.py migrate --noinput"
     envVars:
+      - key: BETA_ENABLED
+        value: true
+      - key: BETA_MAX_USERS
+        value: 100
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
       - key: DATABASE_URL
@@ -71,16 +52,21 @@ services:
       # custom domain; blank resolves to the Render hostname.
       - key: SITE_URL
         sync: false # e.g. https://coverage.app
-      # The rate-limit cache, wired from the `coverage-kv` Key Value store
-      # declared above. NOT optional in practice: blank falls back to a
-      # per-process in-memory cache, and this service runs three gunicorn
-      # workers, so allauth's failed-login limits count three separate times
-      # and reset on every deploy. See the Cache section of settings/base.py.
+      # Approved Upstash free shared cache. Preserve its existing TLS
+      # rediss:// URL in Render; do not provision a second cache on deploy.
       - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: coverage-kv
-          property: connectionString
+        sync: false
+      # Private avatar storage. Set all five values together in Render.
+      - key: MEDIA_S3_BUCKET_NAME
+        sync: false
+      - key: MEDIA_S3_ENDPOINT_URL
+        sync: false
+      - key: MEDIA_S3_REGION_NAME
+        sync: false
+      - key: MEDIA_S3_ACCESS_KEY_ID
+        sync: false
+      - key: MEDIA_S3_SECRET_ACCESS_KEY
+        sync: false
       - key: GOOGLE_OAUTH_CLIENT_ID
         sync: false
       - key: GOOGLE_OAUTH_CLIENT_SECRET
@@ -106,6 +92,10 @@ services:
       # Outbound email (password resets; later digests/alerts). e.g.
       # smtp+tls://resend:API_KEY@smtp.resend.com:587 — blank logs mail to the
       # service logs instead of sending (never 500s).
+      # Reserved credential only; the app does not read RESEND_API_KEY.
+      # EMAIL_URL controls delivery. Keep it unset until the sender is verified.
+      - key: RESEND_API_KEY
+        sync: false
       - key: EMAIL_URL
         sync: false
       - key: DEFAULT_FROM_EMAIL
@@ -140,6 +130,8 @@ services:
         sync: false
       - key: GMAIL_LIVE_TOKEN_KEY
         sync: false
+      - key: GCAL_LIVE_ENABLED
+        sync: false # enable only after testing the separate Calendar consent flow
       # ---- Stripe (billing/stripe_gateway.py) ----------------------------
       # Pay-as-you-go credit top-ups. Both blank = `is_configured()` is False,
       # the Settings card says top-ups aren't on yet, and the webhook 400s
@@ -197,8 +189,21 @@ services:
     # minutes rather than as fast as the quota allows.
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gmail_poll --interval 120"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_GMAIL_POLL
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -218,25 +223,30 @@ services:
       # cache that only ever grows. django-axes reads this same setting.
       - key: REDIS_URL
         fromService:
-          type: keyvalue
-          name: coverage-kv
-          property: connectionString
-      # sync: false, NOT fromService — these start blank on coverage-web too
-      # (docs/gmail-live-setup.md hasn't been done yet on a first deploy),
-      # and fromService can't resolve a value that doesn't exist yet on the
-      # source service. Same reason coverage-push-alerts' VAPID_* keys below
-      # use sync: false instead of fromService. Set the same five values
-      # here as on coverage-web once you have them.
+          type: web
+          name: coverage-web
+          envVarKey: REDIS_URL
+      # Share the configured OAuth client and token encryption key with web.
+      # Pub/Sub remains optional: polling needs no topic or subscription.
       - key: GMAIL_LIVE_CLIENT_ID
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_ID
       - key: GMAIL_LIVE_CLIENT_SECRET
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_SECRET
       - key: GMAIL_LIVE_PUBSUB_TOPIC
         sync: false
       - key: GMAIL_LIVE_PUBSUB_SUBSCRIPTION
         sync: false
       - key: GMAIL_LIVE_TOKEN_KEY
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_TOKEN_KEY
 
   # ---- Freshness pass every 6 hours (scrape + reclassify + reverify) -----
   # Four passes a day keeps deadlines honest across US and Asia hours.
@@ -250,8 +260,21 @@ services:
     schedule: "0 */6 * * *" # 00:00 / 06:00 / 12:00 / 18:00 UTC
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py refresh"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_SCRAPE
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -281,8 +304,21 @@ services:
     schedule: "0 13 * * *" # 13:00 UTC = 9am US Eastern / 9pm Hong Kong
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py send_deadline_push_alerts"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_PUSH_ALERTS
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -295,11 +331,20 @@ services:
       - key: DJANGO_ALLOWED_HOSTS
         value: localhost
       - key: VAPID_PUBLIC_KEY
-        sync: false # from `manage.py generate_vapid_keys`; blank = this cron no-ops
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: VAPID_PUBLIC_KEY
       - key: VAPID_PRIVATE_KEY
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: VAPID_PRIVATE_KEY
       - key: VAPID_CLAIM_EMAIL
-        sync: false # contact address for VAPID's "sub" claim, no "mailto:" prefix
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: VAPID_CLAIM_EMAIL
 
   # ---- Weekly retention digest, once a week -----------------------------
   # send_weekly_digest is safe to run with zero paid setup: unset EMAIL_URL
@@ -318,8 +363,21 @@ services:
     schedule: "0 13 * * 1" # Monday 13:00 UTC = 9am US Eastern / 9pm Hong Kong
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py send_weekly_digest"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_WEEKLY_DIGEST
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -332,7 +390,22 @@ services:
       - key: DJANGO_ALLOWED_HOSTS
         value: localhost
       - key: EMAIL_URL
-        sync: false # unset = every digest prints to this cron's logs instead of sending
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: EMAIL_URL
+      - key: DEFAULT_FROM_EMAIL
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: DEFAULT_FROM_EMAIL
+      # Cron services have no public hostname. Set SITE_URL explicitly on
+      # coverage-web before enabling email; inherit that canonical origin.
+      - key: SITE_URL
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SITE_URL
 
   # ---- Gmail Live watch renewal, once a day -----------------------------
   # Google's users.watch() registration expires after 7 days regardless of
@@ -354,8 +427,21 @@ services:
     schedule: "30 5 * * *" # 05:30 UTC — after trial-expire, clear of the scrape's 00/06/12/18 marks
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gmail_watch_renew"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_GMAIL_WATCH_RENEW
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -367,17 +453,26 @@ services:
           envVarKey: DJANGO_SECRET_KEY
       - key: DJANGO_ALLOWED_HOSTS
         value: localhost
-      # sync: false — see the identical comment on coverage-gmail-live above.
+      # Share Gmail credentials; optional Pub/Sub stays explicitly configured.
       - key: GMAIL_LIVE_CLIENT_ID
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_ID
       - key: GMAIL_LIVE_CLIENT_SECRET
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_SECRET
       - key: GMAIL_LIVE_PUBSUB_TOPIC
         sync: false
       - key: GMAIL_LIVE_PUBSUB_SUBSCRIPTION
         sync: false
       - key: GMAIL_LIVE_TOKEN_KEY
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_TOKEN_KEY
 
   # ---- Pro trial expiry, once a day --------------------------------------
   # accounts.trials starts a PRO_TRIAL_DAYS-long trial the moment a Free
@@ -403,8 +498,21 @@ services:
     schedule: "0 5 * * *" # 05:00 UTC — before gmail-watch-renew, clear of the scrape's 00/06/12/18 marks
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py pro_trial_expire"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_PRO_TRIAL_EXPIRE
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -419,15 +527,24 @@ services:
       # The trial-ended email. Blank = no send at all (not a send to the
       # logs): accounts.trials.email_is_configured() reads False on the
       # console backend, and the Settings banner carries the whole notice
-      # instead. Set the same two values here as on coverage-web.
+      # instead. Inherit web settings once its sender is verified.
       - key: EMAIL_URL
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: EMAIL_URL
       - key: DEFAULT_FROM_EMAIL
-        sync: false
-      # For the "Open Settings" link in that email. Blank resolves to the
-      # Render hostname, same as on coverage-web.
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: DEFAULT_FROM_EMAIL
+      # Cron services have no public hostname; inherit the web service's
+      # explicitly configured origin for the "Open Settings" link.
       - key: SITE_URL
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SITE_URL
 
   # ---- Gmail Live first-connect backfill + "Scan Now" rescans, every ----
   # ---- 5 minutes ----------------------------------------------------------
@@ -459,8 +576,21 @@ services:
     schedule: "*/5 * * * *"
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gmail_backfill"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_GMAIL_BACKFILL
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -472,17 +602,89 @@ services:
           envVarKey: DJANGO_SECRET_KEY
       - key: DJANGO_ALLOWED_HOSTS
         value: localhost
-      # sync: false — see the identical comment on coverage-gmail-live above.
+      # Ambiguous rescan threads use AI after deterministic extraction.
+      # Without the worker's own key that stage silently stays disabled.
+      - key: ANTHROPIC_API_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: ANTHROPIC_API_KEY
+      # Share Gmail credentials; optional Pub/Sub stays explicitly configured.
       - key: GMAIL_LIVE_CLIENT_ID
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_ID
       - key: GMAIL_LIVE_CLIENT_SECRET
-        sync: false
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_SECRET
       - key: GMAIL_LIVE_PUBSUB_TOPIC
         sync: false
       - key: GMAIL_LIVE_PUBSUB_SUBSCRIPTION
         sync: false
       - key: GMAIL_LIVE_TOKEN_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_TOKEN_KEY
+
+  # Read-only Google Calendar mirroring. The explicit flag keeps it idle
+  # until the founder enables Calendar after its separate consent test.
+  - type: cron
+    name: coverage-gcal-sync
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "4-59/5 * * * *"
+    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gcal_sync --apply"
+    envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_GCAL_SYNC
         sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
+      - key: DJANGO_SETTINGS_MODULE
+        value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coverage-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DJANGO_ALLOWED_HOSTS
+        value: localhost
+      - key: GCAL_LIVE_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GCAL_LIVE_ENABLED
+      - key: GMAIL_LIVE_CLIENT_ID
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_ID
+      - key: GMAIL_LIVE_CLIENT_SECRET
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_CLIENT_SECRET
+      - key: GMAIL_LIVE_TOKEN_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: GMAIL_LIVE_TOKEN_KEY
 
   # ---- Autopilot worker: decide the runs students queued ----------------
   # `capture.autopilot.start_run` (the "Run Autopilot" button on Today)
@@ -518,8 +720,21 @@ services:
     schedule: "2-59/5 * * * *" # 02, 07, 12, ... — two minutes off gmail-backfill's */5
     dockerCommand: "uv run --package coverage-web python coverage_web/manage.py capture_autopilot_worker"
     envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_AUTOPILOT
+        sync: false
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
         value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -532,4 +747,41 @@ services:
       - key: DJANGO_ALLOWED_HOSTS
         value: localhost
       - key: ANTHROPIC_API_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: ANTHROPIC_API_KEY
+
+  - type: cron
+    name: coverage-assistant-reconcile
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "*/10 * * * *"
+    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py assistant_reconcile --apply"
+    envVars:
+      # Optional success heartbeat; configure a missed-run alert separately.
+      - key: HEALTHCHECK_URL_ASSISTANT_RECONCILE
         sync: false
+      - key: DJANGO_SETTINGS_MODULE
+        value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coverage-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DJANGO_ALLOWED_HOSTS
+        value: localhost
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED

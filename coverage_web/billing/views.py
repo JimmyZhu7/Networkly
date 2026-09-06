@@ -5,6 +5,10 @@ top-ups (billing/stripe_gateway.py). See that module's docstring for the
 
 from __future__ import annotations
 
+import logging
+
+import stripe
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
@@ -22,6 +26,8 @@ from core.clientip import client_ip
 from . import stripe_gateway
 from .models import ProWaitlist
 
+logger = logging.getLogger(__name__)
+
 
 @login_required
 @require_POST
@@ -35,6 +41,10 @@ def checkout(request, pack_key: str):
     cleanly everywhere" posture applied to a POST instead of a GET.
     """
     settings_url = reverse("accounts:settings") + "#credits"
+    from accounts.access import beta_enabled
+    if beta_enabled():
+        messages.info(request, "The beta is free. Credits refill each month; no payment is needed.")
+        return redirect(settings_url)
     if not stripe_gateway.is_configured():
         messages.info(request, "Credit top-ups aren't available yet.")
         return redirect(settings_url)
@@ -44,9 +54,16 @@ def checkout(request, pack_key: str):
 
     success_url = request.build_absolute_uri(settings_url)
     cancel_url = request.build_absolute_uri(settings_url)
-    session = stripe_gateway.create_checkout_session(
-        request.user, pack_key, success_url=success_url, cancel_url=cancel_url
-    )
+    try:
+        session = stripe_gateway.create_checkout_session(
+            request.user, pack_key, success_url=success_url, cancel_url=cancel_url
+        )
+    except (stripe.StripeError, stripe_gateway.StripeGatewayError) as exc:
+        # Provider errors may contain request or account details. Keep them
+        # out of user-facing messages and log only the failure category.
+        logger.warning("Credit checkout unavailable: %s", type(exc).__name__)
+        messages.error(request, "Checkout is unavailable right now. Please try again shortly.")
+        return redirect(settings_url)
     return redirect(session.url)
 
 

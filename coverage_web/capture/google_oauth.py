@@ -78,12 +78,11 @@ def auth_url(
     no refresh token is one that silently stops working the moment its
     short-lived access token expires.
 
-    `include_granted_scopes="false"` is what keeps the two grants apart.
-    Google's incremental authorisation would otherwise fold every scope the
-    user has already given this client into the new token — so connecting
-    the calendar would hand back a credential that also reads mail, and a
-    Gmail reconnect would silently pick the calendar back up after a
-    disconnect. Each grant asks for its own scope and gets exactly that.
+    `include_granted_scopes="false"` disables incremental authorization for
+    this request; each connection requests its own scopes. It does not
+    isolate revocation: Google revokes authorization across all OAuth
+    clients in the Cloud project for the same Google account, including
+    tokens issued through a different client.
     """
     built = flow(
         client_id=client_id,

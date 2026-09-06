@@ -72,6 +72,7 @@ import urllib.error
 import urllib.request
 from email.utils import parseaddr
 
+from django.contrib.auth import get_user_model
 from django.conf import settings
 
 from capture import inbound
@@ -326,12 +327,18 @@ def run_residue_stage(
     stats = {
         "residue_threads_seen": 0,
         "residue_threads_processed": 0,
+        "residue_threads_failed": 0,
         "genuine_reply": 0,
         "auto_reply": 0,
         "ambiguous": 0,
         "touches_logged": 0,
     }
-    if not residue:
+    def owner_active():
+        return get_user_model().objects.filter(
+            pk=connection.user.pk, is_active=True, deleted_at__isnull=True,
+        ).exists()
+
+    if not residue or not owner_active():
         return stats
 
     # Dedup to one representative message per THREAD -- the cap is on
@@ -355,22 +362,27 @@ def run_residue_stage(
     # right now (see this function's docstring on `max_threads`).
     effective_cap = MAX_RESIDUE_THREADS if max_threads is None else min(MAX_RESIDUE_THREADS, max_threads)
     thread_items = list(by_thread.items())[:effective_cap]
-    stats["residue_threads_processed"] = len(thread_items)
 
     own_email = connection.gmail_address.lower()
     findings = []
     for thread_id, message in thread_items:
+        if not owner_active():
+            break
         try:
             outcome, _quote = _classify_one(message, model=model, timeout=timeout, retries=retries)
         except ResidueClassifyError:
-            outcome = "ambiguous"
+            # Failed requests produced no classification to bill for. Keep
+            # them distinct from a model's valid "ambiguous" answer.
+            stats["residue_threads_failed"] += 1
+            continue
+        stats["residue_threads_processed"] += 1
         stats[outcome] = stats.get(outcome, 0) + 1
         if outcome == "genuine_reply":
             finding = _finding_from_genuine_reply(own_email, message, thread_id)
             if finding is not None:
                 findings.append(finding)
 
-    if findings:
+    if findings and owner_active():
         result = apply_findings(connection.user, findings)
         stats["touches_logged"] = result.touches_logged
 

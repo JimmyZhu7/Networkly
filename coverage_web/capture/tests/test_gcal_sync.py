@@ -19,6 +19,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from google.auth.exceptions import RefreshError
 from googleapiclient.errors import HttpError
 
 from capture import gcal_live
@@ -115,6 +116,22 @@ def _sync(connection, client, **kwargs):
 
 # ---------------------------------------------------------------------------
 class TestCreatesAndUpdates:
+    @pytest.mark.parametrize("explicit_empty", [False, True])
+    def test_cleared_google_fields_do_not_leave_stale_meeting_details(self, connection, explicit_empty):
+        _sync(connection, _fake_client([_page([_event(
+            event_id="clear-me", location="Old video link", description="Old agenda",
+        )])]))
+        cleared = _event(event_id="clear-me")
+        if explicit_empty:
+            cleared.update(location="", description="")
+
+        result = _sync(connection, _fake_client([_page([cleared])]))
+
+        event = CalendarEvent.all_objects.get(external_id="clear-me")
+        assert event.location == ""
+        assert event.description == ""
+        assert result.updated == 1
+
     def test_a_google_event_lands_on_the_timeline(self, student, connection):
         client = _fake_client([_page([_event(
             event_id="g1", summary="Superday prep", location="Zoom",
@@ -406,6 +423,18 @@ class TestItDoesNotFightTheMailboxPath:
         # usually does not.
         assert captured.title == "Chat with Jane Banker"
 
+        captured.description = "Context from the email"
+        captured.save(update_fields=["description"])
+        again = _fake_client([_page([_event(
+            event_id="g1", summary="Jimmy <> Jane", ical_uid="uid-abc@google.com",
+            description="Calendar-only description",
+        )])])
+        _sync(connection, again)
+        captured.refresh_from_db()
+        assert captured.title == "Chat with Jane Banker"
+        assert captured.description == "Context from the email"
+        assert captured.contact_id == contact.id
+
     def test_adopting_promotes_a_prose_guess_to_a_stated_time(
         self, student, connection, contact
     ):
@@ -542,3 +571,11 @@ class TestDryRun:
         _sync(connection, client, dry_run=True)
 
         assert client.events.return_value.list.called
+
+
+def test_retryable_calendar_auth_failure_does_not_revoke_the_grant(connection):
+    with patch.object(gcal_live, "_calendar_client", side_effect=RefreshError("try later", retryable=True)):
+        with pytest.raises(gcal_live.GcalError, match="temporarily unavailable"):
+            gcal_live.sync_connection(connection)
+    connection.refresh_from_db()
+    assert connection.status == "active"

@@ -143,6 +143,31 @@ class TestGrantPurchase:
 # handle_webhook_event — idempotency is the important case here
 # ---------------------------------------------------------------------------
 class TestHandleWebhookEvent:
+    def test_distinct_paid_events_for_one_checkout_grant_once(self, student):
+        events = [
+            _fake_checkout_completed_event("evt_paid", student.id, "small"),
+            _fake_checkout_completed_event(
+                "evt_settled", student.id, "small",
+                event_type="checkout.session.async_payment_succeeded",
+            ),
+        ]
+        with patch("stripe.Webhook.construct_event", side_effect=events):
+            stripe_gateway.handle_webhook_event(b"{}", "sig")
+            stripe_gateway.handle_webhook_event(b"{}", "sig")
+        purchases = CreditLedger.objects.for_user(student).filter(kind="purchase")
+        assert list(purchases.values_list("delta", flat=True)) == [60]
+
+    def test_separate_checkouts_both_grant(self, student):
+        events = [
+            _fake_checkout_completed_event("evt_one", student.id, "small"),
+            _fake_checkout_completed_event("evt_two", student.id, "small"),
+        ]
+        events[1]["data"]["object"]["id"] = "cs_test_other"
+        with patch("stripe.Webhook.construct_event", side_effect=events):
+            for _ in events:
+                stripe_gateway.handle_webhook_event(b"{}", "sig")
+        assert CreditLedger.objects.for_user(student).filter(kind="purchase").count() == 2
+
     def test_grants_credits_on_checkout_session_completed(self, settings, student):
         settings.STRIPE_SECRET_KEY = "sk_test_x"
         settings.STRIPE_WEBHOOK_SECRET = "whsec_x"
@@ -446,6 +471,35 @@ class ConcurrentWebhookDeliveryTest(TransactionTestCase):
     def setUp(self):
         self.student = User.objects.create_user(email="racer-topup@example.com", password="x")
 
+    def test_concurrent_distinct_events_for_the_same_checkout_grant_once(self):
+        from django.db import connections
+
+        events = {
+            str(i): _fake_checkout_completed_event(f"evt_distinct_{i}", self.student.id, "small")
+            for i in range(6)
+        }
+        errors = []
+        barrier = threading.Barrier(6)
+
+        def deliver(index):
+            try:
+                barrier.wait(timeout=10)
+                stripe_gateway.handle_webhook_event(b"{}", str(index))
+            except Exception as exc:
+                errors.append(exc)
+            finally:
+                connections.close_all()
+
+        with patch("stripe.Webhook.construct_event", side_effect=lambda payload, sig, secret: events[sig]):
+            threads = [threading.Thread(target=deliver, args=(i,)) for i in range(6)]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=15)
+        assert not any(thread.is_alive() for thread in threads)
+        assert errors == []
+        assert CreditLedger.objects.for_user(self.student).filter(kind="purchase").count() == 1
+
     def test_concurrent_identical_deliveries_never_double_grant(self):
         with self.settings(
             STRIPE_SECRET_KEY="sk_test_x",
@@ -462,6 +516,9 @@ class ConcurrentWebhookDeliveryTest(TransactionTestCase):
                         stripe_gateway.handle_webhook_event(b"{}", "sig")
                 except Exception as exc:  # noqa: BLE001 — recorded, not swallowed
                     errors.append(exc)
+                finally:
+                    from django.db import connections
+                    connections.close_all()
 
             threads = [threading.Thread(target=_go) for _ in range(6)]
             for t in threads:
@@ -483,6 +540,22 @@ class ConcurrentWebhookDeliveryTest(TransactionTestCase):
 # Views
 # ---------------------------------------------------------------------------
 class TestCheckoutView:
+    def test_provider_failure_returns_to_settings_without_a_server_error(self, settings, student):
+        from django.contrib.messages import get_messages
+
+        settings.STRIPE_SECRET_KEY = "sk_test_x"
+        settings.STRIPE_WEBHOOK_SECRET = "whsec_x"
+        client = Client()
+        client.force_login(student)
+        with patch("stripe.checkout.Session.create", side_effect=stripe.APIConnectionError("private provider detail")):
+            response = client.post(reverse("billing:checkout", args=["small"]))
+        assert response.status_code == 302
+        assert reverse("accounts:settings") in response["Location"]
+        notices = " ".join(str(message) for message in get_messages(response.wsgi_request))
+        assert "try again" in notices.lower()
+        assert "private provider detail" not in notices
+        assert not CreditLedger.objects.for_user(student).filter(kind="purchase").exists()
+
     def test_returns_clean_response_when_not_configured(self, settings, student):
         settings.STRIPE_SECRET_KEY = ""
         settings.STRIPE_WEBHOOK_SECRET = ""

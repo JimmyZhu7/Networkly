@@ -152,9 +152,10 @@ def fetch(board: LumesseBoard) -> FetchResult:
                 if opp is not None and opp.url not in seen:
                     seen.add(opp.url)
                     opps.append(opp)
-            first += _PAGE
+            first += len(jobs)
         return FetchResult(board=board, ok=True, opportunities=opps,
                            raw_count=total or len(opps),
+                           truncated=total is not None and len(seen) < total,
                            empty_state=not opps and total == 0)
     except Exception as exc:  # noqa: BLE001 — one board must not sink the run
         return FetchResult(board=board, ok=False, opportunities=[],

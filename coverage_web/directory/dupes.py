@@ -384,11 +384,23 @@ def _survivor_rank(row: Any, sticky_ids: frozenset) -> tuple:
     )
 
 
+def _stated_grad_claim(row: Any) -> tuple[int, int | None] | None:
+    """The same stated-year precedence as eligibility; never use an inference."""
+    year = str(getattr(row, "class_year", "") or "").strip()
+    if year.isdigit():
+        return int(year), int(year)
+    grad = ((getattr(row, "raw", None) or {}).get("facts") or {}).get("grad") or {}
+    years = [int(y) for y in grad.get("years") or () if str(y).isdigit()]
+    if not years:
+        return None
+    return min(years), None if grad.get("open_high") else max(years)
+
+
 def _competing_claims(cluster: list[Any]) -> bool:
     """Does this cluster hold two rows that STATE different answers to the
     same question? Then it is not a duplicate and nothing may be hidden.
 
-    The three vetoes, in one place because there are now two folds that need
+    The vetoes live together because there are now two folds that need
     them (`fold_duplicates` and `fold_city_variants`) and a veto that held on
     one surface and not the other would be worse than no veto at all. Each
     one's evidence is written up in `fold_duplicates`' own docstring, which
@@ -405,8 +417,13 @@ def _competing_claims(cluster: list[Any]) -> bool:
     stated_sponsorship = {v for v in (getattr(m, "sponsorship", "") or ""
                                       for m in cluster)
                           if v in ("yes", "no")}
+    stated_grad = {claim for m in cluster if (claim := _stated_grad_claim(m)) is not None}
+    buckets = {getattr(m, "bucket", "") for m in cluster if getattr(m, "bucket", "")}
+    # The same title and city can serve different entry routes or graduation
+    # windows. Keeping only one would hide an eligible posting behind a sibling
+    # whose own requirements exclude the reader.
     return (len(stated_deadlines) > 1 or len(stated_cohorts) > 1
-            or len(stated_sponsorship) > 1)
+            or len(stated_sponsorship) > 1 or len(stated_grad) > 1 or len(buckets) > 1)
 
 
 def _cluster_by_location(members: list[Any]) -> list[list[Any]]:

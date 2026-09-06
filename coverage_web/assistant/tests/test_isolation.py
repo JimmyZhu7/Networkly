@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import re
+import inspect
 from datetime import timedelta
 from pathlib import Path
 
@@ -98,8 +99,7 @@ def test_no_tool_body_takes_a_user_from_its_arguments():
     """`execute()` binds `user` from the view's request; the schemas have no
     field for one. Restated here as a source-level check so a future tool
     added with a `user_id` argument fails loudly."""
-    source = (APP_DIR / "tools.py").read_text()
-    assert "def execute(user" in source
+    assert next(iter(inspect.signature(tools.execute).parameters)) == "user"
     for schema in tools.TOOL_SCHEMAS:
         assert "user_id" not in json.dumps(schema["input_schema"]), schema["name"]
 

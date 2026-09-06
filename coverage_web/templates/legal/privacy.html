@@ -60,7 +60,7 @@ DO NOT REWORD: the "Google API Limited Use" section
   <header class="legal-header">
     <nav class="legal-tabs" aria-label="Legal pages"><a href="{% url 'accounts:privacy' %}" aria-current="page">Privacy</a><a href="{% url 'accounts:terms' %}">Terms</a></nav>
     <h1>Privacy Policy</h1><p class="legal-lede">Your data, your choices, and how Networkly works.</p>
-    <p class="legal-updated">Last updated <time datetime="2026-09-05">5 September 2026</time></p>
+    <p class="legal-updated">Last updated <time datetime="2026-09-06">6 September 2026</time></p>
   </header>
   <div class="legal-layout">
     <nav class="legal-index" aria-label="On this page"><span>On This Page</span><a href="#what-we-collect">Your Data</a><a href="#optional-mail-access">Connections</a><a href="#who-we-share-data-with">Providers</a><a href="#retention">Retention</a><a href="#your-rights">Your Controls</a><a href="#contact">Contact</a></nav>
@@ -97,7 +97,7 @@ DO NOT REWORD: the "Google API Limited Use" section
 </section>
 <section id="optional-calendar-access" aria-labelledby="optional-calendar-access-title"><h2 id="optional-calendar-access-title">Optional Calendar Access</h2>
 <p>If you connect Google Calendar, Networkly requests separate read-only permission to display calendar events in your workspace. It stores an encrypted connection token, sync markers, event titles, descriptions, locations, start and end times, and event identifiers. It does not create, edit, delete, or RSVP to events in Google Calendar.</p>
-  <p>Calendar and Gmail connections are separate. You can disconnect either from Settings without disconnecting the other. Imported events remain in Networkly until removed or your account is deleted. Calendar details may also be included as context when you use an AI feature that works with your schedule.</p>
+  <p>Calendar and Gmail have separate consent screens and connection records. You can disconnect either from Settings. When Google confirms revocation, it also revokes other grants in the same Google Cloud project for that Google account, so the other connection may need to be reconnected. Imported events remain in Networkly until removed or your account is deleted. Calendar details may also be included as context when you use an AI feature that works with your schedule.</p>
 </section>
 <section id="google-api-limited-use" aria-labelledby="google-api-limited-use-title"><h2 id="google-api-limited-use-title">Google API Limited Use</h2>
 <p>Networkly's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
@@ -142,7 +142,9 @@ DO NOT REWORD: the "Google API Limited Use" section
 <section id="retention" aria-labelledby="retention-title"><h2 id="retention-title">Retention</h2>
 <p>Your recruiting records are retained while your account is open, unless you delete them. Connection tokens are removed when you disconnect a service. Temporary sessions, rate-limit counters, and sync state follow their own operational expiry rules.</p>
   <p>Gmail sync retains the structured records and limited evidence excerpts described above, rather than complete messages.</p>
-  <p>Account deletion removes your account and associated private database records from the active service. This does not erase data you exported, messages in your mailbox, or copies already held by connected providers. Hosting backups follow [BACKUP RETENTION PERIOD]; provider retention is governed by the applicable service arrangements.</p>
+  <p>Assistant credit records remain after you delete a conversation so we can settle or refund interrupted requests. These records contain request identifiers, the model, credit cost, status, timestamps, and any recovery reason. They are included in your account export and deleted with your account.</p>
+  <p>We retain a beta invitation record for the lifetime of the beta to enforce its 100-person limit and prevent deleted seats from being reused. When you delete your account, we clear the email address and account link from that record but retain a SHA-256 fingerprint of your normalized email address and the invitation and redemption dates. The fingerprint is pseudonymous personal data, not anonymous data.</p>
+  <p>Account deletion removes your account and associated private database records from the active service, except for the beta invitation record described above. This does not erase data you exported, messages in your mailbox, or copies already held by connected providers. Hosting backups follow [BACKUP RETENTION PERIOD]; provider retention is governed by the applicable service arrangements.</p>
 </section>
 <section id="security" aria-labelledby="security-title"><h2 id="security-title">Security</h2>
 <p>Production settings require HTTPS and secure cookies. Passwords are stored as one-way hashes. Gmail and Google Calendar refresh tokens are encrypted with a key held separately from the database. Account scoping and access controls help protect private records.</p>

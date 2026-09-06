@@ -831,6 +831,10 @@ def _ics_body(user) -> HttpResponse:
                   f"UID:coverage-ev-{ev.id}@coverage.app",
                   f"DTSTAMP:{stamp}",
                   f"SUMMARY:{esc(ev.title)}"]
+        if ev.cancelled_at is not None:
+            # Preserve the subscribed event's identity while releasing its
+            # occupied time; a changed title alone still leaves a busy event.
+            lines += ["STATUS:CANCELLED", "TRANSP:TRANSPARENT"]
         if ev.all_day:
             day = timezone.localtime(ev.starts_at).date()
             lines.append(f"DTSTART;VALUE=DATE:{day:%Y%m%d}")

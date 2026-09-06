@@ -25,6 +25,8 @@ conversation the model is having.
 
 from __future__ import annotations
 
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -179,6 +181,37 @@ class AdvisorMemory(PrivateModel):
 
     def __str__(self) -> str:
         return self.text
+
+
+class ChatTurnReservation(PrivateModel):
+    """Durable credit outcome for one turn, retained after chat deletion.
+
+    The ledger debit and pending row commit together. A final saved answer
+    settles it in the same transaction; a failure/recovery refunds it once.
+    conversation_key remains available to recovery after the FK is cleared.
+    """
+
+    PENDING = "pending"
+    SETTLED = "settled"
+    REFUNDED = "refunded"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="assistant_reservations")
+    conversation = models.ForeignKey(ChatConversation, on_delete=models.SET_NULL, null=True, related_name="reservations")
+    conversation_key = models.PositiveBigIntegerField()
+    reply = models.ForeignKey(ChatMessage, on_delete=models.SET_NULL, null=True, blank=True, related_name="credit_reservations")
+    cost = models.PositiveIntegerField()
+    model = models.CharField(max_length=100)
+    status = models.CharField(max_length=16, default=PENDING, choices=[
+        (PENDING, "Pending"), (SETTLED, "Settled"), (REFUNDED, "Refunded"),
+    ])
+    created = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    reason = models.CharField(max_length=100, blank=True, default="")
+
+    class Meta(PrivateModel.Meta):
+        db_table = "assistant_turn_reservations"
+        indexes = [models.Index(fields=["status", "created"], name="as_turn_pending_created")]
 
 
 class DailyBrief(PrivateModel):

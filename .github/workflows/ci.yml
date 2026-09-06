@@ -28,6 +28,7 @@ jobs:
       DJANGO_SETTINGS_MODULE: coverage_web.settings.local
       DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production
       DATABASE_URL: postgres://coverage:coverage@localhost:5432/coverage
+      COVERAGE_DOMAIN_TEST_DATABASE_URL: postgres://coverage:coverage@localhost:5432/test_coverage_domain
 
     steps:
       - name: Check out repository
@@ -48,9 +49,22 @@ jobs:
         working-directory: coverage_web
         run: uv run python manage.py check
 
+      - name: Check model changes have migrations
+        working-directory: coverage_web
+        run: uv run python manage.py makemigrations --check --dry-run
+
       - name: Run migrations against the Postgres service container
         working-directory: coverage_web
         run: uv run python manage.py migrate --noinput
+
+      - name: Create isolated domain test database
+        run: |
+          uv run python - <<'PY'
+          import os
+          import psycopg
+          with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as conn:
+              conn.execute("CREATE DATABASE test_coverage_domain")
+          PY
 
       - name: Run pytest
         run: uv run pytest

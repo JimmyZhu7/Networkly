@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Coverage's Django project: multi-tenant web app, auth, base templates, htmx-served views."
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "django>=5.1,<6.0",
+    "django>=5.2.17,<6.0",
     "psycopg[binary]>=3.2",
     "django-allauth[socialaccount]>=65.0",
     "django-environ>=0.11",
@@ -24,6 +24,7 @@ dependencies = [
     # hashed assets come back with `max-age=315360000, immutable` after that.
     "brotli>=1.1",
     "pillow>=11.0",  # required by ImageField (accounts.User.avatar)
+    "django-storages[s3]>=1.14.6,<2",  # private durable avatars; local fallback remains
     # OPTIONAL AT RUNTIME, and deliberately so. `fetch_firm_logos` uses it to
     # rasterise SVG marks — State Street and Franklin Templeton publish only
     # SVG, and Pillow cannot read it. It needs native cairo present
@@ -65,7 +66,7 @@ dependencies = [
     # Refresh tokens are bearer credentials to someone's mailbox — encrypted
     # at rest with Fernet rather than stored plain, the same "use the
     # well-tested library, don't hand-roll crypto" call as pywebpush above.
-    "cryptography>=43.0",
+    "cryptography>=50.0.1",
     # Pay-as-you-go credit top-ups (billing/stripe_gateway.py). Importable
     # with zero configuration — the SDK itself needs no key at import time,
     # only at call time, which is exactly what `is_configured()` gates. See

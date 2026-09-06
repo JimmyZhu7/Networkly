@@ -10,7 +10,7 @@
   <nav class="directory-back" aria-label="Breadcrumb"><a href="{% url 'opportunities' %}"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m11 5-5 5 5 5M6 10h10"/></svg>Opportunities</a></nav>
   <header class="pagehead">
     <div class="pagehead-text">
-      <div class="directory-firm-identity"><span class="directory-firm-mark{% if firm.logo %} has-logo{% endif %}">{% if firm.logo %}<img src="{{ firm.logo.url }}" alt="" width="48" height="48" decoding="async" data-firm-logo><span class="firm-monogram" hidden>{{ firm.name|slice:":2"|upper }}</span>{% else %}{{ firm.name|slice:":2"|upper }}{% endif %}</span><h1 class="pagehead-title">{{ firm.name|smart_title }}</h1></div>
+      <div class="directory-firm-identity"><span class="directory-firm-mark{% if firm.logo_url %} has-logo{% endif %}">{% if firm.logo_url %}<img src="{{ firm.logo_url }}" alt="" width="48" height="48" decoding="async" data-firm-logo><span class="firm-monogram" hidden>{{ firm.name|slice:":2"|upper }}</span>{% else %}{{ firm.name|slice:":2"|upper }}{% endif %}</span><h1 class="pagehead-title">{{ firm.name|smart_title }}</h1></div>
     </div>
     {% if user.is_authenticated %}
       <div class="pagehead-actions">

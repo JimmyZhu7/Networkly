@@ -43,7 +43,7 @@ from django.utils import timezone
 from analytics.events import record_event
 from analytics.models import FitScore, Import, ProductEvent, UserOpportunity
 from assistant.models import (
-    AdvisorMemory, ChatConversation, ChatFolder, ChatMessage, DailyBrief,
+    AdvisorMemory, ChatConversation, ChatFolder, ChatMessage, ChatTurnReservation, DailyBrief,
 )
 from billing.models import CreditLedger, ProWaitlist
 from capture import gmail_live
@@ -1231,6 +1231,21 @@ def chat_messages_csv(user) -> str:
     )
 
 
+def beta_invitation_csv(user) -> str:
+    return _csv(["email", "invited_at", "joined_at"],
+                ([seat.email, _dt(seat.created_at), _dt(seat.redeemed_at)]
+                 for seat in user.beta_invitations.all()))
+
+
+def assistant_turns_csv(user) -> str:
+    rows = ChatTurnReservation.objects.for_user(user).order_by("created")
+    return _csv(
+        ["turn_id", "conversation_id", "cost", "model", "status", "created", "completed_at", "reason"],
+        ([str(r.id), r.conversation_key, r.cost, r.model, r.status,
+          _dt(r.created), _dt(r.completed_at), r.reason] for r in rows),
+    )
+
+
 def advisor_memories_csv(user) -> str:
     rows = AdvisorMemory.objects.for_user(user)
     return _csv(ADVISOR_MEMORY_EXPORT_COLUMNS, ([m.text, _dt(m.created)] for m in rows))
@@ -1377,6 +1392,10 @@ EXPORT_FILES: list[tuple[str, object, str]] = [
      "Every Talk to Networkly conversation you've started, with its folder."),
     ("chat_messages.csv", chat_messages_csv,
      "Every message in every Talk to Networkly conversation."),
+    ("beta_invitation.csv", beta_invitation_csv,
+     "Your invitation and beta membership dates."),
+    ("assistant_turns.csv", assistant_turns_csv,
+     "AI credit reservations and their settled or refunded outcome."),
     ("advisor_memories.csv", advisor_memories_csv,
      "Facts the advisor has remembered about your search, in its own words."),
     ("daily_briefs.csv", daily_briefs_csv,
@@ -1515,6 +1534,7 @@ _DELETE_ORDER: list[tuple[str, type]] = [
     # OWN relative order among themselves doesn't affect the counts the way
     # `contact`'s children above do — kept messages-then-conversations-then-
     # folders anyway, for the same readability the rest of this list follows).
+    ("assistant_turns", ChatTurnReservation),
     ("chat_messages", ChatMessage),
     ("chat_conversations", ChatConversation),
     ("chat_folders", ChatFolder),

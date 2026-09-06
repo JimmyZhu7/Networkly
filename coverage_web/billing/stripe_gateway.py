@@ -19,13 +19,13 @@ the two env vars below. `user.id` and the pack key travel in `metadata` so
 the webhook (which runs with no request context at all) can identify what
 to grant without a database lookup keyed on anything Stripe-specific.
 
-Idempotency: Stripe redelivers webhook events (at-least-once delivery is
-the documented guarantee), so `handle_webhook_event` must not double-grant
-on a duplicate delivery of the same `event.id`. Enforced with
+Idempotency: Stripe redelivers webhook events and can deliver different
+events for one Checkout Session. `handle_webhook_event` grants once per
+paid session, with an event guard for historical records. Enforced with
 `ProcessedStripeEvent` (billing/models.py) — a plain, non-tenant model,
 because a webhook event isn't tied to any request-time tenant context — and
 a `get_or_create` inside `transaction.atomic()`, so two concurrent
-deliveries of the same event race on that row's unique constraint, not on
+deliveries for one checkout race on that row's unique constraint, not on
 the ledger.
 
 PAID, NOT MERELY COMPLETED. `checkout.session.completed` fires when the
@@ -165,7 +165,7 @@ def handle_webhook_event(payload: bytes, sig_header: str) -> None:
     what tells Stripe's retry logic this delivery was rejected rather than
     silently accepted.
 
-    Idempotent by construction: `ProcessedStripeEvent` records `event.id`
+    Idempotent by construction: `ProcessedStripeEvent` records the checkout ID
     inside the same `atomic()` block the grant is written in, and a
     duplicate delivery hits that row's unique constraint and returns
     without granting again — see this module's docstring for why a plain,
@@ -243,12 +243,22 @@ def handle_webhook_event(payload: bytes, sig_header: str) -> None:
         _mark_processed(event["id"])
         return
 
+    checkout_id = session.get("id")
+    if not isinstance(checkout_id, str) or not checkout_id.startswith("cs_"):
+        raise StripeGatewayError("Paid checkout is missing a valid session ID.")
+
     with transaction.atomic():
+        # Preserve the event guard for records written before session-level
+        # deduplication was added. The unique session key also serializes
+        # distinct events arriving concurrently for one purchase.
+        if ProcessedStripeEvent.objects.filter(stripe_event_id=event["id"]).exists():
+            return
         _, created = ProcessedStripeEvent.objects.get_or_create(
-            stripe_event_id=event["id"]
+            stripe_checkout_id=checkout_id,
+            defaults={"stripe_event_id": event["id"]},
         )
         if not created:
-            # Already handled by an earlier delivery of this same event —
+            # Already handled by an earlier delivery for this checkout —
             # the idempotency guarantee this whole function exists for.
             return
         billing_credits.grant_purchase(user, pack_key, event["id"])

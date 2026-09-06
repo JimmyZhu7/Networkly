@@ -20,9 +20,11 @@ import requests
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
+from django.contrib.messages import get_messages
+from django.utils import timezone
 
 from capture import google_revoke
-from capture.models import GmailConnection
+from capture.models import GmailConnection, GoogleCalendarConnection
 
 pytestmark = pytest.mark.django_db
 
@@ -83,12 +85,10 @@ def test_the_token_travels_in_the_body_not_the_query_string():
     assert "params" not in kwargs
 
 
-def test_an_already_invalid_token_counts_as_revoked():
-    """Google answers 400 for a token the user already revoked in their own
-    Google account. The grant is not live, which is the outcome we wanted;
-    treating it as a failure would log noise for a success."""
+def test_an_invalid_token_does_not_confirm_project_wide_revocation():
+    """An old token can be invalid while a newer sibling grant is active."""
     with mock.patch.object(google_revoke.requests, "post", return_value=_Resp(400)):
-        assert google_revoke.revoke_token(REFRESH) is True
+        assert google_revoke.revoke_token(REFRESH) is False
 
 
 @pytest.mark.parametrize("status", [401, 500, 503])
@@ -212,3 +212,115 @@ def test_deleting_an_account_with_no_gmail_makes_no_request(student):
     with mock.patch.object(google_revoke.requests, "post") as post:
         delete_user_and_data(student)
     post.assert_not_called()
+
+
+@pytest.fixture
+def calendar_connection(student):
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY):
+        from capture import gmail_live
+        return GoogleCalendarConnection.all_objects.create(
+            user=student, google_email="Student@gmail.com",
+            refresh_token_encrypted=gmail_live.encrypt_token("calendar-refresh"), status="active",
+        )
+
+
+def test_gmail_disconnect_clears_matching_calendar_grant_and_explains_reconnect(
+    client, student, connection, calendar_connection,
+):
+    from crm.models import CalendarEvent
+    event = CalendarEvent.all_objects.create(user=student, title="Interview", starts_at=timezone.now(), source="gcal")
+    client.force_login(student)
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY), mock.patch.object(
+        google_revoke.requests, "post", return_value=_Resp(200),
+    ):
+        response = client.post(reverse("capture:gmail_disconnect"))
+    calendar_connection.refresh_from_db()
+    assert calendar_connection.status == "revoked"
+    assert calendar_connection.refresh_token_encrypted == ""
+    assert CalendarEvent.all_objects.filter(pk=event.pk, user=student).exists()
+    assert "Reconnect Google Calendar" in " ".join(str(message) for message in get_messages(response.wsgi_request))
+
+
+def test_calendar_disconnect_clears_matching_gmail_grant_and_explains_reconnect(
+    client, student, connection, calendar_connection,
+):
+    client.force_login(student)
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY), mock.patch.object(
+        google_revoke.requests, "post", return_value=_Resp(200),
+    ):
+        response = client.post(reverse("capture:gcal_disconnect"))
+    connection.refresh_from_db()
+    assert connection.status == "revoked" and connection.refresh_token_encrypted == ""
+    assert not GoogleCalendarConnection.all_objects.filter(user=student).exists()
+    assert "Reconnect Gmail" in " ".join(str(message) for message in get_messages(response.wsgi_request))
+
+
+@pytest.mark.parametrize("status", [400, 503])
+def test_unconfirmed_revoke_does_not_invalidate_a_sibling_grant(
+    client, student, connection, calendar_connection, status,
+):
+    original_token = calendar_connection.refresh_token_encrypted
+    client.force_login(student)
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY), mock.patch.object(
+        google_revoke.requests, "post", return_value=_Resp(status),
+    ):
+        response = client.post(reverse("capture:gmail_disconnect"))
+    assert not GmailConnection.all_objects.filter(user=student).exists()
+    calendar_connection.refresh_from_db()
+    assert calendar_connection.status == "active"
+    assert calendar_connection.refresh_token_encrypted == original_token
+    assert "Google did not confirm revocation" in " ".join(str(message) for message in get_messages(response.wsgi_request))
+
+
+def test_success_does_not_revoke_a_different_google_account_or_tenant(
+    student, connection, calendar_connection,
+):
+    calendar_connection.google_email = "other-google-account@example.com"
+    calendar_connection.save(update_fields=["google_email"])
+    other = User.objects.create_user(email="other@example.com")
+    other_calendar = GoogleCalendarConnection.all_objects.create(
+        user=other, google_email=connection.gmail_address, refresh_token_encrypted="other-token", status="active",
+    )
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY), mock.patch.object(
+        google_revoke.requests, "post", return_value=_Resp(200),
+    ):
+        assert google_revoke.revoke_connection(connection)
+    calendar_connection.refresh_from_db()
+    other_calendar.refresh_from_db()
+    assert calendar_connection.status == other_calendar.status == "active"
+    assert other_calendar.refresh_token_encrypted == "other-token"
+
+
+def test_a_sibling_reconnected_during_revocation_keeps_its_new_credential(
+    student, connection, calendar_connection,
+):
+    def provider_response(*args, **kwargs):
+        GoogleCalendarConnection.all_objects.filter(pk=calendar_connection.pk).update(
+            refresh_token_encrypted="replacement-token", status="active",
+        )
+        return _Resp(200)
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY), mock.patch.object(
+        google_revoke.requests, "post", side_effect=provider_response,
+    ):
+        assert google_revoke.revoke_connection(connection)
+    calendar_connection.refresh_from_db()
+    assert calendar_connection.status == "active"
+    assert calendar_connection.refresh_token_encrypted == "replacement-token"
+
+
+def test_a_reconnected_requested_service_is_not_deleted_by_the_old_disconnect(
+    client, student, connection,
+):
+    client.force_login(student)
+    def provider_response(*args, **kwargs):
+        GmailConnection.all_objects.filter(pk=connection.pk).update(
+            refresh_token_encrypted="replacement-token", status="active",
+        )
+        return _Resp(400)
+    with override_settings(GMAIL_LIVE_TOKEN_KEY=TOKEN_KEY), mock.patch.object(
+        google_revoke.requests, "post", side_effect=provider_response,
+    ):
+        response = client.post(reverse("capture:gmail_disconnect"))
+    connection.refresh_from_db()
+    assert connection.refresh_token_encrypted == "replacement-token"
+    assert "new connection was kept" in " ".join(str(message) for message in get_messages(response.wsgi_request))

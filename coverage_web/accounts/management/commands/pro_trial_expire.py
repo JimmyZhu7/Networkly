@@ -79,6 +79,10 @@ class Command(BaseCommand):
         # "pro-trial-expire" matches render.yaml's coverage-pro-trial-expire
         # cron — see ops/tracking.py.
         with track_job_run("pro-trial-expire"):
+            from accounts.access import beta_enabled
+            if beta_enabled():
+                self.stdout.write("Free beta: trial expiry is paused.")
+                return
             User = get_user_model()
             expired = User.objects.filter(
                 plan=User.PLAN_PRO,

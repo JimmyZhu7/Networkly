@@ -63,8 +63,7 @@ def fetch(board: EightfoldBoard) -> FetchResult:
     `start`/`num`, so unlike Lever this needs a real loop."""
     positions: list[dict] = []
     start = 0
-    # Set only when the CAP ends the walk. Both natural exits below (an empty
-    # page, reaching the API's own `count`) mean we read the whole board.
+    # A cap or an empty page before the stated count leaves the board partial.
     truncated = False
     stated_count: int | None = None
     try:
@@ -84,8 +83,8 @@ def fetch(board: EightfoldBoard) -> FetchResult:
                         f"'positions' key ({shape})"),
                 )
             batch = data.get("positions") or []
-            if stated_count is None and isinstance(data.get("count"), int):
-                stated_count = data["count"]
+            if isinstance(data.get("count"), int):
+                stated_count = max(stated_count or 0, data["count"])
             if not batch and start == 0 and stated_count:
                 return FetchResult(
                     board=board, ok=False, opportunities=[], raw_count=0,
@@ -94,6 +93,7 @@ def fetch(board: EightfoldBoard) -> FetchResult:
                         f"positions"),
                 )
             if not batch:
+                truncated = stated_count is not None and len(positions) < stated_count
                 break
             positions.extend(batch)
             total = data.get("count") if isinstance(data, dict) else None
@@ -112,6 +112,10 @@ def fetch(board: EightfoldBoard) -> FetchResult:
         # greenhouse.py's fetch() for why a normalization failure must not
         # propagate uncaught out of `fetch()`.
         opportunities = [_normalize(p, board) for p in positions]
+        # Repeated pages can reach the row count without returning every job.
+        # Only distinct, usable posting URLs support a complete-board claim.
+        if stated_count is not None:
+            truncated = truncated or len({o.url for o in opportunities if o.url}) < stated_count
     except Exception as e:  # noqa: BLE001
         return FetchResult(board=board, ok=False, opportunities=[], raw_count=0, error=str(e))
     return FetchResult(board=board, ok=True, opportunities=opportunities,

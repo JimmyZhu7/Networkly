@@ -9,8 +9,11 @@ that came out of that.
 from __future__ import annotations
 
 import io
+from pathlib import Path
 
 import pytest
+from django.conf import settings
+from django.template.loader import render_to_string
 from PIL import Image
 
 from directory.management.commands.fetch_firm_logos import (
@@ -89,6 +92,43 @@ def test_stored_logos_are_a_uniform_square():
     out = Image.open(io.BytesIO(to_png(_img(200, (0, 0, 0, 0)))))
     assert out.size == (128, 128)
     assert out.mode == "RGBA", "transparency survives, or nothing melts in"
+
+
+def test_the_generated_library_covers_the_current_networkly_directory():
+    """The generated set is shipped with the app, not left in ephemeral media.
+
+    There were 128 active firms when the library was rebuilt. Keeping the
+    count explicit makes adding another firm a deliberate two-part change:
+    add the directory record and add the mark users will actually see.
+    """
+    logo_dir = Path(settings.BASE_DIR) / "static" / "img" / "firm-logos"
+    paths = sorted(logo_dir.glob("*.png"))
+
+    assert len(paths) == 128
+    for path in paths:
+        with Image.open(path) as image:
+            assert image.size == (128, 128), path.name
+            assert image.mode == "RGBA", path.name
+            assert image.getchannel("A").getbbox() is not None, path.name
+
+
+def test_a_generated_mark_wins_over_ephemeral_uploaded_media():
+    firm = Firm(slug="gs", name="Goldman Sachs", logo="firm-logos/old-gs.png")
+    assert firm.logo_url == "/static/img/firm-logos/gs.png"
+
+
+def test_a_future_firm_without_either_kind_of_mark_still_uses_the_monogram():
+    firm = Firm(slug="future-firm", name="Future Firm")
+    assert firm.logo_url == ""
+
+
+def test_the_crm_firm_mark_uses_the_same_generated_library():
+    html = render_to_string(
+        "crm/_firm_mark.html",
+        {"mark_firm": Firm(slug="sig", name="SIG")},
+    )
+    assert 'src="/static/img/firm-logos/sig.png"' in html
+    assert "data-firm-logo" in html
 
 
 def test_a_wide_wordmark_is_fitted_not_cropped():

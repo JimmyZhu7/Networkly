@@ -170,7 +170,7 @@ def test_the_labels_the_case_decision_named_still_ship():
         # Title Case rule, still a literal.
         "crm/contact_list.html": ["Firm Network", "Log interaction"],
         "account/login.html": ["Welcome Back"],
-        "core/home.html": ["Get started free"],
+        "core/home.html": ["A Clear Next Step"],
         "accounts/import.html": ["Import Contacts"],
         "accounts/delete.html": ["Permanently delete account"],
     }
@@ -178,3 +178,15 @@ def test_the_labels_the_case_decision_named_still_ship():
         body = (TEMPLATES / path).read_text(encoding="utf-8")
         for label in labels:
             assert re.search(r">" + re.escape(label) + r"\s*<", body), f"{path} no longer renders {label!r}"
+
+    # The homepage CTA now reflects invitation-only beta admission. Render
+    # both branches: template tags separate its label from the anchor tag.
+    from django.template import Context, Template
+
+    home = (TEMPLATES / "core/home.html").read_text(encoding="utf-8")
+    signup_links = re.findall(r'<a\b[^>]*href="/accounts/signup/"[^>]*>.*?</a>', home, re.S)
+    assert len(signup_links) == 2, "homepage hero and closing signup CTAs must remain"
+    for beta_enabled, label in ((True, "Join With an Invitation"), (False, "Get started free")):
+        for link in signup_links:
+            rendered = Template(link).render(Context({"beta_enabled": beta_enabled}))
+            assert re.search(r">" + re.escape(label) + r"\s*<", rendered), rendered

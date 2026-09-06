@@ -142,7 +142,7 @@ def fetch(board: GoldmanSachsBoard) -> FetchResult:
             # `min(total, _MAX_ROLES)` hides which of the two ended the walk.
             # If the cap did, the board still has roles we did not read, and
             # ingest must not conclude anything from their absence.
-            truncated = bool(batch) and total > _MAX_ROLES
+            truncated = len(seen) < total
             break
     try:
         # Its own try, separate from the per-page network try above — see

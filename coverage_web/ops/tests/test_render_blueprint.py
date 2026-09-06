@@ -103,23 +103,56 @@ def test_the_two_credit_clamping_crons_are_offset(blueprint):
 # ---------------------------------------------------------------------------
 # The shared cache
 # ---------------------------------------------------------------------------
-def test_a_key_value_store_is_declared(blueprint):
-    """Was a `sync: false` REDIS_URL with a comment telling you to create the
-    store by hand — which meant every deploy so far ran on LocMemCache, so
-    allauth's "5 failed logins per 5 minutes" was really 15 (one allowance
-    per gunicorn worker) and reset on every deploy."""
-    assert "type: keyvalue" in blueprint
-    assert "name: coverage-kv" in blueprint
+def test_external_tls_cache_is_preserved_without_provisioning_another(blueprint):
+    """The approved Upstash URL lives in Render, not in the repository."""
+    assert "type: keyvalue" not in blueprint
+    assert "name: coverage-kv" not in blueprint
+    block = _blocks(blueprint)["coverage-web"]
+    assert re.search(r"key: REDIS_URL\s+sync: false", block)
+    assert "Upstash" in block
+    assert "rediss://" in block
 
 
-@pytest.mark.parametrize("service", ["coverage-web", "coverage-gmail-live"])
-def test_the_long_lived_services_read_redis_url_from_that_store(blueprint, service):
-    """Named exactly REDIS_URL: settings/base.py reads it, and django-axes
-    is being wired to the same setting."""
-    block = _blocks(blueprint)[service]
+def test_worker_inherits_the_web_services_shared_cache(blueprint):
+    block = _blocks(blueprint)["coverage-gmail-live"]
+    assert re.search(
+        r"key: REDIS_URL\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: REDIS_URL",
+        block,
+    )
 
-    assert "key: REDIS_URL" in block
-    assert "coverage-kv" in block, f"{service}'s REDIS_URL is not wired to the store"
+
+def test_all_background_production_services_inherit_error_monitoring(blueprint):
+    services = {
+        name: block for name, block in _blocks(blueprint).items()
+        if "value: coverage_web.settings.production" in block
+        and name != "coverage-web"
+    }
+    assert services
+    for name, block in services.items():
+        assert re.search(
+            r"key: SENTRY_DSN\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: SENTRY_DSN",
+            block,
+        ), f"{name} must report errors to the configured project"
+
+
+def test_each_tracked_job_has_an_optional_heartbeat_on_its_own_service(blueprint):
+    from ops.tracking import EXPECTED_INTERVALS
+
+    blocks = _blocks(blueprint)
+    for job in EXPECTED_INTERVALS:
+        service = "coverage-" + ("gmail-live" if job == "gmail-poll" else job)
+        key = "HEALTHCHECK_URL_" + job.upper().replace("-", "_")
+        assert re.search(rf"key: {key}\s+sync: false", blocks[service]), service
+        assert blueprint.count(f"key: {key}\n") == 1
+
+
+@pytest.mark.parametrize("key", ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_CLAIM_EMAIL"])
+def test_push_cron_inherits_the_web_push_credentials(blueprint, key):
+    block = _blocks(blueprint)["coverage-push-alerts"]
+    assert re.search(
+        rf"key: {key}\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: {key}",
+        block,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +171,62 @@ def test_site_url_and_email_are_declared_on_the_trial_expiry_cron(blueprint):
 
     assert "key: EMAIL_URL" in block
     assert "key: SITE_URL" in block
+
+
+@pytest.mark.parametrize("service", ["coverage-weekly-digest", "coverage-pro-trial-expire"])
+def test_email_jobs_have_a_sender_and_the_public_web_origin(blueprint, service):
+    block = _blocks(blueprint)[service]
+    for key in ("EMAIL_URL", "DEFAULT_FROM_EMAIL"):
+        assert re.search(
+            rf"key: {key}\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: {key}",
+            block,
+        )
+    assert re.search(
+        r"key: SITE_URL\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: SITE_URL",
+        block,
+    ), "A cron has no public hostname to use for links in email."
+
+
+def test_reserved_resend_key_does_not_configure_delivery(blueprint):
+    block = _blocks(blueprint)["coverage-web"]
+    assert re.search(r"key: RESEND_API_KEY\s+sync: false", block)
+    assert re.search(r"key: EMAIL_URL\s+sync: false", block)
+
+
+def test_gmail_rescan_worker_has_model_credentials(blueprint):
+    block = _blocks(blueprint)["coverage-gmail-backfill"]
+    assert re.search(
+        r"key: ANTHROPIC_API_KEY\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: ANTHROPIC_API_KEY",
+        block,
+    ), "Rescan residue classification runs in this worker, not the web process."
+
+
+@pytest.mark.parametrize("service", [
+    "coverage-gmail-live", "coverage-gmail-backfill", "coverage-gmail-watch-renew",
+])
+def test_gmail_workers_share_oauth_and_token_encryption_with_web(blueprint, service):
+    block = _blocks(blueprint)[service]
+    for key in ("GMAIL_LIVE_CLIENT_ID", "GMAIL_LIVE_CLIENT_SECRET", "GMAIL_LIVE_TOKEN_KEY"):
+        assert re.search(
+            rf"key: {key}\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: {key}",
+            block,
+        ), f"{service} must use web's {key} to read stored mailbox connections"
+
+
+def test_autopilot_inherits_model_credentials(blueprint):
+    block = _blocks(blueprint)["coverage-autopilot"]
+    assert re.search(
+        r"key: ANTHROPIC_API_KEY\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: ANTHROPIC_API_KEY",
+        block,
+    )
+
+
+def test_calendar_sync_is_scheduled_and_shares_the_explicit_feature_gate(blueprint):
+    block = _blocks(blueprint)["coverage-gcal-sync"]
+    assert "gcal_sync --apply" in block
+    assert _schedule(blueprint, "coverage-gcal-sync").split()[0].endswith("/5")
+    for key in ("GCAL_LIVE_ENABLED", "GMAIL_LIVE_CLIENT_ID", "GMAIL_LIVE_CLIENT_SECRET", "GMAIL_LIVE_TOKEN_KEY"):
+        assert f"envVarKey: {key}" in block
 
 
 @pytest.mark.parametrize("key", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"])

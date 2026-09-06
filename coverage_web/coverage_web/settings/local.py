@@ -10,6 +10,22 @@ from .base import *  # noqa: F401,F403
 
 DEBUG = True
 
+# The local .env may contain production's Redis URL. Keep development and
+# tests in memory: a Redis KEY_PREFIX would not protect live keys from clear().
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "KEY_PREFIX": "coverage-local",
+    },
+}
+# Keep admin lockouts persistent even though the development cache is local.
+AXES_HANDLER = "axes.handlers.database.AxesDatabaseHandler"
+
+# Local .env can hold production heartbeat credentials for deployment setup.
+# Development/test jobs must never keep suspended or broken production checks
+# alive. Replace the mapping; do not mutate base settings used by production.
+HEALTHCHECK_URLS = {}
+
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 # Print outgoing mail to the console instead of sending it anywhere real.

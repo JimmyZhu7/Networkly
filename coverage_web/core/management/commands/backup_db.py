@@ -59,31 +59,50 @@ class Command(BaseCommand):
         if "postgresql" not in db["ENGINE"]:
             raise CommandError(f"backup_db only knows PostgreSQL, not {db['ENGINE']}")
 
+        if opts["keep"] < 1:
+            raise CommandError("--keep must be at least 1")
         dest = Path(opts["dest"]).expanduser()
-        dest.mkdir(parents=True, exist_ok=True)
-        stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        dest.mkdir(mode=0o700, parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
         out = dest / f"coverage_{stamp}.dump"
 
-        cmd = ["pg_dump", "-Fc", "-f", str(out), "-d", db["NAME"]]
+        partial = out.with_suffix(".dump.partial")
+        # Create privately before pg_dump opens it; never expose a partial as a backup.
+        fd = os.open(partial, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        os.close(fd)
+        cmd = ["pg_dump", "-Fc", "-f", str(partial), "-d", db["NAME"]]
         for flag, key in (("-h", "HOST"), ("-p", "PORT"), ("-U", "USER")):
             if db.get(key):
                 cmd += [flag, str(db[key])]
         # Layered over the inherited environment, never replacing it: a bare
         # {"PGPASSWORD": ...} dict wipes PATH and turns "wrong password" into
         # the far more misleading "pg_dump not found".
-        env = ({**os.environ, "PGPASSWORD": db["PASSWORD"]}
-               if db.get("PASSWORD") else None)
+        env = {**os.environ}
+        if db.get("PASSWORD"):
+            env["PGPASSWORD"] = db["PASSWORD"]
+        for option in ("sslmode", "sslrootcert", "sslcert", "sslkey"):
+            if db.get("OPTIONS", {}).get(option):
+                env["PG" + option.upper()] = str(db["OPTIONS"][option])
 
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True,
                            env=env, timeout=600)
         except FileNotFoundError:
+            partial.unlink(missing_ok=True)
             raise CommandError("pg_dump not on PATH — install the Postgres client tools")
         except subprocess.CalledProcessError as exc:
             # A failed dump must not leave a half-written file that a restore
             # later mistakes for a snapshot.
-            out.unlink(missing_ok=True)
+            partial.unlink(missing_ok=True)
             raise CommandError(f"pg_dump failed: {exc.stderr.strip()[:400]}")
+
+        except subprocess.TimeoutExpired as exc:
+            partial.unlink(missing_ok=True)
+            raise CommandError("pg_dump timed out; the incomplete snapshot was removed") from exc
+        if not partial.stat().st_size:
+            partial.unlink()
+            raise CommandError("pg_dump produced an empty snapshot")
+        os.replace(partial, out)
 
         size_mb = out.stat().st_size / 1_048_576
         # Prune beyond the ring, oldest first, and never the file just written.

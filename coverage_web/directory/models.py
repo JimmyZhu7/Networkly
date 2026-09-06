@@ -9,9 +9,13 @@ design, concretely"). Plain `models.Model` / default manager throughout;
 from __future__ import annotations
 
 from datetime import date as _date, timedelta
+from functools import cached_property
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.templatetags.static import static
 from django.utils import timezone
 
 # The six preference-eligible desk slugs, imported rather than restated so
@@ -126,6 +130,21 @@ class Firm(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @cached_property
+    def logo_url(self) -> str:
+        """The generated, deploy-safe mark for this firm when one exists.
+
+        Generated recreations are tracked as static assets so they survive a
+        deploy. The uploaded-media field remains the fallback for firms added
+        after the generated set was built; its existing monogram fallback is
+        still the final safety net when neither file exists.
+        """
+        filename = f"{self.slug}.png"
+        generated = Path(settings.BASE_DIR) / "static" / "img" / "firm-logos" / filename
+        if generated.is_file():
+            return static(f"img/firm-logos/{filename}")
+        return self.logo.url if self.logo else ""
 
 
 class Opportunity(models.Model):

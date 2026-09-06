@@ -68,7 +68,8 @@ class Command(BaseCommand):
             )
 
         queued = AutopilotRun.all_objects.filter(
-            status=AutopilotRun.STATUS_QUEUED
+            status=AutopilotRun.STATUS_QUEUED, user__is_active=True,
+            user__deleted_at__isnull=True,
         ).select_related("user").order_by("created")
         if opts.get("email"):
             User = get_user_model()

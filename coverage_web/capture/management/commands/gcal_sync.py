@@ -32,6 +32,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from capture import gcal_live
 from capture.models import GoogleCalendarConnection
+from ops.tracking import track_job_run
 
 User = get_user_model()
 
@@ -50,6 +51,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **opts):
+        if opts["apply"]:
+            with track_job_run("gcal-sync"):
+                return self._sync(**opts)
+        return self._sync(**opts)
+
+    def _sync(self, **opts):
         if not gcal_live.is_configured():
             # Not an error: an unconfigured deploy is the NORMAL state until
             # the consent screen carries the calendar scope, and a cron
@@ -63,7 +70,7 @@ class Command(BaseCommand):
 
         apply = opts["apply"]
         connections = GoogleCalendarConnection.all_objects.select_related("user").filter(
-            status="active"
+            status="active", user__is_active=True, user__deleted_at__isnull=True,
         )
         email = (opts.get("user") or "").strip()
         if email:
@@ -111,5 +118,7 @@ class Command(BaseCommand):
         if failures:
             line += f" · {failures} failed"
         self.stdout.write(line)
+        if failures and apply:
+            raise CommandError(f"{failures} calendar sync(s) failed; other calendars were processed.")
         if not apply and totals.changed:
             self.stdout.write("Re-run with --apply to write these.")

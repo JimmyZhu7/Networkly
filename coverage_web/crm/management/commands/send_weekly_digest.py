@@ -114,13 +114,15 @@ class Command(BaseCommand):
 
             if opts["user"]:
                 try:
-                    users = [User.objects.get(email__iexact=opts["user"])]
+                    users = [User.objects.get(
+                        email__iexact=opts["user"], is_active=True, deleted_at__isnull=True,
+                    )]
                 except User.DoesNotExist as exc:
                     raise CommandError(f"no user with email {opts['user']!r}") from exc
             else:
                 users = list(
                     User.objects.filter(
-                        onboarded_at__isnull=False, deleted_at__isnull=True,
+                        is_active=True, onboarded_at__isnull=False, deleted_at__isnull=True,
                         weekly_digest_opt_out=False,
                     )
                     .order_by("email")
@@ -133,6 +135,8 @@ class Command(BaseCommand):
             site_url = getattr(settings, "SITE_URL", "").rstrip("/")
             sent = skipped = 0
             for user in users:
+                if not User.objects.filter(pk=user.pk, is_active=True, deleted_at__isnull=True).exists():
+                    continue
                 try:
                     today = _local_today(user)
                     digest = assemble_digest(user, today=today)
@@ -156,6 +160,8 @@ class Command(BaseCommand):
                 if dry:
                     continue
 
+                if not User.objects.filter(pk=user.pk, is_active=True, deleted_at__isnull=True).exists():
+                    continue
                 message = EmailMultiAlternatives(subject=subject, body=text_body, to=[user.email])
                 message.attach_alternative(html_body, "text/html")
                 message.send()

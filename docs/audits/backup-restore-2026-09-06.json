@@ -1,0 +1,370 @@
+{
+  "source_database": "coverage",
+  "backup": "/Users/zhujimmy/Backups/coverage/launch-readiness-2026-09-06/coverage_consistent_41a593dcd55b.dump",
+  "backup_mode": "0o600",
+  "same_exported_snapshot": true,
+  "tables": [
+    {
+      "name": "account_emailaddress",
+      "snapshot_count": 2,
+      "restored_count": 2,
+      "contents_match": true
+    },
+    {
+      "name": "account_emailconfirmation",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "application_events",
+      "snapshot_count": 3,
+      "restored_count": 3,
+      "contents_match": true
+    },
+    {
+      "name": "assistant_conversations",
+      "snapshot_count": 6,
+      "restored_count": 6,
+      "contents_match": true
+    },
+    {
+      "name": "assistant_daily_briefs",
+      "snapshot_count": 18,
+      "restored_count": 18,
+      "contents_match": true
+    },
+    {
+      "name": "assistant_folders",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "assistant_memories",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "assistant_messages",
+      "snapshot_count": 70,
+      "restored_count": 70,
+      "contents_match": true
+    },
+    {
+      "name": "auth_group",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "auth_group_permissions",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "auth_permission",
+      "snapshot_count": 224,
+      "restored_count": 224,
+      "contents_match": true
+    },
+    {
+      "name": "autopilot_decisions",
+      "snapshot_count": 53,
+      "restored_count": 53,
+      "contents_match": true
+    },
+    {
+      "name": "autopilot_runs",
+      "snapshot_count": 2,
+      "restored_count": 2,
+      "contents_match": true
+    },
+    {
+      "name": "axes_accessattempt",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "axes_accessattemptexpiration",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "axes_accessfailurelog",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "axes_accesslog",
+      "snapshot_count": 924,
+      "restored_count": 924,
+      "contents_match": true
+    },
+    {
+      "name": "bench_dismissals",
+      "snapshot_count": 2,
+      "restored_count": 2,
+      "contents_match": true
+    },
+    {
+      "name": "billing_processedstripeevent",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "calendar_events",
+      "snapshot_count": 6,
+      "restored_count": 6,
+      "contents_match": true
+    },
+    {
+      "name": "campaign_contacts",
+      "snapshot_count": 73,
+      "restored_count": 73,
+      "contents_match": true
+    },
+    {
+      "name": "campaigns",
+      "snapshot_count": 4,
+      "restored_count": 4,
+      "contents_match": true
+    },
+    {
+      "name": "chat_debriefs",
+      "snapshot_count": 12,
+      "restored_count": 12,
+      "contents_match": true
+    },
+    {
+      "name": "contact_merges",
+      "snapshot_count": 1,
+      "restored_count": 1,
+      "contents_match": true
+    },
+    {
+      "name": "contact_proposals",
+      "snapshot_count": 164,
+      "restored_count": 164,
+      "contents_match": true
+    },
+    {
+      "name": "contacts",
+      "snapshot_count": 384,
+      "restored_count": 384,
+      "contents_match": true
+    },
+    {
+      "name": "credit_ledger",
+      "snapshot_count": 16,
+      "restored_count": 16,
+      "contents_match": true
+    },
+    {
+      "name": "django_admin_log",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "django_content_type",
+      "snapshot_count": 56,
+      "restored_count": 56,
+      "contents_match": true
+    },
+    {
+      "name": "django_migrations",
+      "snapshot_count": 148,
+      "restored_count": 148,
+      "contents_match": true
+    },
+    {
+      "name": "django_session",
+      "snapshot_count": 2817,
+      "restored_count": 2817,
+      "contents_match": true
+    },
+    {
+      "name": "django_site",
+      "snapshot_count": 1,
+      "restored_count": 1,
+      "contents_match": true
+    },
+    {
+      "name": "email_pattern_stats",
+      "snapshot_count": 25,
+      "restored_count": 25,
+      "contents_match": true
+    },
+    {
+      "name": "firm_cycle_observations",
+      "snapshot_count": 256,
+      "restored_count": 256,
+      "contents_match": true
+    },
+    {
+      "name": "firm_dates",
+      "snapshot_count": 47,
+      "restored_count": 47,
+      "contents_match": true
+    },
+    {
+      "name": "firms",
+      "snapshot_count": 139,
+      "restored_count": 139,
+      "contents_match": true
+    },
+    {
+      "name": "fit_scores",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "gmail_connections",
+      "snapshot_count": 1,
+      "restored_count": 1,
+      "contents_match": true
+    },
+    {
+      "name": "google_calendar_connections",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "imports",
+      "snapshot_count": 184,
+      "restored_count": 184,
+      "contents_match": true
+    },
+    {
+      "name": "mail_facts",
+      "snapshot_count": 15,
+      "restored_count": 15,
+      "contents_match": true
+    },
+    {
+      "name": "opportunities",
+      "snapshot_count": 28667,
+      "restored_count": 28667,
+      "contents_match": true
+    },
+    {
+      "name": "opportunity_changes",
+      "snapshot_count": 14804,
+      "restored_count": 14804,
+      "contents_match": true
+    },
+    {
+      "name": "ops_jobrun",
+      "snapshot_count": 2799,
+      "restored_count": 2799,
+      "contents_match": true
+    },
+    {
+      "name": "play_dismissals",
+      "snapshot_count": 2,
+      "restored_count": 2,
+      "contents_match": true
+    },
+    {
+      "name": "pro_waitlist",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "product_events",
+      "snapshot_count": 1193,
+      "restored_count": 1193,
+      "contents_match": true
+    },
+    {
+      "name": "push_subscriptions",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "scrape_runs",
+      "snapshot_count": 398,
+      "restored_count": 398,
+      "contents_match": true
+    },
+    {
+      "name": "socialaccount_socialaccount",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "socialaccount_socialapp",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "socialaccount_socialapp_sites",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "socialaccount_socialtoken",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "tasks",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "touches",
+      "snapshot_count": 659,
+      "restored_count": 659,
+      "contents_match": true
+    },
+    {
+      "name": "user_firms",
+      "snapshot_count": 78,
+      "restored_count": 78,
+      "contents_match": true
+    },
+    {
+      "name": "user_opportunities",
+      "snapshot_count": 28,
+      "restored_count": 28,
+      "contents_match": true
+    },
+    {
+      "name": "users",
+      "snapshot_count": 4,
+      "restored_count": 4,
+      "contents_match": true
+    },
+    {
+      "name": "users_groups",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
+      "name": "users_user_permissions",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    }
+  ],
+  "all_tables_match": true,
+  "temporary_database_removed": true
+}

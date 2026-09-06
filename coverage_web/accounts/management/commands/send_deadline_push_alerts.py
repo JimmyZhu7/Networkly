@@ -173,12 +173,14 @@ class Command(BaseCommand):
 
             if opts["user"]:
                 try:
-                    users = [User.objects.get(email__iexact=opts["user"])]
+                    users = [User.objects.get(
+                        email__iexact=opts["user"], is_active=True, deleted_at__isnull=True,
+                    )]
                 except User.DoesNotExist as exc:
                     raise CommandError(f"no user with email {opts['user']!r}") from exc
             else:
                 users = list(
-                    User.objects.filter(deleted_at__isnull=True, pushsubscription__isnull=False)
+                    User.objects.filter(is_active=True, deleted_at__isnull=True, pushsubscription__isnull=False)
                     .distinct().order_by("email")
                 )
 
@@ -188,6 +190,8 @@ class Command(BaseCommand):
 
             sent = skipped = expired = 0
             for user in users:
+                if not User.objects.filter(pk=user.pk, is_active=True, deleted_at__isnull=True).exists():
+                    continue
                 try:
                     today = _local_today(user)
                     due = _due_rows(user, today=today, days=days)

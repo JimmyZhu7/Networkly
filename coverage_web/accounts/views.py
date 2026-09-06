@@ -10,6 +10,8 @@ page and the live firm-search filter during onboarding.
 
 from __future__ import annotations
 
+from accounts.access import has_individual_features, sync_user_filter, plan_label
+
 import json
 
 from allauth.account.models import EmailAddress
@@ -590,7 +592,7 @@ def _gmail_live_context(user) -> dict:
     # template reads this to show the real-time toggle as Pro-gated while
     # keeping Connect/Scan Now open to every plan. Mirrors the exact check
     # `capture.gmail_live.connect_gmail`/`renew_watches` gate on.
-    is_pro = getattr(user, "plan", "") == "pro"
+    is_pro = has_individual_features(user)
     # "Pro trial · N days left" — None for a permanent Pro/Free account, an
     # int only while an actual trial (accounts.trials) is still running.
     trial_days_left = pro_trials.trial_days_left(user)
@@ -677,7 +679,7 @@ def _credits_context(user) -> dict:
     plan = billing_credits.plan_config(user)
     return {
         "balance": billing_credits.balance(user),
-        "plan_label": "Pro" if plan["plan"] == billing_credits.PRO else "Free",
+        "plan_label": plan_label(user),
         "monthly_grant": plan["monthly_grant"],
         "month_usage": billing_credits.month_usage(user),
         "refill_date": billing_credits.next_refill_date(user),

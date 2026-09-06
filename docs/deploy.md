@@ -2,8 +2,9 @@
 
 Target: **Render** (managed Postgres + built-in cron for the 6-hourly scrape). The
 `Dockerfile` is host-agnostic, so Fly.io or any container host works too — only
-the platform steps differ. Nothing here is destructive; take it one section at a
-time.
+the platform steps differ. Deployment, migrations and service activation change
+production state. The existing services are suspended; use the
+[beta release runbook](beta-release-runbook.md) before executing these steps.
 
 Prerequisites you create (Claude can't — they need your accounts/payment):
 a Render account and a Google Cloud project (sign-in, and separately, Gmail Live
@@ -17,25 +18,26 @@ dollars/month; Google OAuth is free.
 1. Push this repo to GitHub (it already has a sensible `.gitignore`; the real
    `.env` is ignored — never commit it).
 2. Render → **New → Blueprint** → pick the repo. Render reads `render.yaml` and
-   proposes a **web service**, a **Postgres database**, a **Key Value store**
-   (`coverage-kv`, the shared rate-limit cache), and several **cron
-   jobs/workers**.
+   proposes a **web service**, a **Postgres database**, and several **cron
+   jobs/workers**. The shared cache is the existing Upstash service; this
+   Blueprint does not provision another cache. Reconcile existing services
+   before applying to avoid creating duplicate paid resources.
 3. It will ask you to fill the `sync: false` env vars (they can't live in git).
-   **Every one of them can be left blank on the first apply** — the service
-   boots, passes its health check, and serves the site without a single one.
-   Each blank has a consequence, and `manage.py deploy_preflight` (below)
-   prints them. Set these on the **web service** when you're ready:
+   Some integrations can remain blank for a boot check, but the full-feature
+   beta requires `deploy_preflight --launch` plus provider acceptance.
+   A healthy process alone does not establish a launchable product. Set these on the **web service** when you're ready:
    - `DJANGO_ALLOWED_HOSTS` — optional. Blank falls back to
      `RENDER_EXTERNAL_HOSTNAME`, which Render injects into every service, so
      the app boots on `coverage-web.onrender.com` with nothing typed in. Set
      it (comma-separated) when you attach a custom domain.
    - `DJANGO_CSRF_TRUSTED_ORIGINS` — same: blank falls back to
      `https://<render hostname>`. Set it for a custom domain, scheme included.
-   - `SITE_URL` — same fallback. This is the host used for links built
-     outside a request (the weekly digest, the trial-ended email). Blank used
-     to mean `http://localhost:8000` in every email; it no longer does.
-   - `REDIS_URL` — **already wired** from the `coverage-kv` service in
-     `render.yaml`; you don't paste anything. This cache holds the
+   - `SITE_URL` — set this explicitly to the public HTTPS origin before
+     enabling email. The web service can fall back to its Render hostname;
+     cron services have no public hostname. Email jobs inherit the web
+     service's explicit value for digest and trial-ended links.
+   - `REDIS_URL` — preserve the existing Upstash TLS (`rediss://`) URL
+     on the web service; workers that use the cache inherit it. This cache holds the
      failed-login, search and waitlist counters. Before it existed, each of
      the three gunicorn workers kept its own copy, so the "5 failed logins
      per 5 minutes" limit was really 15 and reset on every deploy.
@@ -68,7 +70,9 @@ One line per thing that has broken a deploy of this app, each `PASS`, `WARN`
 or `FAIL`. It prints key **names** and verdicts only, never a value, so the
 output is safe to paste anywhere. `FAIL` means this deploy will not work and
 exits non-zero; `WARN` means a feature is dark and the line says which. A
-deploy that is all `PASS` and `WARN` is a working deploy.
+configuration check that has no `FAIL` is not proof of working integrations.
+For this beta, run `deploy_preflight --launch`: required-feature warnings become
+failures. Never use `--warn-only` as release acceptance.
 
 A value left as `changeme` is reported as a placeholder, not as configured —
 the command never guesses a value and never fills one in.
@@ -198,12 +202,33 @@ reset, and the "your Pro trial has ended" mail is not sent at all (the
 Settings banner carries that notice on its own — `accounts/trials.py`
 deliberately does not count a message printed into a log as delivered).
 
-When you're ready: create a Resend (or equivalent) account, verify a sending
-domain, then set on **coverage-web**, **coverage-weekly-digest** and
-**coverage-pro-trial-expire**:
+When you're ready: create an email-provider account, verify a sending
+domain, then set `EMAIL_URL` on **coverage-web**, **coverage-weekly-digest**
+and **coverage-pro-trial-expire**. Set `DEFAULT_FROM_EMAIL` on the web and
+trial-expiry services; the weekly digest inherits the web value. Set the
+public `SITE_URL` on the web service; both email jobs inherit it:
 
 - `EMAIL_URL` = `smtp+tls://resend:API_KEY@smtp.resend.com:587`
-- `DEFAULT_FROM_EMAIL` = `Coverage <no-reply@yourdomain>`
+- `DEFAULT_FROM_EMAIL` = `Networkly <no-reply@yourdomain>`
+- `SITE_URL` = `https://<your-public-host>`
+
+### 4d. Google Calendar
+
+Google Calendar is optional and separately consented. Add
+`https://<your-public-host>/capture/calendar/callback/` to the Gmail/Calendar
+OAuth client and enable the Calendar API. Set `GCAL_LIVE_ENABLED=true` on
+staging, connect a test user and verify a dry preview before enabling it
+on the production web service. The
+`coverage-gcal-sync` cron inherits the flag and credentials, and runs
+`gcal_sync --apply` every five minutes. Without the flag it stays idle.
+Applied runs appear as `gcal-sync` in `/ops/health/cron/`; failures exit
+nonzero after continuing through the other connected calendars. The manual
+command remains dry by default. Test an event update and cancellation, not
+just the initial import.
+
+The Gmail backfill worker also inherits `ANTHROPIC_API_KEY` from the web
+service. Without that worker-side key, deterministic scanning works but
+ambiguous-thread AI classification is skipped.
 
 ## 5. Custom domain (optional, when ready)
 

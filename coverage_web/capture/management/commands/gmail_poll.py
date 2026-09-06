@@ -126,6 +126,8 @@ a managed Postgres' idle reaper drops the connection underneath it.
 
 from __future__ import annotations
 
+from accounts.access import has_individual_features, sync_user_filter, plan_label
+
 import signal
 import threading
 import time
@@ -406,7 +408,7 @@ class Command(BaseCommand):
         expires a poll.
         """
         query = GmailConnection.all_objects.select_related("user").filter(
-            status="active", user__plan="pro"
+            sync_user_filter(), status="active"
         )
         if email:
             query = query.filter(user__email=email)

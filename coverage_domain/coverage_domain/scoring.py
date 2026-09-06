@@ -72,6 +72,7 @@ from typing import Any
 # reads it here and why it is imported rather than re-spelled. `cadence` does
 # not import `scoring`, so this direction cannot cycle.
 from .cadence import _CLOCK_SILENT_KINDS
+from .pipeline import REFERRAL_KIND
 
 # ---------------------------------------------------------------------------
 # Parameters. One versioned bundle of every weight and constant the engine
@@ -154,7 +155,7 @@ DEFAULT_PARAMS: dict[str, Any] = {
 # Touch-kind sets, matching pipeline.TOUCH_TRANSITIONS' vocabulary.
 _REPLY_KINDS = ("reply_received", "chat_scheduled")   # evidence they engaged, pre-chat
 _CHAT_KINDS = ("chat",)
-_MEANINGFUL_KINDS = ("reply_received", "chat_scheduled", "chat")  # their engagement -> recency
+_MEANINGFUL_KINDS = ("reply_received", "chat_scheduled", "chat", REFERRAL_KIND)  # their engagement -> recency
 # NOTE: this is a narrower set than it looks like it should be, and that's
 # deliberate — `thank_you` and `maintain` are courtesy touches nobody is
 # expected to answer, so counting them as "sends" a reply is owed against
@@ -401,7 +402,11 @@ def _depth_level(touches: list[Mapping[str, Any]]) -> int:
     level = 0
     for t in ordered:
         kind = t.get("kind")
-        if kind in _CHAT_KINDS:
+        if kind == REFERRAL_KIND:
+            # Match the pipeline's real advocate event. Later manual demotions
+            # still SET the level in the override branch below.
+            level = max(level, 3)
+        elif kind in _CHAT_KINDS:
             level = max(level, 2)
         elif kind in _REPLY_KINDS:
             level = max(level, 1)
@@ -724,7 +729,10 @@ def score_contact(
     """
     p = _merged_params(params)
     as_of = _required_as_of(as_of)  # naive -> UTC, so the serialized as_of never depends on machine tz
-    tlist = list(touches)
+    # Every axis describes evidence available at as_of. Retain the existing
+    # lenient treatment of undated history, but do not count future chats,
+    # replies, referrals, sends, or overrides as completed interactions.
+    tlist = [t for t in touches if (ts := _as_dt(t.get("ts"))) is None or ts <= as_of]
 
     depth_level = _depth_level(tlist)
     chat_count = sum(1 for t in tlist if t.get("kind") in _CHAT_KINDS)

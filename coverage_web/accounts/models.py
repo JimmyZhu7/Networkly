@@ -24,6 +24,8 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from coverage_web.tenancy import PrivateModel
 
@@ -351,3 +353,55 @@ class PushSubscription(PrivateModel):
 
     def __str__(self) -> str:
         return f"{self.user_id} · {self.endpoint[:40]}"
+
+
+class BetaInvitationQuerySet(models.QuerySet):
+    def delete(self):
+        from django.core.exceptions import ValidationError
+        raise ValidationError("Beta seats cannot be deleted or recycled.")
+
+
+class BetaInvitation(models.Model):
+    """Private, operator-only lifetime seat registry; no public roster.
+
+    Deletion clears the email and user link through accounts.beta, keeping
+    the fingerprint and redemption date so the seat cannot be recycled.
+    A fingerprint is pseudonymous personal data, not anonymous data.
+    """
+
+    email = models.EmailField(blank=True, default="")
+    email_fingerprint = models.CharField(max_length=64, unique=True, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="beta_invitations",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    redeemed_at = models.DateTimeField(null=True, blank=True)
+
+    objects = BetaInvitationQuerySet.as_manager()
+
+    class Meta:
+        db_table = "beta_invitations"
+        ordering = ("created_at", "pk")
+
+    def __str__(self):
+        return self.email or "Deleted account seat"
+
+    def delete(self, *args, **kwargs):
+        from django.core.exceptions import ValidationError
+        raise ValidationError("Beta seats cannot be deleted or recycled.")
+
+
+@receiver(pre_delete, sender=User)
+def preserve_deleted_beta_seat(sender, instance, using, **kwargs):
+    """One deletion path for self-service, admin and queryset removals."""
+    from .access import beta_enabled
+    from .beta import anonymize_user_seats, email_fingerprint
+
+    if beta_enabled() or BetaInvitation.objects.using(using).filter(
+        models.Q(user_id=instance.pk) | models.Q(email_fingerprint=email_fingerprint(instance.email))
+    ).exists():
+        if using != "default":
+            from django.core.exceptions import ImproperlyConfigured
+            raise ImproperlyConfigured("Beta admission is configured for the default database only.")
+        anonymize_user_seats(instance)

@@ -13,6 +13,8 @@ a student can give or refuse without touching whether their mail syncs.
 
 from __future__ import annotations
 
+from accounts.access import has_individual_features, sync_user_filter, plan_label
+
 import secrets
 
 from django.conf import settings
@@ -68,6 +70,14 @@ def gmail_callback(request):
         messages.error(request, str(exc))
         return redirect(f"{reverse('accounts:settings')}#gmail-live")
 
+    if connection.status == "revoked":
+        messages.error(
+            request,
+            "Google could not keep this Gmail connection active. Connect Gmail "
+            "again to restore syncing and your historical scan.",
+        )
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
     # The product's magic moment left no trace in the event stream. ~70
     # `record_event` call sites existed and not one of them fired here, so the
     # single step that turns Coverage from an empty CRM into a populated one
@@ -88,7 +98,7 @@ def gmail_callback(request):
     )
     messages.success(request, f"Gmail connected: {connection.gmail_address}.")
     if connection.watch_expiration is None:
-        if request.user.plan == "pro":
+        if has_individual_features(request.user):
             # connect_gmail stored a perfectly good connection but could not
             # register the Pub/Sub watch (see its comment on why that is not
             # fatal). Everything except real-time push still works, and the
@@ -117,22 +127,16 @@ def gmail_callback(request):
 @login_required
 @require_POST
 def gmail_disconnect(request):
-    """Hands the grant back to Google, then deletes the stored connection.
-
-    This used to delete the row and stop there, on the reasoning that
-    myaccount.google.com/permissions is a better place to revoke and a
-    second call is a second thing that can fail silently. True about the
-    control; wrong about the promise. A button labelled "Disconnect" that
-    leaves a live grant on Google's side is telling the student something
-    that is not so, and the grant then outlives every trace of it in this
-    app. `capture/google_revoke.py` is best-effort and never raises, so the
-    row still goes either way and that Google control is still there —
-    it is the backstop now, not the only path.
-    """
-    for connection in GmailConnection.all_objects.filter(user=request.user):
-        google_revoke.revoke_connection(connection)
-    GmailConnection.all_objects.filter(user=request.user).delete()
-    messages.success(request, "Gmail disconnected.")
+    """Disconnect Gmail and reconcile Google's shared project authorization."""
+    result = google_revoke.disconnect_connections(request.user, GmailConnection)
+    if result["replaced"]:
+        messages.info(request, "Gmail was reconnected while this request was running. Its new connection was kept.")
+    else:
+        messages.success(request, "Gmail disconnected.")
+    if result["related_services"]:
+        messages.info(request, "Google also revoked Calendar access for this account. Reconnect Google Calendar to resume sync. Your imported events are kept.")
+    if result["unconfirmed"]:
+        messages.warning(request, "Google did not confirm revocation. You can remove Networkly’s access in your Google Account permissions.")
     return redirect(f"{reverse('accounts:settings')}#gmail-live")
 
 
@@ -246,13 +250,16 @@ def gcal_callback(request):
 @login_required
 @require_POST
 def gcal_disconnect(request):
-    """Hands the calendar grant back to Google, then deletes the stored row.
+    """Disconnect Calendar and reconcile Google's shared project authorization."""
+    from capture.models import GoogleCalendarConnection
 
-    Through `gcal_live.disconnect`, which goes through the same best-effort
-    `capture.google_revoke` door the Gmail disconnect uses — one revoke
-    implementation, two grants, and neither disconnect can reach the other's
-    row.
-    """
-    gcal_live.disconnect(request.user)
-    messages.success(request, "Google Calendar disconnected.")
+    result = google_revoke.disconnect_connections(request.user, GoogleCalendarConnection)
+    if result["replaced"]:
+        messages.info(request, "Google Calendar was reconnected while this request was running. Its new connection was kept.")
+    else:
+        messages.success(request, "Google Calendar disconnected.")
+    if result["related_services"]:
+        messages.info(request, "Google also revoked Gmail access for this account. Reconnect Gmail to resume sync. Your imported records are kept.")
+    if result["unconfirmed"]:
+        messages.warning(request, "Google did not confirm revocation. You can remove Networkly’s access in your Google Account permissions.")
     return redirect(f"{reverse('accounts:settings')}#google-calendar")

@@ -257,3 +257,26 @@ def test_the_report_ends_with_a_count(settings):
     report = _report()
 
     assert "pass ·" in report and "warn ·" in report and "fail" in report
+
+
+def test_relay_with_localhost_sender_is_not_reported_as_deliverable(settings):
+    settings.EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    settings.DEFAULT_FROM_EMAIL = "Networkly <no-reply@localhost>"
+    line = _line_for(_report(), "EMAIL_URL")
+    assert line.startswith("WARN")
+    assert "sender" in line
+
+
+def test_calendar_flag_and_ephemeral_uploads_are_reported(settings):
+    settings.GCAL_LIVE_ENABLED = False
+    settings.STORAGES = {"default": {"BACKEND": "django.core.files.storage.FileSystemStorage"}}
+    report = _report()
+    assert _line_for(report, "GCAL_LIVE_ENABLED").startswith("WARN")
+    assert _line_for(report, "MEDIA_ROOT").startswith("WARN")
+
+
+def test_api_key_presence_is_not_claimed_as_verified_model_access(settings):
+    settings.ANTHROPIC_API_KEY = "sk-ant-local-only-test"
+    line = _line_for(_report(), "ANTHROPIC_API_KEY")
+    assert "have not been tested" in line
+    assert "sk-ant-local-only-test" not in line

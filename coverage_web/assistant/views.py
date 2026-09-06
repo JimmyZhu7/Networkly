@@ -52,6 +52,7 @@ from . import drafts as drafts_mod
 from . import plans
 from . import tools as tools_mod
 from .client import is_configured
+from .locks import BUSY_TEXT, ConversationLock
 from .models import (
     AdvisorMemory, ChatConversation, ChatFolder, ChatMessage, DailyBrief,
 )
@@ -460,11 +461,21 @@ def send(request: HttpRequest) -> HttpResponse:
     conversation = _current_conversation(request.user, _posted_conversation_id(request))
     text = (request.POST.get("message") or "").strip()[:MAX_MESSAGE_CHARS]
     blocks, errors = attachments_mod.blocks_for(request.FILES.getlist("file"))
+    busy = False
     if errors:
-        agent.reject_attachments(request.user, conversation, text, errors)
+        with ConversationLock(conversation.pk) as ownership:
+            busy = not ownership.acquired
+            if not busy:
+                agent.reject_attachments(request.user, conversation, text, errors)
     elif text or blocks:
-        agent.run_turn(request.user, conversation, text, attachment_blocks=blocks)
-    return render(request, "assistant/_thread.html", _context(request, conversation))
+        result = agent.run_turn(request.user, conversation, text, attachment_blocks=blocks)
+        busy = result.reason == "busy"
+    context = _context(request, conversation)
+    if busy:
+        context["prefill_text"] = text
+        context["rows"].append({"role": "assistant", "notice": "busy", "text": BUSY_TEXT,
+                                "segments": [{"type": "prose", "text": BUSY_TEXT}]})
+    return render(request, "assistant/_thread.html", context)
 
 
 def _editable_message_id(user, conversation, before_id: int | None = None) -> int | None:
@@ -495,7 +506,7 @@ def _editable_message_id(user, conversation, before_id: int | None = None) -> in
     return None
 
 
-def _sse(request: HttpRequest, conversation, text: str, blocks, errors, *, resume=False) -> HttpResponse:
+def _sse(request: HttpRequest, conversation, text: str, blocks, errors, *, resume=False, prepare_turn=None) -> HttpResponse:
     """One streamed turn as `text/event-stream`, shared by the two POSTs that
     can start one: a plain send (`stream`) and a rewind (`edit_message`).
 
@@ -536,7 +547,11 @@ def _sse(request: HttpRequest, conversation, text: str, blocks, errors, *, resum
                 # Same shape as any other terminal notice (unconfigured,
                 # capped) — one frame, nothing streamed, no API call spent on
                 # a request that was never going to be sent.
-                reply = agent.reject_attachments(request.user, conversation, text, errors)
+                with ConversationLock(conversation.pk) as ownership:
+                    if not ownership.acquired:
+                        yield f"data: {json.dumps({'type': 'notice', 'kind': 'busy', 'text': BUSY_TEXT})}\n\n"
+                        return
+                    reply = agent.reject_attachments(request.user, conversation, text, errors)
                 rejected = {
                     "type": "notice",
                     "kind": "failed",
@@ -546,9 +561,10 @@ def _sse(request: HttpRequest, conversation, text: str, blocks, errors, *, resum
                 yield f"data: {json.dumps(rejected)}\n\n"
                 return
             for event in agent.stream_turn(
-                request.user, conversation, text, attachment_blocks=blocks, resume=resume
+                request.user, conversation, text, attachment_blocks=blocks, resume=resume,
+                prepare_turn=prepare_turn,
             ):
-                if event.get("type") == "notice":
+                if event.get("type") == "notice" and event.get("kind") != "busy":
                     # A turn that ended badly still leaves the question on
                     # screen, and still deserves a pencil on it.
                     event = {
@@ -652,35 +668,40 @@ def edit_message(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest("An edited message still needs something in it.")
 
     conversation = message.conversation
-    # BEFORE the edit, while `message.created`/`message.id` still describe
-    # where in the thread this row sits.
-    is_first = not (
-        ChatMessage.objects.for_user(request.user)
-        .filter(conversation=conversation)
-        .filter(Q(created__lt=message.created) | Q(created=message.created, id__lt=message.id))
-        .exists()
-    )
-    _messages_after(request.user, message).delete()
+    def prepare_turn():
+        message.refresh_from_db()
+        # BEFORE the edit, while `message.created`/`message.id` still describe
+        # where in the thread this row sits.
+        is_first = not (
+            ChatMessage.objects.for_user(request.user)
+            .filter(conversation=conversation)
+            .filter(Q(created__lt=message.created) | Q(created=message.created, id__lt=message.id))
+            .exists()
+        )
+        _messages_after(request.user, message).delete()
 
-    # Attachments survive the edit: the file is what it always was, only the
-    # words about it changed. Every text block is replaced, never appended
-    # to — an edit that left the old question in place would send the model
-    # both versions and get an answer to neither.
-    kept = [b for b in message.blocks() if isinstance(b, dict) and b.get("type") != "text"]
-    message.content = kept + [{"type": "text", "text": text[:8000]}]
-    message.save(update_fields=["content"])
+        # Attachments survive the edit: the file is what it always was, only the
+        # words about it changed. Every text block is replaced, never appended
+        # to — an edit that left the old question in place would send the model
+        # both versions and get an answer to neither.
+        kept = [b for b in message.blocks() if isinstance(b, dict) and b.get("type") != "text"]
+        message.content = kept + [{"type": "text", "text": text[:8000]}]
+        message.save(update_fields=["content"])
 
-    # A rewound FIRST message makes the conversation's title stale — it was
-    # derived from words that no longer exist. Blanking it here is what makes
-    # the turn below treat this as a first message again and re-title it
-    # (agent._retitle_if_first_message), which is also why the title is not
-    # saved separately: the turn saves the conversation itself.
-    if is_first:
-        conversation.title = ""
+        # A rewound FIRST message makes the conversation's title stale — it was
+        # derived from words that no longer exist. Blanking it here is what makes
+        # the turn below treat this as a first message again and re-title it
+        # (agent._retitle_if_first_message), which is also why the title is not
+        # saved separately: the turn saves the conversation itself.
+        if is_first:
+            conversation.title = ""
+
 
     if request.POST.get("stream"):
-        return _sse(request, conversation, text, [], [], resume=True)
-    agent.run_turn(request.user, conversation, text, resume=True)
+        return _sse(request, conversation, text, [], [], resume=True, prepare_turn=prepare_turn)
+    result = agent.run_turn(request.user, conversation, text, resume=True, prepare_turn=prepare_turn)
+    if result.reason == "busy":
+        return HttpResponse(BUSY_TEXT, status=409, headers={"Retry-After": "3"})
     return redirect("assistant:chat_conversation", conversation_id=conversation.id)
 
 
@@ -860,7 +881,10 @@ def delete_conversation(request: HttpRequest) -> HttpResponse:
         ChatConversation.objects.for_user(request.user), pk=_posted_conversation_id(request) or 0
     )
     deleted_id = conversation.id
-    conversation.delete()
+    with ConversationLock(deleted_id) as ownership:
+        if not ownership.acquired:
+            return HttpResponse(BUSY_TEXT, status=409, headers={"Retry-After": "3"})
+        conversation.delete()
 
     current_id = _posted_int(request, "current")
     if (

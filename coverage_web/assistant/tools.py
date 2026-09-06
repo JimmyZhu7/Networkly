@@ -232,6 +232,14 @@ class ToolError(Exception):
     tool_result so it can correct itself or tell the student, never as a 500."""
 
 
+class SettingsConfirmationRequired(ToolError):
+    """A server-created proposal, persisted with the tool result for approval."""
+
+    def __init__(self, message, proposal):
+        super().__init__(message)
+        self.proposal = proposal
+
+
 def _s(value, limit: int = MAX_STR) -> str:
     """One untrusted string, safe to hand the model: stripped and capped."""
     text = ("" if value is None else str(value)).strip()
@@ -2466,19 +2474,12 @@ def _apply_setting(user, field: str, raw) -> None:
         raise ToolError(f"{field} is not a setting the advisor can change.")
 
 
-def _update_settings(user, args) -> dict:
+def _update_settings(user, args, *, approved_settings=()) -> dict:
     """Change one settings field.
 
-    Two tiers, and the split is the whole point (see the module docstring).
-    An ordinary field applies on the first call like every other write in
-    this file. An important one does not: without `confirmed=true` this
-    writes NOTHING and raises, and the error is the instruction — say what
-    the change actually does, wait for the student's own yes, then call
-    again. One tool rather than a propose/confirm pair because a `confirm`
-    tool would have to re-take the field and the value anyway (nothing here
-    stores a pending proposal), which makes it a second copy of this
-    function's allowlist and validation under a different name — and two
-    copies of an allowlist is how one of them drifts.
+    Ordinary fields apply immediately. Important fields require the agent's
+    server-owned approval context from the previous conversation turn;
+    the model's confirmed flag alone never grants permission.
     """
     field = (args.get("field") or "").strip()
     if field not in SETTINGS_FIELDS:
@@ -2493,8 +2494,15 @@ def _update_settings(user, args) -> dict:
     if raw is None:
         raise ToolError("value is required. Use an empty string to clear a field.")
 
-    if field in SETTINGS_IMPORTANT and not args.get("confirmed"):
-        raise ToolError(
+    proposal = {
+        "field": field,
+        "value": str(raw).strip(),
+        "before": _setting_display(user, field),
+    }
+    if field in SETTINGS_IMPORTANT and (
+        args.get("confirmed") is not True or proposal not in approved_settings
+    ):
+        raise SettingsConfirmationRequired(
             f"NOT CHANGED, and this is not a failure. {field} is important: "
             f"{_IMPORTANT_EFFECTS[field]}. Do not call this tool again yet. "
             "In your own next reply, tell the student in plain words what "
@@ -2502,7 +2510,9 @@ def _update_settings(user, args) -> dict:
             f"to ({str(raw).strip() or 'cleared'}), and ask them to confirm. "
             "Only if they say yes in their own next message, call "
             "update_settings again with the same field and value plus "
-            "confirmed=true."
+            "confirmed=true. The server also requires that next user message "
+            "to be an explicit confirmation such as 'yes' or 'confirm'.",
+            proposal,
         )
 
     before = _setting_display(user, field)
@@ -2548,7 +2558,9 @@ _MESSAGE_ID_HANDLERS = {
 }
 
 
-def execute(user, name: str, tool_input: dict | None, message_id: str = "") -> tuple[str, bool]:
+def execute(
+    user, name: str, tool_input: dict | None, message_id: str = "", *, approved_settings=()
+) -> tuple[str, bool]:
     """Run one tool for `user` and return `(json_text, is_error)`.
 
     `user` comes from the view's `request.user` closure — it is NEVER read
@@ -2562,13 +2574,17 @@ def execute(user, name: str, tool_input: dict | None, message_id: str = "") -> t
     args = tool_input if isinstance(tool_input, dict) else {}
     try:
         stamped = _MESSAGE_ID_HANDLERS.get(name)
-        if stamped is not None:
+        if name == "update_settings":
+            payload = _update_settings(user, args, approved_settings=approved_settings)
+        elif stamped is not None:
             payload = stamped(user, args, message_id=message_id)
         else:
             handler = _HANDLERS.get(name)
             if handler is None:
                 raise ToolError(f"Unknown tool {name!r}.")
             payload = handler(user, args)
+    except SettingsConfirmationRequired as e:
+        return json.dumps({"error": str(e), "settings_proposal": e.proposal}), True
     except ToolError as e:
         return json.dumps({"error": str(e)}), True
     except Exception as e:  # noqa: BLE001 — one bad tool call must not cost the turn

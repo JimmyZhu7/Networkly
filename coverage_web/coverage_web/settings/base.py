@@ -875,8 +875,9 @@ GMAIL_LIVE_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 # make every Gmail reconnect ask for the calendar too, and would make the
 # calendar impossible to refuse without also giving up mail sync. They are
 # two questions and a student is entitled to answer them separately: the
-# consent screens are separate, the stored grants are separate rows, and
-# disconnecting one leaves the other running.
+# consent screens and stored connection rows are separate. Google revocation
+# still affects all OAuth clients in the Cloud project for the same Google
+# account; separate clients do not isolate disconnects.
 #
 # `calendar.readonly`, never `calendar` or `calendar.events`. Coverage
 # mirrors what is on the calendar onto its own timeline and writes nothing
@@ -933,7 +934,7 @@ STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 # the same way as ops.tracking.EXPECTED_INTERVALS: render.yaml's cron
 # `name:` minus the "coverage-" prefix.
 #
-# All six blank by default, same off-switch posture as VAPID_*/GMAIL_LIVE_*/
+# All blank by default, same off-switch posture as VAPID_*/GMAIL_LIVE_*/
 # STRIPE_* above: track_job_run only pings a job's URL when this dict has a
 # non-empty entry for it, so a deploy with none of these set behaves exactly
 # as it did before this integration existed — JobRun rows and
@@ -942,6 +943,10 @@ STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 # bare, unauthenticated ping endpoint (anyone who has it can ping "success"
 # for that check), so it belongs in the deploy environment, not source
 # control, same reasoning as every other secret-shaped value on this page.
+HEALTHCHECK_URL_GMAIL_POLL = env("HEALTHCHECK_URL_GMAIL_POLL", default="")
+HEALTHCHECK_URL_GCAL_SYNC = env("HEALTHCHECK_URL_GCAL_SYNC", default="")
+HEALTHCHECK_URL_AUTOPILOT = env("HEALTHCHECK_URL_AUTOPILOT", default="")
+HEALTHCHECK_URL_ASSISTANT_RECONCILE = env("HEALTHCHECK_URL_ASSISTANT_RECONCILE", default="")
 HEALTHCHECK_URL_GMAIL_BACKFILL = env("HEALTHCHECK_URL_GMAIL_BACKFILL", default="")
 HEALTHCHECK_URL_GMAIL_WATCH_RENEW = env("HEALTHCHECK_URL_GMAIL_WATCH_RENEW", default="")
 HEALTHCHECK_URL_SCRAPE = env("HEALTHCHECK_URL_SCRAPE", default="")
@@ -954,6 +959,11 @@ HEALTHCHECK_URL_PRO_TRIAL_EXPIRE = env("HEALTHCHECK_URL_PRO_TRIAL_EXPIRE", defau
 # explicit mapping survives a future job whose name doesn't uppercase/
 # underscore cleanly into an env var name, and it's grep-able in one place.
 HEALTHCHECK_URLS = {
+    "gmail-poll": HEALTHCHECK_URL_GMAIL_POLL,
+    "gcal-sync": HEALTHCHECK_URL_GCAL_SYNC,
+    "autopilot": HEALTHCHECK_URL_AUTOPILOT,
+    "assistant-reconcile": HEALTHCHECK_URL_ASSISTANT_RECONCILE,
+
     "gmail-backfill": HEALTHCHECK_URL_GMAIL_BACKFILL,
     "gmail-watch-renew": HEALTHCHECK_URL_GMAIL_WATCH_RENEW,
     "scrape": HEALTHCHECK_URL_SCRAPE,
@@ -1007,3 +1017,10 @@ LOGGING = {
         "django.db.backends": {"level": "WARNING"},
     },
 }
+
+# Private individual beta. Admission is enforced by both allauth adapters.
+BETA_ENABLED = env.bool("BETA_ENABLED", default=False)
+BETA_MAX_USERS = env.int("BETA_MAX_USERS", default=100)
+if not 1 <= BETA_MAX_USERS <= 100:
+    raise ValueError("BETA_MAX_USERS must be between 1 and 100")
+SOCIALACCOUNT_ADAPTER = "accounts.adapter.CoverageSocialAccountAdapter"

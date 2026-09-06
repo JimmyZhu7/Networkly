@@ -21,13 +21,11 @@ a student re-consenting, which is exactly the friction it should have.
 A SEPARATE GRANT FROM GMAIL, ON PURPOSE.
 -----------------------------------------
 Same OAuth client, same Fernet key, different consent and a different row.
-`gmail_live` is untouched by this file: its scope list does not widen, its
-connection record is not shared, and disconnecting one grant leaves the
-other running. A student who wants mail sync and no calendar (or the
-reverse) gets exactly that, because the two questions are asked separately.
-`include_granted_scopes="false"` in `capture.google_oauth.auth_url` is what
-holds that apart at Google's end — without it, incremental authorisation
-would quietly fold the mail scope into the calendar token.
+Each connection requests its own scopes with `include_granted_scopes="false"`.
+This separates consent requests, not revocation: Google revokes authorization
+across all OAuth clients in the Cloud project for the same Google account.
+A confirmed revoke also invalidates the matching local sibling connection.
+Using a different client in the same project would not isolate revocation.
 
 STATED TIMES OUTRANK READ ONES, AND THAT IS ALREADY THE RULE.
 --------------------------------------------------------------
@@ -87,6 +85,8 @@ from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from google.auth.exceptions import RefreshError
@@ -404,7 +404,7 @@ class GcalSyncResult:
         return ", ".join(parts)
 
 
-def _list_events(service, connection, *, now) -> tuple[list[dict], str | None, bool]:
+def _list_events(service, connection, *, now, full_sync=False) -> tuple[list[dict], str | None, bool]:
     """Every event waiting for this calendar, plus the next cursor.
 
     Two modes, and the cursor decides which. With a stored `sync_token`
@@ -430,7 +430,7 @@ def _list_events(service, connection, *, now) -> tuple[list[dict], str | None, b
         "showDeleted": True,
         "maxResults": PAGE_SIZE,
     }
-    if connection.sync_token:
+    if connection.sync_token and not full_sync:
         params["syncToken"] = connection.sync_token
     else:
         params["timeMin"] = (now - timedelta(days=settings.GCAL_SYNC_PAST_DAYS)).isoformat()
@@ -442,6 +442,7 @@ def _list_events(service, connection, *, now) -> tuple[list[dict], str | None, b
     events: list[dict] = []
     page_token = None
     next_sync_token = None
+    seen_page_tokens = set()
     while True:
         call_params = dict(params)
         if page_token:
@@ -449,18 +450,99 @@ def _list_events(service, connection, *, now) -> tuple[list[dict], str | None, b
         try:
             page = service.events().list(**call_params).execute()
         except HttpError as exc:
-            if getattr(exc.resp, "status", None) == 410 and connection.sync_token:
+            if getattr(exc.resp, "status", None) == 410 and "syncToken" in params:
                 return [], None, True
             raise
-        events.extend(page.get("items") or [])
+        if not isinstance(page, dict) or not isinstance(page.get("items", []), list):
+            raise GcalError("Google Calendar returned an incomplete event list; retry the sync.")
+        items = page.get("items", [])
+        if any(not isinstance(item, dict) for item in items):
+            raise GcalError("Google Calendar returned an unreadable event; retry the sync.")
+        events.extend(items)
         page_token = page.get("nextPageToken")
         if not page_token:
             # Google only issues the next cursor on the LAST page. Reading
             # it earlier and stopping would store a token that skips
             # everything after it.
             next_sync_token = page.get("nextSyncToken")
+            if not isinstance(next_sync_token, str) or not next_sync_token.strip():
+                raise GcalError("Google Calendar did not finish the event list; retry the sync.")
             break
+        if not isinstance(page_token, str) or page_token in seen_page_tokens:
+            raise GcalError("Google Calendar repeated an event page; retry the sync.")
+        seen_page_tokens.add(page_token)
     return events, next_sync_token, False
+
+
+def _reconcile_missing_events(service, connection, events, *, now) -> list[dict]:
+    """Resolve gaps in a full *windowed* read using individual Google IDs.
+
+    Absence from the window is not cancellation: a meeting may have moved.
+    Only Google-owned active rows overlapping this window are candidates;
+    mailbox/manual records and older/far-future history are never swept.
+    Finish every lookup before applying any result or advancing the cursor.
+    """
+    seen = set()
+    for event in events:
+        google_id = event.get("id")
+        if not isinstance(google_id, str) or not google_id.strip():
+            continue
+        # A malformed listed resource must not hide an existing event from
+        # reconciliation just because its ID happened to be present.
+        try:
+            usable = event.get("status") == "cancelled" or _parse_start(
+                connection.user, event.get("start") or {},
+            )[0] is not None
+        except (TypeError, ValueError, AttributeError):
+            usable = False
+        if usable:
+            seen.add(google_id.strip())
+
+    lower = now - timedelta(days=settings.GCAL_SYNC_PAST_DAYS)
+    upper = now + timedelta(days=settings.GCAL_SYNC_FUTURE_DAYS)
+    candidates = CalendarEvent.all_objects.filter(user_id=connection.user_id,
+        source=CalendarEvent.SOURCE_GCAL,
+        cancelled_at__isnull=True, starts_at__lt=upper,
+    ).filter(
+        Q(ends_at__gt=lower) | Q(ends_at__isnull=True, starts_at__gte=lower),
+    ).exclude(external_id="").exclude(external_id__in=seen).order_by("pk")
+    resolved = []
+    calendar_id = connection.calendar_id or "primary"
+    for google_id in candidates.values_list("external_id", flat=True):
+        try:
+            event = service.events().get(calendarId=calendar_id, eventId=google_id).execute()
+        except HttpError as exc:
+            if getattr(exc.resp, "status", None) != 404:
+                raise GcalError("Google Calendar could not verify a missing event; retry the sync.") from exc
+            # Google also returns 404 when the *calendar* is inaccessible.
+            # Confirm its identity/access after each missing-event response
+            # before treating that event as removed from this calendar.
+            try:
+                calendar = service.calendars().get(calendarId=calendar_id).execute()
+            except (HttpError, RefreshError) as calendar_exc:
+                raise GcalError("Google Calendar access could not be verified; retry the sync.") from calendar_exc
+            expected_id = connection.google_email if calendar_id == "primary" else calendar_id
+            if not isinstance(calendar, dict) or str(calendar.get("id", "")).casefold() != expected_id.casefold():
+                raise GcalError("Google Calendar identity changed; reconnect before syncing.")
+            event = {"id": google_id, "status": "cancelled"}
+        if not isinstance(event, dict) or event.get("id") != google_id:
+            raise GcalError("Google Calendar could not identify a missing event; retry the sync.")
+        if event.get("status") != "cancelled":
+            try:
+                starts_at, _ = _parse_start(connection.user, event.get("start") or {})
+            except (TypeError, ValueError, AttributeError) as exc:
+                raise GcalError("Google Calendar returned an unreadable event; retry the sync.") from exc
+            if starts_at is None or event.get("status") not in {"confirmed", "tentative"}:
+                raise GcalError("Google Calendar did not resolve a missing event; retry the sync.")
+        resolved.append(event)
+    return resolved
+
+
+def _connection_snapshot(connection):
+    return tuple(getattr(connection, name) for name in (
+        "user_id", "google_email", "calendar_id", "refresh_token_encrypted",
+        "connected_at", "sync_token", "last_synced_at", "status",
+    ))
 
 
 def _upsert_event(user, connection, event: dict, result: GcalSyncResult, *, dry_run: bool) -> None:
@@ -578,7 +660,11 @@ def _upsert_event(user, connection, event: dict, result: GcalSyncResult, *, dry_
     existing.starts_at = starts_at
     existing.ends_at = ends_at
     existing.all_day = all_day
-    existing.location = location or existing.location
+    # A Google-owned row mirrors the full event resource, including cleared
+    # optional fields. Mail-derived rows retain their separate local context
+    # when Google omits it.
+    mirrors_google = existing.source == CalendarEvent.SOURCE_GCAL
+    existing.location = location if mirrors_google else location or existing.location
     # A CANCELLATION GOOGLE HAS TAKEN BACK. The event is live again in the
     # calendar we are mirroring, so the row must stop reading as retired —
     # the same revival `_upsert_scheduled_chat` performs for a re-invite,
@@ -593,16 +679,11 @@ def _upsert_event(user, connection, event: dict, result: GcalSyncResult, *, dry_
     # the row is claiming.
     existing.time_confidence = 1.0
     existing.time_evidence = ""
-    if adopting:
-        # The TITLE of an adopted row stays whatever Coverage wrote ("Chat
-        # with Jane Banker"), because that names the person and Google's
-        # summary usually does not. Everything else about the meeting comes
-        # from the calendar, which is the more current statement of it.
-        pass
-    else:
+    if mirrors_google:
         existing.title = title
-        if description:
-            existing.description = description
+        existing.description = description
+    # Preserve the title/notes of a mail-derived meeting on later syncs too,
+    # not just the first adoption. Its source continues to own that context.
 
     after = (
         existing.title, existing.description, existing.location, existing.starts_at,
@@ -646,6 +727,18 @@ def sync_connection(connection: GoogleCalendarConnection, *, dry_run: bool = Fal
     the cursor past events that never landed, and those events are then
     invisible forever — the incremental read will not offer them again.
     """
+    # Read authoritative state rather than trusting a command's earlier
+    # queryset snapshot. Every lookup and final lock retains the tenant key.
+    connection = GoogleCalendarConnection.all_objects.select_related("user").filter(user_id=connection.user_id,
+        pk=connection.pk, status="active", user__is_active=True,
+        user__deleted_at__isnull=True,
+    ).first()
+    if connection is None:
+        raise GcalError("This calendar connection is no longer active; reconnect in Settings.")
+    snapshot = _connection_snapshot(connection)
+    now = timezone.now()
+    result = GcalSyncResult()
+
     # A REVOKED GRANT IS A FACT ABOUT THE CONNECTION, NOT A CRASH. Google
     # answers a refresh on a withdrawn grant with `RefreshError`, and every
     # future run would raise the same thing forever while the Settings card
@@ -655,41 +748,51 @@ def sync_connection(connection: GoogleCalendarConnection, *, dry_run: bool = Fal
     # every other write is — a dry run reports, it does not decide.
     try:
         service = _calendar_client(connection)
+        events, next_token, expired = _list_events(service, connection, now=now)
+        if expired:
+            result.resynced = True
+            # Do not clear the persisted cursor yet. A failed recovery must
+            # retry the same gap, including on a caller's later full read.
+            events, next_token, _ = _list_events(service, connection, now=now, full_sync=True)
+        if expired or not connection.sync_token:
+            events += _reconcile_missing_events(service, connection, events, now=now)
     except RefreshError as exc:
-        if not dry_run and connection.status != "revoked":
-            connection.status = "revoked"
-            connection.save(update_fields=["status"])
+        if getattr(exc, "retryable", False):
+            raise GcalError(
+                "Google Calendar is temporarily unavailable. Try syncing again."
+            ) from exc
+        if not dry_run:
+            # A reconnect that replaced this grant during the provider call
+            # must not be revoked by the old grant's response.
+            GoogleCalendarConnection.all_objects.filter(user_id=connection.user_id,
+                pk=connection.pk,
+                refresh_token_encrypted=connection.refresh_token_encrypted,
+                connected_at=connection.connected_at,
+            ).update(status="revoked")
         raise GcalError(
             "Google says this calendar grant is no longer valid — reconnect "
             "Google Calendar in Settings."
         ) from exc
-    now = timezone.now()
-
-    events, next_token, expired = _list_events(service, connection, now=now)
-    result = GcalSyncResult()
-    if expired:
-        # Google retired the stored cursor. Re-read the window from scratch
-        # on the SAME pass rather than making the user wait for the next
-        # one: the run has already established the grant works, and a sync
-        # that returns "nothing" after a 410 would be lying about coverage.
-        result.resynced = True
-        if not dry_run:
-            connection.sync_token = ""
-            connection.save(update_fields=["sync_token"])
-        else:
-            # A dry run must not persist the clearing, but the re-read below
-            # still has to behave as though the cursor is gone.
-            connection.sync_token = ""
-        events, next_token, _ = _list_events(service, connection, now=now)
-
-    for event in events:
-        _upsert_event(connection.user, connection, event, result, dry_run=dry_run)
-
-    if not dry_run:
-        connection.sync_token = next_token or connection.sync_token
-        connection.last_synced_at = now
-        connection.last_sync_stats = result.as_stats()
-        connection.save(update_fields=["sync_token", "last_synced_at", "last_sync_stats"])
+    if dry_run:
+        for event in events:
+            _upsert_event(connection.user, connection, event, result, dry_run=True)
+    else:
+        # Network calls are finished. The short lock serializes commits,
+        # while the snapshot rejects stale concurrent syncs/reconnects. A
+        # failure applying any resource rolls back both rows and cursor.
+        with transaction.atomic():
+            current = GoogleCalendarConnection.all_objects.select_for_update().filter(user_id=connection.user_id,
+                pk=connection.pk,
+                user__is_active=True, user__deleted_at__isnull=True,
+            ).first()
+            if current is None or _connection_snapshot(current) != snapshot:
+                raise GcalError("The calendar connection changed during sync; retry the sync.")
+            for event in events:
+                _upsert_event(connection.user, current, event, result, dry_run=False)
+            current.sync_token = next_token
+            current.last_synced_at = now
+            current.last_sync_stats = result.as_stats()
+            current.save(update_fields=["sync_token", "last_synced_at", "last_sync_stats"])
     for line in result.details:
         logger.info("Calendar sync %s: %s", connection.google_email, line)
     return result

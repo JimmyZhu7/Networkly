@@ -905,3 +905,57 @@ def test_the_tenants_own_location_field_still_wins(monkeypatch):
     o = Opportunity.objects.get(url__contains="R-0012398")
     assert o.location == _RJ_STATED_LOCATION
     assert o.region == "us"
+
+
+@pytest.mark.django_db
+def test_rescrape_does_not_derive_a_year_over_preserved_stated_grad_facts(monkeypatch):
+    incoming = _opp(U1, title="2027 Summer Analyst Program")
+    _patch(monkeypatch, [_result([incoming])])
+    ingest.ingest_boards([BOARD])
+    row = Opportunity.objects.get(url=U1)
+    row.raw = {"facts": {"grad": {"years": ["2027", "2028"], "phrase": "graduating in 2027 or 2028"}}}
+    row.class_year_derived = ""
+    row.save(update_fields=["raw", "class_year_derived"])
+
+    ingest.ingest_boards([BOARD])
+    row.refresh_from_db()
+    assert row.raw["facts"]["grad"]["years"] == ["2027", "2028"]
+    assert row.class_year_derived == "", "stated graduation evidence must outrank a title heuristic"
+
+
+@pytest.mark.django_db
+def test_changed_posting_can_derive_again_after_old_grad_facts_are_invalidated(monkeypatch):
+    _patch(monkeypatch, [_result([_opp(U1, title="2027 Summer Analyst Program")])])
+    ingest.ingest_boards([BOARD])
+    row = Opportunity.objects.get(url=U1)
+    row.raw = {"facts": {"grad": {"years": ["2027", "2028"]}}}
+    row.class_year_derived = ""
+    row.save(update_fields=["raw", "class_year_derived"])
+    _patch(monkeypatch, [_result([_opp(U1, title="2028 Summer Analyst Program")])])
+    ingest.ingest_boards([BOARD])
+    row.refresh_from_db()
+    assert "facts" not in row.raw
+    assert row.class_year_derived == "2029"
+
+
+@pytest.mark.django_db
+def test_new_location_with_unknown_market_retracts_the_old_region(monkeypatch):
+    _patch(monkeypatch, [_result([_opp(U1, location="Chicago")])])
+    ingest.ingest_boards([BOARD])
+    assert Opportunity.objects.get(url=U1).region == "us"
+    _patch(monkeypatch, [_result([_opp(U1, location="Location to be announced")])])
+    ingest.ingest_boards([BOARD])
+    row = Opportunity.objects.get(url=U1)
+    assert row.location == "Location to be announced"
+    assert row.region == "", "the newly stated place no longer supports the previous US classification"
+    assert OpportunityChange.objects.filter(opportunity=row, field="region", old_value="us", new_value="").exists()
+
+
+@pytest.mark.django_db
+def test_whitespace_location_is_silence_and_preserves_the_stored_place(monkeypatch):
+    _patch(monkeypatch, [_result([_opp(U1, location="Chicago")])])
+    ingest.ingest_boards([BOARD])
+    _patch(monkeypatch, [_result([_opp(U1, location="  ")])])
+    ingest.ingest_boards([BOARD])
+    row = Opportunity.objects.get(url=U1)
+    assert (row.location, row.region) == ("Chicago", "us")

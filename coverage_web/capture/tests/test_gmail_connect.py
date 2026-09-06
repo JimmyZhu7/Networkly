@@ -192,9 +192,8 @@ class TestConnectGmailConfigFailures:
     def test_a_dead_refresh_at_watch_time_does_not_throw_away_the_connection(
         self, student, settings
     ):
-        """`register_watch` -> `_credentials` -> `creds.refresh()` raises
-        `google.auth.exceptions.RefreshError`, which is not an HttpError at
-        all, so even the 401/403 arm never sees it."""
+        """A dead refresh preserves the saved row but honestly requires
+        reconnection; reporting it as active would leave every poll failing."""
         from google.auth.exceptions import RefreshError
 
         settings.GMAIL_LIVE_TOKEN_KEY = gmail_live.Fernet.generate_key().decode()
@@ -207,8 +206,9 @@ class TestConnectGmailConfigFailures:
              patch.object(gmail_live, "_gmail_client", side_effect=RefreshError("bad grant")):
             connection = gmail_live.connect_gmail(student, "auth-code", "https://x/callback")
 
-        assert connection.status == "active"
+        assert connection.status == "revoked"
         assert connection.watch_expiration is None
+        assert GmailConnection.objects.for_user(student).filter(pk=connection.pk).exists()
 
 
 class TestGmailCallbackNeverRenders500:
@@ -259,3 +259,26 @@ class TestGmailCallbackNeverRenders500:
 
         assert response.status_code == 302
         assert GmailConnection.all_objects.filter(user=student).count() == 0
+
+    def test_callback_reports_revoked_grant_without_success_or_connected_event(self, client, student, settings):
+        from django.contrib.messages import get_messages
+        from google.auth.exceptions import RefreshError
+        from analytics.models import ProductEvent
+
+        settings.GMAIL_LIVE_CLIENT_ID = "cid"
+        settings.GMAIL_LIVE_CLIENT_SECRET = "csecret"
+        settings.GMAIL_LIVE_PUBSUB_TOPIC = "projects/p/topics/t"
+        settings.GMAIL_LIVE_TOKEN_KEY = gmail_live.Fernet.generate_key().decode()
+        student.plan = "pro"
+        student.save(update_fields=["plan"])
+        url = self._consented(client, student)
+        with patch.object(gmail_live, "_flow", return_value=_fake_flow()), \
+             patch.object(gmail_live, "build", return_value=_fake_gmail_client()), \
+             patch.object(gmail_live, "_gmail_client", side_effect=RefreshError("invalid_grant")):
+            response = client.get(url)
+        assert response.status_code == 302
+        messages = list(get_messages(response.wsgi_request))
+        assert any("Connect Gmail again" in str(message) for message in messages)
+        assert not any(message.level_tag == "success" for message in messages)
+        assert not ProductEvent.objects.for_user(student).filter(event="gmail_connected").exists()
+        assert GmailConnection.objects.for_user(student).get().status == "revoked"

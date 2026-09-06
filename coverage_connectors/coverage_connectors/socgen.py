@@ -187,9 +187,10 @@ def fetch(board: SocGenBoard) -> FetchResult:
                 if opp is not None and opp.url not in seen:
                     seen.add(opp.url)
                     opps.append(opp)
-            skip += _PAGE
+            skip += len(docs)
         return FetchResult(board=board, ok=True, opportunities=opps,
                            raw_count=total or len(opps),
+                           truncated=total is not None and len(seen) < total,
                            # Quantum answering TotalCount=0 is the search
                            # saying nothing matched, which is a fact.
                            empty_state=not opps and total == 0)

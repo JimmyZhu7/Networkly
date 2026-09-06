@@ -68,6 +68,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from django.utils import timezone
+from django.db import transaction
 
 from accounts.forms import CADENCE_LABELS
 from accounts.models import WORK_AUTH_CITIZEN, WORK_AUTH_SPONSORSHIP
@@ -83,6 +84,8 @@ from . import attachments as attachments_mod
 from . import plans
 from . import tools as tools_mod
 from .client import get_client, is_configured
+from .confirmation import approved_settings
+from .metering import charge_stream, charge_turn
 from .models import AdvisorMemory, ChatMessage
 
 # Round-trips to the API per student message. Eight is generous for the
@@ -450,6 +453,7 @@ def _api_messages(conversation, user) -> list[dict]:
         if i != last_idx:
             blocks = attachments_mod.stub_old_blocks(blocks)
         messages.append({"role": m.role, "content": attachments_mod.strip_private_fields(blocks)})
+    messages = _repair_interrupted_tools(messages)
     if messages:
         # The preamble rides on the first user turn of the window, rebuilt
         # every request so the date is always today's.
@@ -458,6 +462,34 @@ def _api_messages(conversation, user) -> list[dict]:
             "content": [{"type": "text", "text": build_preamble(user)}] + list(messages[0]["content"]),
         }
     return messages
+
+
+def _repair_interrupted_tools(messages):
+    """A worker kill between a tool request and result must not break replay.
+
+    Preserve stored history and never claim the tool ran or failed. A CRM
+    write might have committed just before the process died; the next turn
+    must check current records rather than blindly execute it again.
+    """
+    repaired = []
+    for index, message in enumerate(messages):
+        repaired.append(message)
+        requested = [b.get("id") for b in message["content"] if b.get("type") == "tool_use"]
+        if message["role"] != "assistant" or not requested:
+            continue
+        following = messages[index + 1] if index + 1 < len(messages) else None
+        results = following["content"] if following and following["role"] == "user" else []
+        answered = {b.get("tool_use_id") for b in results if b.get("type") == "tool_result"}
+        missing = [{
+            "type": "tool_result", "tool_use_id": tool_id, "is_error": True,
+            "content": "The previous turn stopped before this result was saved. Its outcome is unknown. Check current records before retrying a write.",
+        } for tool_id in requested if tool_id not in answered]
+        if missing:
+            if following and following["role"] == "user":
+                following["content"] = missing + results
+            else:
+                repaired.append({"role": "user", "content": missing})
+    return repaired
 
 
 def _tool_calls_used(conversation, user) -> int:
@@ -560,6 +592,23 @@ def _notice(user, conversation, kind: str, text: str) -> ChatMessage:
 def _save(message: ChatMessage) -> ChatMessage:
     message.save()
     return message
+
+
+def _save_turn_reply(user, conversation, blocks, *, going_again, stop_reason, charge):
+    # A killed process must leave either a durable answer AND its settled
+    # debit, or neither. Recovery can safely refund every remaining pending
+    # reservation without guessing whether a final answer was delivered.
+    charge.ensure_owned()
+    with transaction.atomic():
+        reply = _save(ChatMessage(
+            user=user, conversation=conversation, role=ChatMessage.ROLE_ASSISTANT,
+            content=blocks if going_again else _final_blocks(blocks),
+        ))
+        if not going_again:
+            ending = _ending_notice(reply, stop_reason)
+            if not ending or ending[0] != ChatMessage.NOTICE_FAILED:
+                charge.keep(reply=reply)
+    return reply
 
 
 # ---------------------------------------------------------------------------
@@ -724,7 +773,8 @@ def _retitle_if_first_message(user, conversation, is_first: bool, client, user_t
 # ---------------------------------------------------------------------------
 # The loop
 # ---------------------------------------------------------------------------
-def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=None, resume=False) -> TurnResult:
+@charge_turn
+def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=None, resume=False, charge=None) -> TurnResult:
     """One student message in, the persisted assistant reply out.
 
     The student's message is persisted BEFORE the API call, so a failed or
@@ -760,6 +810,7 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 content=list(attachment_blocks) + ([{"type": "text", "text": text[:8000]}] if text else []),
             )
         )
+    settings_approval = approved_settings(user, conversation)
     is_first = not conversation.title
     if is_first:
         conversation.title = text[:120]
@@ -778,12 +829,9 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
         return TurnResult(ok=False, reason="unconfigured", reply=reply)
 
     limits = plans.limits_for(user)
-    # Checked once, before round 0 ever fires — a hard stop before the turn
-    # starts, never mid-turn (docs/credit-system-plan.md §6). The debit
-    # itself happens below, at the exact point round 0 succeeds, preserving
-    # the fairness rule the old daily cap already established: a request the
-    # API never answered must not cost the student anything.
-    if not billing_credits.can_spend(user, limits.message_cost):
+    # The gate and reservation share the ledger's user-row lock. Failed or
+    # interrupted turns refund it; no transaction spans provider work.
+    if not charge.reserve(limits):
         reply = _save(
             _notice(
                 user,
@@ -798,17 +846,12 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
     used = _tool_calls_used(conversation, user)
     executed: list[str] = []
     last_assistant: ChatMessage | None = None
-    # Whether THIS turn has already been charged (round 0 succeeded) —
-    # tracked so a failure on a LATER round, or running out the round cap,
-    # can refund it. The fairness rule this gate exists for is "never
-    # charged for a request the student didn't get an answer to," and a
-    # network hiccup on round 1 is exactly as possible as one on round 0 —
-    # the charge landing before that happens must not be the difference
-    # between refunded and not.
-    charged = False
+    # The reservation is refunded on every failure, including round zero.
+    charged = True
 
     for round_no in range(MAX_ROUNDS):
         try:
+            charge.ensure_owned()
             response = client.messages.create(
                 model=limits.model,
                 max_tokens=MAX_TOKENS,
@@ -816,10 +859,11 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 tools=tools_mod.TOOL_SCHEMAS,
                 messages=_api_messages(conversation, user),
             )
+            charge.ensure_owned()
         except Exception:  # noqa: BLE001 — see module docstring: never a 500
             if charged:
-                billing_credits.refund(
-                    user, limits.message_cost, reason="turn_failed_after_charge", model=limits.model
+                charge.refund(
+                    reason="turn_failed_after_charge", model=limits.model
                 )
             reply = _save(
                 _notice(
@@ -832,25 +876,15 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
             return TurnResult(ok=False, reason="failed", rounds=round_no, tool_calls=executed, reply=reply)
 
         if round_no == 0:
-            # Counted (and, below, charged) only once the API actually
-            # answered — not before the call, which used to charge a
-            # student's quota for a request that never got a response at
-            # all. At Free's 15/day that read as being billed for an error.
+            # Usage analytics count answered requests; the credit is already
+            # reserved and is retained only when the turn completes.
             record_event("assistant_message_sent", user=user)
-            billing_credits.spend(
-                user, limits.message_cost, "spend_chat", model=limits.model
-            )
-            charged = True
         _log_usage(user, limits.model, response)
         blocks = [_as_dict(b) for b in response.content]
         going_again = response.stop_reason == "tool_use"
-        last_assistant = _save(
-            ChatMessage(
-                user=user,
-                conversation=conversation,
-                role=ChatMessage.ROLE_ASSISTANT,
-                content=blocks if going_again else _final_blocks(blocks),
-            )
+        last_assistant = _save_turn_reply(
+            user, conversation, blocks, going_again=going_again,
+            stop_reason=response.stop_reason, charge=charge,
         )
 
         if not going_again:
@@ -860,8 +894,8 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 # on the same fairness rule every other failed turn is —
                 # see `charged` above.
                 if charged:
-                    billing_credits.refund(
-                        user, limits.message_cost, reason="turn_returned_nothing", model=limits.model
+                    charge.refund(
+                        reason="turn_returned_nothing", model=limits.model
                     )
                 reply = _save(_notice(user, conversation, *ending))
                 return TurnResult(
@@ -895,8 +929,10 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 )
                 continue
             used += 1
+            charge.ensure_owned()
             payload, is_error = tools_mod.execute(
-                user, name, block.get("input"), message_id=response.id or ""
+                user, name, block.get("input"), message_id=response.id or "",
+                approved_settings=settings_approval,
             )
             executed.append(name)
             record_event("assistant_tool_call", user=user, tool=name, ok=not is_error)
@@ -922,11 +958,11 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
 
     # Fell out of the loop still wanting tools: the model has not landed an
     # answer inside the budget. Say so rather than showing a half-thought —
-    # and refund round 0's charge, since "I went round in circles" is a
+    # and refund the reservation, since "I went round in circles" is a
     # failure notice, not an answer, same as any other failed turn.
     if charged:
-        billing_credits.refund(
-            user, limits.message_cost, reason="turn_exhausted_round_cap", model=limits.model
+        charge.refund(
+            reason="turn_exhausted_round_cap", model=limits.model
         )
     reply = _save(
         _notice(
@@ -952,7 +988,8 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
 # code to add a second mode. Some duplication between the two loops is the
 # price of that, and it is a small one: each is under 90 lines.
 # ---------------------------------------------------------------------------
-def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks=None, resume=False):
+@charge_stream
+def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks=None, resume=False, charge=None):
     """Same contract as run_turn, as a generator of small dicts instead of one
     TurnResult — this is what makes the reply grow into the page token by
     token instead of appearing all at once when the whole thing is ready.
@@ -1000,6 +1037,7 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
                 content=list(attachment_blocks) + ([{"type": "text", "text": text[:8000]}] if text else []),
             )
         )
+    settings_approval = approved_settings(user, conversation)
     is_first = not conversation.title
     if is_first:
         conversation.title = text[:120]
@@ -1026,7 +1064,7 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
     limits = plans.limits_for(user)
     # Same hard-stop-before-the-turn-starts rule as run_turn — see that
     # function's comment on this same check.
-    if not billing_credits.can_spend(user, limits.message_cost):
+    if not charge.reserve(limits):
         notice_text = _credit_block_notice(user, limits)
         _save(_notice(user, conversation, ChatMessage.NOTICE_CAPPED, notice_text))
         yield {"type": "notice", "kind": "capped", "text": notice_text}
@@ -1037,13 +1075,14 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
     executed: list[str] = []
     # Same tracking as run_turn, and for the same reason — see that
     # function's comment on `charged`.
-    charged = False
+    charged = True
 
     for round_no in range(MAX_ROUNDS):
         blocks: list[dict] = []
         stop_reason = None
         message_id = ""
         try:
+            charge.ensure_owned()
             with client.messages.stream(
                 model=limits.model,
                 max_tokens=MAX_TOKENS,
@@ -1055,22 +1094,18 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
                     if delta:
                         yield {"type": "delta", "text": delta}
                 final = stream.get_final_message()
+            charge.ensure_owned()
             if round_no == 0:
-                # Same fix as run_turn: counted and charged only once the
-                # API actually answered, not before the call.
+                # Same answered-request analytics as the nonstreaming loop.
                 record_event("assistant_message_sent", user=user)
-                billing_credits.spend(
-                    user, limits.message_cost, "spend_chat", model=limits.model
-                )
-                charged = True
             _log_usage(user, limits.model, final)
             blocks = [_as_dict(b) for b in final.content]
             stop_reason = final.stop_reason
             message_id = final.id or ""
         except Exception:  # noqa: BLE001 — see module docstring: never a 500
             if charged:
-                billing_credits.refund(
-                    user, limits.message_cost, reason="turn_failed_after_charge", model=limits.model
+                charge.refund(
+                    reason="turn_failed_after_charge", model=limits.model
                 )
             notice_text = "I couldn't reach the model just then. Try that again in a moment."
             _save(_notice(user, conversation, ChatMessage.NOTICE_FAILED, notice_text))
@@ -1078,13 +1113,9 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
             return
 
         going_again = stop_reason == "tool_use"
-        last_reply = _save(
-            ChatMessage(
-                user=user,
-                conversation=conversation,
-                role=ChatMessage.ROLE_ASSISTANT,
-                content=blocks if going_again else _final_blocks(blocks),
-            )
+        last_reply = _save_turn_reply(
+            user, conversation, blocks, going_again=going_again,
+            stop_reason=stop_reason or "", charge=charge,
         )
 
         if not going_again:
@@ -1095,8 +1126,8 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
             ending = _ending_notice(last_reply, stop_reason or "")
             if ending and ending[0] == ChatMessage.NOTICE_FAILED:
                 if charged:
-                    billing_credits.refund(
-                        user, limits.message_cost, reason="turn_returned_nothing", model=limits.model
+                    charge.refund(
+                        reason="turn_returned_nothing", model=limits.model
                     )
                 _save(_notice(user, conversation, *ending))
                 yield {"type": "notice", "kind": "failed", "text": ending[1]}
@@ -1143,7 +1174,11 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
                 label = TOOL_LABELS.get(name)
                 if label:
                     yield {"type": "tool", "label": label}
-            payload, is_error = tools_mod.execute(user, name, block.get("input"), message_id=message_id)
+            charge.ensure_owned()
+            payload, is_error = tools_mod.execute(
+                user, name, block.get("input"), message_id=message_id,
+                approved_settings=settings_approval,
+            )
             executed.append(name)
             record_event("assistant_tool_call", user=user, tool=name, ok=not is_error)
             if name in tools_mod.WRITE_TOOLS and not is_error:
@@ -1162,8 +1197,8 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
     # Same refund as run_turn's own round-cap exhaustion — see that
     # function's comment.
     if charged:
-        billing_credits.refund(
-            user, limits.message_cost, reason="turn_exhausted_round_cap", model=limits.model
+        charge.refund(
+            reason="turn_exhausted_round_cap", model=limits.model
         )
     notice_text = (
         "I went round in circles on that one and stopped myself. Try asking it "

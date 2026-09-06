@@ -206,6 +206,7 @@ def test_every_deletable_table_is_also_exportable(student, loaded):
         "chat_folders": "chat_folders.csv",
         "chat_conversations": "chat_conversations.csv",
         "chat_messages": "chat_messages.csv",
+        "assistant_turns": "assistant_turns.csv",
         "advisor_memories": "advisor_memories.csv",
         "daily_briefs": "daily_briefs.csv",
         "gmail_connection": "gmail_connection.csv",
