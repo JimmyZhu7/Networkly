@@ -94,6 +94,23 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 # be right before the claim is made.
 SECURE_HSTS_PRELOAD = env.bool("DJANGO_SECURE_HSTS_PRELOAD", default=False)
 
+# THE DECISION ABOVE, MADE MACHINE-READABLE — and the reason this line is
+# not merely tidiness. `security.W021` fires whenever SECURE_HSTS_PRELOAD is
+# False, which is permanently, by the deliberate choice argued above. The
+# release runbook's gate is
+# `manage.py check --deploy --fail-level WARNING`, and that gate must exit
+# zero. With W021 always firing, it never could: the documented launch check
+# was guaranteed red on a correctly configured deploy, which turns the one
+# command that is supposed to catch a real misconfiguration into a line
+# everybody learns to skip. Silenced HERE, next to its own argument, and
+# scoped to this single check id — every other security warning still fails
+# the gate, which is the point of running it at all.
+#
+# The moment DJANGO_SECURE_HSTS_PRELOAD is flipped to true (after a year-long
+# max-age on the real domain, in that order) this entry becomes inert rather
+# than wrong: Django raises W021 only while preload is off.
+SILENCED_SYSTEM_CHECKS = ["security.W021"]
+
 # Django 4+ requires the scheme-qualified origin(s) for CSRF on unsafe methods
 # behind an HTTPS proxy (admin login, all form POSTs). Set to your deployed
 # origin(s), e.g. "https://coverage.onrender.com,https://app.coverage.app".
