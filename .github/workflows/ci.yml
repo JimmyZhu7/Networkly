@@ -1,9 +1,17 @@
 name: CI
 
+# `codex/**` is here so the release branch gets a gate WITHOUT being merged
+# first. Everything below used to run on `main` and on pull requests only,
+# which meant the branch a release is actually cut from was the one branch
+# nothing checked — the image in particular had never been built anywhere
+# except a developer's laptop, and this one has no Docker installed at all.
+# `workflow_dispatch` so a release engineer can re-run the gate against a
+# revision on demand rather than pushing an empty commit to trigger it.
 on:
   push:
-    branches: [main]
+    branches: [main, "codex/**"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -68,3 +76,60 @@ jobs:
 
       - name: Run pytest
         run: uv run pytest
+
+  # ---------------------------------------------------------------------
+  # The image gate.
+  #
+  # WHY THIS JOB EXISTS. `render.yaml` points all eleven services at this
+  # one Dockerfile, so a Dockerfile that does not build is a total outage
+  # of the deploy, not a degraded one — and until now nothing built it
+  # outside Render's own build step, which is to say the first time anyone
+  # found out was mid-deploy. It is also the only way THIS repo can
+  # validate the image at all: the release machine has no Docker installed,
+  # and a GitHub-hosted runner does.
+  #
+  # BUILD ONLY. No `docker login`, no registry, no push, no tag anyone else
+  # can pull — Render builds its own image from the same file on its own
+  # hosts. This job answers one question ("does it build?") and buys
+  # nothing.
+  #
+  # Plain `docker build` rather than buildx + a third-party action: the
+  # runner ships Docker already, and this needs no cache export, no
+  # multi-arch matrix and no registry credentials, so an action here would
+  # be one more pinned third party in the supply chain for no capability.
+  # `--progress=plain` so a failing apt/uv/playwright step is readable in
+  # the log instead of collapsed behind a spinner.
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      # The image carries Playwright's Chromium (~300MB) plus its system
+      # libraries; the hosted runner's default free space is enough, but
+      # not by so much that the preinstalled toolchains are worth keeping.
+      - name: Reclaim runner disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
+      - name: Build the deploy image
+        run: docker build --progress=plain --tag coverage-web:ci .
+
+      # A build that succeeds but ships an image without the Postgres client
+      # is the exact failure this suite is meant to stop: `backup_db` shells
+      # out to `pg_dump`, and a missing binary only shows up when the backup
+      # cron runs, which is the worst possible moment to find out. The
+      # server is Postgres 18, so the client's major version must be at
+      # least 18 — an older `pg_dump` refuses a newer server outright.
+      - name: Verify the image can take a backup
+        run: |
+          docker run --rm coverage-web:ci pg_dump --version
+          docker run --rm coverage-web:ci pg_restore --version
+          docker run --rm coverage-web:ci sh -c \
+            'pg_dump --version | grep -Eq "\(PostgreSQL\) 1[89]|\(PostgreSQL\) [2-9][0-9]"'
+
+      - name: Report image size
+        run: docker image ls coverage-web:ci

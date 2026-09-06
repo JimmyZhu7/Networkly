@@ -14,8 +14,9 @@ name: pip-audit
 
 on:
   push:
-    branches: [main]
+    branches: [main, "codex/**"] # the release branch is gated before it merges
   pull_request:
+  workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1" # Monday 06:00 UTC
 
