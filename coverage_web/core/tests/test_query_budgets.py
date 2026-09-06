@@ -32,7 +32,10 @@ because `audit-perf-tests.md §5` item 4 asks for a budget fixture that does
 not add to the suite's per-test setup cost. The test that shrinks the board
 does it inside its own transaction, so the rollback puts it back. The
 teardown is not optional: these rows are committed, and rows left behind
-would be counted by every module that runs after this one.
+would be counted by every module that runs after this one. One of them is not
+a row this file writes — retiring the fixture user used to mint a permanent
+`beta_invitations` seat through a pre_delete receiver, and that seat broke a
+transactional test three apps away. See the comment on the teardown.
 
 THE TWO PROFILE FIELDS on the fixture user are load-bearing, not decoration.
 `work_authorization` sends `directory.views._eligibility` down the visa
@@ -51,7 +54,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.test import Client
-from django.test.utils import CaptureQueriesContext
+from django.test.utils import CaptureQueriesContext, override_settings
 from django.urls import reverse
 
 User = get_user_model()
@@ -63,17 +66,19 @@ _FIRMS = 5
 _ROLES_PER_FIRM = 10
 _SMALL_ROLES_PER_FIRM = 1
 _URL_PREFIX = "https://budget.test/"
+_USER_EMAIL = "budget-student@example.test"
 
 
 @pytest.fixture(scope="module")
 def budget_world(django_db_setup, django_db_blocker):
+    from accounts import beta
     from crm.models import Contact, Task, Touch, UserFirm
     from directory.models import Firm, Opportunity
     from django.utils import timezone
 
     with django_db_blocker.unblock():
         user = User.objects.create_user(
-            email="budget-student@example.test", password="x",
+            email=_USER_EMAIL, password="x",
             regions=["us"], tracks=["ib"],
             work_authorization={"us": "sponsorship"},
             class_year=2029,
@@ -110,7 +115,37 @@ def budget_world(django_db_setup, django_db_blocker):
         for model in (Touch, Task, UserFirm, Contact):
             model.all_objects.filter(user_id=user.pk).delete()
         Firm.objects.filter(slug__startswith="budget-firm-").delete()
-        User.objects.filter(pk=user.pk).delete()
+        # Deleting this user is not a plain row removal. `.env` carries
+        # BETA_ENABLED=true, so `accounts.models.preserve_deleted_beta_seat`
+        # fires on pre_delete and calls `accounts.beta.anonymize_user_seats`,
+        # which get_or_creates a `beta_invitations` row holding this address's
+        # fingerprint with the email blanked. That is deliberate product
+        # behaviour — a departed member's seat must not be recycled — and both
+        # `BetaInvitation.delete()` and its queryset's `delete()` raise, so
+        # nothing here can take the row back out afterwards. Because this
+        # teardown runs outside any test transaction, that seat is COMMITTED,
+        # survives every rollback-mode test that follows, and is only cleared
+        # by the TRUNCATE after the suite's first `transaction=True` test.
+        # `accounts.beta.capacity_status` counts fingerprints, so
+        # `accounts/tests/test_beta_admission.py::
+        # test_simultaneous_last_seat_reservations_are_serialized` — the first
+        # transactional test in collection order — read the leftover as an
+        # occupied seat and both of its racers saw a full beta. It failed twice
+        # that way in full-suite runs while passing alone, and passed on CI,
+        # which has no `.env` and therefore no BETA_ENABLED.
+        #
+        # This user is a query-counting prop that never joined the beta, so
+        # retiring it must not mint a lifetime seat: take the receiver's own
+        # switch off for the delete, then sweep in raw SQL for a seat any
+        # future test in this module might commit against the same address.
+        # Raw SQL because the model forbids the ORM path on purpose.
+        with override_settings(BETA_ENABLED=False):
+            User.objects.filter(pk=user.pk).delete()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM beta_invitations WHERE email_fingerprint = %s",
+                [beta.email_fingerprint(_USER_EMAIL)],
+            )
 
 
 def _shrink_the_board(world):
