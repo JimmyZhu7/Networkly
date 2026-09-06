@@ -111,3 +111,17 @@ def _beta_off_by_default(settings):
     accounts/tests/test_beta_admission.py.
     """
     settings.BETA_ENABLED = False
+
+
+@pytest.fixture(autouse=True)
+def _push_dark_by_default(settings):
+    """Run every test with Web Push unconfigured unless it configures it.
+
+    Third member of the same family: a developer's .env holds real VAPID
+    keys, which makes accounts.push.is_configured() true and turns the
+    "unconfigured keys no-op cleanly" test into a real webpush() call
+    attempt. Push tests that need keys set all three in their own body.
+    """
+    settings.VAPID_PUBLIC_KEY = ""
+    settings.VAPID_PRIVATE_KEY = ""
+    settings.VAPID_CLAIM_EMAIL = ""
