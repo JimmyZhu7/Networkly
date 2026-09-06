@@ -288,6 +288,36 @@ Google and mail-owned rows) is in progress on its own branch and will be
 recorded here when merged. The search throttle from the security review is
 applied.
 
+**Calendar reschedule and cancel — merged.** Reschedule moves the same row
+(same UID) and bumps an ICS `SEQUENCE`; cancel keeps the row with
+`cancelled_at` so the subscription emits `STATUS:CANCELLED`. Both are limited
+to hand-added events the caller owns; Google-owned and mail-owned rows answer
+404 and show neither control. Delete keeps its previous meaning because six
+existing tests pin it. Acceptance step 5 can now be exercised end to end.
+Twenty calendar journey tests, 423 across the calendar and route-auth files.
+
+**Gates, and what they showed.** The authoritative local gate runs in a
+detached worktree at the merged head, because the main checkout carries
+another session's uncommitted interface edits and that session runs pytest
+there (two pytest processes in one checkout share a test database; the
+result is deadlocks and "database couldn't be flushed", which is a collision
+signature, not a code failure). The clean gate on the merged tree: **11,944
+passed, 45 skipped, 1 failed**. The one failure,
+`test_simultaneous_last_seat_reservations_are_serialized`, passed alone five
+times and on CI, and its failing assertion was `['full', 'full']`: both
+simultaneous claims saw a full beta, which means a seat-counting row already
+existed. Existing users count as seats, and pytest-django runs every
+rollback-mode test in the suite before any transactional one, so a row a
+side connection committed earlier lands in this test's count. The test now
+sets its cap to one above whatever is already counted and checks its own two
+reservations, which is the claim it was written to prove; the row's source is
+being located with an isolated instrumented run. CI on the clean runner:
+green on `bd127c0` (11,819 tests, audit clean across 122 pins, image
+built); on `2862274` the test job died at collection because the browser
+matrix's screenshot directory defaulted to one developer's absolute path,
+fixed in `c419c11` together with a clean skip when a browser is absent and a
+CI step that installs Chromium and WebKit.
+
 **Suite hygiene fixed in this pass:** the suite's verdict no longer depends
 on the developer's `.env`. `BETA_ENABLED=true` had made every account read as
 Pro and failed twenty free-tier tests on the founder's laptop only; the root
