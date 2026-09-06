@@ -11,12 +11,22 @@ holds the composer in place while a long conversation scrolls underneath it,
 same shape as every AI chat surface a student has already used.
 {% endcomment %}
 <div id="as-thread" class="as-thread">
+  {% comment %}BOTH ARMS ARE SCROLLING REGIONS, and a scrolling region that
+  cannot take focus cannot be scrolled from a keyboard at all — the content
+  below the fold is simply unreachable without a pointer. Measured on the
+  empty arm at 375x812: the box is 250px tall over 419px of content, so three
+  of the four starter prompts sit outside it, on the first screen a new
+  account sees. `tabindex="0"` plus a name is what makes them reachable; it is
+  also axe's `scrollable-region-focusable` remedy. `ensureLog` in chat.html
+  rebuilds the log arm client-side and sets the same three attributes, so a
+  conversation started without a reload is no less reachable than one that
+  was rendered here.{% endcomment %}
   {% if rows %}
-    <div class="as-log" id="as-log">
+    <div class="as-log" id="as-log" tabindex="0" role="region" aria-label="Conversation">
       {% for row in rows %}{% include "assistant/_message.html" %}{% endfor %}
     </div>
   {% else %}
-    <div class="as-empty">
+    <div class="as-empty" tabindex="0" role="region" aria-label="Ways to start">
       <span class="as-empty-mark" aria-hidden="true">{% include "_logo.html" %}</span>
       <p class="as-empty-lead">Ask about your recruiting. Review your contacts, plan follow-ups, or check upcoming deadlines.</p>
       <div class="as-starters">

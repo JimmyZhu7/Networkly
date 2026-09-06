@@ -187,6 +187,36 @@ def test_settings_renders_every_card_at_both_widths(session, live_server, world)
     assert save.is_enabled()
 
 
+def test_every_scrolling_region_can_be_reached_from_a_keyboard(session, live_server, world):
+    """A region that scrolls and cannot take focus hides its own content.
+
+    The assistant's empty state is the case that found this: at 375x812 its box
+    is 250px over 419px of content, so three of the four starter prompts are
+    below the fold with no way to reach them except a pointer. Asserted on
+    every authenticated surface, not just that one, because any of them can
+    grow a scrolling panel.
+    """
+    _adopt_session(session, live_server, world["student"])
+
+    for path in ("/app/", "/assistant/", "/app/contacts/", "/opportunities/mine/"):
+        _open(session, live_server, path)
+        unreachable = session.page.evaluate("""() => {
+          const focusable = 'a[href],button,input,select,textarea,[tabindex]';
+          return [...document.querySelectorAll('*')].filter(el => {
+            const style = getComputedStyle(el);
+            const scrolls = /(auto|scroll)/.test(style.overflowY)
+              && el.scrollHeight - el.clientHeight > 1;
+            if (!scrolls) return false;
+            if (el.tabIndex >= 0) return false;
+            return !el.querySelector(focusable);
+          }).map(el => el.className || el.tagName);
+        }""")
+        assert unreachable == [], (
+            f"{path} at {session.viewport['name']}: scrolling regions with no "
+            f"keyboard route in: {unreachable}"
+        )
+
+
 def test_no_page_needs_a_horizontal_swipe_on_a_phone(session, live_server, world):
     """Every authenticated surface, in one sweep, at whatever width is under
     test. This is the assertion the narrow viewport exists for."""
