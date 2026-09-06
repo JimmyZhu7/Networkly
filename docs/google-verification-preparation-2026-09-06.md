@@ -22,6 +22,8 @@ Prepend the owner-confirmed production HTTPS origin to each callback. These are 
 
 **Calendar least-privilege decision:** the current implementation calls `calendars.get(primary)` and `events.list/get`. It reads primary-calendar identity for connection/recovery and event details for the schedule. Google now documents narrower `calendar.calendars.readonly` and `calendar.events.readonly` scopes. Before submission, compare that pair with the current broad read-only scope and either migrate and validate the flow or document why the current scope is necessary. Do not claim `calendar.readonly` is the only possible read-only choice. No scope change is made by this dossier. [Calendar scope inventory](https://developers.google.com/workspace/calendar/api/auth).
 
+*Source check, 6 September (second pass):* `capture/gcal_live.py` makes exactly three Calendar API calls: `calendars().get` (line 202), `events().list` (line 451) and `events().get` (line 513). Nothing reads calendar lists, ACLs, settings, colors or free/busy. Google's `calendar.calendars.readonly` covers `calendars.get` and `calendar.events.readonly` covers `events.list/get`, so the narrower pair is sufficient for the shipped behavior. Both the pair and `calendar.readonly` are sensitive (not restricted) scopes; the restricted-scope review is driven by Gmail either way, so the change does not alter the review tier. Migrating is a founder decision because it changes the consent screen and needs one more real consent, sync, disconnect and reconnect pass on a test account; that live pass cannot be run from this environment.
+
 ## Copy for review forms
 
 ### Product description
@@ -66,6 +68,26 @@ Use a designated demo account with synthetic recruiting mail and calendar events
 | 10 | Open `/welcome/export/` and account deletion confirmation | Export contents and accurate deletion explanation; use a disposable account for any actual deletion demonstration |
 
 Upload the completed video as Unlisted on YouTube and save its URL in the submission. Google's guidance requires the complete consent flow, app name/client ID, scope-enabled functionality, and coverage of multiple clients. [Demo requirements](https://support.google.com/cloud/answer/13464321?hl=en).
+
+## Domain, DNS and console changes once a domain exists
+
+The founder has no domain yet. Nothing below is executable until one is bought; every value that depends on the domain is written as `<domain>` and must not be guessed. Provider records below were read from the providers' own documentation on 6 September 2026.
+
+**Render web service (from Render's custom-domain docs).** Attach `<domain>` and `www.<domain>` to `coverage-web`. Then at the DNS host:
+
+| Record | Name | Value | Note |
+|---|---|---|---|
+| `ALIAS` or `ANAME` (preferred) | `<domain>` (apex) | `coverage-web.onrender.com` | Use if the DNS host supports apex aliases |
+| `A` (fallback) | `<domain>` (apex) | `216.24.57.1` | Render's documented apex address |
+| `CNAME` | `www` | `coverage-web.onrender.com` | Render adds the other of apex/www automatically |
+
+Remove any `AAAA` record for the domain while configuring; Render's docs say IPv6 records interfere. On Cloudflare, use `CNAME` at the apex instead of `A`. HTTP redirects to HTTPS automatically and Render issues the certificate after the records resolve. Then set on `coverage-web`: `DJANGO_ALLOWED_HOSTS=<domain>,www.<domain>,coverage-web.onrender.com`, `DJANGO_CSRF_TRUSTED_ORIGINS=https://<domain>,https://www.<domain>`, `SITE_URL=https://<domain>`. Keep HSTS preload off (see `docs/deploy.md` 5b).
+
+**Resend sending domain.** Add `<domain>` (or a subdomain such as `mail.<domain>`) in Resend, which then generates the records to publish. The record *shape* is one `TXT` for SPF, one or more `CNAME` or `TXT` records for DKIM, and an optional `MX` for return-path; the exact names and values are produced by Resend for that domain and cannot be written here in advance. After Resend reports the domain verified, set `EMAIL_URL=smtp+tls://resend:<key>@smtp.resend.com:587` and `DEFAULT_FROM_EMAIL=Networkly <no-reply@<domain>>` on `coverage-web` (the digest and trial-expiry crons inherit both). The free plan allows 100 emails a day and 3,000 a month across 3 domains with 30-day retention (read from Resend's pricing page on 6 September).
+
+**Google Cloud console.** For the sign-in client add `https://<domain>/accounts/google/login/callback/`; for the mailbox/calendar client add `https://<domain>/capture/gmail/callback/` and `https://<domain>/capture/calendar/callback/`. Keep the existing `coverage-web.onrender.com` callbacks until the domain is live and tested, then remove them. Add `<domain>` as an authorized domain on the consent screen; this requires Search Console ownership of `<domain>`, which is an owner action. Update the app home page, privacy and terms links on the consent screen to the `<domain>` URLs and read them back unauthenticated.
+
+**Order of operations.** DNS first and wait for resolution; Render certificate; Django host settings and redeploy; Google callbacks and consent-screen links; Resend domain and `EMAIL_URL` last, because every email link uses `SITE_URL`.
 
 ## Submission gates and owner inputs
 

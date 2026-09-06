@@ -1,8 +1,76 @@
 {
+  "drill_date": "2026-09-06",
+  "drill_number": 2,
+  "supersedes": {
+    "backup": "/Users/zhujimmy/Backups/coverage/launch-readiness-2026-09-06/coverage_consistent_41a593dcd55b.dump",
+    "tables": 60,
+    "note": "Earlier same-day drill predates migrations accounts.0018/assistant.0005; kept for history."
+  },
   "source_database": "coverage",
-  "backup": "/Users/zhujimmy/Backups/coverage/launch-readiness-2026-09-06/coverage_consistent_41a593dcd55b.dump",
+  "backup": "/Users/zhujimmy/Backups/coverage/launch-readiness-2026-09-06/coverage_2026-09-06_211044_188821.dump",
   "backup_mode": "0o600",
-  "same_exported_snapshot": true,
+  "backup_bytes": 13158372,
+  "backup_sha256": "a95f0657b8853ac836559b5863c7d4a99453a3f2f47cb1240c4f4c22ffc90ec5",
+  "backup_command": "manage.py backup_db --dest <private dir> --keep 14 (own destination; the founder's ring was not pruned)",
+  "client_tools": "pg_dump/pg_restore 18.6 (Postgres.app) against server PostgreSQL 18.6",
+  "restore_command": "createdb <new drill db> && pg_restore --exit-on-error --no-owner --no-privileges --dbname <drill db> <dump>",
+  "restore_target": "newly created drill_* database on the local server; never the application or maintenance database",
+  "restore_seconds": 2,
+  "comparison_method": "per table: row count from the dump's own COPY data vs restored count; row contents compared as a sorted multiset (COPY text) so physical heap order is not treated as a defect",
+  "table_count": 62,
+  "all_counts_match": true,
+  "all_rows_identical_as_multiset": true,
+  "tables_with_different_physical_order_only": [
+    "assistant_messages",
+    "django_session",
+    "opportunities",
+    "product_events",
+    "touches"
+  ],
+  "sequences_checked": [
+    {
+      "table": "users",
+      "sequence_ok": true
+    },
+    {
+      "table": "contacts",
+      "sequence_ok": true
+    },
+    {
+      "table": "touches",
+      "sequence_ok": true
+    },
+    {
+      "table": "opportunities",
+      "sequence_ok": true
+    },
+    {
+      "table": "beta_invitations",
+      "sequence_ok": true
+    }
+  ],
+  "sequences_ok": true,
+  "application_checks_on_restore": {
+    "migrate_check_exit": 0,
+    "system_check": "no issues",
+    "forced_login_pages": {
+      "/healthz": 200,
+      "/welcome/": 200,
+      "/welcome/settings/": 200,
+      "/opportunities/": 200
+    },
+    "tenant_scope": "user A sees 0 of 384 other users' contacts through the scoped manager; another user's contact detail returns 404 as A",
+    "encrypted_token": "the stored Gmail refresh token decrypts under GMAIL_LIVE_TOKEN_KEY (value not recorded)",
+    "outbound_jobs_run": false
+  },
+  "temporary_databases_removed": true,
+  "remaining_drill_databases": 0,
+  "not_established": [
+    "production backup scheduling",
+    "recovery on the hosting provider",
+    "avatar object recovery (no real avatars migrated)",
+    "time-to-recover on Render"
+  ],
   "tables": [
     {
       "name": "account_emailaddress",
@@ -53,6 +121,12 @@
       "contents_match": true
     },
     {
+      "name": "assistant_turn_reservations",
+      "snapshot_count": 0,
+      "restored_count": 0,
+      "contents_match": true
+    },
+    {
       "name": "auth_group",
       "snapshot_count": 0,
       "restored_count": 0,
@@ -66,8 +140,8 @@
     },
     {
       "name": "auth_permission",
-      "snapshot_count": 224,
-      "restored_count": 224,
+      "snapshot_count": 232,
+      "restored_count": 232,
       "contents_match": true
     },
     {
@@ -110,6 +184,12 @@
       "name": "bench_dismissals",
       "snapshot_count": 2,
       "restored_count": 2,
+      "contents_match": true
+    },
+    {
+      "name": "beta_invitations",
+      "snapshot_count": 0,
+      "restored_count": 0,
       "contents_match": true
     },
     {
@@ -174,14 +254,14 @@
     },
     {
       "name": "django_content_type",
-      "snapshot_count": 56,
-      "restored_count": 56,
+      "snapshot_count": 58,
+      "restored_count": 58,
       "contents_match": true
     },
     {
       "name": "django_migrations",
-      "snapshot_count": 148,
-      "restored_count": 148,
+      "snapshot_count": 150,
+      "restored_count": 150,
       "contents_match": true
     },
     {
@@ -240,8 +320,8 @@
     },
     {
       "name": "imports",
-      "snapshot_count": 184,
-      "restored_count": 184,
+      "snapshot_count": 185,
+      "restored_count": 185,
       "contents_match": true
     },
     {
@@ -264,8 +344,8 @@
     },
     {
       "name": "ops_jobrun",
-      "snapshot_count": 2799,
-      "restored_count": 2799,
+      "snapshot_count": 2845,
+      "restored_count": 2845,
       "contents_match": true
     },
     {
@@ -364,7 +444,5 @@
       "restored_count": 0,
       "contents_match": true
     }
-  ],
-  "all_tables_match": true,
-  "temporary_database_removed": true
+  ]
 }
