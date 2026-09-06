@@ -45,10 +45,13 @@ jobs:
       # PyPI and fail the export's consumer for the wrong reason.
       - name: Export locked dependencies (uv.lock -> requirements.txt)
         run: >
-          uv export --all-packages --locked --no-emit-workspace
+          uv export --no-hashes --all-packages --locked --no-emit-workspace
           --format requirements.txt -o requirements-audit.txt
 
       - name: Audit exported requirements
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           inputs: requirements-audit.txt
+          # The export is the full transitive lock; never let the action's pip
+          # re-resolve it under the runner's own interpreter.
+          no-deps: true
