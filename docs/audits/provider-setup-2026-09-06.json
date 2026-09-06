@@ -9,7 +9,10 @@
     "bucket": "networkly-avatars",
     "public_bucket": false,
     "file_size_limit_mb": 8,
-    "allowed_mime_types": ["image/jpeg", "image/png"],
+    "allowed_mime_types": [
+      "image/jpeg",
+      "image/png"
+    ],
     "credentials_saved_local_and_render_web": true,
     "render_exact_value_readback": true,
     "synthetic_application_upload_and_readback": true,
@@ -49,7 +52,7 @@
     "new_calendar_and_assistant_reconciliation_services_deployed": false
   },
   "sentry": {
-    "alert_name": "Networkly — New Issues and Regressions",
+    "alert_name": "Networkly \u2014 New Issues and Regressions",
     "alert_id": "3952368",
     "saved_rule_readback_verified": true,
     "new_issues_and_resolved_issue_regressions_included": true,
@@ -66,7 +69,10 @@
     "missing_checks_created": 4,
     "private_urls_saved_local": 10,
     "existing_render_services_saved_and_exactly_verified": 8,
-    "new_service_urls_pending_deployment": ["gcal-sync", "assistant-reconcile"],
+    "new_service_urls_pending_deployment": [
+      "gcal-sync",
+      "assistant-reconcile"
+    ],
     "all_ten_checks_never_pinged": true,
     "missed_job_notification_delivery_tested": false,
     "local_settings_disable_external_heartbeat_pings": true
@@ -81,6 +87,90 @@
     "full_suite_warnings": 2,
     "subsequent_monitoring_changes_focused_tests_passed": 46,
     "migration_drift_check": "No changes detected",
-    "local_authenticated_pages_loaded": ["Today", "Opportunities", "Network", "Calendar", "Assistant"]
+    "local_authenticated_pages_loaded": [
+      "Today",
+      "Opportunities",
+      "Network",
+      "Calendar",
+      "Assistant"
+    ]
+  },
+  "second_pass": {
+    "checked_on": "2026-09-06",
+    "session": "afternoon release-owner pass",
+    "production_deployed": false,
+    "paid_hosting_resumed": false,
+    "branch_pushed_to_github": true,
+    "ci_image_build": "triggered on push; result recorded in product-readiness once known",
+    "supabase_backups": {
+      "bucket": "networkly-backups",
+      "created_via": "S3 API with the saved MEDIA_S3_* keys",
+      "public_bucket": false,
+      "anonymous_object_read_blocked": true,
+      "probe_object_deleted": true,
+      "objects_now": 0,
+      "purpose": "destination for backup_db --s3-bucket (BACKUP_S3_BUCKET); left blank in every environment until the backup cron is resumed"
+    },
+    "backup_restore": {
+      "drill_report": "audits/backup-restore-2026-09-06.json",
+      "tables": 62,
+      "all_counts_match": true,
+      "all_rows_identical_as_multiset": true,
+      "drill_databases_removed": true
+    },
+    "sentry": {
+      "owner_inbox_search": "zhujimmy123@gmail.com, 10 days, including spam",
+      "messages_from_sentry": 0,
+      "test_notification_inbox_delivery_verified": false,
+      "owner_action": "confirm the Sentry account's notification address and check that inbox; re-fire the alert test"
+    },
+    "healthchecks": {
+      "dashboard_reachable_this_session": false,
+      "reason": "Claude in Chrome extension not connected; in-app browser has no session; no API key stored",
+      "missed_job_notification_delivery_tested": false,
+      "monitor_windows_prepared": 11,
+      "free_plan_checks": 20
+    },
+    "resend": {
+      "free_limits_reread": {
+        "per_month": 3000,
+        "per_day": 100,
+        "domains": 3,
+        "retention_days": 30
+      },
+      "digest_now_spread_daily_cap": 60
+    },
+    "render": {
+      "custom_domain_records_documented": true,
+      "apex_a_record": "216.24.57.1",
+      "postgresMajorVersion": "immutable; existing coverage-db version unknown from repo; owner must read from dashboard before pinning",
+      "render_yaml_schema_valid": true,
+      "services_in_blueprint": 12,
+      "new_suspended_cron": "coverage-db-backup"
+    },
+    "google": {
+      "callbacks_resolved_from_source": [
+        "/accounts/google/login/callback/",
+        "/capture/gmail/callback/",
+        "/capture/calendar/callback/"
+      ],
+      "calendar_api_calls": [
+        "calendars.get",
+        "events.list",
+        "events.get"
+      ],
+      "narrower_scope_pair_sufficient": true,
+      "scope_changed": false
+    },
+    "push": {
+      "vapid_pair_valid": true,
+      "sender_normalises_mailto": true,
+      "delivery_tested": false
+    },
+    "tests": {
+      "local_no_ping_safeguard": "ops/tests/test_healthcheck_settings.py 2 passed",
+      "workstream_focused_after_merge_A_D": "375 passed, 2 pre-existing env-dependent failures since pinned",
+      "fix_set_focused": "331 passed + logo 3 passed"
+    }
   }
 }
