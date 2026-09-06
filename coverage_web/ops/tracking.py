@@ -63,7 +63,15 @@ EXPECTED_INTERVALS: dict[str, timedelta] = {
     "gmail-watch-renew": timedelta(days=1),
     "scrape": timedelta(hours=6),
     "push-alerts": timedelta(days=1),
-    "weekly-digest": timedelta(days=7),
+    # ONE DAY, NOT SEVEN. render.yaml's coverage-weekly-digest is now a
+    # DAILY cron that mails the seventh of the roster whose slot is today
+    # (see send_weekly_digest's docstring for why the Monday-only run could
+    # not fit inside a 100-a-day mail allowance). Each recipient still gets
+    # one digest a week; the JOB runs every day, and a job that has not
+    # succeeded in seven days is a job that has been dead for six of them.
+    # Six hours of slack over the interval, same as the rest of this dict:
+    # enough that one late container start is not an alarm.
+    "weekly-digest": timedelta(days=1, hours=6),
     "pro-trial-expire": timedelta(days=1),
 }
 
