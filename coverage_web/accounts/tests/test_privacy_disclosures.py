@@ -172,3 +172,83 @@ def test_export_and_deletion_scope_do_not_overpromise(page):
     assert "[BACKUP RETENTION PERIOD]" in page
     assert "[HOSTING REGION]" in page
     assert "[LEGAL ENTITY NAME]" in page
+
+
+# ---------------------------------------------------------------------------
+# 2026-09-06 security review. Four more claims that trace to a call site, and
+# one honest omission, each of which a copy pass would otherwise smooth away.
+# ---------------------------------------------------------------------------
+
+
+def test_ai_classification_is_not_described_as_scan_now_only(page):
+    """`capture/gmail.py` calls `appmail.consider_finding` and
+    `mailfacts.consider_finding` without passing `allow_ai`, and both default
+    it to True — so the ORDINARY background sync already sends a subject and
+    Gmail snippet to Anthropic whenever the deterministic rules come up
+    empty. The page framed that transfer as something that happens only when
+    the student presses Scan Now, which is the narrower and friendlier claim
+    and not the one the code makes. Both paths, or neither."""
+    section = page.split("Optional Mail Access", 1)[1]
+    section = section.split("Optional Calendar Access", 1)[0]
+    assert "During ordinary sync" in section
+    assert "Scan Now" in section
+
+
+def test_the_provider_list_names_the_object_store_holding_the_avatar(page):
+    """With MEDIA_S3_* set, `core/storage.py::media_storage_config` swaps
+    STORAGES["default"] to PrivateMediaStorage and the profile picture leaves
+    Render for a third-party bucket. The provider list named only Render, so
+    a reader would have concluded their photo sits where their database rows
+    sit. It does not."""
+    section = page.split("Who We Share Data With", 1)[1]
+    section = section.split("Cookies and Sessions", 1)[0]
+    assert "object storage provider" in section
+    assert "profile picture" in section
+
+
+def test_the_provider_list_names_the_shared_cache(page):
+    """`settings/base.py`'s REDIS_URL branch moves allauth's brute-force
+    counters and axes' lockout records into a third-party cache, and those
+    counters are keyed by the email address typed at sign-in. Small, short
+    lived, and still someone else's server holding an address."""
+    section = page.split("Who We Share Data With", 1)[1]
+    section = section.split("Cookies and Sessions", 1)[0]
+    assert "shared cache provider" in section
+    assert "email address typed at sign-in" in section
+
+
+def test_the_advisor_bullet_admits_mail_subject_lines_go_with_it(page):
+    """`assistant/tools.py` puts "recent_subjects" — real Gmail subject
+    lines, three per contact — into the advisor's contact payload. The bullet
+    listed CRM fields only, so Google-derived data was travelling to Anthropic
+    through a route the page did not name. It correctly said contact EMAIL
+    ADDRESSES stay out of that path (`tools.py` sends `has_email` as a bool);
+    that sentence stays true and stays put."""
+    section = page.split("Who We Share Data With", 1)[1]
+    section = section.split("Cookies and Sessions", 1)[0]
+    assert "recent mail subject lines" in section
+    assert "excludes contact email addresses" in section
+
+
+def test_the_google_bullet_admits_addresses_travel_to_google_as_search_terms(page):
+    """`capture/gmail_live.py` builds `(from:<address> OR to:<address>)`
+    Gmail queries per contact. Every read of the mailbox is also a WRITE of a
+    third party's address into Google's query log, which is the direction of
+    flow the page described only one way round."""
+    section = page.split("Who We Share Data With", 1)[1]
+    section = section.split("Cookies and Sessions", 1)[0]
+    assert "search term" in section
+
+
+def test_deletion_does_not_claim_to_end_sessions_it_does_not_end(page):
+    """`accounts/views.py::delete_account` calls `logout(request)`, which
+    flushes the REQUESTING session and nothing else; `sign_out_other_sessions`
+    is a separate control the deletion path never calls, and Django's session
+    rows carry no FK for `user.delete()` to cascade. The rows are harmless —
+    the account they name is gone — but "removes your account and associated
+    private database records" said more than that."""
+    # "Retention" is also an entry in the on-this-page nav, so anchor on the
+    # section's own opening sentence rather than on its heading.
+    section = page.split("Your recruiting records are retained", 1)[1]
+    section = section.split("Security", 1)[0]
+    assert "Sign-in sessions on your other devices are not removed" in section
