@@ -587,14 +587,50 @@
 .today-page .today-context-grid .rail-title,
 .today-page .today-context-grid .situation-heading { display: flex; align-items: center; justify-content: flex-start; gap: 9px; }
 .today-page .today-context-grid .nav-icon { width: 17px; height: 17px; flex: none; color: var(--accent-ink); }
-.today-page .today-context-grid .activity-card { display: flex; flex-direction: column; height: var(--context-card-height); margin: 0; overflow: hidden; }
-.today-page .today-context-grid .activity-card > .rail-title { flex: none; }
-.today-page .today-context-grid .activity-card > .activity { flex: 1 1 auto; min-height: 0; margin: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.today-page .today-context-grid .activity-card { display: flex; flex-direction: column; height: var(--context-card-height); margin: 0; padding: 0; overflow: hidden; }
+.today-page .today-context-grid .context-header { flex: none; display: grid; grid-template-columns: minmax(0,1fr) auto; align-content: center; gap: 4px 12px; height: 72px; min-height: 72px; margin: 0; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+.today-page .today-context-grid .context-header :is(.rail-title,.situation-heading) { grid-column: 1; margin: 0; font: 600 16px/1.35 var(--font-ui); letter-spacing: -.01em; gap: 8px; }
+.today-page .today-context-grid :is(.context-subtitle,.situation-period) { grid-column: 1; margin: 0; padding: 0; color: var(--ink-2); font: 400 12px/1.4 var(--font-ui); }
+.today-page .today-context-grid .situation-count { flex: none; padding: 1px 6px; font-size: 11px; }
+.today-page .today-context-grid .situation-section > summary::after { grid-column: 2; grid-row: 1 / 3; align-self: center; margin: 0 2px 0 0; }
+.today-page .today-context-grid .activity-card > .activity { flex: 1 1 auto; min-height: 0; margin: 0; padding: 4px 12px 12px; overflow-y: auto; scrollbar-gutter: stable; }
 .today-page .today-context-grid .situation-section { padding: 0; overflow: hidden; }
 .today-page .today-context-grid .situation-section[open] { height: var(--context-card-height); }
-.today-page .today-context-grid .situation-section > summary { height: 88px; min-height: 88px; margin: 0; }
-.today-page .today-context-grid .situation-strip { display: block; height: calc(var(--context-card-height) - 90px); min-height: 0; padding: 0 20px 12px; overflow-y: auto; scrollbar-gutter: stable; }
+.today-page .today-context-grid .situation-strip { display: block; height: calc(var(--context-card-height) - 74px); min-height: 0; padding: 4px 12px 12px; overflow-y: auto; scrollbar-gutter: stable; }
+.today-page .today-context-grid :is(.activity,.situation-strip) { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
 .today-page .today-context-grid :is(.activity,.situation-strip):focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; }
+.today-page .today-context-grid .situation-card { display: grid; grid-template-columns: 32px minmax(0,1fr) 14px; align-items: start; gap: 10px; margin: 0; padding: 12px 4px; min-width: 0; min-height: 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; color: var(--ink); text-decoration: none; box-shadow: none; transform: none; }
+.today-page .today-context-grid .situation-card:last-child { border-bottom: 0; }
+.today-page .today-context-grid .situation-card .crm-firm-mark { width: 32px; height: 32px; margin-top: 1px; }
+.today-page .today-context-grid .situation-card-body { gap: 5px; }
+.today-page .today-context-grid .situation-card-head { gap: 3px 8px; align-items: baseline; font-size: 12px; line-height: 1.4; }
+.today-page .today-context-grid .situation-card-head strong { color: var(--ink-2); font-weight: 600; }
+.today-page .today-context-grid .situation-event-kind { color: var(--ink-2); font-size: 11px; }
+.today-page .today-context-grid .situation-card-title { color: var(--ink); font: 550 13px/1.45 var(--font-ui); overflow-wrap: anywhere; }
+.today-page .today-context-grid .situation-card-meta { display: flex; flex-wrap: wrap; gap: 3px 8px; color: var(--ink-2); font: 400 12px/1.45 var(--font-ui); overflow-wrap: anywhere; }
+.today-page .today-context-grid .situation-card-arrow { margin: 1px 0 0; }
+.today-page .today-context-grid .situation-card-arrow .nav-icon { width: 14px; height: 14px; color: var(--ink-2); }
+.today-page .today-context-grid .activity-row { display: block; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+.today-page .today-context-grid .activity-row:last-child { border-bottom: 0; }
+.today-page .today-context-grid .activity-entry { display: grid; grid-template-columns: 32px minmax(0,1fr) auto; align-items: center; gap: 10px; min-height: 58px; padding: 10px 4px; color: var(--ink); text-decoration: none; }
+.today-page .today-context-grid .activity-avatar { position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9px; color: var(--accent-ink); background: var(--accent-soft); font: 550 11px/1 var(--font-ui); }
+.today-page .today-context-grid .activity-dot { position: absolute; right: -1px; bottom: -1px; width: 8px; height: 8px; margin: 0; border: 2px solid var(--surface); box-sizing: content-box; }
+.today-page .today-context-grid .activity-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-wrap: anywhere; }
+.today-page .today-context-grid .activity-name { color: var(--ink); font: 550 13px/1.4 var(--font-ui); }
+.today-page .today-context-grid .activity-detail { display: flex; flex-wrap: wrap; gap: 2px 7px; color: var(--ink-2); font: 400 12px/1.4 var(--font-ui); }
+.today-page .today-context-grid :is(.activity-kind,.activity-firm) { color: inherit; font: inherit; }
+.today-page .today-context-grid .activity-firm { display: inline-flex; align-items: baseline; gap: 7px; }
+.today-page .today-context-grid .activity-firm::before { content: "·"; }
+.today-page .today-context-grid .activity-when { align-self: start; padding-top: 1px; color: var(--ink-2); font: 400 11px/1.5 var(--font-ui); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.today-page .today-context-grid :is(.situation-card,.activity-entry):hover { border-radius: 6px; background: var(--surface-subtle); }
+.today-page .today-context-grid :is(.situation-card,.activity-entry):focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 6px; background: var(--surface-subtle); }
+.today-page .today-context-grid .activity-entry:hover .activity-name { color: var(--accent-ink); }
+.today-page .today-context-grid .rail-empty { margin: 0; padding: 24px 18px; color: var(--ink-2); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) {
+  .today-page .today-context-grid :is(.situation-card,.activity-entry) { transition: background-color 160ms ease-out; }
+  .today-page .today-context-grid .situation-card-arrow { transition: transform 160ms ease-out; }
+  .today-page .today-context-grid .situation-card:hover .situation-card-arrow { transform: translateX(2px); }
+}
 .today-page .cockpit-main > .unplaced-card { padding: 16px 20px; }
 @container queue (max-width: 650px) {
   .today-page .today-context-grid { grid-template-columns: minmax(0,1fr); }

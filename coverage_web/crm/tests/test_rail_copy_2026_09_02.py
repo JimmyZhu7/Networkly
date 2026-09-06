@@ -670,5 +670,5 @@ def test_no_rail_card_states_a_direction_of_time_inconsistently():
     )
     html = _page(user)
     assert "in 58d" in _card(html, "Deadlines")
-    activity = _card(html, "Recent Activity")
+    activity = _rail_widget(html, "activity-card")
     assert ">3d<" in activity and "in 3d" not in activity

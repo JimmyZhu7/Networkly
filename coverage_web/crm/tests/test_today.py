@@ -1868,6 +1868,28 @@ def test_the_brief_never_leaks_into_the_partial_cockpit_template(client, monkeyp
 # assistant.situation.build_situation. Same full-page-only invariant as the
 # brief itself — see the guard test below.
 # ---------------------------------------------------------------------------
+def test_situation_cards_tidy_place_without_rewriting_the_snapshot(django_assert_num_queries):
+    from copy import deepcopy
+    from crm.today import _situation_cards
+    from directory.models import Opportunity
+
+    firm = Firm.objects.create(slug="context-bank", name="Context Bank")
+    opp = Opportunity.objects.create(firm=firm, title="Summer Analyst", url="https://context.example/role")
+    events = [{
+        "opportunity_id": opp.id, "title": opp.title, "firm": firm.name,
+        "url": opp.url, "kind": "new_role_at_known_firm",
+        "location": "Brookfield Place, 200 Vesey Street:new York",
+    }]
+    original = deepcopy(events)
+    with django_assert_num_queries(1):
+        cards = _situation_cards(events)
+        assert cards[0]["firm_record"].name == firm.name
+    assert cards[0]["display_location"].casefold() == "new york"
+    assert cards[0]["location"] == events[0]["location"]
+    assert cards[0]["url"] == opp.url
+    assert events == original
+
+
 def test_a_moved_deadline_on_a_tracked_role_renders_a_card(client):
     from analytics.models import UserOpportunity
     from directory.models import Opportunity, OpportunityChange

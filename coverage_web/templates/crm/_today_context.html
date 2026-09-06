@@ -14,24 +14,26 @@
   {% if situation_events %}
 
     <details class="situation-section rail-card panel" open>
-    <summary><span class="situation-heading">{% include "_nav_icon.html" with name="opportunities" %}Firm Updates</span><span class="situation-count">{{ situation_events|length }}</span><span class="situation-period">Past 7 days</span></summary>
+    <summary class="context-header"><span class="situation-heading">{% include "_nav_icon.html" with name="opportunities" %}<span>Firm Updates</span><span class="situation-count">{{ situation_events|length }}</span></span><span class="situation-period">Past 7 days</span></summary>
     <div class="situation-strip" tabindex="0" role="region" aria-label="Firm updates list">
       {% for e in situation_events %}
-        <a class="situation-card kin-reveal panel panel--flat" style="--i: {{ forloop.counter0 }}"
+        <a class="situation-card"
            href="{{ e.url }}" target="_blank" rel="nofollow noopener">
+          {% if e.firm_record %}{% include "crm/_firm_mark.html" with mark_firm=e.firm_record %}{% else %}<span class="crm-firm-mark" aria-hidden="true">{{ e.firm|first|upper }}</span>{% endif %}
           <span class="situation-card-body">
           <span class="situation-card-head"><strong>{{ e.firm|smart_title }}</strong><span class="situation-event-kind">{% if e.kind == "deadline_moved" %}Deadline changed{% elif e.kind == "new_role_at_known_firm" %}New role{% endif %}</span></span>
-          <span class="situation-card-text">
+          <span class="situation-card-title">{{ e.title|smart_title }}</span>
+          <span class="situation-card-meta">
             {% if e.kind == "deadline_moved" %}
-              <b>{{ e.title|smart_title }}</b> deadline moved
+              <span>Deadline moved
               {% if e.old_date %}from {{ e.old_date|date:"M j" }} {% elif e.old_value %}from {{ e.old_value }} {% endif %}to
-              {% if e.new_date %}{{ e.new_date|date:"M j" }}{% else %}{{ e.new_value|default:"no date" }}{% endif %}.
+              {% if e.new_date %}{{ e.new_date|date:"M j" }}{% else %}{{ e.new_value|default:"no date" }}{% endif %}{% if e.deadline_source == "reported" %} · reported{% endif %}</span>
             {% elif e.kind == "new_role_at_known_firm" %}
-              <b>{{ e.title|smart_title }}</b> opened{% if e.location %} · {{ e.location|smart_location }}{% endif %}.
+              {% if e.display_location %}<span title="{{ e.location }}">{{ e.display_location|smart_location }}{% if e.location_more %} +{{ e.location_more }}{% endif %}</span>{% endif %}
             {% endif %}
           </span>
           </span>
-          <span class="situation-card-arrow" aria-hidden="true">&rarr;</span>
+          <span class="situation-card-arrow">{% include "_nav_icon.html" with name="arrow" %}</span>
         </a>
       {% endfor %}
     </div>
@@ -39,14 +41,16 @@
   {% endif %}
     </div>
     <div class="rail-card activity-card panel">
-      <h3 class="rail-title">{% include "_nav_icon.html" with name="talk" %}Recent Activity</h3>
+      <div class="context-header"><h3 class="rail-title">{% include "_nav_icon.html" with name="talk" %}Recent Activity</h3><p class="context-subtitle">Latest interactions</p></div>
       {% if activity %}
         <ul class="activity" tabindex="0" aria-label="Recent activity list">
           {% for e in activity %}
             <li class="activity-row">
-              <span class="activity-dot{% if e.inbound %} in{% endif %}"></span>
-              <span class="activity-text"><a href="{% url 'crm:contact_detail' e.contact_id %}">{{ e.name|smart_person_name|smart_title }}</a> <span class="activity-kind">{{ e.kind_label }}</span></span>
-              <span class="activity-when">{{ e.ago }}</span>
+              <a class="activity-entry" href="{% url 'crm:contact_detail' e.contact_id %}">
+                <span class="activity-avatar" aria-hidden="true">{% if e.initials %}{{ e.initials }}{% else %}{{ e.name|first|upper }}{% endif %}<span class="activity-dot{% if e.inbound %} in{% endif %}"></span></span>
+                <span class="activity-text"><span class="activity-name">{{ e.name|smart_person_name|smart_title }}</span><span class="activity-detail"><span class="activity-kind">{{ e.kind_label }}</span>{% if e.firm_name %}<span class="activity-firm">{{ e.firm_name|smart_title }}</span>{% endif %}</span></span>
+                <time class="activity-when" datetime="{{ e.timestamp|date:'c' }}" title="{{ e.timestamp|date:'M j, Y · g:i A T' }}">{{ e.ago }}</time>
+              </a>
             </li>
           {% endfor %}
         </ul>

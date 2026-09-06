@@ -2292,7 +2292,7 @@ def _recent_activity(user, *, as_of) -> list[dict]:
     recent = (
         Touch.objects.for_user(user)
         .exclude(kind__in=_RAIL_SILENT_TOUCH_KINDS)
-        .select_related("contact")
+        .select_related("contact__firm")
         .order_by("-ts")[:_RAIL_ACTIVITY_LIMIT]
     )
 
@@ -2335,13 +2335,38 @@ def _recent_activity(user, *, as_of) -> list[dict]:
         {
             "name": t.contact.name,
             "contact_id": t.contact_id,
+            "initials": "".join(part[0] for part in t.contact.name.split()[:2]).upper(),
+            "firm_name": t.contact.firm.name if t.contact.firm else t.contact.firm_text,
             "kind": t.kind,
             "kind_label": kind_labels.get(t.kind, t.kind.replace("_", " ").capitalize()),
             "ago": _rail_ago(t.ts),
+            "timestamp": t.ts,
             "inbound": t.kind in _INBOUND_TOUCH_KINDS,
         }
         for t in recent
     ]
+
+
+def _situation_cards(events: list[dict]) -> list[dict]:
+    """Decorate the bounded Today list without changing the advisor snapshot."""
+    from directory.views import tidy_place
+
+    firms = {
+        o.id: o.firm
+        for o in Opportunity.objects.filter(
+            pk__in=[e["opportunity_id"] for e in events if e.get("opportunity_id")]
+        ).select_related("firm")
+    }
+    cards = []
+    for event in events:
+        location, more = tidy_place(event.get("location", ""))
+        cards.append({
+            **event,
+            "firm_record": firms.get(event.get("opportunity_id")),
+            "display_location": location,
+            "location_more": more,
+        })
+    return cards
 
 
 _SCHEDULE_HORIZON_DAYS = 14
@@ -4248,7 +4273,7 @@ def week(request: HttpRequest) -> HttpResponse:
          # longer emits that kind at all and says why in its docstring, so
          # the number here can stay 3 without being a guess about which
          # third of the news survives.
-         "situation_events": situation.get("events", [])[:3],
+         "situation_events": _situation_cards(situation.get("events", [])[:3]),
          # Signup lands on the /welcome/ wizard, but nothing ever looked at
          # whether it was FINISHED: close the tab at step one and every later
          # login lands here, on an empty queue over an unpersonalized feed,
@@ -4730,5 +4755,4 @@ def _dashboard_context(user) -> dict:
             "funnel_label": funnel_label,
         },
     }
-
 
