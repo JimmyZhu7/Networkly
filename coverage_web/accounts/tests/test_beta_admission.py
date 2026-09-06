@@ -321,7 +321,17 @@ def test_admin_add_is_idempotent_and_capacity_error_is_a_form_error(client, sett
 
 @pytest.mark.django_db(transaction=True)
 def test_simultaneous_last_seat_reservations_are_serialized(settings):
-    settings.BETA_MAX_USERS = 1
+    # The claim under test is "exactly one of two simultaneous reservations
+    # for the LAST seat wins", not "the table is empty". Existing users count
+    # as seats, and a transactional test runs after every rollback-mode test
+    # in the suite, so any row a side connection committed earlier would
+    # make both claims see a full beta and fail this test for the wrong
+    # reason (it did, twice, in loaded full-suite runs while passing alone).
+    # Set the cap one above whatever is already counted.
+    used = beta.capacity_status()["used"]
+    if used >= 100:
+        pytest.skip("the beta cap is at its ceiling; no last seat to race for")
+    settings.BETA_MAX_USERS = used + 1
     barrier = Barrier(2)
     test_name = connection.settings_dict["NAME"]
 
@@ -341,4 +351,4 @@ def test_simultaneous_last_seat_reservations_are_serialized(settings):
     with ThreadPoolExecutor(max_workers=2) as pool:
         futures = [pool.submit(reserve, email) for email in ("one@example.com", "two@example.com")]
         assert sorted(future.result(timeout=10) for future in futures) == ["full", "reserved"]
-    assert BetaInvitation.objects.count() == 1
+    assert BetaInvitation.objects.filter(email__in=["one@example.com", "two@example.com"]).count() == 1
