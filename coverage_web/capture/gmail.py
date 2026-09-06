@@ -894,6 +894,45 @@ def _upsert_scheduled_chat(user, contact: Contact, finding: dict) -> bool:
         )
         return True
 
+    # A GOOGLE-OWNED ROW IS THE STUDENT'S OWN CALENDAR, RESTATED, and the
+    # mailbox does not get to argue with it. `CalendarEvent.SOURCE_GCAL`'s
+    # own comment draws the line: a `capture` row is something Coverage
+    # FOUND in the mail and can be argued with; a `gcal` row is read-only
+    # and the place to change it is Google Calendar.
+    #
+    # `gcal_live._upsert_event` already enforces the mirror image — its
+    # `mirrors_google` flag stops a Google sync overwriting the title and
+    # notes of a row the mailbox created, because that row's source owns
+    # its context. This is the same rule pointed the other way, and it was
+    # missing: the lookup above finds a row by `ics_uid`, and a Google
+    # event's `iCalUID` is exactly the string the invite email carries.
+    #
+    # Which row exists first is a scheduling coin-flip — the calendar job
+    # runs every five minutes, the mail poll on its own cadence, and the
+    # invite and the calendar entry arrive together. Mail-first is the
+    # adoption path and is designed. Calendar-first walked straight into
+    # the update path below, and did two things:
+    #
+    #   * MOVED THE MEETING. A Google row has no `invite_sent_at`, because
+    #     no invite wrote it. The recency guard reads that null as "no time
+    #     to protect" — true for the legacy capture rows it was written for,
+    #     false here — and opens. So a student who reschedules in Google
+    #     Calendar gets dragged back to the original DTSTART by the original
+    #     invite, which is still sitting in the rolling mail window. The
+    #     resurrection loop `_retire_cancelled_chat` refuses outright
+    #     deletion to avoid, arriving through the calendar door.
+    #   * TOOK THE ROW. Flipping `source` to `capture` is not a label
+    #     change: `mirrors_google` tests `source == SOURCE_GCAL`, so after
+    #     one mail pass Google stops mirroring its own title, notes and
+    #     location onto that row forever. The restatement quietly stops
+    #     restating.
+    #
+    # What the mailbox may still do is the join — which person, which
+    # thread, which UID. Those are facts mail owns and Google does not
+    # have, and they are what lets a Today prep card find the contact
+    # behind a meeting that only exists on the student's calendar.
+    google_owned = event.source == CalendarEvent.SOURCE_GCAL
+
     # A RETIRED CHAT IS INERT TO ANY INVITE THAT CANNOT OUTDATE ITS
     # CANCELLATION, and this is what stops the retirement being undone by
     # accident. The sync re-reads a ROLLING WINDOW, so the original REQUEST
@@ -910,7 +949,9 @@ def _upsert_scheduled_chat(user, contact: Contact, finding: dict) -> bool:
     # re-invite does, and revives the chat by clearing `cancelled_at` and
     # dropping the marker off the title.
     if event.cancelled_at is not None:
-        if sent_at is None or sent_at < event.cancelled_at:
+        # A Google-owned row's cancellation came from Google, and reviving
+        # it is a change to the calendar, not a reading of the mailbox.
+        if google_owned or sent_at is None or sent_at < event.cancelled_at:
             return False
         event.cancelled_at = None
 
@@ -940,10 +981,17 @@ def _upsert_scheduled_chat(user, contact: Contact, finding: dict) -> bool:
         ).exclude(pk=event.pk).delete()
         deleted_dup = deleted > 0
 
-    event.title = f"Chat with {label}"
-    event.all_day = False
-    event.kind = CalendarEvent.KIND_CHAT
-    event.source = CalendarEvent.SOURCE_CAPTURE
+    if not google_owned:
+        event.title = f"Chat with {label}"
+        event.all_day = False
+        event.kind = CalendarEvent.KIND_CHAT
+        event.source = CalendarEvent.SOURCE_CAPTURE
+    else:
+        # The join, and only the join. `thread_id` normally moves with the
+        # time below, because on a capture row it names the thread that set
+        # that time; here nothing sets the time, so it is recorded on its
+        # own as the plain mailbox fact it is.
+        event.thread_id = thread_id or event.thread_id
     event.contact = contact
     # Adopt the UID even when the row was found by thread: that is how a chat
     # first captured before any of this existed becomes reschedulable.
@@ -981,8 +1029,10 @@ def _upsert_scheduled_chat(user, contact: Contact, finding: dict) -> bool:
     # (The reverse never reaches here: a prose finding aimed at a stated row
     # was refused at the top of this function.)
     structured_over_prose = not prose and event.time_reported
-    if structured_over_prose or event.invite_sent_at is None or (
-        sent_at is not None and sent_at >= event.invite_sent_at
+    if not google_owned and (
+        structured_over_prose or event.invite_sent_at is None or (
+            sent_at is not None and sent_at >= event.invite_sent_at
+        )
     ):
         event.starts_at = when
         event.thread_id = thread_id or event.thread_id

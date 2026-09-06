@@ -97,19 +97,36 @@ from directory.models import Opportunity
 
 
 def expected_class_year_derived(bucket: str, title: str, cohort: str,
-                                 class_year: str) -> str:
+                                 class_year: str, raw: dict | None = None) -> str:
     """The value ingest would write today for this row's current fields —
     exactly `directory.ingest._apply_opportunity`'s own rule, so a repaired
     row ends up reading exactly as it would if freshly ingested right now.
-    A stated `class_year` always wins to blank, and `derive_class_year` is
-    not even called in that case — matching ingest's
-    `"" if class_year else derive_class_year(...)[0]`.
+
+    TWO stated claims suppress derivation, not one, matching ingest's
+
+        stated_grad = (merged_raw.get("facts") or {}).get("grad")
+        class_year_derived = "" if (class_year or stated_grad) else derive...
+
+    A `class_year` read off the title is the obvious one. The other is a
+    graduation window extracted from the posting's own prose and kept in
+    `raw["facts"]["grad"]` — most postings state their window in the body,
+    not the title, so that is the common case, not the exotic one.
+    `derive_class_year` is not called when either is present.
+
+    Reading only `class_year` made this command disagree with ingest on
+    exactly those rows: it saw a blank column that ingest had deliberately
+    left blank, called it drift, and under `--commit` wrote a summer-shape
+    heuristic year on top of a window the posting had spelled out. The
+    column does not record where a year came from, so that overwrite is not
+    distinguishable afterwards from a correctly derived one.
 
     Returns the bare year string, never the `(year, justification)` tuple
     `derive_class_year` actually returns — see the module docstring's note
     on the measurement bug this guards against.
     """
     if class_year:
+        return ""
+    if ((raw or {}).get("facts") or {}).get("grad"):
         return ""
     return derive_class_year(bucket, title or "", cohort)[0]
 
@@ -151,7 +168,7 @@ class Command(BaseCommand):
             examined += 1
             current = o.class_year_derived or ""
             expected = expected_class_year_derived(
-                o.bucket, o.title, o.cohort, o.class_year)
+                o.bucket, o.title, o.cohort, o.class_year, o.raw)
             if current == expected:
                 continue
             if not current and expected:

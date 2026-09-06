@@ -1015,7 +1015,18 @@ def _opening_bench(user, contacts, actions, today) -> list[dict]:
         sig = _opening_signature(opening)
         if (c.id, sig) in dismissed:
             continue
-        idle = (today - timezone.localtime(last.ts).date()).days
+        # CLAMPED AT 0, for the reason and in the words `_recent_activity`
+        # below already settled for the rail: the query behind `last_real`
+        # has no `ts__lte` bound, so a touch dated after `today` reaches this
+        # subtraction and an unclamped result is a negative day count — "a
+        # wrong result", and here it is spent directly by the template as
+        # "Last interaction {{ days_since }} days ago". `_opening_keep_warms`
+        # is safe from the same shape only by accident: its
+        # `idle < OPENING_MIN_IDLE_DAYS` gate drops anything negative before
+        # the number can be shown. The bench has no such gate, which makes
+        # it the one surface where the string the rail refuses to print
+        # could still appear.
+        idle = max(0, (today - timezone.localtime(last.ts).date()).days)
         tier = tiers.get(c.firm_id)
         score = (
             rel._TIER_WEIGHT.get(tier, rel._TIER_UNRANKED_WEIGHT)
@@ -2229,11 +2240,33 @@ def _pace(user, today) -> dict:
     the capture pipeline off inbound mail) + 1 `chat`. A progress meter that
     fills while you do nothing is the same class of over-claim as a "New" badge
     that means "we imported it" — the goal was always honest, the numerator
-    never was."""
+    never was.
+
+    THE WINDOW HAS A CEILING AS WELL AS A FLOOR. `ts__date__gte=week_start`
+    alone counts a touch dated next Friday as work already done, which is
+    the same over-claim one step further out: the numerator fills for
+    something that has not happened. Future-dated touches reach the table
+    for real — `crm.services.log_touch` takes `now=` for "when the
+    interaction actually happened, if known (e.g. a captured email's Date
+    header)", and nothing between a skewed header and this count clamps it;
+    `_recent_activity` below names the same shape in its own comment.
+
+    The effect is not confined to the ring. `done` goes straight to
+    `_daily_cap`, which divides what is LEFT of the goal across the working
+    days that remain, so every phantom credit takes work off today's queue.
+    A chat hand-logged for next week makes today's plan smaller.
+
+    Both edges are `__date` against the SAME `today` the caller passed, so
+    the window is one whole run of local days rather than a date floor
+    against an instant ceiling. A touch dated later today still counts: it
+    belongs to the day being reported on."""
     week_start = today - timedelta(days=today.weekday())
     done = (
         Touch.objects.for_user(user)
-        .filter(ts__date__gte=week_start, kind__in=PACE_TOUCH_KINDS)
+        .filter(
+            ts__date__gte=week_start, ts__date__lte=today,
+            kind__in=PACE_TOUCH_KINDS,
+        )
         .count()
     )
     # `or` (not a None check) on purpose: a stored 0 is not a goal of zero —

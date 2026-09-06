@@ -286,3 +286,110 @@ def test_limit_caps_rows_examined():
     out = _run(limit=1)
 
     assert "1 row(s) examined" in out
+
+
+# ---------------------------------------------------------------------------
+# The stated graduation window ingest preserves.
+#
+# `directory/ingest.py::_apply_opportunity` suppresses derivation on EITHER a
+# stated title `class_year` OR a retained `raw["facts"]["grad"]` window:
+#
+#     stated_grad = (merged_raw.get("facts") or {}).get("grad")
+#     class_year_derived = "" if (class_year or stated_grad) else derive...
+#
+# This command claims in its own docstring to write "the value ingest would
+# write today". Consulting only `class_year` makes it disagree with ingest on
+# every row whose window came from the posting's prose rather than its title,
+# and `--commit` then writes a heuristic year over a stated one.
+# ---------------------------------------------------------------------------
+
+_GRAD_FACTS = {
+    "facts": {
+        "grad": {
+            "phrase": "graduating in 2026 or 2027",
+            "value": "2026 or 2027",
+            "years": [2026, 2027],
+        }
+    }
+}
+
+
+@pytest.mark.django_db
+def test_a_stated_grad_window_suppresses_derivation_the_way_ingest_does():
+    """The row ingest itself would leave blank. `class_year` is empty, so a
+    `class_year`-only rule derives 2028 from the summer-internship shape,
+    while the posting's own prose says 2026 or 2027."""
+    result = expected_class_year_derived(
+        INTERNSHIP, "2027 Summer Analyst Program", "2027", "",
+        raw=_GRAD_FACTS,
+    )
+    assert result == ""
+
+
+@pytest.mark.django_db
+def test_a_row_with_a_stated_grad_window_is_not_reported_as_stale():
+    firm = _firm()
+    opp = Opportunity.objects.create(
+        firm=firm, title="2027 Summer Analyst Program", status="open",
+        url="https://hsbc.example/job/grad-window", bucket=INTERNSHIP,
+        cohort="2027", class_year="", class_year_derived="",
+        raw=_GRAD_FACTS,
+    )
+    out = _run()
+
+    assert "Nothing stale" in out
+    opp.refresh_from_db()
+    assert opp.class_year_derived == ""
+
+
+@pytest.mark.django_db
+def test_commit_never_writes_a_derived_year_over_a_stated_grad_window():
+    """The damaging shape: `--commit` on a row ingest deliberately left
+    blank. A derived 2028 landing here contradicts the posting's own
+    "2026 or 2027", and the column alone does not say where it came from."""
+    firm = _firm()
+    opp = Opportunity.objects.create(
+        firm=firm, title="2027 Summer Analyst Program", status="open",
+        url="https://hsbc.example/job/grad-window", bucket=INTERNSHIP,
+        cohort="2027", class_year="", class_year_derived="",
+        raw=_GRAD_FACTS,
+    )
+    _run(commit=True)
+
+    opp.refresh_from_db()
+    assert opp.class_year_derived == ""
+
+
+@pytest.mark.django_db
+def test_an_empty_or_absent_grad_window_still_derives():
+    """The guard is a stated window, not the presence of a `raw` blob. A row
+    whose facts were invalidated by changed content derives again, which is
+    what ingest's `_merge_raw(changed=True)` branch produces."""
+    assert expected_class_year_derived(
+        INTERNSHIP, "2027 Summer Analyst Program", "2027", "", raw={}) == "2028"
+    assert expected_class_year_derived(
+        INTERNSHIP, "2027 Summer Analyst Program", "2027", "", raw=None) == "2028"
+    assert expected_class_year_derived(
+        INTERNSHIP, "2027 Summer Analyst Program", "2027", "",
+        raw={"facts": {}}) == "2028"
+    assert expected_class_year_derived(
+        INTERNSHIP, "2027 Summer Analyst Program", "2027", "",
+        raw={"facts": {"grad": None}}) == "2028"
+
+
+@pytest.mark.django_db
+def test_a_stale_derived_year_over_a_stated_window_is_repaired_to_blank():
+    """The corrective direction: a row written by the older rule, carrying a
+    derived year it should never have had, is reported and cleared."""
+    firm = _firm()
+    opp = Opportunity.objects.create(
+        firm=firm, title="2027 Summer Analyst Program", status="open",
+        url="https://hsbc.example/job/stale", bucket=INTERNSHIP,
+        cohort="2027", class_year="", class_year_derived="2028",
+        raw=_GRAD_FACTS,
+    )
+    out = _run(commit=True)
+
+    assert "VALUE -> BLANK" in out
+    opp.refresh_from_db()
+    assert opp.class_year_derived == ""
