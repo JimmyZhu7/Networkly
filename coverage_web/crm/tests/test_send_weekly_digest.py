@@ -386,3 +386,122 @@ def test_a_picks_board_published_deadline_prints_without_a_marker(mailoutbox):
     assert "closes in 12 days" in text
     assert "reported" not in text
     assert "reported" not in html
+
+
+# ---------------------------------------------------------------------------
+# The daily mail budget.
+#
+# The provider's free tier allows 100 messages a day. A 100-student beta
+# mailed in one tick spends all of it on the digest, and the confirmation
+# or reset somebody is waiting on is refused AFTER the app has told them to
+# check their inbox. These two mechanisms are what keeps that from
+# happening; both are exercised with the locmem backend, never a relay.
+# ---------------------------------------------------------------------------
+def test_the_daily_cap_defers_the_rest_instead_of_dropping_them(mailoutbox, settings):
+    settings.DIGEST_DAILY_SEND_CAP = 2
+    for n in range(4):
+        _closing_opp(_user(f"cap{n}@example.com"), n)
+
+    out = _run()
+
+    assert len(mailoutbox) == 2
+    assert "daily send cap of 2 reached" in out
+    assert "2 recipient(s) deferred" in out
+    assert "2 deferred (daily cap 2)" in out
+
+
+def test_the_cap_admits_the_same_recipients_in_the_same_order_every_run(mailoutbox, settings):
+    """Who loses is decided by a stable ordering, not by chance: the same run
+    twice admits the same two, so the two below the line stay a known set
+    that the next run resumes from rather than a fresh shuffle."""
+    settings.DIGEST_DAILY_SEND_CAP = 2
+    for n in range(4):
+        _closing_opp(_user(f"order{n}@example.com"), n)
+
+    _run()
+    first = sorted(m.to[0] for m in mailoutbox)
+    mailoutbox.clear()
+    _run()
+
+    assert sorted(m.to[0] for m in mailoutbox) == first
+    assert first == ["order0@example.com", "order1@example.com"]
+
+
+def test_the_cap_counts_sends_not_recipients_with_nothing_to_report(mailoutbox, settings):
+    """A student the digest skips costs no mail, so they must not consume a
+    slot — otherwise a roster of quiet accounts would starve the loud ones."""
+    settings.DIGEST_DAILY_SEND_CAP = 2
+    _user("aquiet@example.com")  # onboarded, nothing to report
+    _user("bquiet@example.com")
+    for n in range(2):
+        _closing_opp(_user(f"cloud{n}@example.com"), n)
+
+    _run()
+
+    assert sorted(m.to[0] for m in mailoutbox) == ["cloud0@example.com", "cloud1@example.com"]
+
+
+def test_the_cap_applies_to_a_dry_run_too(mailoutbox, settings):
+    """A dry run that reports sends a real run would not make is not a
+    rehearsal."""
+    settings.DIGEST_DAILY_SEND_CAP = 1
+    for n in range(3):
+        _closing_opp(_user(f"drycap{n}@example.com"), n)
+
+    out = _run("--dry-run")
+
+    assert mailoutbox == []
+    assert out.count("+ ") == 1
+    assert "2 recipient(s) deferred" in out
+
+
+def test_spread_mails_only_todays_seventh_of_the_roster(mailoutbox):
+    """The daily cron's flag. Seven accounts spanning every residue of pk % 7
+    means exactly one of them is due on any given weekday."""
+    users = [_user(f"spread{n}@example.com") for n in range(7)]
+    for n, user in enumerate(users):
+        _closing_opp(user, n)
+    weekday = timezone.now().weekday()
+    due = [u.email for u in users if u.pk % 7 == weekday]
+
+    _run("--spread")
+
+    assert [m.to[0] for m in mailoutbox] == due
+    assert len(due) == 1
+
+
+def test_seven_consecutive_spread_runs_reach_everyone_exactly_once(mailoutbox):
+    """The cadence promise: one digest per student per seven runs, no more
+    and no fewer. Simulated by sweeping the weekday rather than the clock, so
+    the assertion does not depend on which day the suite runs."""
+    from crm.management.commands.send_weekly_digest import _send_today
+
+    users = [_user(f"week{n}@example.com") for n in range(7)]
+    reached = {u.email: 0 for u in users}
+    for weekday in range(7):
+        for user in users:
+            if _send_today(user, weekday=weekday):
+                reached[user.email] += 1
+
+    assert set(reached.values()) == {1}
+
+
+def test_without_spread_the_whole_roster_is_considered(mailoutbox):
+    for n in range(3):
+        _closing_opp(_user(f"whole{n}@example.com"), n)
+
+    _run()
+
+    assert len(mailoutbox) == 3
+
+
+def test_a_single_user_run_ignores_the_spread_entirely(mailoutbox):
+    """--user already bypasses the onboarded gate and the opt-out; the
+    weekday split is the same kind of roster rule and must not silently turn
+    a targeted preview into a no-op six days in seven."""
+    user = _user("targeted@example.com", onboarded=False)
+    _closing_opp(user)
+
+    _run("--user", "targeted@example.com", "--spread")
+
+    assert [m.to[0] for m in mailoutbox] == ["targeted@example.com"]

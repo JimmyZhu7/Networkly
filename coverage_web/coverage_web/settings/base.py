@@ -1024,3 +1024,43 @@ BETA_MAX_USERS = env.int("BETA_MAX_USERS", default=100)
 if not 1 <= BETA_MAX_USERS <= 100:
     raise ValueError("BETA_MAX_USERS must be between 1 and 100")
 SOCIALACCOUNT_ADAPTER = "accounts.adapter.CoverageSocialAccountAdapter"
+
+# ---------------------------------------------------------------------------
+# Off-host database backups (core.management.commands.backup_db).
+#
+# A dump written inside a container is not a backup. Render's filesystem is
+# ephemeral, so `backup_db --dest ...` on a cron would produce a snapshot and
+# then throw it away with the container — which is why the backup cron in
+# render.yaml uploads to object storage and refuses to run at all until this
+# bucket is named.
+#
+# A SEPARATE BUCKET FROM THE AVATARS, on purpose, sharing only the endpoint
+# and the credentials (MEDIA_S3_ENDPOINT_URL / MEDIA_S3_REGION_NAME /
+# MEDIA_S3_ACCESS_KEY_ID / MEDIA_S3_SECRET_ACCESS_KEY, read by
+# core.storage.media_storage_config). The avatar bucket is reachable from a
+# request path; a database dump is every row in the app in one file, and the
+# two do not belong behind the same object listing even when they are behind
+# the same key. Blank is the default and the off switch: blank means the
+# command does nothing rather than writing somewhere unintended.
+BACKUP_S3_BUCKET = env("BACKUP_S3_BUCKET", default="").strip()
+BACKUP_S3_PREFIX = env("BACKUP_S3_PREFIX", default="db/").strip()
+
+# ---------------------------------------------------------------------------
+# Weekly digest send budget (crm.management.commands.send_weekly_digest).
+#
+# Resend's free tier allows 100 emails a day and 3,000 a month. The digest
+# cron fires once a week, on one minute, for every eligible account — so a
+# 100-user beta puts up to 100 sends into a single day's allowance and leaves
+# nothing behind it for the mail a person is WAITING on: an email
+# confirmation, a password reset, a beta invitation. Those bounce silently
+# from the app's point of view, and the student sees a sign-up that never
+# arrives.
+#
+# So the digest takes a share of the day rather than all of it, and defers
+# the rest. 60 is deliberately well under the cap: it fits a 100-user beta in
+# two runs, and leaves 40 for interactive mail on the heaviest day of the
+# week. Raising this above the provider's own daily limit is the one thing
+# that cannot be right, so the command clamps rather than trusting it.
+DIGEST_DAILY_SEND_CAP = env.int("DIGEST_DAILY_SEND_CAP", default=60)
+if DIGEST_DAILY_SEND_CAP < 1:
+    raise ValueError("DIGEST_DAILY_SEND_CAP must be at least 1")
