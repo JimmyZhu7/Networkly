@@ -462,13 +462,19 @@ deployed job.
 - **Source follow-up:** Sixth Street's endpoint was corrected and an EY GET
   recovered; Morgan Stanley's bot wall persists. See the historical audit for
   the earlier board snapshot and its limits.
-- **Test evidence:** the latest full offline suite passed: **11,639 passed,
-  45 skipped, 2 warnings**. Migration drift check reported no changes. The beta
-  admission file separately passed 25 tests, including a new invited-user
-  onboarding/application journey and cross-account isolation. Authenticated local
-  Today, Opportunities, Network, Calendar and Assistant pages loaded without a
-  visible error. These checks do not establish deployed OAuth, push delivery or
-  complete production sync acceptance; live connector tests remain opt-in.
+- **Test evidence (final, second pass):** on the finished tree at `a5886cf`,
+  the full suite in an isolated clean worktree passed **11,945, 45 skipped, 0
+  failed** (15 min 10 s). On the clean CI runner with no `.env`, `c419c11` (the
+  same tree minus the race-test hardening and a checklist note) passed
+  **11,977, 13 skipped, 0 failed** in 25 min 34 s with the browser matrix
+  running on real Chromium and WebKit, the Docker image built, and `pip-audit`
+  clean across 122 pins; the CI run on `a5886cf` itself has the audit green and
+  the test job in progress at the time of writing. The two counts differ by the
+  live-network skips (45 locally, 13 on CI) and the matrix. Migration drift: no
+  changes. These checks do not establish deployed OAuth, push delivery or
+  complete production sync acceptance; live connector tests remain opt-in. The
+  earlier figure in this document (11,639) is the handoff's count and is
+  superseded.
 
 ## Latest Launch Preparation
 
