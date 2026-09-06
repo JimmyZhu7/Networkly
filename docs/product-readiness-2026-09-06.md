@@ -229,6 +229,41 @@ now pin beta off. Each fix carries a regression test.
 is anonymous and unthrottled (static data, no leak); the shared per-IP search
 throttle should be applied.
 
+**Algorithms and data integrity — four demonstrated defects fixed, thirty
+tests added, and two areas probed and found already covered.** (1) The
+`backfill_class_year_derived` repair command claimed to reproduce ingest's
+rule but read only the title year, so under `--commit` it wrote a heuristic
+`2028` over rows whose body stated "graduating in 2026 or 2027"; the column
+carries no provenance, so the overwrite was unrecoverable. It now honors the
+retained stated window. (2) When a Google Calendar event arrived before the
+matching invite email, the mail path matched it by iCalUID with no source
+filter, took the row over, and could drag a rescheduled meeting back to its
+original time while permanently silencing Google's own mirroring. Mail may now
+record the join but never move or re-own a Google-owned meeting. (3) The credit
+burst guard computed the student's day inside their zone but built midnight
+outside it, which falls back to UTC from a cron tick; for a Los Angeles
+account every evening's spend counted against tomorrow, and the fall-back
+day's 25th hour was orphaned. (4) Two Today counts accepted future-dated
+touches: the pace ring could read 100% on a week with nothing sent (and that
+count feeds the daily cap), and the bench rendered "-4 days ago". Reservation
+settlement (provider exception, mid-stream disconnect, hard-kill, refund
+exactly once, age never refunding a live owner, two recovery workers) and
+same-conversation concurrency were probed and found already covered by the
+existing durable-turn tests. Rules deliberately left alone: blank-region
+deadline bucketing, the recent-activity clamp, and the "already has N today"
+copy that counts planned cards. Verified per app from the agent's worktree:
+capture 1,187, crm 2,869, assistant/billing/directory 5,469, domain 612 on a
+disposable PostgreSQL database.
+
+**Suite hygiene fixed in this pass:** the suite's verdict no longer depends
+on the developer's `.env`. `BETA_ENABLED=true` had made every account read as
+Pro and failed twenty free-tier tests on the founder's laptop only; the root
+conftest now runs every test with the beta off unless the test turns it on,
+the same rule it already applied to the AI key. The three Gmail-card tests
+now configure the live client themselves, and the two Stripe preflight tests
+pin the beta off. The CI test job (a clean runner with no `.env`) is the
+independent check that no further machine-dependence remains.
+
 ## Founder Decisions and Evidence Limits
 
 - **Who to Find remains a decision gate.** Choose a contextual firm-page entry or
