@@ -310,8 +310,16 @@ existed. Existing users count as seats, and pytest-django runs every
 rollback-mode test in the suite before any transactional one, so a row a
 side connection committed earlier lands in this test's count. The test now
 sets its cap to one above whatever is already counted and checks its own two
-reservations, which is the claim it was written to prove; the row's source is
-being located with an isolated instrumented run. CI on the clean runner:
+reservations, which is the claim it was written to prove. The row's source was
+then located and fixed: `core/tests/test_query_budgets.py`'s module fixture
+deletes its user outside any test transaction, and with `BETA_ENABLED=true` in
+the founder's `.env` the `pre_delete` receiver minted an undeletable beta seat
+for that prop user, which survived until the suite's first TRUNCATE. CI has no
+`.env`, so it never saw it. The fixture now deletes with the beta off and
+sweeps the seat; a full run with the race test restored to its strict form
+passed 11,945 with no other leaking test. Two lessons stand: a suite-wide
+default set per test does not reach a module fixture's teardown, and a
+receiver that runs on delete is part of a test's cleanup surface. CI on the clean runner:
 green on `bd127c0` (11,819 tests, audit clean across 122 pins, image
 built); on `2862274` the test job died at collection because the browser
 matrix's screenshot directory defaulted to one developer's absolute path,
