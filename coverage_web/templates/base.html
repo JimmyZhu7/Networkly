@@ -612,11 +612,13 @@ select on.
           if (search) {
             search.value = "";
             menu.classList.remove("csel-menu-empty");
-            // Deferred: focusing synchronously, in the same click that
-            // opened the menu, raced Safari's own focus-on-click handling
-            // and the caret never appeared until a second click.
-            setTimeout(function () { search.focus(); }, 0);
           }
+          // Safari does not reliably focus mouse-clicked buttons. Transfer
+          // focus after its click handling so arrows and Escape also work
+          // for menus without a search field.
+          setTimeout(function () {
+            if (!panel.hidden) (search || btn).focus({ preventScroll: true });
+          }, 0);
         }
         function close() {
           panel.hidden = true;
@@ -663,7 +665,7 @@ select on.
             if (["ArrowDown", "ArrowUp", "Enter", " "].indexOf(e.key) > -1) { e.preventDefault(); open(); }
             return;
           }
-          if (e.key === "Escape") { e.preventDefault(); close(); btn.focus(); }
+          if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); btn.focus(); }
           else if (e.key === "ArrowDown") { e.preventDefault(); moveActive(1); }
           else if (e.key === "ArrowUp") { e.preventDefault(); moveActive(-1); }
           else if (e.key === "Home" && e.target !== search) { e.preventDefault(); var first = visibleOpts()[0]; if (first) { active = opts.indexOf(first); highlight(); } }
@@ -808,9 +810,13 @@ select on.
   browser's job, not ours.
   {% endcomment %}
   <dialog class="palette panel" id="cmdk" aria-label="Search Networkly">
-    <input type="search" id="cmdk-q" aria-label="Search contacts, firms, and roles" placeholder="Search people, firms, roles…"
-           autocomplete="off" spellcheck="false">
-    <ul id="cmdk-results" role="listbox"></ul>
+    <div class="palette-search">
+      <input type="search" id="cmdk-q" aria-label="Search contacts, firms, and roles" placeholder="Search people, firms, roles…"
+             role="combobox" aria-autocomplete="list" aria-controls="cmdk-results" aria-expanded="true"
+             autocomplete="off" spellcheck="false">
+      <button type="button" class="palette-close" aria-label="Close search"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    </div>
+    <ul id="cmdk-results" role="listbox" aria-label="Search results"></ul>
     <p class="palette-hint">↑↓ move · Enter open · Esc close</p>
   </dialog>
   {% script %}
@@ -853,7 +859,7 @@ select on.
           rows.forEach(function (r) {
             var i = items.length;
             items.push(r);
-            html += '<li class="palette-item" data-i="' + i + '" role="option">' + fmt(r) + "</li>";
+            html += '<li class="palette-item" id="cmdk-option-' + i + '" data-i="' + i + '" role="option">' + fmt(r) + "</li>";
           });
         }
         // Actions lead: they are the shortest path and never make the user
@@ -886,9 +892,13 @@ select on.
       function highlight() {
         list.querySelectorAll(".palette-item").forEach(function (li) {
           li.classList.toggle("is-active", +li.dataset.i === active);
+          li.setAttribute("aria-selected", String(+li.dataset.i === active));
         });
         var el = list.querySelector(".palette-item.is-active");
-        if (el) el.scrollIntoView({ block: "nearest" });
+        if (el) {
+          input.setAttribute("aria-activedescendant", el.id);
+          el.scrollIntoView({ block: "nearest" });
+        } else input.removeAttribute("aria-activedescendant");
       }
 
       function go(i) {
@@ -923,6 +933,7 @@ select on.
       document.addEventListener("click", function (e) {
         if (e.target.closest("[data-open-search]")) open();
       });
+      dlg.querySelector(".palette-close").addEventListener("click", function () { dlg.close(); });
       document.addEventListener("keydown", function (e) {
         if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); dlg.open ? dlg.close() : open(); }
         else if (e.key === "/" && !dlg.open) {

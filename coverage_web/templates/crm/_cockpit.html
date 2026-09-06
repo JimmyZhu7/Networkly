@@ -418,8 +418,8 @@ copy exactly once, and this is the once.
     {% elif autopilot_state.phase == "reviewed_empty" %}
       <div class="prop-undo ap-strip ap-strip-quiet" role="status">
         <span class="prop-undo-said">
-          Autopilot read {{ autopilot_state.run.llm_calls }} card{{ autopilot_state.run.llm_calls|pluralize }} and left {% if autopilot_state.run.escalations > 1 %}them all{% else %}it{% endif %} for you — nothing was safe enough to add on its own.
-          <span class="prop-undo-note">Each one carries the line it read, below. <a href="{% url 'crm:autopilot_log' %}">Check its work</a>.</span>
+          {% if autopilot_state.run.llm_calls %}Autopilot reviewed {{ autopilot_state.run.llm_calls }} card{{ autopilot_state.run.llm_calls|pluralize }}. Your review is needed.{% else %}These suggestions need your review.{% endif %}
+          <span class="prop-undo-note"><a href="{% url 'crm:autopilot_log' %}">View the run</a>.</span>
         </span>
       </div>
     {% elif autopilot_state.phase == "no_credits" %}
@@ -649,7 +649,7 @@ copy exactly once, and this is the once.
                 <label class="act-fill-lab" for="prop-role-{{ p.id }}">Role</label>
                 <input class="act-fill-in" type="text" id="prop-role-{{ p.id }}"
                        name="role" maxlength="255" autocomplete="off"
-                       placeholder="Analyst, VP, Campus Recruiting…"
+                       placeholder="e.g. Analyst"
                        value="{{ p.role_hint }}">
                 <label class="act-fill-lab" for="prop-region-{{ p.id }}">Region</label>
                 <select class="act-fill-in" id="prop-region-{{ p.id }}" name="region">

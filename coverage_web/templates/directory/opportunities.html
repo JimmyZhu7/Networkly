@@ -134,6 +134,9 @@
         window.covKeepInViewport(menu);
         window.addEventListener("resize", onResize);
         document.addEventListener("click", onDoc, true);
+        setTimeout(function () {
+          if (!menu.hidden) btn.focus({ preventScroll: true });
+        }, 0);
       }
       function close() {
         menu.hidden = true; wrap.dataset.open = "false";
@@ -151,7 +154,7 @@
       // checkbox inside the panel.
       wrap.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && !menu.hidden) {
-          e.preventDefault(); close(); btn.focus();
+          e.preventDefault(); e.stopPropagation(); close(); btn.focus();
         }
       });
       sync();

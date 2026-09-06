@@ -507,7 +507,7 @@
                 {% endcomment %}
                 <span class="cc-firm"
                       title="{% if card.c.firm %}{{ card.c.firm.name|smart_title }}{% else %}{{ card.c.firm_text|smart_title }}{% endif %}{% if card.c.role %} · {{ card.c.role|smart_title }}{% endif %}">
-                  <span class="cc-firm-name">{% if card.c.firm %}{{ card.c.firm.name|smart_title }}{% else %}{{ card.c.firm_text|smart_title }}{% endif %}</span>{% if card.c.role %}<span class="cc-firm-role">· {{ card.c.role|smart_role|smart_title }}</span>{% endif %}
+                  <span class="cc-firm-name">{% if card.c.firm %}{{ card.c.firm.name|smart_title }}{% else %}{{ card.c.firm_text|smart_title }}{% endif %}</span>{% if card.c.role %}<span class="cc-firm-role">{{ card.c.role|smart_role|smart_title }}</span>{% endif %}
                 </span>
                 {% comment %}
                 No description line and no on-card email, on the founder's

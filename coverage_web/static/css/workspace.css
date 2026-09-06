@@ -553,7 +553,7 @@ a.ribbon-stat:hover .ribbon-icon { color: var(--accent); }
 .workspace-search:hover { background: var(--surface); border-color: var(--line); color: var(--accent-ink); }
 .workspace-nav .site-auth { display: flex; order: 3; gap: 16px; flex: none; align-items: center; flex-wrap: nowrap; padding: 0; margin: 0; border: 0; font: 400 13px/1.4 var(--font-ui); }
 .workspace-nav .site-user { display: flex; width: auto; gap: 8px; min-width: 0; min-height: 44px; }
-.workspace-nav .site-user-name { display: none; }
+.workspace-nav .site-user-name { display: none; font: inherit; }
 .workspace-nav .site-user-avatar { flex: none; width: 32px; height: 32px; }
 .workspace-nav .site-auth > a:last-child { color: var(--ink-2); min-height: 44px; display: inline-flex; align-items: center; margin: 0; }
 body:has(.workspace-nav) > main, body:has(.workspace-nav) > .site-footer { margin-left: 0; }
@@ -568,6 +568,7 @@ body:has(.workspace-nav) > main, body:has(.workspace-nav) > .site-footer { margi
 }
 @media (max-width: 1050px) {
   :root { --workspace-top: 88px; }
+  .workspace-nav.is-open { max-height: 100dvh; overflow-y: auto; overscroll-behavior: contain; }
   .workspace-nav .site-header-inner { min-height: 72px; padding: 12px 24px; flex-wrap: wrap; gap: 10px; }
   .workspace-nav .wordmark { margin-right: auto; }
   .workspace-menu { display: inline-flex; order: 4; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-ctl); background: transparent; color: var(--ink); cursor: pointer; }

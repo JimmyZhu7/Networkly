@@ -247,6 +247,8 @@
 .support-analytics .inst-sub { font-size: 13px; }
 .support-analytics .inst-tab { font-size: 13px; }
 .support-analytics .inst-log { font-size: 13px; }
+.support-analytics :is(.inst-card,.inst-wide,.inst-rows li,.inst-log li) { min-width: 0; }
+.support-analytics :is(.inst-rows li > *,.inst-log li > *,h2) { min-width: 0; overflow-wrap: anywhere; }
 .support-error { min-height: 60vh; display: flex; align-items: center; }
 .support-error-content { max-width: 660px; padding: 48px 0; }
 .support-error h1 { margin: 0 0 20px; }
@@ -265,8 +267,9 @@
 @media (max-width: 820px) {
   .support-settings .settings-wrap { grid-template-columns: 1fr; gap: 28px; }
   .support-settings .settings-index { position: static; border-block: 1px solid var(--line); }
-  .support-settings .settings-index summary { padding: 16px 0; font-weight: 600; min-height: 48px; }
-  .support-settings .settings-nav { position: static; padding-bottom: 16px; }
+  .support-settings .settings-index > summary { padding: 16px; min-height: 48px;
+    border: 0; border-radius: 0; background: transparent; font-weight: 600; list-style-position: inside; }
+  .support-settings .settings-nav { position: static; padding: 8px 4px 16px; }
   .support-settings .settings-nav-group { margin-top: 12px; }
 }
 @media (max-width: 680px) {
@@ -340,7 +343,6 @@
 .support-unsubscribe .auth-sub { font-size: 15px; line-height: 1.7; }
 @media (max-width: 680px) {
   .as-page .as-chat-head { padding-bottom: 14px; }
-  .support-settings .settings-index > summary { border: 0; padding-inline: 0; background: transparent; }
 }
 .support-pricing .price-grid { max-width: none; margin-inline: 0; }
 .support-pricing .seg { width: fit-content; border-radius: 8px; box-shadow: none; }
@@ -349,3 +351,89 @@
   .ob .ob-grid { grid-template-columns: 1fr; }
   .ob .ob-side { position: static; }
 }
+
+/* Forms and examples need their own usable measure inside split panes. */
+.support-auth .auth-form-column,
+.support-home .desk-copy, .support-home .desk-panel,
+.support-home .feature-copy, .support-home .vig { min-width: 0; }
+.support-home .desk-hero { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+.support-home .feature-row, .support-home .feature-row.flip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.support-home .vig { overflow: visible; }
+.support-home .vig::before { content: none; }
+.support-home .v-board { grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); }
+.support-home .v-col { min-width: 0; }
+.support-home .v-col-h, .support-home .v-card { overflow-wrap: anywhere; }
+.support-home .desk-row { flex-wrap: wrap; gap: 8px 16px; }
+.support-home .desk-row-main { flex: 1 1 160px; }
+.support-home .desk-row b, .support-home .desk-why { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.support-home .desk-bar { flex-wrap: wrap; gap: 8px 16px; }
+.support-home .desk-stat .dash-num { opacity: 1; }
+.support-home .cta-band p { margin-inline: 0; text-align: left; }
+
+/* The tier name and its controls form one record. Full rows grow naturally
+   so the last chip never disappears behind a fixed-height viewport. */
+.support-settings .tf-chips { gap: 8px; padding: 2px 4px 4px 2px; }
+.support-settings .tf-chip { max-width: 100%; padding: 8px 10px; gap: 8px;
+  animation: none; transform: none; }
+.support-settings .tf-chip > span { white-space: normal; overflow: visible;
+  text-overflow: clip; overflow-wrap: anywhere; }
+.support-settings .tf-chip-x { flex: none; opacity: 1; color: var(--ink-2); }
+.support-settings .tf-tier { color: var(--ink-2); }
+.support-settings .set-row-main { flex: 1 1 220px; overflow-wrap: anywhere; }
+.support-settings .set-row { flex-wrap: wrap; }
+.support-settings .set-row-control { max-width: 100%; flex-wrap: wrap; }
+.support-settings .set-save { flex-wrap: wrap; }
+.support-settings .set-grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); }
+.support-settings .avatar-field > div { min-width: 0; }
+.support-settings .set-hint, .support-account .acct-lede,
+.support-account .exp-file, .support-account .unmatched-firm-row { overflow-wrap: anywhere; }
+
+/* Conversation content can include long subjects, links and filenames.
+   Let text wrap inside its turn; only the conversation viewport scrolls. */
+.as-page .as-starter:hover { padding-inline: 0; }
+.as-page .as-turn, .as-page .as-attachments, .as-page .as-draft { max-width: 100%; min-width: 0; }
+.as-page .as-attachment-chip { min-width: 0; overflow-wrap: anywhere; }
+.as-page .as-draft-subject { flex-wrap: wrap; overflow-wrap: anywhere; }
+.as-page .as-draft-body { overflow-wrap: anywhere; }
+.as-page .as-msg-edit-actions { flex-wrap: wrap; }
+.as-page .as-attach-chip { max-width: 100%; min-width: 0; }
+.as-page .as-attach-chip-name { min-width: 0; }
+.as-page .as-starters { flex-shrink: 0; }
+
+@media (max-width: 820px) {
+  .support-auth.auth-wrap { display: block; max-width: 520px; padding: 32px 24px 48px; }
+  .support-auth .auth-intro { padding: 0 0 28px; }
+  .support-auth .auth-title { font-size: 38px; max-width: 16ch; margin-bottom: 12px; }
+  .support-auth .auth-intro-copy { font-size: 15px; margin-bottom: 8px; }
+  .support-auth .auth-form-title { border-top: 1px solid var(--line); padding-top: 24px; margin-bottom: 20px; }
+  .support-home .desk-hero, .support-home .feature-row, .support-home .feature-row.flip { grid-template-columns: 1fr; gap: 32px; }
+  .support-home .desk-hero { padding: 24px 0 40px; }
+  .support-home .desk-title { max-width: 18ch; }
+}
+@media (max-width: 560px) {
+  .support-auth.auth-wrap { padding-inline: 20px; }
+  .support-settings .set-field { grid-template-columns: minmax(0, 1fr); }
+  .support-home .v-board { grid-template-columns: 1fr; }
+  .support-home .v-col { padding: 12px; }
+  .as-page .as-composer textarea { font-size: 16px; }
+}
+.support-home .v-board .v-col:last-child { display: flex; }
+/* This dialog lives outside .as-page so it can enter the top layer. */
+.as-memory-dialog .as-memory-list { margin-inline: 0; }
+.as-memory-dialog .as-memory-text { overflow-wrap: anywhere; }
+.as-memory-dialog .as-memory-forget { min-width: 36px; min-height: 36px; opacity: 1; }
+@media (max-width: 640px) {
+  .as-memory-dialog .as-memory-forget { min-width: 44px; min-height: 44px; }
+}
+
+.support-settings .tf-chips { max-height: none; overflow: visible; }
+.support-settings .tf-results { max-height: none; overflow: visible; padding: 0;
+  border: 0; border-radius: 0; }
+.support-settings .tf-result { flex: none; min-width: 0; flex-wrap: wrap; padding: 12px 0;
+  border-bottom: 1px solid var(--line); border-radius: 0; }
+.support-settings .tf-result > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.support-settings .tf-results-footer { display: flex; align-items: center;
+  flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.support-settings .tf-results-count { font-size: 13px; color: var(--ink-2); }
+.support-settings .tf-results-toggle[hidden] { display: none; }
+.support-settings .tf-group-heading[hidden] { display: none; }

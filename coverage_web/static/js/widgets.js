@@ -48,8 +48,33 @@
     }
   }
 
+  // Preview complete rows, never a pixel slice through a title or action.
+  // Nothing is hidden until enhancement runs, so no-JS readers get every row.
+  function applyFirmPreview(panel) {
+    var list = panel.querySelector(".firmcol-scroll");
+    var button = panel.querySelector("[data-widget-expand]");
+    if (!list || !button) return;
+    var open = panel.classList.contains("is-expanded"), row = 0, remainder = 0, conceal = false;
+    Array.from(list.children).forEach(function (child) {
+      if (child.matches(".rolerow,.rolerow-dismissed")) {
+        row++;
+        conceal = row > 3;
+        if (conceal) remainder++;
+        child.hidden = conceal && !open;
+      } else if (child.matches(".variant-fold")) {
+        // A programme's other locations travel with their complete lead row.
+        if (conceal) remainder += child.querySelectorAll(".rolerow").length;
+        child.hidden = conceal && !open;
+      }
+    });
+    button.hidden = remainder === 0;
+    button.setAttribute("aria-expanded", String(open));
+    if (!button.dataset.originalLabel) button.dataset.originalLabel = button.getAttribute("aria-label");
+    button.setAttribute("aria-label", open ? button.dataset.originalLabel.replace(/^Expand/, "Collapse") : button.dataset.originalLabel);
+    button.querySelector("span").textContent = open ? "Show fewer roles" : "Show " + remainder + " more role" + (remainder === 1 ? "" : "s");
+  }
   function setup() {
-    document.querySelectorAll("[data-widget-expand]").forEach(function (button) { button.hidden = false; });
+    document.querySelectorAll(".firmcol").forEach(applyFirmPreview);
     applyStage(false);
   }
   function reveal(element) {
@@ -68,11 +93,8 @@
     if (expand) {
       var panel = expand.closest(".firmcol");
       if (!panel) return;
-      if (!expand.dataset.originalLabel) expand.dataset.originalLabel = expand.getAttribute("aria-label");
       var open = panel.classList.toggle("is-expanded");
-      expand.setAttribute("aria-expanded", String(open));
-      expand.setAttribute("aria-label", open ? expand.dataset.originalLabel.replace(/^Expand/, "Collapse") : expand.dataset.originalLabel);
-      expand.querySelector("span").textContent = open ? "Collapse" : "Expand";
+      applyFirmPreview(panel);
       reveal(panel.querySelector(".firmcol-scroll"));
       if (!open && panel.getBoundingClientRect().top < 0) panel.scrollIntoView({ block: "start", behavior: "instant" });
     }

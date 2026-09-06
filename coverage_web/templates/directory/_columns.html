@@ -80,13 +80,6 @@ walks the same URL as a plain page load.
               {% if cl.is_mine %}<span class="firmcol-tier is-mine">{% if cl.tier %}Tier {{ cl.tier }}{% else %}Untiered{% endif %}</span>{% endif %}
             </div>
           </div>
-          {% if cl.open_count > 3 %}
-          <button type="button" class="firmcol-expand" data-widget-expand
-                  aria-expanded="false" aria-controls="firm-roles-{{ cl.firm_slug }}"
-                  aria-label="Expand roles at {{ cl.firm_name }}" hidden>
-            {% include "_nav_icon.html" with name="expand" %}<span>Expand</span>
-          </button>
-          {% endif %}
         </header>
         <div class="firmcol-scroll" id="firm-roles-{{ cl.firm_slug }}">
           {% for r in cl.roles %}
@@ -134,6 +127,13 @@ walks the same URL as a plain page load.
             <a class="firmcol-more" href="{% url 'directory:firm_detail' cl.firm_slug %}">{{ cl.roles_hidden }} more at {{ cl.firm_name|smart_title }}</a>
           {% endif %}
         </div>
+          {% if cl.open_count > 3 %}
+          <button type="button" class="firmcol-expand" data-widget-expand
+                  aria-expanded="false" aria-controls="firm-roles-{{ cl.firm_slug }}"
+                  aria-label="Expand roles at {{ cl.firm_name }}" hidden>
+            {% include "_nav_icon.html" with name="expand" %}<span>Expand</span>
+          </button>
+          {% endif %}
       </article>
     {% endfor %}
 

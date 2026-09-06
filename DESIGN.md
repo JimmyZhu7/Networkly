@@ -199,11 +199,11 @@ The sticky horizontal masthead has an (80px) desktop height, a bottom divider, a
 
 Default page padding is (40px 40px 64px), with ordinary workspace pages capped at (1200px) and wide pages at (1440px) above (1100px). Shared padding becomes (24px 20px 40px) at (820px) and (28px 20px 44px) at (640px), with deliberate page-local exceptions. Spacing uses the base scale and recurring (20px), (28px), and (40px) gaps.
 
-Today has a ruled factual summary followed by open action records and a (290px) supporting column, separated by a vertical rule. At (900px), that support moves below the main work. Phone action records stack identity, evidence, and actions; the final phone spacing uses compact section gaps while retaining (44px) primary targets. This places the first action group in the reviewed phone arrival view; arbitrary content length can extend it.
+Today has a ruled factual summary, a collapsed weekly-updates disclosure, open action records, and a (290px) supporting column separated by a vertical rule. At (900px), that support moves below the main work. The action queue uses its own container width: below (680px), records stack identity, evidence, and actions; the final phone spacing uses compact section gaps while retaining (44px) primary targets. This places the first action group in the reviewed phone arrival view; arbitrary content length can extend it.
 
-Opportunities groups each firm in one horizontal band: a (250px) identity column and a broad role column with a (36px) gap. The role area has a (408px) collapsed maximum scroll height and expands to natural height. At (720px), firm identity sits above roles. Applications uses wrapping labeled count filters above ruled rows, not boxed metric tiles. Network is a roster whose firm context and actions reflow beneath identity as space narrows. Contact records use open journal sections, a separate capture form, and supporting facts beside them.
+Opportunities groups each firm in one horizontal band: a (250px) identity column and a broad role column with a (36px) gap. Each role list previews three complete lead rows with their grouped-location disclosures. A counted footer reveals the remaining rows; lists have natural height and show every rendered row when JavaScript is unavailable. At (720px), firm identity sits above roles. Applications uses wrapping labeled count filters above ruled rows, not boxed metric tiles. Network is a roster whose firm context and actions reflow beneath identity as space narrows. Its firm grid uses natural content-sized rows; a collapsed viewport never compresses cards into shorter tracks. Application stage controls precede a disclosure containing contacts at that firm. Contact records use open journal sections, a separate capture form, and supporting facts beside them.
 
-Settings has a (200px) section index beside open ruled sections, with a (64px) gap at wide sizes. The index becomes a disclosure and the layout becomes one column at (820px). Assistant keeps an open reading area with divided starters and an enclosed composer. Calendar uses time-based grids and agenda rows; responsive forms and day views retain their own geometry. Legal reading content caps at (760px).
+Settings has a (200px) section index beside open ruled sections, with a (64px) gap at wide sizes. The index becomes an inset disclosure and the layout becomes one column at (820px). Selected firm lists use natural height. Add-firm search previews five complete matching rows with a result count and an explicit control to show all matches; the no-JavaScript fallback shows all rows. Assistant keeps an open reading area with divided starters and an enclosed composer. Calendar uses time-based grids and agenda rows; responsive forms and day views retain their own geometry. Legal reading content caps at (760px). Public examples and authentication layouts stack at (820px) so their narrower columns cannot clip headings or content.
 
 ## Elevation & Depth
 
@@ -241,7 +241,7 @@ Today tasks, firm bands, application rows, roster entries, and settings sections
 
 ### Collection controls
 
-Application stage filters expose `aria-pressed` and operate on the authoritative rows. Preserve the live visible-count announcement, empty-filter guidance, focus restoration after replacement, and disabled enhancement when JavaScript is unavailable. Firm expansion uses a real button with Expand/Collapse wording and `aria-expanded`; it removes internal clipping while keeping the header reachable on collapse. Preserve the scrollable fallback when the enhancement is unavailable.
+Application stage filters expose `aria-pressed` and operate on the authoritative rows. Preserve the live visible-count announcement, empty-filter guidance, focus restoration after replacement, and disabled enhancement when JavaScript is unavailable. Firm expansion uses a real button with Expand/Collapse wording and `aria-expanded`; it reveals complete hidden records while keeping the header reachable on collapse. Preserve the natural-height full list when the enhancement is unavailable.
 
 ### Calendar and capture
 
@@ -249,7 +249,7 @@ Calendar categories retain their colors and text. Month-cell add controls appear
 
 ### Assistant and overlays
 
-Assistant starters form an open divided list. The bordered composer marks the editing area; draft subject, body, and actions remain distinct. Dialogs and drawers use the raised shadow, clear headings, constrained scrolling, and grouped wrapping actions. Dialogs have (24px) padding and a maximum height of (100dvh - 32px). Command-search results retain visible labels and keyboard focus.
+Assistant starters form an open divided list. The bordered composer marks the editing area; draft subject, body, and actions remain distinct. Dialogs and drawers use the raised shadow, clear headings, constrained scrolling, and grouped wrapping actions. Dialogs have (24px) padding and a maximum height of (100dvh - 32px). Command search uses vertically grouped, fully wrapping result names and context, a visible close button, and keyboard selection announced through the search field. Its result list scrolls inside a dialog bounded by the viewport, including short landscape windows.
 
 ### Identity and compatibility
 

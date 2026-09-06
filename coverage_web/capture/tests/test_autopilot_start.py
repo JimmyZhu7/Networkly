@@ -280,7 +280,7 @@ def test_rows_already_decided_are_not_a_second_invitation_to_spend(
     client.force_login(student)
     body = client.get(reverse("crm:week")).content.decode()
     assert "Run Autopilot" not in body
-    assert "left it for you" in body
+    assert "Your review is needed." in body
 
 
 # --------------------------------------------------------------------------- #

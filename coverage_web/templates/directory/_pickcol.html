@@ -211,11 +211,16 @@ there: an `hx-swap-oob` element sitting in the initial document is inert noise.
         {% endif %}
       </header>
       {% if pick_cluster.roles %}
-        <div class="firmcol-scroll">
+        <div class="firmcol-scroll" id="picked-roles">
           {% for r in pick_cluster.roles %}
             {% include "directory/_rolecard.html" %}
           {% endfor %}
         </div>
+        <button type="button" class="firmcol-expand" data-widget-expand
+                aria-expanded="false" aria-controls="picked-roles"
+                aria-label="Expand picked roles" hidden>
+          {% include "_nav_icon.html" with name="expand" %}<span>Expand</span>
+        </button>
       {% endif %}
     </article>
 {% endif %}

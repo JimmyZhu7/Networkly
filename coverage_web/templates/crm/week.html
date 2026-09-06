@@ -320,8 +320,8 @@
     `since = now - timedelta(days=RECENT_DAYS)`. If that constant changes,
     this label is wrong and should change with it.
     {% endcomment %}
-    <section class="situation-section">
-    <h2 class="sec-label">Moved this week</h2>
+    <details class="situation-section">
+    <summary>Moved this week <span class="situation-count">{{ situation_events|length }} update{{ situation_events|length|pluralize }}</span></summary>
     <div class="situation-strip">
       {% for e in situation_events %}
         <a class="situation-card kin-reveal panel panel--flat" style="--i: {{ forloop.counter0 }}"
@@ -339,7 +339,7 @@
         </a>
       {% endfor %}
     </div>
-    </section>
+    </details>
   {% endif %}
 
   {% comment %}

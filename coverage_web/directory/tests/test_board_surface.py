@@ -424,11 +424,11 @@ def test_directory_motion_respects_reduced_motion():
 # ---------------------------------------------------------------------------
 
 
-def test_long_firm_lists_have_theme_aware_scroll_and_expansion_controls():
+def test_long_firm_lists_show_complete_rows_with_expansion_controls():
     css = _css()
     body = _rule(css, ".firmcol-scroll")
-    assert "overflow-y: auto" in body
-    assert "scrollbar-color: var(--line-strong) transparent" in body
+    assert "overflow: visible" in body
+    assert "max-height: none" in body
     assert "max-height: none" in _rule(css, ".firmcol.is-expanded .firmcol-scroll")
     template = (pathlib.Path(__file__).resolve().parents[2] / "templates/directory/_columns.html").read_text()
     assert "data-widget-expand" in template

@@ -187,9 +187,6 @@ survives even if it was in the batch.
                   days". Same builder and same partial the cards used, so
                   there was never a second version of it to drift.
                   {% endcomment %}
-                  {% if r.net %}
-                    {% include "directory/_role_people.html" with net=r.net compact=1 %}
-                  {% endif %}
                 </span>
                 {% comment %}
                 THE ROW'S OWN STAGE CONTROL. This was an anchor down to the
@@ -241,6 +238,18 @@ survives even if it was in the batch.
                           aria-label="Remove {{ r.title }} at {{ r.firm_name }} from your list"
                           title="Remove from your list">Remove</button>
                 </form>
+                {% if r.net %}
+                  {% if r.net.people %}
+                    <details class="lens-network">
+                      <summary>Your contacts here <span>{{ r.net.total }}</span></summary>
+                      {% include "directory/_role_people.html" with net=r.net compact=1 %}
+                    </details>
+                  {% else %}
+                    <div class="lens-network lens-network-empty">
+                      {% include "directory/_role_people.html" with net=r.net compact=1 %}
+                    </div>
+                  {% endif %}
+                {% endif %}
               </li>
             {% endfor %}
           </ul>

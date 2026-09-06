@@ -1238,6 +1238,11 @@ that don't already declare explicit htmx behaviour.
               {% endif %}
             {% endfor %}
           </div>
+          <div class="tf-results-footer">
+            <span class="tf-results-count" id="tf-results-count" aria-live="polite"></span>
+            <button type="button" class="btn tf-results-toggle" id="tf-results-toggle"
+                    aria-controls="tf-results" aria-expanded="false" hidden>Show all firms</button>
+          </div>
           <p class="tf-empty-search" data-tf-no-results hidden>No firms match that search.</p>
         </div>
       </section>
@@ -1248,6 +1253,10 @@ that don't already declare explicit htmx behaviour.
         var results = document.getElementById("tf-results");
         var search = document.getElementById("tf-search");
         var noResults = document.querySelector("[data-tf-no-results]");
+        var resultsToggle = document.getElementById("tf-results-toggle");
+        var resultsCount = document.getElementById("tf-results-count");
+        var resultsExpanded = false;
+        var resultsPreviewLimit = 5;
         var csrf = "{{ csrf_token }}";
         var tierUrl = "{% url 'crm:set_firm_tier' %}";
         var removeUrl = "{% url 'crm:remove_target_firm' %}";
@@ -1354,6 +1363,7 @@ that don't already declare explicit htmx behaviour.
                 col.querySelector("[data-tf-chips]").appendChild(buildChip(firmId, name, tier));
                 syncEmpty(col);
                 row.remove();
+                filterResults();
               });
             });
           });
@@ -1367,15 +1377,36 @@ that don't already declare explicit htmx behaviour.
         // of specificity, so `hidden` here would silently do nothing. ----
         function filterResults() {
           var q = search.value.trim().toLowerCase();
-          var any = false;
-          results.querySelectorAll(".tf-result").forEach(function (row) {
-            var match = !q || row.dataset.firmName.indexOf(q) > -1;
-            row.classList.toggle("is-hidden", !match);
-            if (match) any = true;
+          var matches = Array.prototype.filter.call(results.querySelectorAll(".tf-result"), function (row) {
+            return !q || row.dataset.firmName.indexOf(q) > -1;
           });
-          noResults.hidden = !q || any || results.children.length === 0;
+          var shown = resultsExpanded ? matches : matches.slice(0, resultsPreviewLimit);
+          results.querySelectorAll(".tf-result").forEach(function (row) {
+            row.classList.toggle("is-hidden", shown.indexOf(row) === -1);
+          });
+          results.querySelectorAll(".tf-group-heading").forEach(function (heading) {
+            var sibling = heading.nextElementSibling, hasRows = false;
+            while (sibling && !sibling.classList.contains("tf-group-heading")) {
+              if (sibling.classList.contains("tf-result") && !sibling.classList.contains("is-hidden")) hasRows = true;
+              sibling = sibling.nextElementSibling;
+            }
+            heading.hidden = !hasRows;
+          });
+          resultsCount.textContent = matches.length ? "Showing " + shown.length + " of " + matches.length + (matches.length === 1 ? " firm" : " firms") : "";
+          resultsToggle.hidden = matches.length <= resultsPreviewLimit;
+          resultsToggle.setAttribute("aria-expanded", String(resultsExpanded));
+          resultsToggle.textContent = resultsExpanded ? "Show fewer firms" : "Show all " + matches.length + " firms";
+          noResults.hidden = !q || matches.length > 0 || results.querySelectorAll(".tf-result").length === 0;
         }
-        if (search) search.addEventListener("input", filterResults);
+        if (search) search.addEventListener("input", function () {
+          resultsExpanded = false;
+          filterResults();
+        });
+        resultsToggle.addEventListener("click", function () {
+          resultsExpanded = !resultsExpanded;
+          filterResults();
+        });
+        filterResults();
 
         // ---- Re-tier without a pointer. HTML5 drag-and-drop never fires
         // on a touchscreen and has no keyboard equivalent, so the drag

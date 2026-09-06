@@ -215,7 +215,8 @@ def test_offscreen_rows_do_not_reserve_a_fixed_clipping_box():
             for size in re.findall(r"contain-intrinsic-size:\s*([^;]+)", body):
                 assert size.startswith("auto "), "Virtualized rows must remember their measured size"
             assert not re.search(r"(?:^|;)\s*(?:height|max-height):\s*\d", body)
-    assert "overflow-y: auto" in _rule(css, ".firmcol-scroll")
+    assert "max-height: none" in _rule(css, ".firmcol-scroll")
+    assert "overflow: visible" in _rule(css, ".firmcol-scroll")
 
 
 def test_the_role_title_remains_readable_without_a_line_clamp():
