@@ -94,3 +94,20 @@ def _no_live_anthropic_calls(settings):
     fake client or by patching `is_configured`, and are unaffected either way.
     """
     settings.ANTHROPIC_API_KEY = ""
+
+
+@pytest.fixture(autouse=True)
+def _beta_off_by_default(settings):
+    """Run every test with the invitation beta OFF unless it turns it on.
+
+    The same invariant as `_no_live_anthropic_calls`, applied to the other
+    variable a developer's `.env` sets: `BETA_ENABLED=true` makes
+    `accounts.access.effective_plan` answer "pro" for every account, which
+    silently breaks every free-tier assertion in billing/ and assistant/
+    (20 failures with the founder's .env, none without it). A suite whose
+    verdict depends on the machine it runs on is not a suite. Tests that
+    are ABOUT the beta set `settings.BETA_ENABLED = True` in their own
+    fixture or body, which runs after this one and wins; see
+    accounts/tests/test_beta_admission.py.
+    """
+    settings.BETA_ENABLED = False
