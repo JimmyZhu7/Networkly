@@ -648,7 +648,10 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 5 * * *" # 05:00 UTC — before gmail-watch-renew, clear of the scrape's 00/06/12/18 marks
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py pro_trial_expire"
+    # clearsessions rides on this daily job rather than a new cron service:
+    # deleted accounts and expired logins leave session rows with no foreign
+    # key to cascade from, and nothing else purges them.
+    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py pro_trial_expire && uv run --package coverage-web python coverage_web/manage.py clearsessions"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_PRO_TRIAL_EXPIRE

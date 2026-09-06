@@ -14,6 +14,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.exceptions import SuspiciousFileOperation
 from django.db import models
 from django.templatetags.static import static
 from django.utils import timezone
@@ -144,7 +145,15 @@ class Firm(models.Model):
         generated = Path(settings.BASE_DIR) / "static" / "img" / "firm-logos" / filename
         if generated.is_file():
             return static(f"img/firm-logos/{filename}")
-        return self.logo.url if self.logo else ""
+        if not self.logo:
+            return ""
+        # Production media is the private avatar store, which refuses any key
+        # outside its prefix by raising; a firm mark on a public page must
+        # degrade to the monogram, never to a 400.
+        try:
+            return self.logo.url
+        except (SuspiciousFileOperation, ValueError):
+            return ""
 
 
 class Opportunity(models.Model):

@@ -94,8 +94,11 @@ def _ping_healthcheck(name: str) -> None:
         return
     try:
         requests.get(url, timeout=5)
-    except requests.RequestException:
-        logger.exception("healthcheck ping failed for job %r", name)
+    except requests.RequestException as exc:
+        # warning, not exception: the traceback carries the request URL, and
+        # the ping UUID in that URL is the credential (settings/base.py). A
+        # DNS blip must not write it into the host's log stream.
+        logger.warning("healthcheck ping failed for job %r (%s)", name, type(exc).__name__)
 
 
 class JobHeartbeat:

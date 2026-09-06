@@ -196,6 +196,9 @@ def test_console_email_warns_that_nothing_is_sent(settings):
 def test_blank_stripe_warns_that_there_is_no_way_to_pay(settings):
     settings.STRIPE_SECRET_KEY = ""
     settings.STRIPE_WEBHOOK_SECRET = ""
+    # Pin beta OFF: with BETA_ENABLED=true (a developer's .env), the Stripe
+    # line is a PASS "not required for the free beta", not the WARN under test.
+    settings.BETA_ENABLED = False
 
     line = _line_for(_report(), "STRIPE_SECRET_KEY")
 
@@ -207,6 +210,7 @@ def test_an_unrestricted_stripe_key_warns(settings):
     """`sk_` works and is a much bigger blast radius than this app needs."""
     settings.STRIPE_SECRET_KEY = "sk_live_x"
     settings.STRIPE_WEBHOOK_SECRET = "whsec_x"
+    settings.BETA_ENABLED = False
 
     report = _report()
 

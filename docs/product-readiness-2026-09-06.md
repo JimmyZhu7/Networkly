@@ -81,8 +81,11 @@ requirements and generally seven-day Gmail/Calendar refresh-token expiration.
   authenticated TLS `EMAIL_URL` and `DEFAULT_FROM_EMAIL` on sending services.
   Receive verification, password-reset and digest messages in Gmail and another
   inbox; verify that links use the deployed HTTPS address. Resend's free allowance
-  is 100 emails/day and 3,000/month: 100 digests on one day leave no daily capacity
-  for verification or reset messages. Plan delivery within that constraint.
+  is 100 emails/day and 3,000/month (re-read from Resend's pricing page on 6
+  September). The digest is now spread across the week and capped at 60 sends a
+  day, so no single day can consume the allowance and starve verification or
+  reset messages; that headroom is by construction, not by hoping the roster
+  stays small.
 - [ ] **Accept durable private uploads.** Deploy the configured private storage,
   verify authenticated ownership enforcement and an avatar surviving redeploy.
   Review the explicit `--rekey` preview before authorizing any existing-avatar
@@ -124,8 +127,10 @@ requirements and generally seven-day Gmail/Calendar refresh-token expiration.
 | `autopilot` | Every 5 minutes, offset | User-requested review runs |
 | `gcal-sync` | Every 5 minutes, offset | Google Calendar mirroring |
 | `assistant-reconcile` (`assistant_reconcile --apply`) | Every 10 minutes | Settle/refund interrupted assistant reservations |
-| `weekly-digest` | Mondays, 13:00 UTC | Weekly email |
+| `weekly-digest` (`send_weekly_digest --spread`) | Daily, 13:00 UTC | One seventh of the roster each day under `DIGEST_DAILY_SEND_CAP` (60); each person still gets one digest a week |
 | `push-alerts` | Daily, 13:00 UTC | Deadline push |
+| `pro-trial-expire` then `clearsessions` | Daily, 05:00 UTC | Legacy trial expiry (suppressed in beta) and purge of expired session rows |
+| `db-backup` (`backup_db --require-s3`) | Daily, 04:15 UTC, **defined but suspended** | Off-host snapshot to the private backups bucket; inert while `BACKUP_S3_BUCKET` is blank; resume after payment |
 
 The Blueprint also contains legacy trial expiry and optional Gmail watch renewal;
 polling does not depend on watch renewal. No production job execution is claimed.
@@ -163,6 +168,66 @@ quota, bucket policy, delivery or scheduled execution.
 10. Verify job alerts and recovery from provider failure, revocation and interrupted
     assistant work. Calendar recovery must not treat absence alone as cancellation
     or overwrite manual/mail-owned records.
+
+## Second-Pass Results, 6 September
+
+The afternoon pass ran four parallel workstreams on isolated worktrees with
+exclusive file ownership, merged each behind its own focused tests, and gates
+the whole with one integrated suite (recorded under Test evidence below).
+
+**Release and configuration — done.** The image builds and is gated in CI on
+`codex/**` branches and manual dispatch; CI proves `pg_dump`/`pg_restore` at
+major version 18 exist inside it. `render.yaml` validates against Render's
+published JSON Schema (it did not before: `BETA_ENABLED` was an unquoted YAML
+boolean, which the schema types as string-or-number). `check --deploy
+--fail-level WARNING` exits zero on placeholder values with only
+`security.W021` (HSTS preload, off by recorded decision) silenced.
+`pip-audit --strict` on the exported lockfile: no known vulnerabilities across
+126 packages, no version moved. The weekly digest is a daily cron sending one
+seventh of the roster under a 60-a-day cap. `backup_db` gained an S3
+destination behind a separate `BACKUP_S3_BUCKET`; the `coverage-db-backup`
+cron is defined and inert. `coverage-assistant-reconcile` needs no `REDIS_URL`
+(PostgreSQL advisory locks); `coverage-gcal-sync` inherits everything it reads;
+no optional monitoring key became required.
+
+**Owner action before applying the Blueprint:** read `coverage-db`'s
+PostgreSQL major version from the Render dashboard and record it here.
+`postgresMajorVersion` is immutable, it is not in the repo, and it decides
+whether the image's `pg_dump` 18 can dump the server. No pin was added because
+a wrong one is the single edit that could turn an apply into a data event.
+Plan names `basic-256mb` and `starter` are current in Render's schema; no tier
+changed.
+
+**Security and privacy — no launch blocker in the posture.** Eleven checks
+verified with proofs in the [security review](audits/security-review-2026-09-06.md):
+every non-public route gated (a resolver-walking test now requires a gate or a
+declared reason on every route), all object lookups tenant-scoped with an
+unscoped query raising loudly, invitation cap held under a real threaded
+last-seat race, uploads re-encoded with EXIF dropped and served only through
+the ownership-checked route, exports scoped and in-memory, Sentry scrubbing
+verified by executing the production block, production headers read off a
+live response, no secret on any ref. Four privacy-page corrections were forced
+by call sites, the most important being that **ordinary background Gmail sync
+already sends subjects and snippets to the AI provider**, not only Scan Now;
+the object store and the shared cache are now named as processors; the advisor
+sends subject lines; a contact's address travels to Google as a search term.
+All six legal placeholders and the draft banner are intact.
+
+**Fixed in the same pass from the review's findings:** a failed heartbeat ping
+no longer writes the ping URL (the credential) into the log stream; the Stripe
+webhook no longer echoes provider error text to unauthenticated callers;
+account deletion now signs out every device, and expired session rows are
+purged by `clearsessions` chained onto the daily trial-expiry cron; region
+enrichment logs a contact's domain rather than the address; and `Firm.logo_url`
+no longer raises when the private media store refuses a legacy `firm-logos/`
+key — **11 of the 139 local firms** carry a stored logo with no generated static
+mark and would have returned 400 on the public Opportunities feed in
+production. Two preflight tests that silently depended on a developer's `.env`
+now pin beta off. Each fix carries a regression test.
+
+**Still open from the review, for the journeys owner:** `university_search`
+is anonymous and unthrottled (static data, no leak); the shared per-IP search
+throttle should be applied.
 
 ## Founder Decisions and Evidence Limits
 
@@ -222,7 +287,7 @@ Apply these in Healthchecks (cron mode, timezone UTC, matching the Blueprint):
 | `autopilot` | `2-59/5 * * * *` | 6 min | Max observed 17 s; runs are budget-bounded. |
 | `gcal-sync` | `4-59/5 * * * *` | 5 min | New job; no history. |
 | `assistant-reconcile` | `*/10 * * * *` | 10 min | `EXPECTED_INTERVALS` is 20 min. |
-| `weekly-digest` | `0 13 * * 1` | 30 min | At most 100 sends. |
+| `weekly-digest` | `0 13 * * *` (daily since the spread change) | 30 min | Sends one seventh of the roster per day under `DIGEST_DAILY_SEND_CAP` (60), so no single day can reach Resend's 100. |
 | `push-alerts` | `0 13 * * *` | 30 min | |
 | `pro-trial-expire` | `0 5 * * *` | 30 min | |
 | `gmail-watch-renew` | `30 5 * * *` | 30 min | Optional job; polling does not depend on it. |

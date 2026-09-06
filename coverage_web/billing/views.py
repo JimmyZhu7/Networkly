@@ -87,7 +87,10 @@ def webhook(request):
     try:
         stripe_gateway.handle_webhook_event(request.body, sig_header)
     except stripe_gateway.StripeGatewayError as exc:
-        return HttpResponseBadRequest(str(exc))
+        # Same rule as the checkout view above: provider error text can carry
+        # account or signature details, and this caller is unauthenticated.
+        logger.warning("Stripe webhook rejected: %s", type(exc).__name__)
+        return HttpResponseBadRequest("Webhook rejected.")
     return HttpResponse(status=200)
 
 

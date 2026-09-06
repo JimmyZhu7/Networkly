@@ -1574,6 +1574,11 @@ def delete_user_and_data(user) -> dict[str, int]:
     from capture import google_revoke
 
     google_revoke.revoke_all_for_user(user)
+    # Every device, not only the one asking. The view's logout() flushes the
+    # caller's session; session rows have no foreign key to cascade from, so
+    # a phone left signed in would otherwise keep a live session for an
+    # account that no longer exists.
+    sign_out_other_sessions(user)
 
     avatar_name = user.avatar.name if user.avatar else None
     avatar_storage = user.avatar.storage if avatar_name else None

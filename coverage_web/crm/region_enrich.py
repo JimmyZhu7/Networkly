@@ -212,6 +212,11 @@ class Placement:
         )
 
 
+def _domain(email: str) -> str:
+    """A contact's address is third-party personal data; logs get the domain only."""
+    return email.rsplit("@", 1)[-1] if "@" in (email or "") else "(no address)"
+
+
 def _prompt(name: str, email: str, firm: str, role: str) -> str:
     parts = [f"Name: {name}", f"Work email: {email}", f"Firm: {firm}"]
     if role:
@@ -287,10 +292,10 @@ def enrich(
                 messages=messages,
             )
     except anthropic.APIStatusError as exc:
-        logger.warning("region_enrich: API %s for %r: %s", exc.status_code, email, exc)
+        logger.warning("region_enrich: API %s for a contact at %s", exc.status_code, _domain(email))
         return None
     except anthropic.APIConnectionError as exc:
-        logger.warning("region_enrich: connection error for %r: %s", email, exc)
+        logger.warning("region_enrich: connection error for a contact at %s (%s)", _domain(email), type(exc).__name__)
         return None
 
     record = _record_from_response(response)
