@@ -131,9 +131,9 @@ def test_park_all_names_its_count_before_the_tap(client):
     _quiet(user, 8)
     client.force_login(user)
     page = client.get(reverse("crm:week")).content.decode()
-    assert "Park all 8" in page
+    assert "Pause all 8" in page
     # The number is in the dialog, not only in the flash afterwards.
-    assert "hx-confirm=\"Park all 8?" in page
+    assert 'hx-confirm="Pause outreach for all 8 contacts? A reply resumes outreach. You can undo this immediately."' in page
 
 
 def test_the_board_asks_before_parking_more_than_one(client):

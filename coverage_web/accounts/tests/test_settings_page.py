@@ -153,17 +153,19 @@ def test_the_decisions_groups_keep_their_own_anchors(client, logged_in):
     assert 'id="duplicates"' not in body
 
 
-def test_the_cadence_rails_carry_a_fill_span(body):
-    """Each rail draws a coloured span for the one stretch its clock is
-    actually counting (see settings.html's note on why that span is set via
-    plain left/width rather than a custom property behind calc() — the
-    calc(var()) version rendered correctly once and then never moved again
-    on a later edit). One `.cad-fill` per `.cad-rail`, no more, no less."""
-    rails = re.findall(r'<div class="cad-rail[^"]*"[^>]*>(.*?)</div>\s*<p class="cad-sentence"',
-                        body, re.S)
-    assert len(rails) == 3
-    for rail_html in rails:
-        assert rail_html.count('class="cad-fill"') == 1
+def test_the_cadence_preview_keeps_sequence_and_independent_clocks(body):
+    """The preview aligns labels instead of floating them above a shared rail.
+    New-contact steps are sequential; relationship intervals are independent."""
+    assert 'id="cad-viz" hidden' in body
+    assert 'cad-mark-note' in body and 'cad-mark-followup' in body and 'cad-mark-park' in body
+    assert 'cad-mark-chatted' in body and 'cad-mark-advocate' in body
+    assert 'cad-mark-reping' in body and 'cad-mark-close' in body
+    assert 'class="cad-fill"' not in body
+    assert "Business days · if no reply" in body
+    assert "Calendar days · confirmed deadline" in body
+    assert "Since the follow-up, or note if sent once." in body
+    for sentence in ("cad-cold-sentence", "cad-warm-sentence", "cad-deadline-sentence"):
+        assert f'id="{sentence}"' in body
 
 
 def test_the_rail_is_grouped(body):
@@ -180,8 +182,11 @@ def test_the_danger_zone_is_last_and_holds_exactly_one_action(body):
     would hide it where nobody looks."""
     sections = re.findall(r'<section class="set-card[^"]*" id="([a-z-]+)"', body)
     assert sections[-1] == "danger"
-    danger = body.split('id="danger"', 1)[1]
-    assert danger.count("set-row-label") == 1
+    danger = body.split('id="danger"', 1)[1].split("</section>", 1)[0]
+    assert danger.count('class="btn btn-danger"') == 1
+    assert f'href="{reverse("accounts:delete")}"' in danger
+    assert 'aria-label="Delete account permanently"' in danger
+    assert "Sign out everywhere" not in danger
 
 
 # ---------------------------------------------------------------------------
@@ -331,22 +336,22 @@ def test_every_single_control_row_has_a_real_label_for(body):
         assert f'id="{target}"' in body, f"label points at missing control {target}"
 
 
-def test_every_work_auth_region_is_a_labelled_radiogroup(body):
-    """The six selects became one matrix (regions x three states), so the
-    accessible structure changed shape: each region is now a radiogroup
-    labelled by its own name, rather than a select with a <label for>. The
-    guarantee is the same — no unlabelled control — and this asserts the new
-    shape rather than the old markup."""
+def test_every_work_auth_region_has_a_labelled_control_and_unknown_choice(body):
+    """Each region has an accessible label and retains all three answers,
+    including the unknown state. Compact presentation must not imply eligibility."""
     from accounts.forms import REGION_CHOICES
 
-    assert body.count('role="radiogroup"') >= len(REGION_CHOICES)
     for code, _label in REGION_CHOICES:
-        # The row names its own label element, and that element exists.
-        assert f'aria-labelledby="id_work_auth_{code}-lab"' in body
-        assert f'id="id_work_auth_{code}-lab"' in body
-    # The explanation is stated ONCE now and described by every row, instead
-    # of being repeated per region.
-    assert body.count('aria-describedby="wa-note"') >= len(REGION_CHOICES)
+        assert f'<label class="wa-region" for="id_work_auth_{code}">' in body
+        control = re.search(
+            rf'<select\b[^>]*name="work_auth_{code}"[^>]*>.*?</select>', body, re.S
+        )
+        assert control, f"missing region control: {code}"
+        markup = control.group(0)
+        assert f'id="id_work_auth_{code}"' in markup
+        assert 'aria-describedby="wa-note"' in markup
+        assert re.findall(r'<option value="([^"]*)"', markup) == ["", "citizen", "sponsorship"]
+        assert '<option value="" selected>' in markup
     assert body.count('id="wa-note"') == 1
 
 
@@ -488,46 +493,51 @@ def test_the_picker_offers_every_tier_the_board_renders(client, tracked_firms):
 
 
 def test_the_picker_shows_the_tier_the_chip_is_actually_on(client, tracked_firms):
-    """Option text is the bare numeral as of 2026-09-02, the founder's own
-    call. The word was on screen once per chip inside a column already
-    headed TIER 1, sixteen times in one lane, which made the firm name (the
-    only thing that differs chip to chip) the least prominent text on the
-    row. The template comment above the control had argued for numerals all
-    along; the markup simply never did it.
-
-    The word is not lost, it moved: the `aria-label` below carries it, and
-    the next test pins that it still does."""
+    """Each native selector identifies its current tier in visible text,
+    including when a screen reader announces the selected option."""
     body = client.get(reverse(SETTINGS)).content.decode()
     for tier, chip in enumerate(_chips(body), start=1):
-        assert f'<option value="{tier}" selected>{tier}</option>' in chip
-        assert f">Tier {tier}</option>" not in chip, (
-            "the tier word is back on the chip face, inside a column whose "
-            "heading already says it"
-        )
+        assert f'<option value="{tier}" selected>Tier {tier}</option>' in chip
+        picker = re.search(r'<select\b[^>]*class="tf-tier"[^>]*>', chip).group(0)
+        assert 'data-no-csel' not in picker, "Tier menus share the workspace control"
 
 
-def test_the_accessible_name_carries_the_word_the_face_no_longer_does(client, tracked_firms):
-    """Rewritten 2026-09-02, and this is the half that must not regress.
-
-    It used to require the option text to spell "Tier 2", on the argument
-    that a screen reader reads the chosen OPTION back on change rather than
-    the box's label, so a bare numeral drops half the meaning. That concern
-    is real, which is why the word has to live somewhere the control always
-    carries: the accessible name. `aria-label="Tier for Tier 2 Co"` is
-    announced when the control takes focus, so the pair reads "Tier for Tier
-    2 Co, 2" rather than an unqualified "2".
-
-    So the visible redundancy goes and the spoken meaning stays. If the
-    label ever loses the word, this fails even though the page looks fine,
-    which is the point."""
+def test_the_tier_picker_accessible_name_identifies_its_firm(client, tracked_firms):
     body = client.get(reverse(SETTINGS)).content.decode()
     chip = _chips(body)[1]
     assert 'aria-label="Tier for Tier 2 Co"' in chip
-    assert 'aria-label="Tier' in chip, (
-        "the accessible name dropped the word Tier, which is now the only "
-        "place a screen reader can hear it"
-    )
-    assert ">2</option>" in chip
+    assert '>Tier 2</option>' in chip
+
+
+def test_firm_finder_has_one_labeled_destination_and_one_add_per_result(client, tracked_firms):
+    """The compact finder can still add any available firm to every tier,
+    while each result carries only one Add action."""
+    from directory.models import Firm
+
+    available = Firm.objects.create(slug="available-finder-firm", name="Available Finder Firm")
+    body = client.get(reverse(SETTINGS)).content.decode()
+    destination = re.search(r'<select id="tf-add-tier"[^>]*>(.*?)</select>', body, re.S)
+    assert destination is not None
+    assert 'for="tf-add-tier"' in body
+    assert set(re.findall(r'<option value="(\d+)"', destination.group(1))) == {"1", "2", "3"}
+    assert all(f'>Tier {tier}</option>' in destination.group(1) for tier in (1, 2, 3))
+    results = body[body.index('id="tf-results"'):body.index('class="tf-results-footer"')]
+    row = re.search(rf'<div class="tf-result"[^>]*data-firm="{available.id}"[^>]*>(.*?)</div>', results, re.S)
+    assert row is not None
+    assert row.group(1).count('data-tf-add=') == 1
+    assert 'class="tf-identity"' in row.group(1)
+    assert 'data-tf-name>Available Finder Firm</span>' in row.group(1)
+    assert 'data-tf-tier=' not in row.group(1)
+    assert 'aria-label="Add Available Finder Firm to selected tier"' in row.group(1)
+    assert 'id="tf-search"' in body
+    assert 'aria-controls="tf-results"' in body
+    assert 'data-no-csel' not in destination.group(0)
+    assert 'networklyEnhanceSelects(added)' in body
+    assert 'networklyRefreshSelect(sel)' in body
+    assert '<details class="tf-finder" id="tf-finder">' in body
+    assert 'role="tablist" aria-label="Target firm tiers"' in body
+    assert set(re.findall(r'data-tf-tab="(\d+)"', body)) == {"1", "2", "3"}
+    assert 'data-tf-list-count' in body and 'data-tf-expand' in body
 
 
 def test_the_drag_survives_as_the_pointer_shortcut(client, tracked_firms):
@@ -546,7 +556,7 @@ def test_the_board_no_longer_prescribes_a_gesture_touch_cannot_send(
     assert "Drag a firm to change its tier" not in body
     assert "Drop a firm here" not in body
     # Whatever it says instead still has to say what tier is FOR.
-    assert "Higher tiers get more attention from Networkly." in body
+    assert "Networkly prioritizes Tier 1." in body
 
 
 def test_paused_only_recovery_link_counts_current_users_contacts(client, logged_in):

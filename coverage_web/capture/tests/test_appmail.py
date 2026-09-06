@@ -849,7 +849,7 @@ def test_the_card_renders_on_today(client, student, role):
     client.force_login(student)
     body = client.get(reverse("crm:week")).content.decode()
 
-    assert "From your applications" in body
+    assert "From Your Applications" in body
     assert "Mark applied" in body
     assert role.title in body
 

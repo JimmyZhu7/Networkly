@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load socialaccount %}
 
-{% block title %}Connected accounts · Networkly{% endblock %}
+{% block title %}Networkly · Connected accounts{% endblock %}
 
 {% block head %}{% include "account/_account_page.html" %}{% endblock %}
 
@@ -9,7 +9,7 @@
 <div class="page page--narrow acct-wrap support-account">
   <a class="acct-back" href="{% url 'accounts:settings' %}#security">← Back to settings</a>
   <header class="pagehead pagehead--compact">
-    <div class="pagehead-text"><h1 class="pagehead-title">Connected accounts</h1></div>
+    <div class="pagehead-text"><h1 class="pagehead-title">Connected Accounts</h1></div>
   </header>
   {% comment %}
   Sign-in only. Every provider in settings/base.py requests identity scopes
@@ -59,7 +59,7 @@
   {% endcomment %}
   {% if social_providers %}
     <div class="panel panel--page">
-      <h2>Connect another account</h2>
+      <h2>Connect Another Account</h2>
       <div class="actions">
         {% for provider in social_providers %}
           {% if provider.configured %}

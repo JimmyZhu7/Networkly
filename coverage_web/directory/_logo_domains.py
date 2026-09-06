@@ -23,6 +23,28 @@ DOMAINS = {
     "tpg": "tpg.com", "eqt": "eqtgroup.com", "statestreet": "statestreet.com",
     "wellington": "wellington.com", "solomonpartners": "solomonpartners.com",
     "mangroup": "man.com",
+    # Connector-created firms added after the original seed pass. Their
+    # board URLs point at ATS hosts, so they otherwise have no first-party
+    # front door for the logo fetcher to inspect.
+    "belvedere": "belvederetrading.com",
+    "creditagricole": "ca-cib.com",
+    "fifththird": "53.com",
+    "gic": "gic.com.sg",
+    "gsacapital": "gsacapital.com",
+    "haitong": "htisec.com",
+    "hps": "hpspartners.com",
+    "huntington": "huntington.com",
+    "keybank": "key.com",
+    "marshallwace": "mwam.com",
+    "mtb": "mtb.com",
+    "mufg": "mufgamericas.com",
+    "pnc": "pnc.com",
+    "qube": "qube-rt.com",
+    "santander": "santander.com",
+    "squarepoint": "squarepoint-capital.com",
+    "towerresearch": "tower-research.com",
+    "usbank": "usbank.com",
+    "verition": "verition.com",
     # Firms whose first domain yielded nothing usable. Each replacement was
     # probed against all three sources before being written here (2026-08-05,
     # after the owner reported specific firms missing or looking wrong).

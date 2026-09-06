@@ -1,0 +1,83 @@
+/* Shared control finish. Route styles own placement and width; this file owns
+   the field shape, typography, caret and interaction states across Networkly. */
+:root {
+  --control-height: 42px;
+  --control-radius: 9px;
+  --control-text: 14px;
+  --control-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2354647a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --control-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23b8c5d8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+}
+:root[data-theme="dark"] { --control-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23b8c5d8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+
+:is(input[type="text"],input[type="email"],input[type="url"],input[type="tel"],input[type="password"],input[type="search"],input[type="number"],input[type="date"],input[type="time"],input[type="datetime-local"],select:not(.csel-native):not([multiple]),.csel-btn,.cmulti-btn,.filters-toggle,.directory-page .filters .csel-btn,.support-settings .tf-tier:not(.csel-native)) {
+  box-sizing: border-box;
+  min-height: var(--control-height);
+  height: auto;
+  padding: 10px 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--control-radius);
+  background-color: var(--surface-subtle);
+  color: var(--ink);
+  font: 400 var(--control-text)/1.4 var(--font-ui);
+  letter-spacing: normal;
+  box-shadow: none;
+  transition: border-color var(--motion-state), background-color var(--motion-state), box-shadow var(--motion-state), transform var(--motion-press) var(--ease-widget);
+}
+:is(select:not(.csel-native):not([multiple]),.directory-page .filters .filters-role select:not(.csel-native),.support-settings .tf-tier:not(.csel-native)) {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px;
+  background-image: var(--control-caret);
+  background-size: 16px 16px;
+  background-position: right 11px center;
+  background-repeat: no-repeat;
+}
+.support-settings .tf-tier:not(.csel-native) { width: 100px; }
+:is(.csel-btn,.cmulti-btn,.filters-toggle) { gap: 12px; align-items: center; cursor: pointer; }
+:is(.csel-caret,.filters-toggle > svg) { width: 16px; height: 16px; flex: none; color: var(--ink-2); transition: transform var(--motion-state) var(--ease-widget); }
+.filters-toggle[aria-expanded="true"] > svg { transform: rotate(180deg); }
+:is(input,select,textarea)::placeholder { color: var(--ink-3); opacity: 1; }
+:is(input,select,textarea,.csel-btn,.cmulti-btn,.filters-toggle):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:is(input[type="text"],input[type="email"],input[type="url"],input[type="password"],input[type="search"],input[type="number"],select:not(.csel-native),.csel-btn,.cmulti-btn,.filters-toggle):hover:not(:disabled) { border-color: var(--ink-2); background-color: var(--surface); }
+html :is(.csel[data-open="true"] > .csel-btn,.cmulti[data-open="true"] > .cmulti-btn,.directory-page .filters-toggle.is-set) { border-color: var(--accent); background-color: var(--accent-soft); color: var(--accent-ink); }
+:is(.csel-btn,.cmulti-btn,.filters-toggle):active:not(:disabled) { transform: scale(.985); }
+:is(input,select,textarea,.csel-btn,.cmulti-btn):disabled { opacity: .65; cursor: not-allowed; }
+:is(input,select,textarea):is([aria-invalid="true"],:user-invalid) { border-color: var(--danger); }
+
+/* Search has one frame and one inset, whether its icon lives in the label
+   (Network) or above an ordinary form field (Opportunities). */
+:is(.csearch-field,.network-page .network-toolbar .csearch-field) { min-height: var(--control-height); padding: 0 12px; gap: 10px; border: 1px solid var(--control-border); border-radius: var(--control-radius); background: var(--surface-subtle); }
+:is(.crm-page .csearch-field input,.network-page .network-toolbar .csearch-field input) { height: calc(var(--control-height) - 2px); min-height: calc(var(--control-height) - 2px); min-width: 0; padding: 8px 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; appearance: none; }
+.csearch-field > svg { position: static; width: 16px; height: 16px; flex: none; color: var(--ink-2); }
+.csearch-field:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; background: var(--surface); }
+.csearch-field input:focus-visible { outline: none; }
+.directory-page .filters-search input[type="search"] { padding-left: 38px; }
+.directory-page .filters-search-icon { left: 12px; bottom: calc((var(--control-height) - 16px) / 2); }
+
+/* Embedded editing surfaces already own their enclosure. */
+:is(.palette .palette-head input,.as-page .as-composer textarea) { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+:is(.palette .palette-head input,.as-page .as-composer textarea):focus-visible { outline: none; }
+textarea { font: 400 var(--control-text)/1.6 var(--font-ui); border-radius: var(--control-radius); }
+.support-account textarea { background: var(--surface-subtle); }
+
+@media (max-width: 640px), (pointer: coarse) {
+  :root { --control-height: 44px; --control-text: 16px; }
+  .support-settings .tf-tier:not(.csel-native) { width: 108px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(input,select,textarea,.csel-btn,.cmulti-btn,.filters-toggle,.csel-caret) { transition: none; }
+  :is(.csel-btn,.cmulti-btn,.filters-toggle):active:not(:disabled) { transform: none; }
+}
+
+/* Open menus use the browser top layer, escaping clipped lists and cards.
+   Their DOM stays beside the control for labels, focus and delegated events. */
+.csel-panel[popover] { position: fixed; inset: auto; margin: 0; min-width: 0; box-sizing: border-box; }
+.csel-panel[popover]::backdrop { background: transparent; pointer-events: none; }
+.csel-opt { min-height: var(--control-height); font: 400 var(--control-text)/1.4 var(--font-ui); }
+.csel > select.csel-native { min-width: 0; min-height: 0; width: 1px; height: 1px; padding: 0; border: 0; }
+.csel-opt[aria-selected="true"] { color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; }
+.csel-opt[aria-disabled="true"] { opacity: .5; cursor: not-allowed; }
+.csel-opt[aria-disabled="true"]:hover { color: var(--ink-3); background: transparent; }
+.csel-btn[aria-invalid="true"] { border-color: var(--danger); }

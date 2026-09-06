@@ -1,69 +1,8 @@
-"""The Today rail's 2026-09-02 copy pass — every card, what it may not say again.
+"""Today rail contracts: keep exact facts, explicit timing, accessible labels,
+and actionable market assignment across presentation changes.
 
-THE COMPLAINT. The founder read the rail and said the cards were wordy and the
-spacing was wrong, and the cause was known: the pass of 2026-08-31 made every
-claim state its provenance in prose, and the sentences stacked. The rule this
-file enforces is the one that pass needed and did not have — keep every FACT,
-cut the EXPLANATION. A fact the student acts on is a line; a fact about where
-that fact came from is a `title`, a chip, or nothing.
-
-So the assertions here come in pairs. Each one that forbids a phrase is
-followed by one that pins the fact the phrase used to carry, because the
-failure mode of a copy diet is not a sentence surviving, it is a fact leaving
-with it.
-
-Measured with headless Playwright at 1280x800 and 375x812 in both colour
-schemes against the demo account. Rail card heights, desktop, before -> after:
-
-    Pace                157 -> 151
-    Schedule            205 -> 167
-    Deadlines           138 -> 138   (rewritten, not shortened)
-    Where do they sit?  247 -> 229
-    Recent Activity     310 -> 310   (rewritten, not shortened)
-
-and the stacked rail at 375px, 1088 -> 1059.
-
-THE SAME NIGHT, A THIRD PASS on the two cards this file's section 5 covers.
-The founder read the shortened rail and asked for the sparkline to go and
-for the two cards to become one ("remove the bar below, just leave 76 /14
-OUTREACH THIS WEEK / Weekly goal hit. Combine this with unsorted contacts,
-make into one widget"), so those two rows above are now one row:
-
-    Pace + Where do they sit?   327 -> 245   at 1280x800
-                                333 -> 251   at 375x812
-
-where the "before" is the two card boxes plus the 16px rail gap between
-them, both colour schemes identical at both widths. The pace half alone,
-with nothing unplaced, is 100px.
-
-A FOURTH PASS, LATER THE SAME NIGHT: "clear, concise, straightforward."
-Not a cutting job. Every line on the three cards the founder was looking at
-was already short, and each one that changed here changed because of what a
-student reads it as on FIRST encounter, with no knowledge of the codebase:
-
-    Where do they sit?              -> Contacts to place
-    N new this week, no market set. -> N new this week with no market set.
-    HK desk good 9PM to 10:30PM     -> HK desk send 9PM to 10:30PM
-    N open, longest Nd              -> N roles open, oldest Nd
-    N open, all today               -> N roles open, all opened today
-    Lily Liu - chat set up          -> Lily Liu - chat agreed
-
-Nothing got shorter to be shorter and no fact left. One fact was ADDED, to
-a `title`: the send windows are printed on the reader's own clock and the
-card had never said so, which is the one misreading on these cards that
-would send a student to write at the wrong hour. The rest of the rule holds
-as before -- keep every fact, cut the explanation, and where the explanation
-is load-bearing put it in a `title`.
-
-Widths re-measured with headless Playwright against the demo account at
-1280x800 and 375x812 in both colour schemes, on the widest value each line
-can hold (999 unplaced arrivals; 236 roles open, oldest 124d). Every line
-that changed renders on exactly the number of lines it rendered on before,
-which is one.
-
-A Django test client has no layout engine, so those numbers are quoted
-rather than re-run; what is checked here is the markup and the CSS text that
-produce them.
+The September 5 workspace separates progress from contact cleanup. Browser
+checks own responsive geometry; these assertions protect meaning and actions.
 """
 
 from __future__ import annotations
@@ -141,37 +80,29 @@ def _face(markup: str) -> str:
 def _card(html: str, heading: str) -> str:
     """One rail card, so an assertion about it cannot be satisfied by the
     rest of a large page."""
-    start = html.index(f'<h3 class="rail-title">{heading}')
+    # Decorative heading icons do not change the widget's visible name.
+    title = next((m for m in re.finditer(r'<h3 class="rail-title"[^>]*>(.*?)</h3>', html, re.S)
+                  if _face(m.group(1)).startswith(heading)), None)
+    assert title is not None, f"missing widget heading: {heading}"
+    start = title.start()
     return html[start:html.index("</div>", start)]
 
 
+def _rail_widget(html: str, class_name: str) -> str:
+    """Read one named widget, including its nested markup."""
+    match = re.search(r'<(?P<tag>div|section) class="[^"]*\b' + re.escape(class_name) + r'\b[^"]*"[^>]*>', html)
+    assert match, f"missing widget: {class_name}"
+    tag = match.group("tag")
+    depth = 0
+    for token in re.finditer(r'</?' + tag + r'\b[^>]*>', html[match.start():]):
+        depth += -1 if token.group(0).startswith("</") else 1
+        if not depth:
+            return html[match.start():match.start() + token.end()]
+    raise AssertionError(f"unclosed widget: {class_name}")
+
+
 def _pace_card(html: str) -> str:
-    """The pace card and everything now inside it.
-
-    Anchored on the CLASS NAME, never on a whole class attribute: this card
-    has picked up `panel` (D-13) and could pick up more, and matching the
-    attribute exactly is how four guards broke on the night of 2026-09-01.
-
-    The end of the slice is the card's own closing tag, found by counting
-    `<div` against `</div>` from the opening tag. It used to be "the first
-    `</div>` after `pace-spark`", which stopped existing when the sparkline
-    was deleted — and would have been wrong anyway from 2026-09-02, when the
-    unplaced block moved inside this card and gave it a nested div.
-    """
-    start = html.index('class="rail-card pace-card')
-    start = html.rindex("<div", 0, start)
-    depth, i = 0, start
-    while True:
-        nxt_open = html.find("<div", i)
-        nxt_close = html.index("</div>", i)
-        if nxt_open != -1 and nxt_open < nxt_close:
-            depth += 1
-            i = nxt_open + 4
-            continue
-        depth -= 1
-        i = nxt_close + 6
-        if depth == 0:
-            return html[start:i]
+    return _rail_widget(html, "pace-card")
 
 
 def _css_rule(css: str, selector: str) -> str:
@@ -249,7 +180,7 @@ def test_both_windows_survive_the_diet():
     """
     card = _card(_page(_st_user_with_two_markets("both@example.com")), "Schedule")
     hk = _face(re.search(r'<li class="dbh"[^>]*>(.*?)</li>', card, re.S).group(1))
-    assert "send " in hk and "avoid " in hk, (
+    assert "send " in hk.lower() and "avoid " in hk.lower(), (
         "two windows, still two: a send window and an avoid window"
     )
     # A pair of clock times on each side. Matched rather than spelled out:
@@ -279,7 +210,7 @@ def test_the_send_window_leads_with_a_verb_and_says_what_it_is_for():
     # into the `title` is in the attribute, not in the element's children.
     row = re.search(r'<li class="dbh".*?</li>', card, re.S).group(0)
     face = _face(row)
-    assert " send " in f" {face} ", "the window states the action it is a window for"
+    assert " send " in f" {face.lower()} ", "the window states the action it is a window for"
     assert "good" not in face, (
         "an adjective is leading the clause again; the word belongs in the "
         "title, where the reason the window is good lives"
@@ -308,13 +239,11 @@ def test_the_windows_say_whose_clock_they_are_on():
     assert "your own clock" in card
 
 
-def test_the_hint_row_is_the_rails_own_content_left_meta_right_shape():
-    """Not a new layout: `.activity-row` three cards down already puts the
-    subject left and its meta right, and the good window is the actionable
-    half."""
-    css = _css_rule(_styles_of(_page(_st_user_with_two_markets("shape@example.com"))), ".dbh")
-    assert "justify-content: space-between" in css
-    assert "display: flex" in css
+def test_send_and_avoid_windows_have_visible_labels():
+    card = _card(_page(_st_user_with_two_markets("shape@example.com")), "Schedule")
+    assert card.count('<span class="dbh-label">Send</span>') == 2
+    assert card.count('<span class="dbh-label">Avoid</span>') == 2
+    assert "your timezone" in _face(card)
 
 
 def test_an_ib_only_student_still_gets_no_hint_at_all():
@@ -531,95 +460,25 @@ def _unplaced_user():
     return user
 
 
-def test_the_verb_is_untouched_and_the_heading_now_carries_it():
-    """REWRITTEN 2026-09-02, fourth pass. It was
-    `test_the_heading_and_the_verb_are_untouched` and it pinned the old
-    interrogative heading as fixed on the grounds that it was the founder's
-    own word.
-
-    THE VERB IS STILL FIXED and this test still pins it. "Place them" is the
-    same verb the Contacts caption on the Network page uses for this exact
-    action, pointing at this exact tool.
-
-    THE HEADING CHANGED, on "clear, concise, straightforward", for three
-    reasons the template comment states at length:
-
-      it is a question this card never answers -- under it are a count and a
-      button, so the reader is asked something and handed a number;
-
-      "sit" is a trading floor's word for a DESK and the field this block is
-      short of is a MARKET. Coverage stores no desk and the tool the button
-      opens asks for a country, so a literal reading sends the student
-      hunting a field that does not exist;
-
-      it was the only interrogative heading in a rail of noun phrases.
-
-    This is NOT a relitigation of the 2026-08-31 call that rejected
-    "Unplaced" for naming a state nobody could resolve unaided -- unplaced
-    WHAT, and placed WHERE. "Contacts to place" answers the WHAT and borrows
-    the button's own verb, and the WHERE is answered by the line directly
-    beneath, which is the ground that moved: on 2026-08-31 the heading stood
-    above a NOTE and was the only thing on the block naming the missing
-    field. The count line that replaced the note says "no market set" on its
-    own face, which the next test pins.
-
-    The verb's MARKUP changed on 2026-09-02 ("make Place them into a
-    button"), which is why this no longer looks for `>Place them</a>` inside
-    a `.rail-more`: the words are the claim, the element is not. That the
-    element is the shared `.btn` is pinned in
-    `crm/tests/test_unplaced_arrivals.py`.
-    """
-    card = _card(_page(_unplaced_user()), "Contacts to place")
-    assert "Contacts to place" in card
-    assert ">Place them</a>" in card
-    assert "sit?" not in card, (
-        "the heading asks about a desk again; the field is a market"
-    )
+def test_market_assignment_names_the_missing_field_and_links_to_its_tool():
+    card = _rail_widget(_page(_unplaced_user()), "unplaced-card")
+    assert "No market · new this week" in _face(card)
+    assert ">Assign markets</a>" in card
+    assert f'href="{reverse("crm:contact_list")}?scope=unplaced"' in card
 
 
-def test_the_line_under_the_heading_is_a_count_and_keeps_both_its_facts():
-    """REWRITTEN 2026-09-02; the note it pinned was cut later the same day.
-
-    It read `test_the_note_is_one_line_and_keeps_both_its_facts` and pinned
-    "New this week. Deadlines match by market." as the one-line survivor of a
-    two-line note. Then the names under it went ("just show how many people
-    need to be placed"), and with a count on the face the note's first fact
-    was said twice and its second was pure mechanism.
-
-    So the count line carries both facts the note was kept for: the window
-    ("new this week"), which is why this card exists rather than listing
-    every region-less contact on the account, and the missing fact itself
-    ("no market set"). The mechanism is a `title`, pinned by the next test,
-    which is the same place it was already living.
-
-    "WITH", NOT A COMMA (2026-09-02, fourth pass). The two facts used to hang
-    off a comma splice, which leaves the reader to work out whether all N
-    lack a market or merely some unnamed things do. "with" makes the second
-    fact a property of the first and the ambiguity goes. Neither fact moved
-    and the line still renders on one line at both widths, measured at 999.
-    """
-    card = _card(_page(_unplaced_user()), "Contacts to place")
+def test_market_assignment_count_keeps_its_period_and_missing_fact():
+    card = _rail_widget(_page(_unplaced_user()), "unplaced-card")
     line = re.search(r'<p class="unplaced-count"[^>]*>(.*?)</p>', card, re.S).group(1)
-    assert _face(line) == "3 new this week with no market set."
-    assert "week, no market" not in _face(card), (
-        "the splice is back; the two facts are joined by a comma again"
-    )
-    assert "until you say" not in card
-    assert "Coverage cannot match" not in card
-    assert "unplaced-note" not in card, (
-        "the note is back on top of the count line that replaced it"
-    )
+    assert _face(line) == "3 contacts"
+    assert "No market · new this week" in _face(card)
+    assert "Arrival 0" not in card, "this summary should not repeat the full roster"
 
 
-def test_the_mechanism_the_note_stopped_explaining_is_still_reachable():
-    """It is a fact about how the product works, not one the student acts on,
-    so it is a `title` now. Cut the explanation, do not delete it."""
-    card = _card(_page(_unplaced_user()), "Contacts to place")
-    assert "matches a firm's deadlines to a person by market" in card
-    assert "nothing infers one" in card, (
-        "P1 still has to be visible somewhere on this card: the product does "
-        "not guess a market"
-    )
+def test_market_assignment_explains_matching_without_claiming_inference():
+    card = _rail_widget(_page(_unplaced_user()), "unplaced-card")
+    assert "matches firm deadlines to contacts by market" in card
+    assert "does not infer one" in card
 
 
 # ---------------------------------------------------------------------------
@@ -690,96 +549,39 @@ def test_the_pace_ring_is_gone_and_took_its_css_with_it():
         assert dead not in css, f"{dead} is dead CSS now that the ring is gone"
 
 
-def test_the_week_is_still_stated_to_the_unit():
-    """REWRITTEN 2026-09-02, second pass. It was
-    `..._and_still_has_its_memory` and its second half pinned the sparkline
-    as the visual that survived the ring, on the argument that eight weeks
-    beat one.
-
-    The founder answered that argument a few hours later by asking for no
-    picture at all ("remove the bar below, just leave 76 /14 OUTREACH THIS
-    WEEK / Weekly goal hit."), so the memory is gone and only the fact it was
-    drawn beside remains. That fact is what this test was always really
-    protecting: the ring measured nothing of its own — it drew `done / goal`
-    imprecisely and capped — and neither did the bars, so what has to survive
-    every one of these deletions is the count, exactly, to the unit.
-    """
+def test_weekly_outreach_preserves_the_exact_count_and_goal():
     user = _user(email="pace2@example.com", tracks=("ib",))
     contact = Contact.all_objects.create(user=user, name="Katherine Johnson")
-    Touch.all_objects.create(
-        user=user, contact=contact, kind="outreach", channel="email",
-        ts=timezone.now(),
-    )
-    html = _page(user)
-    assert 'class="pace-done">1</span>' in html
-    assert 'class="pace-goal">/' in html
-    assert "Last 8 weeks:" not in html, (
-        "the sparkline's aria-label is back; the eight-week memory was "
-        "deleted, not hidden"
-    )
-
-
-def test_the_figure_label_cannot_break_apart_in_the_middle_of_itself():
-    """"OUTREACH THIS WEEK" wrapped onto a second line beside the numeral, and
-    the ring is why. Measured on the widest week the figure shows (39/14) the
-    pair needs 204px; the padded rail card offers 268px at 1280 and 299px once
-    the rail stacks at 375. The ring and its gap were taking 72px, which is
-    the whole of the shortfall — so with the ring gone the label goes back on
-    the figure's line, one fewer block in a card already read as having too
-    many.
-
-    `nowrap` is the guard: the row may still push the label to its own line at
-    some width nobody renders at, but the label can never split mid-phrase.
-    """
-    html = _page(_user(email="pace3@example.com", tracks=("ib",)))
-    figure = re.search(r'<p class="pace-figure">(.*?)</p>', html, re.S).group(1)
-    assert 'class="pace-lbl"' in figure, (
-        "the label shares the figure's line; the ring is what it had no room "
-        "beside"
-    )
-    assert "white-space: nowrap" in _css_rule(_styles_of(html), ".pace-lbl")
-
-
-def test_the_pace_card_carries_no_picture_at_all():
-    """REWRITTEN 2026-09-02, second pass; it read
-    `..._carries_one_picture_not_two_of_the_same_number` and pinned exactly
-    one sparkline in a card that had just lost its ring.
-
-    That version answered "which of the two pictures stays". The founder's
-    next instruction answered a question it had not asked — whether the card
-    wants a picture — with "remove the bar below, just leave 76 /14 OUTREACH
-    THIS WEEK / Weekly goal hit." A rail card is read in the seconds between
-    two queue rows, and in those seconds an eight-week shape is decoration
-    beside a figure that already states the week to the unit.
-
-    So the count that matters is zero, and it is asserted over the card as it
-    is now — the unplaced block moved inside it the same day, and this guard
-    has to keep holding with that block present. The `.unplaced-act` button
-    is not a picture; `<svg>`, `<canvas>` and the spark classes are.
-    """
-    user = _user(email="pace4@example.com", tracks=("ib",))
-    contact = Contact.all_objects.create(user=user, name="Mary Jackson")
-    Touch.all_objects.create(
-        user=user, contact=contact, kind="outreach", channel="email",
-        ts=timezone.now(),
-    )
+    Touch.all_objects.create(user=user, contact=contact, kind="outreach", channel="email", ts=timezone.now())
+    from crm.today import _cockpit_context
+    pace = _cockpit_context(user)["pace"]
     card = _pace_card(_page(user))
-    for drawing in ("<svg", "<canvas", "pace-spark", "role=\"img\""):
-        assert drawing not in card, (
-            f"the pace card grew a {drawing}; the figure and the note are "
-            "the whole of its top half"
-        )
+    assert '<dd class="pace-done">1</dd>' in card
+    assert f'<dd class="pace-goal">{pace["goal"]}</dd>' in card
+    assert f'aria-valuetext="1 completed; weekly goal {pace["goal"]}"' in card
+    assert "Last 8 weeks:" not in card
+
+
+def test_weekly_count_and_goal_have_distinct_accessible_labels():
+    card = _pace_card(_page(_user(email="pace3@example.com", tracks=("ib",))))
+    assert 'aria-labelledby="weekly-outreach-title"' in card
+    assert 'id="weekly-outreach-title">Weekly Outreach</h3>' in card
+    assert re.search(r'<dt>Completed</dt>\s*<dd class="pace-done">\d+</dd>', card)
+    assert re.search(r'<dt>Weekly goal</dt>\s*<dd class="pace-goal">\d+</dd>', card)
+
+
+def test_weekly_progress_has_a_literal_accessible_value_without_fake_history():
+    user = _user(email="pace4@example.com", tracks=("ib",))
+    card = _pace_card(_page(user))
+    assert card.count("<progress") == 1
+    assert 'aria-label="Weekly outreach goal"' in card
+    assert 'aria-valuetext="0 completed; weekly goal ' in card
+    for drawing in ("<canvas", "pace-spark", "pace-ring"):
+        assert drawing not in card
 
 
 # ---------------------------------------------------------------------------
-# 5b. Pace and "Contacts to place" as ONE widget (2026-09-02, third pass).
-#
-# "Combine this with unsorted contacts, make into one widget." Both halves
-# are facts about this week, which is why they are together, but they are not
-# the same KIND of fact: the pace figure is a self-set goal you are measured
-# against and has no action at all, while the unplaced block is a queue of
-# work waiting on you and has exactly one. Everything below pins that
-# distinction being carried by the markup rather than by a comment.
+# 5b. Weekly progress and contact-market cleanup retain independent meanings.
 # ---------------------------------------------------------------------------
 def _merged_user(email="merge@example.com"):
     """Both halves at once: a pace figure and something unplaced under it.
@@ -794,132 +596,63 @@ def _merged_user(email="merge@example.com"):
     return user
 
 
-def test_the_two_cards_are_one_card(client):
-    """The founder asked for one widget, so there is one rail card carrying
-    both halves and no second card carrying either.
-
-    `rail-card` is the load-bearing token: the unplaced block still has its
-    own `unplaced-card` class (its styling and every guard in
-    `test_unplaced_arrivals.py` hang off it) and what it no longer has is the
-    class that makes something a card in this rail.
-    """
-    user = _merged_user()
-    from crm.today import _cockpit_context
-    assert _cockpit_context(user)["unplaced_arrival_count"], (
-        "precondition: an unplaced arrival exists, so both halves render"
-    )
-
-    html = _page(user)
-    assert 'class="rail-card unplaced-card' not in html, (
-        "the unplaced block is a rail card again; it belongs inside the pace "
-        "card"
-    )
-    card = _pace_card(html)
-    assert 'class="pace-figure"' in card
-    assert "Contacts to place" in card
-    assert "Place them" in card
+def test_weekly_progress_and_market_assignment_are_distinct_tasks(client):
+    html = _page(_merged_user())
+    pace = _pace_card(html)
+    markets = _rail_widget(html, "unplaced-card")
+    assert "Weekly Outreach" in pace
+    assert "No market · new this week" in _face(markets)
+    assert "unplaced-card" not in pace
+    assert "pace-card" not in markets
 
 
-def test_the_pace_figure_is_the_headline_and_the_count_is_not(client):
-    """One headline per card. The pace figure keeps `--fs-figure` in the
-    display face; the count beside "new this week" is demoted to `--fs-l`,
-    which is what stops the merged card from reading as two numbers arguing
-    about which one you were meant to look at."""
-    html = _page(_merged_user(email="merge2@example.com"))
-    css = _styles_of(html)
-    assert "var(--fs-figure)" in _css_rule(css, ".pace-done")
-    count = _css_rule(css, ".unplaced-n")
-    assert "font-size: var(--fs-l)" in count
-    assert "var(--fs-figure)" not in count
+def test_market_summary_counts_only_new_contacts_without_a_market(client):
+    user = _merged_user(email="merge2@example.com")
+    card = _rail_widget(_page(user), "unplaced-card")
+    assert "1 contact No market · new this week" in _face(card)
+    assert "2 contacts" not in _face(card)
 
 
-def test_the_merged_card_has_exactly_one_primary(client):
-    """The pace half has no action at all, which is precisely what earns the
-    unplaced half's verb the only accent fill in the widget. A second primary
-    in here would make the card ask twice."""
-    card = _pace_card(_page(_merged_user(email="merge3@example.com")))
-    assert card.count("btn-primary") == 1, (
-        f"expected one primary in the merged card; card was:\n{card}"
-    )
-    assert re.search(r'class="btn btn-primary[^"]*"[^>]*>Place them</a>', card)
-    assert "rail-more" not in card, (
-        "the corner text link is back; the founder replaced it with a button"
-    )
+def test_market_assignment_has_one_action_and_progress_is_a_readout(client):
+    html = _page(_merged_user(email="merge3@example.com"))
+    assert "<a " not in _pace_card(html)
+    markets = _rail_widget(html, "unplaced-card")
+    links = re.findall(r'<a\b[^>]*>.*?</a>', markets, re.S)
+    assert len(links) == 1
+    assert _face(links[0]) == "Assign markets"
 
 
-def test_the_halves_are_told_apart_by_a_surface_not_by_a_rule(client):
-    """The distinction is carried by an inset panel, not by a hairline with
-    two stacked blocks either side of it. `panel panel--inset panel--flat` is
-    the shared primitive doing all of it, so the merged card declares no
-    panel shape of its own — and `--flat` matters: a panel inside a panel
-    that casts a shadow looks like it is floating off its own card."""
+def test_the_two_widgets_have_distinct_landmark_names(client):
     html = _page(_merged_user(email="merge4@example.com"))
-    block = re.search(r'<div class="([^"]*\bunplaced-card\b[^"]*)"', html)
-    assert block, "the unplaced block did not render"
-    classes = block.group(1).split()
-    for modifier in ("panel", "panel--inset", "panel--flat"):
-        assert modifier in classes, (
-            f"the unplaced block is missing {modifier}; it is meant to be "
-            f"the shared primitive, not a local shape. Got: {classes}"
-        )
-    local = _css_rule(_styles_of(html), ".unplaced-card")
-    for redeclared in ("background", "box-shadow", "border-radius",
-                       "border:", "border-top", "border-bottom"):
-        assert redeclared not in local, (
-            f"`.unplaced-card` sets {redeclared}, which is the panel "
-            "primitive's job"
-        )
+    for name, title in (("pace-card", "weekly-outreach-title"), ("unplaced-card", "set-markets-title")):
+        card = _rail_widget(html, name)
+        assert card.startswith("<section")
+        assert f'aria-labelledby="{title}"' in card
+        assert f'id="{title}"' in card
 
 
-def test_with_nothing_unplaced_the_card_is_the_pace_half_alone(client):
-    """FIRST DEGRADATION CASE, and the one the merge could most easily get
-    wrong. The unplaced card used to vanish on its own by being absent from
-    the rail; folded inside another card it has to vanish without leaving an
-    orphan heading, an empty action, or the top half of a divider.
-
-    The pace card itself is always present, so "nothing unplaced" is not
-    "no card" — it is a card with one half.
-    """
+def test_no_market_task_is_shown_when_every_new_contact_has_a_market(client):
     user = _user(email="merge5@example.com", tracks=("ib",))
     Contact.all_objects.create(user=user, name="Ada Lovelace", region="us")
-    from crm.today import _cockpit_context
-    assert _cockpit_context(user)["unplaced_arrival_count"] == 0, (
-        "precondition: nothing arrived unplaced this week"
-    )
-
-    card = _pace_card(_page(user))
-    assert 'class="pace-figure"' in card, "the pace half is always present"
-    assert "unplaced-card" not in card
-    assert "Contacts to place" not in card, "an orphan heading survived"
-    assert "Place them" not in card, "an empty action survived"
-    assert "btn-primary" not in card, (
-        "the merged card kept a primary with nothing left to press it for"
-    )
+    html = _page(user)
+    assert "Weekly Outreach" in _pace_card(html)
+    assert not re.search(r'<section[^>]*class="[^"]*unplaced-card', html)
+    assert 'id="set-markets-title"' not in html
 
 
-def test_the_goal_not_yet_hit_reads_the_same_in_both_halves(client):
-    """SECOND DEGRADATION CASE. "Weekly goal hit." is one of three things the
-    note says, and the merge must not have quietly made it the only one the
-    layout was checked against — the card is at its tallest with an unmet
-    goal AND an unplaced block, which is the state the founder's own account
-    is in most weeks.
-
-    The two halves are independent: a missed goal changes the note and
-    nothing else, and the queue below it neither appears nor disappears
-    because of it.
-    """
+def test_unmet_outreach_goal_does_not_hide_the_market_task(client):
     user = _merged_user(email="merge6@example.com")
     from crm.today import _cockpit_context
     ctx = _cockpit_context(user)
-    assert not ctx["pace"]["hit"], "precondition: the goal is not hit"
-    assert ctx["unplaced_arrival_count"], "precondition: something is unplaced"
-
-    card = _pace_card(_page(user))
-    assert "Weekly goal hit." not in card
-    assert "more to go." in card
-    # And the queue half is unchanged by the miss.
-    assert "Contacts to place" in card
-    assert "Place them" in card
+    assert not ctx["pace"]["hit"]
+    html = _page(user)
+    card = _pace_card(html)
+    assert "Weekly goal reached." not in card
+    if ctx["blackout"]:
+        assert "Outreach is paused today." in card
+    else:
+        assert "more to reach your goal." in card
+    assert "Assign markets" in _rail_widget(html, "unplaced-card")
 
 
 # ---------------------------------------------------------------------------

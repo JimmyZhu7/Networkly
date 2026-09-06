@@ -393,11 +393,15 @@ def test_the_log_touch_form_accepts_wechat_and_refuses_a_retired_value(client):
     client.force_login(user)
     url = f"/app/contacts/{contact.id}/touch/"
     good = client.post(url, {"kind": "outreach", "channel": "wechat"})
-    assert good.status_code == 200
-    assert Touch.all_objects.filter(contact=contact, channel="wechat").exists()
+    assert good.status_code == 302
+    assert good.url == f"/app/contacts/{contact.id}/"
+    assert Touch.all_objects.filter(contact=contact, channel="wechat").count() == 1
     bad = client.post(url, {"kind": "outreach", "channel": "event"})
-    assert bad.status_code == 200
+    assert bad.status_code == 302
+    assert bad.url == f"/app/contacts/{contact.id}/"
+    assert b"Pick a channel." in client.get(bad.url).content
     assert not Touch.all_objects.filter(contact=contact, channel="event").exists()
+    assert Touch.all_objects.filter(contact=contact).count() == 1
 
 
 # ---------------------------------------------------------------------------

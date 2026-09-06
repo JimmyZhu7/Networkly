@@ -237,11 +237,11 @@ def test_both_columns_spend_the_same_two_rows_on_their_identity(feed_with_both_c
 # ---------------------------------------------------------------------------
 
 
-def test_firm_collections_use_open_bands_without_nested_card_surfaces():
+def test_firm_collections_have_a_bounded_surface_and_natural_height():
     body = _rule(_feed_css(), ".firmcol")
-    assert "background: transparent" in body
-    assert "box-shadow: none" in body and "border-radius: 0" in body
-    assert "border-bottom: 1px solid var(--line)" in body
+    assert "background: var(--surface)" in body
+    assert "height: auto" in body and "overflow: visible" in body
+    assert "border: 1px solid var(--line)" in body
 
 
 def test_picks_have_a_distinct_named_identity_without_a_card_wash():

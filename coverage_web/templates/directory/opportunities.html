@@ -2,15 +2,15 @@
 {% load csp %}
 {% load textstyle %}
 
-{% block title %}Opportunities · Networkly{% endblock %}
+{% block title %}Networkly · Opportunities{% endblock %}
 
-{% block head %}{% include "directory/_styles.html" %}{% endblock %}
+{% block head %}<meta name="htmx-config" content='{"refreshOnHistoryMiss":true}'>{% include "directory/_styles.html" %}{% endblock %}
 
 {% block content %}
-<div class="page page--full directory-page directory-browse">
+<div class="page page--full directory-page directory-browse" hx-history="false">
   <header class="pagehead">
     <div class="pagehead-text">
-      <h1 class="pagehead-title">Opportunities</h1>
+      <h1 class="pagehead-title"><span class="directory-title-icon">{% include "directory/_section_icon.html" with name="roles" %}</span>Opportunities</h1>
       <p class="pagehead-sub">Find your next role. Start with the firms that matter to you.</p>
     </div>
     {% if user.is_authenticated %}
@@ -35,6 +35,22 @@
         method="get"
         action="{% url 'opportunities' %}">
 
+    <div class="filters-toolbar">
+    <label class="filters-search{% if selected.q %} is-set{% endif %}"><span class="f-cap">Search</span>
+      <svg class="filters-search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="search" name="q" value="{{ selected.q }}" placeholder="Search firm, role, city" autocomplete="off">
+    </label>
+
+      <label class="filters-role" data-role-choice-label hidden><span class="f-cap">Role type</span>
+        <select id="f-role-choice" data-role-choice aria-label="Role type"></select>
+      </label>
+      <button type="button" class="filters-toggle" data-filters-toggle data-widget-disclosure aria-controls="opportunity-refinements" aria-expanded="{% if filters_more_active or fit %}true{% else %}false{% endif %}" hidden>
+        Filters<span data-filter-active-count>{% if fit %} · {{ filters_more_active|add:"1" }}{% elif filters_more_active %} · {{ filters_more_active }}{% endif %}</span>
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <a class="filters-clear" data-filters-clear href="{% url 'opportunities' %}"{% if not has_filters %} hidden{% endif %}>Clear filters</a>
+    </div>
+
     <fieldset class="seg">
       <legend>Role type</legend>
       <div class="seg-list">
@@ -49,13 +65,9 @@
       </div>
     </fieldset>
 
-    <label class="filters-search{% if selected.q %} is-set{% endif %}"><span class="f-cap">Search</span>
-      <svg class="filters-search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-      <input type="search" name="q" value="{{ selected.q }}" placeholder="Search firm, role, city" autocomplete="off">
-    </label>
-
-    <details class="filters-more" data-filters-more open>
-      <summary class="filters-more-summary">Filters{% if filters_more_active %} · {{ filters_more_active }}{% endif %}</summary>
+    <details class="filters-more" id="opportunity-refinements" data-filters-more{% if filters_more_active or fit %} open{% endif %}>
+      <summary class="filters-more-summary">Filters<span data-filter-active-count>{% if fit %} · {{ filters_more_active|add:"1" }}{% elif filters_more_active %} · {{ filters_more_active }}{% endif %}</span></summary>
+      <div class="filters-more-grid">
 
       <label{% if selected.year %} class="is-set"{% endif %}><span class="f-cap">Programme year</span>
         <select name="year" id="f-year">{% include "directory/_facet_options.html" with options=year_facet current=selected.year %}</select>
@@ -86,7 +98,7 @@
             <span class="cmulti-label">All firms</span>
             <svg class="csel-caret" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <div class="cmulti-menu panel panel--raised" hidden>
+          <div class="cmulti-menu panel panel--raised">
             {% for f in all_firms %}
               <label class="cmulti-opt"><input type="checkbox" name="firm" value="{{ f.slug }}"{% if f.slug in selected.firm %} checked{% endif %}><span>{{ f.name|smart_title }}</span></label>
             {% endfor %}
@@ -94,10 +106,10 @@
         </div>
       </label>
 
+      </div>
     </details>
 
     <noscript><button type="submit">Apply</button></noscript>
-    {% if has_filters %}<a class="filters-clear" href="{% url 'opportunities' %}">Clear</a>{% endif %}
   </form>
 
   <span class="vh" id="cov-live" aria-live="polite" aria-atomic="true"></span>
@@ -118,9 +130,11 @@
       var btn = wrap.querySelector(".cmulti-btn");
       var menu = wrap.querySelector(".cmulti-menu");
       var label = wrap.querySelector(".cmulti-label");
+      menu.hidden = true;
+      wrap.dataset.enhanced = "true";
       function sync() {
         var n = wrap.querySelectorAll("input:checked").length;
-        label.textContent = n === 0 ? "All Companies" : n + " selected";
+        label.textContent = n === 0 ? "All firms" : n + " selected";
       }
       function onDoc(e) { if (!wrap.contains(e.target)) close(); }
       function onResize() { window.covKeepInViewport(menu); }
@@ -161,28 +175,69 @@
     });
   })();
 
-  // The mobile filter disclosure. `open` is server-rendered ON and this script
-  // is the only thing that ever removes it, so every no-JS path — and every
-  // path before this runs — shows the controls rather than hiding them.
-  //
-  // Closing is correct ONLY when both are true: we are under 640px (above it
-  // `.filters-more` is `display: contents`, and a closed <details> would hide
-  // the whole of row 2), and no row-2 filter is engaged (a deep-linked filter
-  // must never be invisible). `filters_more_active` is computed server-side
-  // and frozen into the attribute below, so this makes no attempt to re-derive
-  // which controls count as active.
-  //
-  // Bound to a media-query listener, not just load: this page is resized in
-  // testing and on device rotation, and a bar that stayed collapsed after a
-  // 375px -> 1024px resize would render row 2 as nothing at all.
+  // Keep role radios and OOB count spans authoritative. The unnamed native
+  // select is a compact view of that same choice, never another submitted value.
   (function () {
-    var d = document.querySelector("[data-filters-more]");
-    if (!d) return;
-    var active = {{ filters_more_active }} > 0;
-    var mq = window.matchMedia("(max-width: 640px)");
-    function apply() { d.open = active || !mq.matches; }
-    apply();
-    mq.addEventListener("change", apply);
+    var form = document.querySelector(".filters");
+    if (!form) return;
+    var radios = Array.from(form.querySelectorAll('input[name="role"]'));
+    var choice = form.querySelector("[data-role-choice]");
+    var choiceLabel = form.querySelector("[data-role-choice-label]");
+    var details = form.querySelector("[data-filters-more]");
+    var toggle = form.querySelector("[data-filters-toggle]");
+    var clear = form.querySelector("[data-filters-clear]");
+    function syncRole() {
+      var visible = radios.filter(function (radio) { return radio.value !== "other" || radio.checked; });
+      while (choice.options.length > visible.length) choice.remove(choice.options.length - 1);
+      visible.forEach(function (radio, i) {
+        var label = form.querySelector('label[for="' + radio.id + '"]');
+        var option = choice.options[i];
+        if (!option) {
+          option = document.createElement("option");
+          option.value = radio.value;
+          choice.appendChild(option);
+        }
+        option.textContent = label.firstElementChild.textContent.trim() + " " + label.querySelector(".seg-count").textContent.trim();
+        option.selected = radio.checked;
+      });
+      if (window.networklyRefreshSelect) window.networklyRefreshSelect(choice);
+    }
+    function syncFilters() {
+      var active = Array.from(details.querySelectorAll('select[name]')).filter(function (el) { return el.value !== ""; }).length;
+      if (details.querySelector('input[name="firm"]:checked')) active++;
+      if (details.querySelector('input[name="fit"]:checked')) active++;
+      form.querySelectorAll("[data-filter-active-count]").forEach(function (el) { el.textContent = active ? " · " + active : ""; });
+      toggle.classList.toggle("is-set", active > 0);
+      clear.hidden = !active && !form.querySelector('input[name="q"]').value.trim() && !radios.some(function (el) { return el.checked && el.value; });
+    }
+    function syncDisclosure() { toggle.setAttribute("aria-expanded", String(details.open)); }
+    choice.addEventListener("change", function (event) {
+      event.stopPropagation();
+      var radio = radios.find(function (el) { return el.value === choice.value; });
+      if (radio && !radio.checked) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    choice.addEventListener("keyup", function (event) { event.stopPropagation(); });
+    toggle.addEventListener("click", function () { details.open = !details.open; syncDisclosure(); });
+    details.addEventListener("toggle", syncDisclosure);
+    form.addEventListener("change", function () { syncRole(); syncFilters(); });
+    form.addEventListener("input", syncFilters);
+    // Only typing in Search owns the debounced query; menu navigation and
+    // keyboard disclosure activation must not issue a second filter request.
+    form.addEventListener("keyup", function (event) {
+      if (event.target !== form.querySelector('input[name="q"]')) event.stopImmediatePropagation();
+    });
+    document.body.addEventListener("htmx:afterSettle", function () {
+      queueMicrotask(function () { syncRole(); syncFilters(); });
+    });
+    syncRole(); syncFilters(); syncDisclosure();
+    form.querySelector(".seg").hidden = true;
+    choiceLabel.hidden = false;
+    if (window.networklyEnhanceSelects) window.networklyEnhanceSelects(choiceLabel);
+    toggle.hidden = false;
+    details.classList.add("is-enhanced");
   })();
 
   // The filter bar's stuck-state skin. A passive scroll listener rather
@@ -263,7 +318,7 @@
   // swap trigger another request — an endless loop of the page filtering
   // itself. Setting `selectedIndex` does not fire `change` on its own.
   document.body.addEventListener("htmx:afterSettle", function () {
-    document.querySelectorAll(".filters select").forEach(function (sel) {
+    document.querySelectorAll(".filters select[name]").forEach(function (sel) {
       var i = Array.prototype.findIndex.call(sel.options, function (o) {
         return o.hasAttribute("selected");
       });
@@ -297,7 +352,7 @@
     // on every firm the student ticks — invisible (nothing styles a set
     // `.cmulti-opt`) and exactly the kind of quiet DOM litter that becomes a
     // real bug the day someone writes a rule for `.is-set` alone.
-    var SCOPE = ":scope > label, :scope > details > label";
+    var SCOPE = ".filters-toolbar > label, .filters-more-grid > label";
     function sync() {
       form.querySelectorAll(SCOPE).forEach(function (label) {
         if (label.classList.contains("fit-toggle")) return;

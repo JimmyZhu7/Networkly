@@ -115,12 +115,13 @@ def test_the_500_page_carries_both_palettes_and_no_stale_ink():
     # Still self-contained: an error page that needs a stylesheet is an error
     # page that fails when the stylesheet is what broke.
     assert "networkly.css" not in page
-    assert "<link" not in page
+    assert 'rel="stylesheet"' not in page
+    assert 'href="/favicon.ico?v=networkly-2"' in page
 
     assert "@media (prefers-color-scheme: dark)" in page
     for stale in ("#171717", "#1d3a5f", "#555"):
         assert stale not in page, f"{stale} is pre-v4 ink/navy"
-    for light in ("#f7f7f2", "#252b2e", "#2857c7"):
+    for light in ("#f4f6fa", "#19283f", "#2857c7"):
         assert light in page, f"{light} is a current light token"
-    for dark in ("#191e20", "#edf0ec", "#a4bbff"):
+    for dark in ("#111827", "#eef3fb", "#a4bbff"):
         assert dark in page, f"{dark} is a current dark token"

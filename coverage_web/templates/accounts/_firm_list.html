@@ -24,7 +24,7 @@ grid looks exactly as it always has.
 {% endcomment %}
 <div class="ob-firms panel panel--inset panel--flat" id="firm-list">
   {% if matching_firms %}
-    <p class="ob-firms-heading">Matches your profile</p>
+    <p class="ob-firms-heading">Matches Your Profile</p>
   {% endif %}
   {% for firm in matching_firms %}
     {% comment %}`smart_title` on the name only; the meta keeps the
@@ -43,7 +43,7 @@ grid looks exactly as it always has.
     </label>
   {% endfor %}
   {% if matching_firms %}
-    <p class="ob-firms-heading">All firms</p>
+    <p class="ob-firms-heading">All Firms</p>
   {% endif %}
   {% for firm in other_firms|default:firms %}
     <label class="ob-firm"
@@ -64,6 +64,10 @@ grid looks exactly as it always has.
   Present in the DOM and hidden, so the script only toggles a class and
   never builds markup.{% endcomment %}
   <p class="ob-firms-empty is-ob-hidden" id="firm-none">No firms match that search.</p>
+</div>
+<div class="ob-firm-footer" id="firm-preview-footer" hidden>
+  <span id="firm-preview-count" role="status"></span>
+  <button type="button" class="btn" id="firm-preview-toggle" aria-controls="firm-list" aria-expanded="false">Show all firms</button>
 </div>
 
 {% comment %}
@@ -95,18 +99,46 @@ that is simply the server-rendered starting number.
     count.classList.toggle("is-some", n > 0);
   }
 
-  if (box) {
-    box.addEventListener("input", function () {
-      var q = box.value.trim().toLowerCase();
-      var shown = 0;
-      tiles.forEach(function (t) {
-        var hit = !q || (t.dataset.search || "").indexOf(q) > -1;
-        t.classList.toggle("is-ob-hidden", !hit);
-        if (hit) shown++;
-      });
-      if (none) none.classList.toggle("is-ob-hidden", shown > 0 || !tiles.length);
+  var expanded = false;
+  var footer = document.getElementById("firm-preview-footer");
+  var previewCount = document.getElementById("firm-preview-count");
+  var toggle = document.getElementById("firm-preview-toggle");
+  function filter() {
+    list.querySelectorAll(".ob-firms-heading").forEach(function (heading) { heading.hidden = false; });
+    var q = box ? box.value.trim().toLowerCase() : "";
+    var matches = tiles.filter(function (tile) {
+      var hit = !q || (tile.dataset.search || "").indexOf(q) > -1;
+      tile.classList.toggle("is-ob-hidden", !hit); return hit;
     });
+    // Measure three complete grid rows after filtering. The hidden native
+    // checkboxes stay in this form and therefore keep their submitted values.
+    var tops = [], shown = 0;
+    var positions = matches.map(function (tile) { return tile.offsetTop; });
+    matches.forEach(function (tile, index) {
+      var top = positions[index];
+      if (tops.indexOf(top) < 0) tops.push(top);
+      var visible = expanded || tops.length <= 3;
+      tile.classList.toggle("is-ob-hidden", !visible); if (visible) shown++;
+    });
+    list.querySelectorAll(".ob-firms-heading").forEach(function (heading) {
+      var next = heading.nextElementSibling, visible = false;
+      while (next && !next.classList.contains("ob-firms-heading")) {
+        if (next.classList.contains("ob-firm") && !next.classList.contains("is-ob-hidden")) visible = true;
+        next = next.nextElementSibling;
+      }
+      heading.hidden = !visible;
+    });
+    if (none) none.classList.toggle("is-ob-hidden", matches.length > 0 || !tiles.length);
+    footer.hidden = matches.length <= shown && !expanded;
+    previewCount.textContent = "Showing " + shown + " of " + matches.length + " firms";
+    toggle.textContent = expanded ? "Show fewer" : "Show all " + matches.length + " firms";
+    toggle.setAttribute("aria-expanded", String(expanded));
   }
+  if (box) box.addEventListener("input", function () { expanded = false; filter(); });
+  toggle.addEventListener("click", function () { expanded = !expanded; filter(); });
+  window.addEventListener("resize", filter);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(filter);
+  filter();
 
   // Delegated: one listener for the whole grid rather than one per tile,
   // which matters at directory scale.

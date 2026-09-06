@@ -14,45 +14,19 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="{% block og_title %}Networkly: recruiting deadlines and the people behind them{% endblock %}">
   <meta property="og:description" content="{% block og_description %}Everyone has a spreadsheet. Nobody tracks the relationship.{% endblock %}">
-  {% comment %}Three declarations, because this tab has now gone blank twice
-  on the Opportunities page and each time the cause was the fallback path,
-  not the markup.
-
-  Round one: the icon was a data URI. htmx's hx-push-url calls pushState,
-  Chrome re-resolves the icon after a history change, fell back to
-  /favicon.ico, got a 404, and blanked the tab. Fixed by shipping a real
-  file and redirecting /favicon.ico to it.
-
-  Round two (this one): the redirect pointed at the SVG. That still leaves
-  a single raster-free chain — Chrome's post-pushState re-resolution asks
-  for /favicon.ico and does not reliably accept an SVG served through a 301
-  for it, so the tab blanked again on exactly the same page. An SVG alone
-  is not a fallback; it is the same asset wearing a different URL.
-
-  Round three: the SVG carried a viewBox but no width/height, so it had no
-  intrinsic size — Chrome fetched it 200, never asked for the PNG, and could
-  not rasterise what it had committed to. Fixed on the asset (width="24"
-  height="24"); it measured 150x150 before and 24x24 after.
-
-  RASTER FIRST in this list, and that ordering is deliberate. Rounds one
-  through three were all diagnosed against Chrome; the browser actually
-  showing the blank tab is Safari, whose SVG-favicon support is the patchier
-  of the two and which checks /favicon.ico as a matter of course rather than
-  only after a history change. A browser that takes the first usable icon now
-  gets a raster that cannot fail to rasterise; one that prefers the vector
-  still finds it on the next line. /favicon.ico is served directly by a view
-  with no redirect in the way, because Safari is unreliable about following
-  one for an icon.
-
-  All three assets come from the same geometry, so the mark cannot drift
-  between them.{% endcomment %}
-  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=networkly-1">
-  <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}?v=networkly-1">
-  <link rel="apple-touch-icon" href="{% static 'img/icon-192.png' %}?v=networkly-1">
+  {% comment %}One raster identity across tabs, bookmarks and app icons. Version
+  the declarations so existing browser caches fetch the current Networkly mark.
+  Keep /favicon.ico serving real ICO bytes for history and direct-load fallback.
+  {% endcomment %}
+  <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="{% static 'img/favicon.ico' %}?v=networkly-2">
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=networkly-2">
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}?v=networkly-2">
+  <meta name="application-name" content="Networkly">
+  <meta name="apple-mobile-web-app-title" content="Networkly">
   {% comment %}Installable: students live on phones, and without a manifest
   "Add to Home Screen" produces a bare bookmark. start_url is /app/ — an
   installed Networkly opens on Today, not the marketing page.{% endcomment %}
-  <link rel="manifest" href="{% static 'manifest.webmanifest' %}?v=networkly-1">
+  <link rel="manifest" href="{% static 'manifest.webmanifest' %}?v=networkly-2">
   {% comment %}Browser-chrome tint. The value was #1d3a5f, the navy from
   before the v4 palette landed, so the one piece of UI the site paints
   OUTSIDE its own document was the last thing still wearing the old accent.
@@ -62,7 +36,7 @@
   audit flagged elsewhere. The unqualified tag stays first as the fallback
   for clients that do not understand `media` on this meta.{% endcomment %}
   <meta name="theme-color" content="#2857c7">
-  <meta name="theme-color" content="#191e20" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
   {% comment %}Registers the notification-display worker (deadline push
   alerts — see static/service-worker.js's own docstring for why it is NOT
   an offline-cache worker) for every signed-in visitor, same "students live
@@ -111,6 +85,7 @@
   <link rel="stylesheet" href="{% static 'css/presentation-crm.css' %}">
   <link rel="stylesheet" href="{% static 'css/presentation-directory.css' %}">
   <link rel="stylesheet" href="{% static 'css/presentation-support.css' %}">
+  <link rel="stylesheet" href="{% static 'css/controls.css' %}">
   <script src="{% static 'js/workspace.js' %}" defer></script>
   <script src="{% static 'js/widgets.js' %}" defer></script>
 </head>
@@ -142,7 +117,7 @@ select on.
   {% endcomment %}
   <header class="site-header{% if user.is_authenticated and user.onboarded_at and not hide_site_nav %} workspace-nav{% endif %}">
     <div class="site-header-inner">
-      <a class="wordmark" aria-label="Networkly home" href="{% if user.is_authenticated and user.onboarded_at %}/app/{% else %}/{% endif %}">{% include "_wordmark.html" with logo_id="nav" %}</a>
+      <a class="wordmark" aria-label="Networkly home" href="/">{% include "_wordmark.html" with logo_id="nav" %}</a>
       {% if user.is_authenticated and user.onboarded_at and not hide_site_nav %}
       <button class="workspace-menu" type="button" data-workspace-menu aria-controls="workspace-primary" aria-expanded="false" aria-label="Open navigation">{% include "_nav_icon.html" with name="menu" %}</button>
       <button class="workspace-search" type="button" data-open-search aria-label="Search Networkly">{% include "_nav_icon.html" with name="search" %}<span>Search</span><kbd>⌘ K</kbd></button>
@@ -167,7 +142,7 @@ select on.
       {% comment %}Nested rather than one condition: Django templates have no
       parentheses, and `a and b or a and c` is a thing to re-read every time
       rather than a thing to read once.{% endcomment %}
-      {% if not hide_site_nav %}{% if not user.is_authenticated or user.onboarded_at %}
+      {% if not hide_site_nav %}{% if not user.is_authenticated or user.onboarded_at %}{% if user.is_authenticated or request.path|slice:":10" != "/accounts/" %}
       <nav class="site-nav" id="workspace-primary" aria-label="Primary">
         {% comment %}
           Site IA: Today, Opportunities, Network, Calendar, Talk, Settings.
@@ -193,7 +168,7 @@ select on.
         <a href="/assistant/"{% if request.path|slice:":10" == "/assistant" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="talk" %}Assistant</a>
         <a href="/welcome/"{% if request.path|slice:":8" == "/welcome" or request.path|slice:":8" == "/capture" %} class="active" aria-current="page"{% endif %}>{% include "_nav_icon.html" with name="settings" %}Settings</a>
       </nav>
-      {% endif %}{% endif %}
+      {% endif %}{% endif %}{% endif %}
       {% comment %}A landmark, and now a named one. axe flagged the page as
       carrying unlabelled navigation regions; a screen reader listing
       landmarks got "navigation" twice with nothing to tell them apart.
@@ -295,12 +270,23 @@ select on.
       ancestor only ever sees it during capture.
       {% endcomment %}
       {% script %}
-        document.addEventListener("error", function (e) {
-          if (e.target && e.target.matches && e.target.matches("[data-nav-avatar]")) {
-            e.target.hidden = true;
-            if (e.target.nextElementSibling) e.target.nextElementSibling.hidden = false;
+        (function () {
+          var selector = "img[data-nav-avatar], img[data-firm-logo]";
+          function fallback(img) {
+            img.hidden = true;
+            if (img.nextElementSibling) img.nextElementSibling.hidden = false;
           }
-        }, true);
+          document.addEventListener("error", function (e) {
+            if (e.target && e.target.matches && e.target.matches(selector)) fallback(e.target);
+          }, true);
+          function checkImages() {
+            document.querySelectorAll(selector).forEach(function (img) {
+              if (img.complete && !img.naturalWidth) fallback(img);
+            });
+          }
+          document.addEventListener("DOMContentLoaded", checkImages);
+          document.addEventListener("htmx:afterSwap", checkImages);
+        })();
       {% endscript %}
     </div>
   </header>
@@ -439,6 +425,7 @@ select on.
     };
     (function () {
       var uid = 0;
+      var controls = new WeakMap();
       function enhance(sel) {
         if (sel.dataset.cselDone || sel.multiple) return;
         sel.dataset.cselDone = "1";
@@ -515,6 +502,10 @@ select on.
         var panel = document.createElement("div");
         panel.className = "csel-panel panel panel--raised";
         panel.hidden = true;
+        // The top layer keeps the same menu usable inside scrolling firm
+        // lists and dialogs, without replacing the submitted native select.
+        var floating = typeof panel.showPopover === "function";
+        if (floating) panel.setAttribute("popover", "manual");
         wrap.appendChild(panel);
 
         // A select with only a handful of options reads fine as a plain
@@ -544,12 +535,19 @@ select on.
         menu.className = "csel-menu";
         menu.id = listId;
         menu.setAttribute("role", "listbox");
+        menu.setAttribute("aria-label", caption || "Options");
         panel.appendChild(menu);
 
         var opts = [], active = -1;
         function syncLabel() {
           var o = sel.options[sel.selectedIndex];
           val.textContent = o ? o.textContent : "";
+          btn.disabled = sel.disabled;
+          ["aria-describedby", "aria-invalid"].forEach(function (name) {
+            if (sel.hasAttribute(name)) btn.setAttribute(name, sel.getAttribute(name));
+            else btn.removeAttribute(name);
+          });
+          if (sel.disabled && !panel.hidden) close();
         }
         function build() {
           menu.innerHTML = "";
@@ -560,9 +558,13 @@ select on.
             li.id = listId + "-o" + i;
             li.setAttribute("role", "option");
             li.setAttribute("aria-selected", o.selected ? "true" : "false");
+            li.setAttribute("aria-disabled", o.disabled || o.parentElement.disabled ? "true" : "false");
             li.textContent = o.textContent;
             li.dataset.matchText = o.textContent.toLowerCase();
-            li.addEventListener("click", function () { choose(i); });
+            // Keep focus on the trigger while an option is clicked. Safari
+            // otherwise blurs to the page before mouseup and closes the menu.
+            li.addEventListener("mousedown", function (e) { e.preventDefault(); });
+            li.addEventListener("click", function (e) { e.preventDefault(); choose(i); });
             menu.appendChild(li);
             opts.push(li);
           });
@@ -571,7 +573,7 @@ select on.
         // by arrow keys, or the highlight silently lands on something the
         // user can't see moving.
         function visibleOpts() {
-          return opts.filter(function (li) { return !li.classList.contains("is-csel-hidden"); });
+          return opts.filter(function (li) { return !li.classList.contains("is-csel-hidden") && li.getAttribute("aria-disabled") !== "true"; });
         }
         function filter() {
           if (!search) return;
@@ -600,12 +602,15 @@ select on.
           }
         }
         function open() {
+          if (sel.disabled) return;
           build();
           panel.hidden = false;
+          if (floating) panel.showPopover();
           wrap.dataset.open = "true";
           btn.setAttribute("aria-expanded", "true");
-          window.covKeepInViewport(panel);
+          positionPanel();
           window.addEventListener("resize", onResize);
+          document.addEventListener("scroll", onScroll, true);
           active = sel.selectedIndex < 0 ? 0 : sel.selectedIndex;
           highlight();
           document.addEventListener("click", onDoc, true);
@@ -621,16 +626,41 @@ select on.
           }, 0);
         }
         function close() {
+          if (floating && panel.matches(":popover-open")) panel.hidePopover();
           panel.hidden = true;
           wrap.dataset.open = "false";
           btn.setAttribute("aria-expanded", "false");
           btn.removeAttribute("aria-activedescendant");
           document.removeEventListener("click", onDoc, true);
           window.removeEventListener("resize", onResize);
+          document.removeEventListener("scroll", onScroll, true);
         }
-        function onResize() { window.covKeepInViewport(panel); }
+        function positionPanel() {
+          if (!floating) { window.covKeepInViewport(panel); return; }
+          if (!btn.isConnected || !btn.getClientRects().length) { close(); return; }
+          var anchor = btn.getBoundingClientRect();
+          var viewport = window.visualViewport;
+          var vx = viewport ? viewport.offsetLeft : 0;
+          var vy = viewport ? viewport.offsetTop : 0;
+          var vw = viewport ? viewport.width : document.documentElement.clientWidth;
+          var vh = viewport ? viewport.height : window.innerHeight;
+          var gutter = 12, gap = 6;
+          var width = Math.min(Math.max(anchor.width, 208), 520, vw - gutter * 2);
+          panel.style.width = width + "px";
+          panel.style.left = Math.max(vx + gutter, Math.min(anchor.left, vx + vw - width - gutter)) + "px";
+          var below = Math.max(0, vy + vh - anchor.bottom - gutter - gap);
+          var above = Math.max(0, anchor.top - vy - gutter - gap);
+          var upwards = below < Math.min(panel.scrollHeight, 240) && above > below;
+          panel.style.maxHeight = Math.min(320, upwards ? above : below) + "px";
+          panel.style.top = (upwards ? anchor.top - gap - panel.offsetHeight : anchor.bottom + gap) + "px";
+          panel.style.transformOrigin = upwards ? "bottom" : "top";
+        }
+        function onResize() { positionPanel(); }
+        function onScroll(e) { if (!panel.contains(e.target)) positionPanel(); }
         function onDoc(e) { if (!wrap.contains(e.target)) close(); }
         function choose(i) {
+          var option = sel.options[i];
+          if (!option || sel.disabled || option.disabled || option.parentElement.disabled) return;
           if (sel.selectedIndex !== i) {
             sel.selectedIndex = i;
             sel.dispatchEvent(new Event("change", { bubbles: true }));
@@ -660,7 +690,21 @@ select on.
             else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); if (active > -1) choose(active); }
           });
         }
+        var typed = "", typedAt = 0;
+        wrap.addEventListener("focusout", function () {
+          setTimeout(function () { if (!wrap.contains(document.activeElement)) close(); }, 0);
+        });
         wrap.addEventListener("keydown", function (e) {
+          if (e.target !== search && e.key.length === 1 && e.key !== " " && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+            if (panel.hidden) open();
+            if (search) { search.value = e.key; filter(); return; }
+            typed = Date.now() - typedAt > 700 ? e.key : typed + e.key;
+            typedAt = Date.now();
+            var match = visibleOpts().find(function (li) { return li.dataset.matchText.indexOf(typed.toLowerCase()) === 0; });
+            if (match) { active = opts.indexOf(match); highlight(); }
+            return;
+          }
           if (panel.hidden) {
             if (["ArrowDown", "ArrowUp", "Enter", " "].indexOf(e.key) > -1) { e.preventDefault(); open(); }
             return;
@@ -676,23 +720,23 @@ select on.
           }
         });
         sel.addEventListener("change", syncLabel);
+        var refresh = function () {
+          syncLabel();
+          if (!panel.hidden) { build(); filter(); positionPanel(); }
+        };
+        controls.set(sel, refresh);
+        new MutationObserver(refresh).observe(sel, { childList: true, subtree: true, attributes: true, attributeFilter: ["disabled", "selected", "aria-describedby", "aria-invalid"] });
+        if (sel.form) sel.form.addEventListener("reset", function () { setTimeout(refresh, 0); });
         syncLabel();
       }
-      // `data-no-csel` is the opt-out, and it exists for exactly one
-      // reason: `.csel-panel` is `position: absolute`, so it is clipped by
-      // any ancestor with its own `overflow`. Two tier boards keep their
-      // firms in a bounded, internally-scrolling box on purpose
-      // (`.tf-chips` in Settings, `.tier-grid.is-capped` on Network) — a
-      // panel opened inside either would be cut off at the box's edge.
-      // Only the browser's own dropdown can escape a scroll container, so
-      // those two controls stay native. Everywhere the page is not already
-      // scroll-clipping its own controls, csel is the better one and this
-      // attribute has no business being there.
       function enhanceAll(root) {
-        (root || document)
-          .querySelectorAll("select:not([multiple]):not(.csel-native):not([data-no-csel])")
-          .forEach(enhance);
+        root = root || document;
+        var selector = "select:not([multiple]):not(.csel-native):not([data-no-csel])";
+        if (root.matches && root.matches(selector)) enhance(root);
+        root.querySelectorAll(selector).forEach(enhance);
       }
+      window.networklyEnhanceSelects = enhanceAll;
+      window.networklyRefreshSelect = function (sel) { var refresh = controls.get(sel); if (refresh) refresh(); };
       if (document.readyState !== "loading") enhanceAll();
       else document.addEventListener("DOMContentLoaded", function () { enhanceAll(); });
       document.body.addEventListener("htmx:afterSettle", function (e) { enhanceAll(e.target); });
@@ -1127,7 +1171,7 @@ select on.
         }
       });
       document.body.addEventListener("htmx:sendError", function () {
-        toast("That didn't save. Check your connection and try again.");
+        toast("Connection interrupted. Try again when you're back online.");
       });
     })();
   {% endscript %}

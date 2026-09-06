@@ -47,7 +47,7 @@ The rules pinned here:
      here either, or the card would send a student to a tab without them.
   7. THE HEADING AND THE VERB ARE THE FOUNDER'S OWN, from 2026-08-31 ("this
      doesn't even make sense, make it more straightforward"): "Where do they
-     sit?" and "Place them". Every pass since has changed only how they are
+     sit?" and "Assign markets". Every pass since has changed only how they are
      presented, never the words.
 
 Its own module rather than an append to `test_region_resolution.py`: that file
@@ -134,7 +134,7 @@ def _card(body: str) -> str:
     night of 2026-09-01 and it is not repeated here.
     """
     match = re.search(
-        r'<div class="[^"]*\bunplaced-card\b[^"]*">(.*?)</div>', body, re.S
+        r'<section class="[^"]*\bunplaced-card\b[^"]*"[^>]*>(.*?)</section>', body, re.S
     )
     return match.group(1) if match else ""
 
@@ -175,9 +175,9 @@ def test_a_contact_that_arrived_blank_this_week_is_counted(client):
     # comma splice became "with", which binds the missing field to the count
     # instead of leaving the reader to. Neither fact left the card:
     # `crm/tests/test_rail_copy_2026_09_02.py` holds the full argument.
-    assert "Contacts to place" in card
-    assert "1 new this week with no market set." in _face(card)
-    assert "Place them" in card
+    assert "unplaced-count" in card
+    assert "1 contact No market · new this week" in _face(card)
+    assert "Assign markets" in card
     # Neither the person nor their firm reaches the page.
     assert "Jude Yoon" not in card
     assert "Citi" not in card
@@ -283,7 +283,7 @@ def test_a_bulk_batch_is_counted_in_full(client):
         _arrival(user, f"Person {i}", firm)
 
     assert _count(user) == 9
-    assert "9 new this week with no market set." in _face(_card(_today(client, user)))
+    assert "9 contacts No market · new this week" in _face(_card(_today(client, user)))
 
 
 def test_the_card_counts_the_week_and_the_tab_counts_the_pool(client):
@@ -308,7 +308,7 @@ def test_the_card_counts_the_week_and_the_tab_counts_the_pool(client):
                  days_ago=UNPLACED_ARRIVAL_WINDOW_DAYS + 1 + i)
 
     assert _count(user) == 12
-    assert "12 new this week with no market set." in _face(_card(_today(client, user)))
+    assert "12 contacts No market · new this week" in _face(_card(_today(client, user)))
 
     client.force_login(user)
     resp = client.get(reverse("crm:contact_list"), {"scope": "unplaced"})
@@ -471,7 +471,7 @@ def test_the_card_has_one_link_and_it_is_the_shared_button(client):
     card = _card(_today(client, user))
     href = f'href="{reverse("crm:contact_list")}?scope=unplaced"'
     assert card.count(href) == 1, f"expected one link; card was:\n{card}"
-    assert re.search(r'class="btn btn-primary[^"]*"[^>]*>Place them</a>', card), (
+    assert re.search(r'class="btn[^"]*"[^>]*>Assign markets</a>', card), (
         "the verb is not the shared button any more"
     )
     assert "rail-more" not in card, (
@@ -513,8 +513,8 @@ def test_the_passive_caveat_on_contacts_is_untouched(client):
     body = client.get(
         reverse("crm:contact_list"), {"scope": "us"}
     ).content.decode()
-    assert "1 of these have no region set. Shown on a guess." in body
-    assert "Place them" in body
+    assert "1 of these have no region set. Grouped by an inferred market." in body
+    assert 'href="?scope=unplaced">Place them</a>' in body
     assert "?scope=unplaced" in body
 
 
@@ -582,8 +582,8 @@ def test_every_class_the_card_renders_is_styled(client):
     card = _card(_today(client, user))
     assert card, "precondition: the card rendered"
 
-    css = " ".join(STYLES.read_text().split())
-    for cls in ("unplaced-count", "unplaced-n", "unplaced-act"):
+    css = " ".join((STYLES.read_text() + (STYLES.parents[2] / "static/css/presentation-crm.css").read_text()).split())
+    for cls in ("unplaced-count", "unplaced-note", "unplaced-act"):
         assert f'class="{cls}"' in card or f'{cls}"' in card
         assert re.search(rf"\.{cls} \{{", css), (
             f".{cls} is rendered by the rail card but styled nowhere in "
@@ -620,7 +620,7 @@ def test_the_count_leads_its_own_line_and_the_verb_is_not_redefined():
     min-height and every state are `.btn`'s, which is the control-shape rule
     networkly.css §6 writes down.
     """
-    css = " ".join(STYLES.read_text().split())
+    css = " ".join((STYLES.read_text() + (STYLES.parents[2] / "static/css/presentation-crm.css").read_text()).split())
     figure = re.search(r"\.unplaced-n \{(.*?)\}", css, re.S).group(1)
     assert "font-size: var(--fs-l)" in figure
     assert "var(--fs-figure)" not in figure, (

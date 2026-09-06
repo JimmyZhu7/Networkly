@@ -19,10 +19,11 @@ def main():
     parser.add_argument("--storage-state", required=True)
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
     parser.add_argument("--report")
+    parser.add_argument("--browser", choices=("chromium", "webkit"), default="chromium")
     args = parser.parse_args()
     checks, errors = [], []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = getattr(p, args.browser).launch()
         context = browser.new_context(storage_state=args.storage_state, viewport={"width": 1440, "height": 1000})
         page = context.new_page()
         page.on("pageerror", lambda error: errors.append(str(error)))
@@ -67,6 +68,15 @@ def main():
             assert abs(panel.bounding_box()["height"] - before) < 2
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         checks.append("Firm panels expand and collapse with Enter on desktop and phone")
+
+        # Opening with the pointer must animate even where clicking a summary
+        # does not focus it (WebKit). Initial and reduced-motion states stay still.
+        disclosure = page.locator(".filters-more")
+        if disclosure.get_attribute("open") is not None:
+            page.locator("[data-filters-toggle]").click()
+        page.locator("[data-filters-toggle]").click()
+        assert disclosure.evaluate("e => e.getAnimations({subtree:true}).some(a => a.effect.getTiming().duration > 1)"), "Pointer-opened filters should reveal their content"
+        checks.append("Pointer-opened disclosure provides motion feedback")
 
         page.emulate_media(reduced_motion="reduce")
         page.wait_for_timeout(300)  # Let an already-running prior interaction finish.

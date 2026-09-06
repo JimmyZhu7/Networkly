@@ -54,8 +54,7 @@ has to do it.
     </summary>
     <div class="cal-ev-body">
       {% if ev.cancelled %}
-        <p class="cal-ev-meta">The organiser cancelled this. It stays here so
-          the date still makes sense.</p>
+        <p class="cal-ev-meta">The organiser cancelled this event. It remains here for your records.</p>
       {% endif %}
       {% if ev.all_day %}<p class="cal-ev-meta">All day</p>{% endif %}
       {% if ev.contact %}<p class="cal-ev-meta">{{ ev.contact.name|smart_person_name|smart_title }}</p>{% endif %}

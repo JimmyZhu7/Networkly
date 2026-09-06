@@ -542,7 +542,7 @@ def live_board(db):
 # grid of per-firm blocks above the filter bar, and now the feed's pinned
 # FIRST COLUMN — same shape as a firm column, accent-tinted, sitting in the
 # same grid as the firms it recommends.
-_HEADING = '<span class="firmcol-name" id="pickcol-h">Picked for you</span>'
+_HEADING = '<span class="firmcol-name" id="pickcol-h">Picked for You</span>'
 _RAIL = '<article class="firmcol firmcol--picked'
 
 

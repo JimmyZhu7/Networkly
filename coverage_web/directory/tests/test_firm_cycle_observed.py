@@ -65,7 +65,7 @@ def test_a_healthy_window_renders_its_real_numbers(client):
     )
     html = _page(client, firm)
 
-    assert "Observed activity" in html
+    assert "Observed Activity" in html
     assert "Opened 99 postings, Aug 9 to Aug 29." in html
     assert "Closed 77, Aug 18 to Aug 30." in html
     # "other" is a real, if imprecise, region — the label must read as one of
@@ -92,7 +92,7 @@ def test_a_thin_close_count_renders_no_close_claim(client):
     )
     html = _page(client, firm)
 
-    assert "Observed activity" in html
+    assert "Observed Activity" in html
     assert "Opened 12 postings" in html
     # No hedge, no number: the close side says nothing, silently.
     assert "Closed 1" not in html
@@ -116,7 +116,7 @@ def test_a_thin_open_count_renders_no_open_claim(client):
     )
     html = _page(client, firm)
 
-    assert "Observed activity" in html
+    assert "Observed Activity" in html
     assert "Closed 10, Aug 10 to Aug 28." in html
     assert "Opened 2" not in html
 
@@ -135,7 +135,7 @@ def test_an_honest_zero_row_renders_no_claim_at_all(client):
     )
     html = _page(client, firm)
 
-    assert "Observed activity" not in html
+    assert "Observed Activity" not in html
     assert "0 postings" not in html
     assert "closed 0" not in html.lower()
 
@@ -148,7 +148,7 @@ def test_a_firm_with_no_observation_row_gets_no_section(client):
     firm = _firm(slug="neverscraped", name="Never Scraped LLC")
     html = _page(client, firm)
 
-    assert "Observed activity" not in html
+    assert "Observed Activity" not in html
 
 
 def test_excluded_suspect_closes_only_shown_alongside_a_real_close_claim(client):
@@ -166,7 +166,7 @@ def test_excluded_suspect_closes_only_shown_alongside_a_real_close_claim(client)
     )
     html = _page(client, firm)
 
-    assert "Observed activity" not in html
+    assert "Observed Activity" not in html
     assert "excluded" not in html.lower()
 
 

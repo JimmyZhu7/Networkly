@@ -291,7 +291,7 @@ class TestTrialEndedNotice:
         # The three facts the banner exists to carry.
         assert "Real-time Gmail sync is paused" in body
         assert "Scan Now is unlocked" in body
-        assert "credits, contacts and touches stayed" in body
+        assert "credits, contacts, and interactions are unchanged" in body
 
         resp = client.post(reverse("accounts:dismiss_trial_notice"))
         assert resp.status_code == 302

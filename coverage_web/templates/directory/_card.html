@@ -37,7 +37,7 @@ on actually holding the text.
     {% endif %}
     {% if card.facts or card.tags %}
       <div class="frow-chips">
-        {% for f in card.facts %}<span class="fact-chip {{ f.css }}" title="{{ f.why }}">{{ f.label }}</span>{% endfor %}
+        {% for f in card.facts %}{% include "directory/_role_fact.html" with fact_class="fact-chip" %}{% endfor %}
         {% comment %}`card.tags` never carries a firm-category pill any more
         — this page's header already names the firm and its category, per
         the header comment above — so every tag here renders.{% endcomment %}
@@ -55,7 +55,7 @@ on actually holding the text.
     {% if card.has_text %}
       <button type="button" class="meta-read" data-role-read data-role-id="{{ card.id }}"
               hx-get="{% url 'role_description' card.id %}"
-              hx-target="#role-drawer-body" hx-swap="innerHTML">View role</button>
+              hx-target="#role-drawer-body" hx-swap="innerHTML" hx-sync="#role-drawer:replace">View role</button>
     {% endif %}
   </div>
 </article>

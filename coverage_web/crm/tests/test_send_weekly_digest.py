@@ -294,7 +294,7 @@ def test_the_digest_opens_with_the_coverage_line_in_both_parts(mailoutbox):
     assert line in html
     # Leads: above this week's deadlines, not below them.
     assert text.index(line) < text.index("CLOSING THIS WEEK")
-    assert html.index(line) < html.index("Closing this week")
+    assert html.index(line) < html.index("Closing This Week")
 
 
 def test_a_student_with_nothing_tiered_gets_no_coverage_line(mailoutbox):

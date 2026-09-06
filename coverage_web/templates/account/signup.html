@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Create your account · Networkly{% endblock %}
+{% block title %}Networkly · Create your account{% endblock %}
 
 {% block head %}{% include "account/_auth_styles.html" %}{% endblock %}
 
 {% block content %}
 <div class="auth-wrap support-auth">
   <header class="auth-intro">
-    <h1 class="auth-title">Start your recruiting workspace</h1>
+    <h1 class="auth-title">Start Your Recruiting Workspace</h1>
     <p class="auth-intro-copy">Save roles, keep your contacts together, and make your next follow-up clear.</p>
-    <a class="auth-browse" href="/opportunities/">Browse opportunities</a>
+    <a class="auth-browse" href="/opportunities/">Browse opportunities {% include "_nav_icon.html" with name="arrow" %}</a>
   </header>
   <div class="auth-form-column">
   <div class="auth-card">
-    <h2 class="auth-form-title">Create your account</h2>
+    <h2 class="auth-form-title"><span class="auth-heading-mark">{% include "_nav_icon.html" with name="plus" %}</span>Create Your Account</h2>
 
     {% include "account/_auth_providers.html" %}
 

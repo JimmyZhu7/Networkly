@@ -2,7 +2,7 @@
 {% load csp %}
 {% load textstyle %}
 
-{% block title %}Network · Networkly{% endblock %}
+{% block title %}Networkly · Network{% endblock %}
 
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
@@ -28,38 +28,7 @@
   direct call) -- the label alone is what you click, and the count is
   still available a click away on whichever board it names.
   {% endcomment %}
-  <div class="network-toolbar">
-    <nav class="network-sections" aria-label="Network sections">
-      <a href="#net-contacts">Contacts</a>
-      <a href="#net-coverage">Firm network</a>
-    </nav>
-  <nav class="subnav scope-tabs standalone" aria-label="Network region">
-    <a href="{% url 'crm:contact_list' %}"{% if not scope %} aria-current="page"{% endif %}>All</a>
-    {% comment %}
-    Narrowed to Settings > Profile's "Regions of Interest" (crm/views.py's
-    `region_scopes`) — a student recruiting only HK/US doesn't carry
-    Singapore and Europe tabs forever. Nobody has stated a preference yet
-    shows every tab, same "silence never hides" rule the Opportunities
-    filters already follow.
-    {% endcomment %}
-    {% for r in region_scopes %}
-      {% comment %}
-      "Other countries" is the one region nothing on this board ever infers
-      — a human has to say "London" by hand (the region_other bulk verb) —
-      so on most students' data it sits at zero forever. That is the exact
-      "standing reproach" the founder called out, and it gets the same fix
-      already proven on the two hidden-contact links below: render only
-      when it actually holds somebody. The one exception is standing on it
-      already — answering "London" for your very first Other contact must
-      not make the tab you're looking at disappear out from under you.
-      {% endcomment %}
-      {% if r.code != "other" or r.count or scope == r.code %}
-        <a href="?scope={{ r.code }}"{% if scope == r.code %} aria-current="page"{% endif %}>{{ r.label }}</a>
-      {% endif %}
-    {% endfor %}
-    <a href="?scope=school"{% if scope == 'school' %} aria-current="page"{% endif %}>School</a>
-  </nav>
-  </div>
+
 
   {% comment %}
   THE BOARD'S META STRIP IS GONE (2026-08-28). Pointed at twice in a row,
@@ -72,7 +41,7 @@
   - The unplaced ask is still made TWICE lower on this same page: the
     `net-unplaced` section (the full grouped-by-firm answer, which is where
     the question is actually answerable) and the one-line "N of these have
-    no region set. Shown on a guess. Place them" above the contact grid.
+    no region set. Grouped by an inferred market. Place them" above the contact grid.
     The band removed here was the third statement of it, and the only one
     with nowhere useful to go.
   - The four off-board lists (archived, parked, campaign-hidden,
@@ -140,8 +109,7 @@
   <section class="net-unplaced">
     <h2 class="strip-title">Unplaced <span class="scrub-count">{{ contact_total }}</span></h2>
     <p class="net-caveat">
-      Nobody has said where these people sit, and Networkly will not guess.
-      Until then they match deadlines in both markets.
+      These contacts have no confirmed market. Until you assign one, they can match deadlines in both markets.
     </p>
     <form id="place-form" method="post" action="{% url 'crm:contacts_bulk' %}">
       {% csrf_token %}
@@ -238,10 +206,44 @@
       {# Never let a region tab pass off a guess as a confirmed match. The #}
       {# link is the ENTIRE nag budget for the unplaced pool — a sentence #}
       {# that was already being shown, now with somewhere to go. #}
-      <p class="net-caveat">{{ unconfirmed_total }} of these have no region set. Shown on a guess.
+      <p class="net-caveat">{{ unconfirmed_total }} of these have no region set. Grouped by an inferred market.
         <a href="?scope={{ unplaced_scope }}">Place them</a></p>
     {% endif %}
-    {% include "crm/_contact_search.html" with target="net-contacts" %}
+  <div class="network-toolbar">
+    <nav class="network-sections" aria-label="Network sections">
+      <a href="#net-contacts">Contacts</a>
+      <a href="#net-coverage">Firm network</a>
+    </nav>
+  <div class="network-scope"><span class="network-control-label">Market</span>
+  <nav class="subnav scope-tabs standalone" aria-label="Network region">
+    <a href="{% url 'crm:contact_list' %}"{% if not scope %} aria-current="page"{% endif %}>All</a>
+    {% comment %}
+    Narrowed to Settings > Profile's "Regions of Interest" (crm/views.py's
+    `region_scopes`) — a student recruiting only HK/US doesn't carry
+    Singapore and Europe tabs forever. Nobody has stated a preference yet
+    shows every tab, same "silence never hides" rule the Opportunities
+    filters already follow.
+    {% endcomment %}
+    {% for r in region_scopes %}
+      {% comment %}
+      "Other countries" is the one region nothing on this board ever infers
+      — a human has to say "London" by hand (the region_other bulk verb) —
+      so on most students' data it sits at zero forever. That is the exact
+      "standing reproach" the founder called out, and it gets the same fix
+      already proven on the two hidden-contact links below: render only
+      when it actually holds somebody. The one exception is standing on it
+      already — answering "London" for your very first Other contact must
+      not make the tab you're looking at disappear out from under you.
+      {% endcomment %}
+      {% if r.code != "other" or r.count or scope == r.code %}
+        <a href="?scope={{ r.code }}"{% if scope == r.code %} aria-current="page"{% endif %}>{{ r.label }}</a>
+      {% endif %}
+    {% endfor %}
+    <a href="?scope=school"{% if scope == 'school' %} aria-current="page"{% endif %}>School</a>
+  </nav>
+  </div>
+  {% include "crm/_contact_search.html" with target="net-contacts" %}
+  </div>
     {% comment %}
     THE BULK-PARK UNDO STRIP. Present only on the render right after a bulk
     park (crm.views.contacts_bulk stores the ids under PARK_UNDO_SESSION_KEY;
@@ -410,9 +412,11 @@
                   is the explicit, deliberate target, same as ticking a row
                   in a mail client.
                   {% endcomment %}
-                  <input class="cc-check" type="checkbox" name="ids"
-                         value="{{ card.c.id }}"
-                         aria-label="Select {{ card.c.name|smart_person_name|smart_title }}">
+                  <label class="cc-selection">
+                    <input class="cc-check" type="checkbox" name="ids"
+                           value="{{ card.c.id }}"
+                           aria-label="Select {{ card.c.name|smart_person_name|smart_title }}">
+                  </label>
                   {% comment %}The staleness ring: silence made visible. The
                   ring drains as the cadence clock this contact runs on is
                   consumed — full ring means the engine is about to nag. The
@@ -468,7 +472,7 @@
                 <span class="cc-tags">
                   {% if card.parked or card.thread_state == "parked" or card.c.thread_state == "parked" %}<span class="pill cc-pill cc-parked" title="You stopped following up on this thread. Nothing is scheduled against it.">Paused</span>{% endif %}
                   {% if card.gender %}<span class="pill cc-pill">{{ card.gender }}</span>{% endif %}
-                  {% if card.tier %}<span class="pill cc-pill">T{{ card.tier }}</span>{% endif %}
+                  {% if card.tier %}<span class="pill cc-pill">Tier {{ card.tier }}</span>{% endif %}
                   {% if card.region %}<span class="pill cc-pill">{{ card.region }}</span>{% endif %}
                   </span>
                   </span>
@@ -507,7 +511,8 @@
                 {% endcomment %}
                 <span class="cc-firm"
                       title="{% if card.c.firm %}{{ card.c.firm.name|smart_title }}{% else %}{{ card.c.firm_text|smart_title }}{% endif %}{% if card.c.role %} · {{ card.c.role|smart_title }}{% endif %}">
-                  <span class="cc-firm-name">{% if card.c.firm %}{{ card.c.firm.name|smart_title }}{% else %}{{ card.c.firm_text|smart_title }}{% endif %}</span>{% if card.c.role %}<span class="cc-firm-role">{{ card.c.role|smart_role|smart_title }}</span>{% endif %}
+                  <span class="cc-firm-name">{% if card.c.firm %}{% include "crm/_firm_mark.html" with mark_firm=card.c.firm %}{{ card.c.firm.name|smart_title }}{% else %}{{ card.c.firm_text|smart_title }}{% endif %}</span>{% if card.c.role %}<span class="cc-firm-role">{{ card.c.role|smart_role|smart_title }}</span>{% endif %}
+                  <span class="cc-since" title="{{ card.since_title }}">{% if card.days_since is not None %}Last interaction: {% endif %}{{ card.since_label }}</span>
                 </span>
                 {% comment %}
                 No description line and no on-card email, on the founder's
@@ -547,7 +552,7 @@
                   this span can ever hold is "364d since last touch" (116.4px
                   against a 120px floor). See that function for the pixels.
                   {% endcomment %}
-                  <span class="cc-since" title="{{ card.since_title }}">{{ card.since_label }}</span>
+
                   {% comment %}
                   Log Touch and Edit are not equals: Log Touch is the verb
                   this whole board exists to prompt, Edit is the escape
@@ -598,6 +603,16 @@
       Deliberately NO delete: see `_BULK_VERBS` in crm/views.py for why the
       product has no hard-delete path for a contact at all.
       {% endcomment %}
+      <noscript>
+        <div class="bulk-bar bulk-bar-native">
+          <span class="bulk-count">For selected contacts</span>
+          <span class="bulk-acts">
+            <button type="submit" name="verb" value="snooze" class="btn">Snooze 3d</button>
+            <button type="submit" name="verb" value="park" class="btn">Stop following up</button>
+            <button type="submit" name="verb" value="archive" class="btn">Archive</button>
+          </span>
+        </div>
+      </noscript>
       <div class="bulk-bar" data-cc-bulk-bar hidden>
         <span class="bulk-count"><b data-cc-bulk-n>0</b> selected</span>
         <span class="bulk-acts">
@@ -616,24 +631,9 @@
     (the actual drag target). A third copy on this header explained nothing
     those two don't already cover before you reach a single tier section.
     {% endcomment %}
-    <h2 class="strip-title strip-title-lg">Firm network</h2>
+    <h2 class="strip-title strip-title-lg">Firm Network</h2>
       <div class="net-panel panel">
-      {% comment %}
-      THE LEGEND that used to open this panel is gone. Four warmth dots and
-      an "SP" swatch, explained once, above a grid where most of 54 cards
-      show an empty bar — a fixed row asking every reader to hold "colour =
-      meaning" in their head while scanning dozens of tracks that mostly
-      have no colour to decode. Nothing it said is lost: "SP" already
-      carries its own explanation in the chip's own `title=` below
-      (`fc-spon`), and the warmth words themselves — Replied, Chatted,
-      Emailed No Reply, Advocates — are the section headers of the Contacts
-      list further down this page, dot and label both (see
-      `_WARMTH_SECTIONS` in views.py). A hover on any card's own bar now
-      gives the SAME colours in words, with real counts for that one firm
-      instead of a generic swatch (see `firm_card`'s `bar_title`) — more
-      specific than the legend ever was, and it costs a row only on the
-      card that needs it.
-      {% endcomment %}
+      {% comment %}Each firm names its relationship distribution and categorical facts directly; no color-decoding legend is required.{% endcomment %}
       {% for section in tier_sections %}
         <div class="tier-section" data-tier="{{ section.tier|default:'' }}">
           {% comment %}
@@ -691,170 +691,44 @@
               <div class="firm-card kin-reveal panel panel--inset" draggable="true" data-firm="{{ fc.firm.id }}"
                    style="--i:{{ forloop.counter0 }}; view-transition-name: firm-card-{{ fc.firm.id }}"
                    title="Tier drives your action priorities. Drag this card to another lane to change its tier (or use Settings > Target firms on mobile).">
-                {% comment %}
-                The COUNT badges are gone. Asked for directly: take the
-                counts off these cards and leave the progress bar and the
-                reach-out suggestion. "48 Open" is inventory — the
-                Opportunities feed is where a student shops for roles. "1 Act
-                Now" counted contacts who are listed BY NAME in the action
-                lanes to the left of these cards; the card was restating its
-                own page back at itself. Neither changes what a student does
-                next, which is what a status board owes them, and neither is
-                lost: both still decide which firm sorts first in its tier
-                (see firm_card in views.py).
 
-                "Sponsors" is not a count and stays. It answers a question
-                about the student rather than about the week — whether this
-                firm is open to them at all — and nothing else on this board
-                answers it. Shortened to "SP" and moved into the head row,
-                beside the close date rather than on a row of its own — a
-                card with both used to be four lines for two facts. The
-                explanation used to live one hop away, spelled out once in
-                a `.net-legend` row above the grid; that row is gone now (see
-                the comment above `.net-panel`'s opening tag), so the chip
-                carries its own explanation directly in `title=` below —
-                still spelled out exactly once, just on the chip itself
-                rather than in furniture above it.
 
-                One removed badge did NOT survive as a sort key, so it moved
-                up to the name row instead of quietly going with the rest:
-                a real deadline. "N Soon" counted roles closing inside two
-                weeks, and a progress bar says how far along you are while
-                structurally unable to say how long you have. Only the
-                CONFIRMED close date qualifies (see firm_card), and it is a
-                red mono countdown — the full sentence is in its title,
-                because a 190px card shares this line with the firm's name.
-                {% endcomment %}
-                {% comment %}
-                "CG" is the deleted Relationship gaps strip, on the card it was
-                always about. It is NOT the same fact as the gap label on
-                the verb below: that names the rung EVERY under-target firm
-                sits on, and every under-target firm has one. This is the
-                ranking — this firm's exposure cleared
-                `coverage.CG_EXPOSURE_MIN`, the measured bar (11 of the
-                founder's 54 cards, 6 of the demo board's 23). A tag most
-                cards wear says nothing.
-
-                Built exactly like `fc-spon` beside it, because that is the
-                pattern this row already has: a two-letter pill that spells
-                itself out in its own `title=`, with a matching entry in
-                `.net-legend-mini` at the foot of the grid. Two letters
-                alone tell a first-time reader nothing, and the tag must not
-                need the legend to be readable.
-
-                First in the row, after the name: this is the Network board
-                and coverage is what it is for. "SP" is a fact about the
-                firm and the countdown is a fact about the calendar; both
-                keep the order they already had behind it.
-
-                Colour: `--danger`, the token the founder asked for, in a
-                DIFFERENT register from the countdown two elements along, so
-                the row does not end up with two identical reds shouting at
-                each other. The countdown is bare red mono text; this is a
-                soft-filled chip, the same construction as the green "SP"
-                (see `.pill.fc-cg` in _styles.html). Shape separates them,
-                and the countdown stays the loudest thing on the card,
-                which is right: a gap you can work is not an alarm, a
-                closing deadline is.
-                {% endcomment %}
                 <div class="firm-card-head">
-                  <div class="firm-card-name">{{ fc.firm.name|smart_title }}</div>
+                  {% include "crm/_firm_mark.html" with mark_firm=fc.firm %}
+                  <div class="firm-card-name"><a draggable="false" href="{% url 'directory:firm_detail' fc.firm.slug %}">{{ fc.firm.name|smart_title }}</a></div>
                   {% if fc.cg %}
-                    <span class="pill fc-cg" title="Relationship gap. You ranked this firm high and nobody here is warm yet.">Gap</span>
+                    <span class="pill fc-cg" title="Prioritized relationship gap based on firm tier, relationship strength, recruiting fit and upcoming deadlines.">{{ fc.gap_label }}</span>
                   {% endif %}
                   {% if fc.sponsors %}
-                    <span class="pill fc-spon" title="Sponsors visas. See Opportunities for which regions.">SP</span>
+                    <span class="pill fc-spon" title="Sponsors visas. See Opportunities for which regions.">Visa sponsorship</span>
                   {% endif %}
                   {% if fc.close_label %}
-                    <span class="gap-due-tag" title="{{ fc.close_title }}">{{ fc.close_label }}</span>
+                    <span class="gap-due-tag" title="{{ fc.close_title }}">Closes {{ fc.close_label }}</span>
                   {% endif %}
                 </div>
-                {% comment %}
-                The bar now renders for every card, including zero
-                contacts (2026-08-31): the founder wants one consistent
-                shape across the grid rather than some cards ending in a
-                bar and some ending bare. An untouched firm gets a flat
-                grey track — `.firm-bar`'s own background IS the cold
-                colour, so an empty `{% for %}` loop below already draws
-                exactly that with no extra markup. `bar_title` says "No
-                contacts yet" for this case rather than rendering empty
-                (`firm_card` in views.py), so the one thing every other
-                bar states in words is still stated here.
 
-                Sockets stay gated on `fc.advocates`: zero contacts is
-                zero advocates, and two empty dots next to a flat grey
-                bar was real decoration with nothing to plot, which the
-                bar itself no longer is.
-                {% endcomment %}
                 <div class="firm-card-foot">
-                  <div class="firm-bar" title="{{ fc.bar_title }}">
-                    {% for seg in fc.segments %}{% if seg.pct %}<i class="seg seg-{{ seg.warmth }}" style="width: {{ seg.pct }}%"></i>{% endif %}{% endfor %}
-                  </div>
-                  {% comment %}
-                  Advocate SOCKETS, not a fraction: the target is 2 or 3
-                  slots, and dots that visibly fill say "one more to go"
-                  faster than 1/2 does. That form is unchanged from the
-                  prior pass. What changed is WHEN it earns a place on the
-                  card: every firm here starts at zero advocates, so a pair
-                  of empty sockets was the single most repeated element on
-                  the whole board — decoration on nearly every card, exactly
-                  as reported. The widget now shows only once there is a
-                  fill to show (`fc.advocates`); the "0 of N" case moves into
-                  the bar's own title above instead of staying a permanent
-                  fixture. The number still names the target as YOURS, set
-                  in Settings, wherever it renders — it's
-                  `crm.coverage.advocate_target`, user-editable and
-                  defaulting to 2.
-                  {% endcomment %}
-                  {% if fc.advocates %}
-                  <span class="fc-adv{% if fc.adv_met %} is-met{% endif %}"
-                        role="img"
-                        aria-label="{{ fc.advocates }} of {{ fc.adv_target }} advocate{{ fc.adv_target|pluralize }} at this firm. Your target, set in Settings"
-                        title="{{ fc.advocates }} of {{ fc.adv_target }} advocate{{ fc.adv_target|pluralize }} at this firm. Your target, set in Settings &gt; Cadence">
-                    {% for slot in fc.adv_slots %}<i class="adv-socket{% if slot %} is-filled{% endif %}"></i>{% endfor %}{% if fc.adv_met %} ✓{% endif %}
-                  </span>
+                  <p class="firm-contact-count">{{ fc.contact_count }} contact{{ fc.contact_count|pluralize }}</p>
+                  {% if fc.contact_count %}
+                    <ul class="firm-mix" aria-label="Relationship mix" title="{{ fc.bar_title }}">
+                      {% for seg in fc.segments %}{% if seg.pct %}<li class="firm-mix-{{ seg.warmth }}"><span class="firm-mix-dot" aria-hidden="true"></span><span>{{ seg.pct }}% {% if seg.warmth == 'cold' %}Not yet replied{% else %}{{ seg.warmth|relationship_label }}{% endif %}</span></li>{% endif %}{% endfor %}
+                    </ul>
+                    <p class="firm-advocate-target">{{ fc.advocates }} of {{ fc.adv_target }} advocate{{ fc.adv_target|pluralize }} · your target</p>
+                  {% else %}
+                    <p class="firm-no-contacts">Start by adding someone at this firm.</p>
                   {% endif %}
                 </div>
-                {% comment %}
-                What the Relationship gaps strip used to give its worst 6 firms,
-                on all of them: a status is not a task, and this was the one
-                thing 55-odd of these cards couldn't do — the click target
-                existed for six firms on the whole page and nowhere else.
-                The strip is gone now, so this is the only route left, which
-                is exactly why it was extended first. `draggable="false"` so
-                starting a drag on the link hands off to the card's own
-                drag-to-retier handler instead of the browser's native "drag
-                this link" gesture. The LINK is hidden once `adv_met` — a
-                covered firm is a status, not a task, the same posture the
-                gap ladder holds by scoring COVERED at zero. Its row is not:
-                see the note below on why the row itself now always renders.
-                {% endcomment %}
-                {% comment %}
-                The row is unconditional now, because the tier picker beside
-                the verb is: a card whose firm is already covered still has
-                to be re-tierable, and until this control existed the only
-                way to move one was a drag, which a touchscreen cannot
-                send. A covered firm therefore gains one 10px line it did
-                not carry before, and that is the whole cost.
-
-                Options are rendered from `tier_sections` rather than a
-                hard-coded 1/2/3 so the picker can only ever offer a lane
-                that exists in the DOM to move the card into. "Unranked" is
-                built by the view only when something is already sitting
-                there (see `if cards or tier in (1, 2, 3)` in views.py), and
-                that is exactly when the option should appear.
-                {% endcomment %}
+                {% if fc.gap_label %}
                 <div class="firm-card-act">
-                  {% if fc.gap_label %}
                     {% if fc.lever %}
                       <a class="fc-act-link" draggable="false" title="{{ fc.gap_label }}"
                          href="{% url 'crm:contact_detail' fc.lever.id %}">Talk to {{ fc.lever.name|smart_person_name|smart_title }}</a>
                     {% else %}
                       <a class="fc-act-link" draggable="false" title="{{ fc.gap_label }}"
-                         href="{% url 'crm:contact_new' %}?firm={{ fc.firm.slug }}">＋ Add a contact</a>
+                         href="{% url 'crm:contact_new' %}?firm={{ fc.firm.slug }}">Add contact</a>
                     {% endif %}
-                  {% endif %}
                 </div>
+                {% endif %}
               </div>
             {% endfor %}
           </div>
@@ -870,24 +744,7 @@
             <a href="{% url 'accounts:settings' %}#firms">Pick your firms</a>.</p>
         </div>
       {% endfor %}
-      {% comment %}
-      A key, back (2026-08-31) -- reused, not reinvented: `.dot`/`.dot-cold`
-      etc. never left (`.net-group-head` below still draws them), and the
-      labels are `_WARMTH_SECTIONS` verbatim, so this cannot say something
-      the Contacts list beneath it disagrees with. It was pulled once
-      because most of 54 cards drew an empty bar and a fixed row asked
-      every reader to hold "colour = meaning" in their head for colour
-      that mostly was not there. Every card draws a bar now (the
-      founder's call, same day) -- the premise that removed it no longer
-      holds, so it is back, one line, inside the same panel it explains.
-
-      A permanent "SP -> Sponsors visas" swatch here means
-      `crm/tests/test_firm_card_badges.py::_tier_board` can no longer
-      stop at the panel's own `</section>` to isolate the CARDS from this
-      key -- "no firm on this board sponsors" would be indistinguishable
-      from "the legend always shows one anyway". That helper now stops at
-      THIS element's own opening tag instead; see its docstring.
-      {% endcomment %}
+      {% comment %}Each firm names its relationship distribution and categorical facts directly; no color-decoding legend is required.{% endcomment %}
       {% comment %}
       Labels come from `warmth_labels` (crm/views.py's `_warmth_labels()`,
       derived from `_WARMTH_SECTIONS`) rather than being retyped here. This
@@ -900,26 +757,7 @@
       rename is out of scope here) but now reads the `no_reply` label, the
       warmth state it has always coloured.
       {% endcomment %}
-      <p class="net-legend-mini">
-        <span><i class="dot dot-cold"></i>{{ warmth_labels.no_reply }}</span>
-        <span><i class="dot dot-replied"></i>{{ warmth_labels.replied }}</span>
-        <span><i class="dot dot-chatted"></i>{{ warmth_labels.chatted }}</span>
-        <span><i class="dot dot-advocate"></i>{{ warmth_labels.advocate }}</span>
-        <span><span class="pill fc-spon" aria-hidden="true">SP</span>Sponsors visas</span>
-        {% comment %}
-        The CG entry, and it is not optional furniture: "CG" is two letters
-        with no reading, so the key is the only place the board says what
-        the mark means without a hover, and a hover is unreachable on a
-        phone. Wording is the pill's own `title=` cut to the clause that
-        distinguishes it, the same way "Sponsors visas" is the short form
-        of the SP chip's sentence.
 
-        `aria-hidden` on the swatch, same as SP: the words beside it are
-        the accessible content, and a screen reader announcing "CG
-        Relationship gap" would read the abbreviation twice.
-        {% endcomment %}
-        <span><span class="pill fc-cg" aria-hidden="true">Gap</span>Relationship gap, nobody warm yet</span>
-      </p>
       </div>
   </section>
 
@@ -1213,8 +1051,9 @@
       );
     }
 
-    // Contact bands use eight record rows in the catalogue layout. The
-    // boundary is measured from real content so a long name or wrapped
+    // Contact bands show three complete rows: twelve cards on wide screens,
+    // six at medium widths, three on smaller screens. Actual cards set the
+    // boundary, so a long name or wrapped
     // mobile action never leaves a partially clipped record.
     //
     // `.contact-scroll` carried a flat `max-height: 416px`. Measured on the
@@ -1266,10 +1105,11 @@
         if (!row) { row = { top: top, bottom: bottom }; rows.push(row); }
         row.bottom = Math.max(row.bottom, bottom);
       });
-      if (rows.length <= 8) return; // Fits already — no cap, no tab stop.
+      if (rows.length <= 3) return; // Fits already — no cap, no tab stop.
 
       var gapPx = parseFloat(getComputedStyle(grid).rowGap) || 0;
-      var cap = rows[7].bottom + gapPx / 2;
+      var insetTop = parseFloat(getComputedStyle(scroll).paddingTop) || 0;
+      var cap = insetTop + rows[2].bottom + gapPx / 2;
       scroll.style.setProperty("--band-cap", cap + "px");
       scroll.setAttribute("tabindex", "0");
       scroll.setAttribute("role", "region");

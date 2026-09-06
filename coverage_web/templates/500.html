@@ -10,7 +10,7 @@ page that must never itself 500.
 That constraint is also why the palette below is a block of literal hex rather
 than `var(--paper)` and friends: an error page cannot depend on a stylesheet
 that may be exactly what is down. The values are copied from
-static/css/networkly.css §1 (light) and its dark block, so the page reads as
+static/css/workspace.css (light) and its dark block, so the page reads as
 Networkly in both schemes instead of as the pre-v4 ink-and-navy it wore until
 now (#171717 ink, #1d3a5f link, no dark scheme at all — a light card thrown at
 a reader whose whole OS is dark).
@@ -20,25 +20,26 @@ a reader whose whole OS is dark).
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#2857c7">
-  <meta name="theme-color" content="#191e20" media="(prefers-color-scheme: dark)">
-  <title>Something broke · Networkly</title>
+  <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
+  <title>Networkly · Something Went Wrong</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=networkly-2">
   <style>
     :root {
       color-scheme: light dark;
-      --paper: #f7f7f2;
-      --ink: #252b2e;
-      --ink-2: #596365;
+      --paper: #f4f6fa;
+      --ink: #19283f;
+      --ink-2: #54647a;
       --accent: #2857c7;
       /* Copied from the shared display scale for the same reason the palette
          above is copied: the token is the NAME of the size, and a page that
          cannot load a stylesheet still has to sit on the scale. */
-      --fs-display-3: 38px;
+      --fs-display-3: 30px;
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --paper: #191e20;
-        --ink: #edf0ec;
-        --ink-2: #b6c0bf;
+        --paper: #111827;
+        --ink: #eef3fb;
+        --ink-2: #b8c5d8;
         --accent: #a4bbff;
       }
     }
@@ -46,7 +47,7 @@ a reader whose whole OS is dark).
       background: var(--paper); color: var(--ink); display: grid;
       place-items: center; min-height: 100vh; }
     main { width: min(660px, calc(100% - 48px)); padding: 48px 0; }
-    h1 { font: 400 var(--fs-display-3)/1.15 Georgia, serif; letter-spacing: -.02em; margin: 0 0 20px; }
+    h1 { font: 650 var(--fs-display-3)/1.2 -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: -.02em; margin: 0 0 20px; }
     p { color: var(--ink-2); font-size: 15px; line-height: 1.7; margin: 0 0 20px; }
     a { color: var(--accent); display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: 5px; }
     a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
@@ -54,7 +55,7 @@ a reader whose whole OS is dark).
 </head>
 <body>
   <main>
-    <h1>Something went wrong.</h1>
+    <h1>Something Went Wrong.</h1>
     <p>Try refreshing the page. If the problem continues, try again later.</p>
     <p><a href="/">Back to Networkly</a></p>
   </main>

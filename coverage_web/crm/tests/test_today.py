@@ -133,9 +133,9 @@ def test_pace_note_reads_more_to_go(client):
     user = _user(weekly_touch_goal=14)
     client.force_login(user)
     body = client.get(reverse("crm:week")).content.decode()
-    assert "outreach this week" in body
+    assert "Weekly Outreach" in body
     # The figure is bolded, so the sentence is not one contiguous string.
-    assert "<b>14</b> more to go" in body
+    assert "<b>14</b> more to reach your goal." in body
 
 
 # ---------------------------------------------------------------------------
@@ -200,7 +200,7 @@ def test_held_items_are_still_reachable_in_full(client):
     body = client.get(reverse("crm:week")).content.decode()
     for i in range(30):
         assert f"Coldperson {i:02d}" in body, "the cap paces, it must never filter"
-    assert "pacing out at" in body
+    assert "Your plan includes up to" in body
 
 
 def test_a_capped_lane_header_carries_its_denominator(client):
@@ -774,7 +774,7 @@ def test_park_never_occupies_a_plan_slot_and_gets_a_bulk_button(client):
     assert ctx["park_bulk"] is True
 
     client.force_login(user)
-    assert "Park all" in client.get(reverse("crm:week")).content.decode()
+    assert "Pause all" in client.get(reverse("crm:week")).content.decode()
 
 
 def test_bulk_park_goes_through_the_audited_override_per_contact(client):
@@ -808,7 +808,7 @@ def test_a_small_park_group_gets_no_bulk_button(client):
         _touch(user, c, "follow_up", days_ago=30)
     assert _cockpit_context(user)["park_bulk"] is False
     client.force_login(user)
-    assert "Park all" not in client.get(reverse("crm:week")).content.decode()
+    assert "Pause all" not in client.get(reverse("crm:week")).content.decode()
 
 
 def test_bulk_park_is_tenant_scoped(client):
@@ -840,7 +840,7 @@ def test_done_for_today_is_not_all_caught_up(client):
     # Un-snooze nothing: the whole queue is snoozed away, so the plan is empty
     # and so is the remainder -> genuinely caught up.
     body = _login_and_get(client, user)
-    assert "You're all caught up." in body
+    assert "You're All Caught Up." in body
 
 
 def test_an_empty_plan_with_a_queue_behind_it_says_done_for_today(client):
@@ -852,8 +852,8 @@ def test_an_empty_plan_with_a_queue_behind_it_says_done_for_today(client):
         _touch(user, c, "follow_up", days_ago=30)
 
     body = _login_and_get(client, user)
-    assert "Done for today." in body
-    assert "You're all caught up." not in body
+    assert "Your Next Steps" in body
+    assert "You're All Caught Up." not in body
     # It names what's left instead of implying the database is empty.
     assert "8 contacts have gone quiet" in body
 
@@ -861,7 +861,7 @@ def test_an_empty_plan_with_a_queue_behind_it_says_done_for_today(client):
 def test_no_contacts_still_says_no_contacts(client):
     user = _user(weekly_touch_goal=14)
     body = _login_and_get(client, user)
-    assert "No contacts yet." in body
+    assert "No Contacts Yet." in body
 
 
 def _login_and_get(client, user) -> str:
@@ -1016,7 +1016,7 @@ def test_the_closing_cell_names_how_many_of_its_dates_are_our_own_reading(client
 
     ribbon = _ribbon(client, _user(weekly_touch_goal=14))
 
-    assert "Closing in 10 days, 2 reported" in ribbon
+    assert "Next 10 days · 2 reported" in ribbon
     # The urgent figure itself is unchanged: this qualifies the count, it does
     # not shrink it.
     assert '<span class="ribbon-num">3</span>' in ribbon
@@ -1041,14 +1041,14 @@ def test_a_closing_cell_of_published_dates_claims_no_reading_of_its_own(client):
 
     ribbon = _ribbon(client, _user(weekly_touch_goal=14))
 
-    assert "Closing in 10 days<" in ribbon
+    assert "Next 10 days<" in ribbon
     assert "reported" not in ribbon
 
 
 def test_an_empty_funnel_says_so_in_words_rather_than_drawing_zeroes(client):
     user = _user(weekly_touch_goal=14)
     body = _login_and_get(client, user)
-    assert "Nothing submitted yet." in body
+    assert _funnel_figure(body) == "0 › 0 › 0"
     assert "0 › 0 › 0" not in body
 
 
@@ -1107,10 +1107,12 @@ def _funnel_figure(html):
     substring would have passed on a page that printed those numbers
     ANYWHERE, this one reads them out of the funnel cell itself and fails on
     a stray fourth figure or a lost separator."""
-    m = re.search(r'class="ribbon-num ribbon-funnel-num">(.*?)</span>\s*'
-                  r'<span class="ribbon-lbl"', html, re.S)
-    assert m, "no funnel figure on the page"
-    return " ".join(re.sub(r"<[^>]+>", " ", m.group(1)).split())
+    m = re.search(r'<dl class="ribbon-stages">(.*?)</dl>', html, re.S)
+    assert m, "no labeled application stages on the page"
+    stages = re.findall(r'<dt>(.*?)</dt><dd>(.*?)</dd>', m.group(1), re.S)
+    assert [label for label, value in stages] == ["Applied", "Interviewing", "Offers"]
+    return " › ".join(value for label, value in stages)
+
 
 
 def test_the_funnel_counts_still_match_the_stage_the_label_names(client):
@@ -1184,34 +1186,12 @@ def test_the_rail_names_every_confirmed_date_a_firm_has(client):
 
 
 # ---------------------------------------------------------------------------
-# The rail's own order, 2026-08-31. The founder's own words: "outreach this
-# week goes on top, then deadlines, then unplaced." Before this the rail read
-# Unplaced, Pace, Schedule, Deadlines — a standing question above the pace
-# ring and the confirmed dates it should trail.
+# The September 5 layout puts contact cleanup in the actionable main column
+# and preserves weekly progress before dated context in the supporting rail.
 # ---------------------------------------------------------------------------
-def test_the_rail_orders_pace_before_deadlines_and_unplaced_rides_with_pace(client):
-    """REWRITTEN 2026-09-02; the third rung of its premise no longer exists.
-
-    It read `..._orders_pace_before_deadlines_before_unplaced` and pinned
-    three rail cards in the founder's own 2026-08-31 order. On 2026-09-02 he
-    asked for the first and the third to become one ("Combine this with
-    unsorted contacts, make into one widget"), so "then unplaced" is no
-    longer an order this rail can express: the unplaced block is inside the
-    pace card, which means it necessarily renders ABOVE Deadlines rather
-    than below it.
-
-    Both halves of what the old test was protecting survive and are pinned
-    here. Pace still leads (`pace < deadlines`), and the unplaced block is
-    still positioned rather than loose — it now has to sit inside the pace
-    card's own element, which is a stricter claim than "somewhere after
-    Deadlines" and is what would actually break if a future pass pulled it
-    back out into a card of its own without saying so.
-
-    Getting Started is not part of this claim — it is gated to an unfinished
-    setup and, by its own rule, outranks everything whenever it renders at
-    all — so this fixture leaves it unfinished-but-absent (no
-    Firm/UserFirm/Gmail link needed to make that true for a fresh test user).
-    """
+def test_cleanup_follows_the_plan_while_progress_and_deadlines_use_the_rail(client):
+    """Contact cleanup belongs to the actionable main column. Weekly progress
+    still leads dated context in the supporting rail, with no duplicate task."""
     user = _user(weekly_touch_goal=14, regions=["hk", "us"])
     firm = Firm.objects.create(slug="gs4", name="Goldman Sachs",
                                 regions=["hk", "us"])
@@ -1238,19 +1218,16 @@ def test_the_rail_orders_pace_before_deadlines_and_unplaced_rides_with_pace(clie
         f"expected pace ({pace}) before deadlines ({deadlines}) in rendered "
         "order"
     )
-    # And the merged half is INSIDE the pace card, not a card of its own.
-    # `unplaced-card` with no `rail-card` in front of it is the whole
-    # difference, so the assertion is on both facts at once.
-    unplaced = body.index('class="unplaced-card')
-    assert 'class="rail-card unplaced-card' not in body, (
-        "the unplaced block is back to being its own rail card; the founder "
-        "asked for one widget"
-    )
-    assert pace < unplaced < deadlines, (
-        f"expected the unplaced block ({unplaced}) between the pace card's "
-        f"opening tag ({pace}) and Deadlines ({deadlines}), i.e. inside the "
-        "pace card"
-    )
+    main = body.index('<div class="cockpit-main">')
+    rail = body.index('<aside class="cockpit-rail">')
+    unplaced = body.index('class="rail-card unplaced-card')
+    assert main < unplaced < rail < pace < deadlines
+    assert body.count('class="rail-card unplaced-card') == 1
+    activity = body.index('class="rail-card activity-card')
+    assert main < activity < rail
+    cleanup = body[unplaced:body.index('</section>', unplaced)]
+    assert 'href="/app/contacts/?scope=unplaced"' in cleanup
+    assert "Assign markets" in cleanup
 
 
 def test_an_unconfirmed_date_never_reaches_the_rail():
@@ -1354,7 +1331,7 @@ def test_a_chat_today_gets_a_prep_card_with_what_you_learned_last_time(client):
     assert prep["firm_date_label"] == "Applications close"
 
     body = _login_and_get(client, user)
-    assert "Chat today" in body
+    assert "Chat Today" in body
     assert "TMT desk" in body
 
 
@@ -1516,8 +1493,8 @@ def test_the_picks_cell_never_congratulates_an_unchecked_user(client):
 
     # Nothing on the board, so nothing can be picked: the check never ran.
     body = client.get(reverse("crm:week")).content.decode()
-    assert "Fill in Settings to get picks" in body
-    assert "Every pick saved" not in body
+    assert "Get role suggestions" in body
+    assert "All picks saved" not in body
 
     # A role this student is picked for, and then saved: the all-clear is
     # EARNED, because there was something to be caught up on.
@@ -1528,13 +1505,13 @@ def test_the_picks_cell_never_congratulates_an_unchecked_user(client):
         firm=firm, url="https://picks/1", title="Summer Analyst",
         bucket="internship", status="open", class_year="2029")
     body = client.get(reverse("crm:week")).content.decode()
-    assert "Picked for you, not saved yet" in body
+    assert "Not saved yet" in body
 
     client.get(reverse("opportunities"))
     client.post(reverse("track_eligible"), {"confirmed": "1"})
     body = client.get(reverse("crm:week")).content.decode()
-    assert "Every pick saved" in body
-    assert "Fill in Settings to get picks" not in body
+    assert "All picks saved" in body
+    assert "Get role suggestions" not in body
 
 
 # ---------------------------------------------------------------------------
@@ -2422,7 +2399,7 @@ def test_a_queue_of_only_stuck_prompts_is_not_a_silent_queue(client):
 
     client.force_login(user)
     body = client.get(reverse("crm:week")).content.decode()
-    assert "Still open" in body
+    assert "Still Open" in body
     assert "Leo Ziqiang Yuan" in body
 
 
@@ -3069,12 +3046,12 @@ def test_the_holiday_plans_confirmed_deadlines_only_and_marks_the_rest():
         )
     # The strip, and the two lines that used to quote the cap.
     assert 'data-blackout="holiday"' in body
-    assert "Outreach resumes Jan 4." in body
-    assert "Confirmed deadlines still show below." in body
+    assert "Outreach resumes Jan 4" in body
+    assert "Confirmed deadlines stay in today’s plan." in body
     assert "It's the weekend" not in body
-    assert "waiting for Jan 4" in body
-    assert "pacing out at" not in body
-    assert "Resumes Jan 4." in body
+    assert "The plan resumes Jan 4" in body
+    assert "Your plan includes up to" not in body
+    assert "Outreach is paused today." in body
     assert "more to go" not in body
 
 
@@ -3093,9 +3070,11 @@ def test_a_weekend_holds_everything_but_confirmed_deadlines_until_monday():
         assert a["blackout"] == "weekend"
         assert a["reason"].endswith("It's the weekend. Better Monday.")
         assert "better tomorrow" not in a["reason"]
-    assert "It's the weekend. Outreach resumes Monday." in body
-    assert "waiting for Monday" in body
-    assert "Resumes Monday." in body
+    assert "1 outreach task in today’s plan." in body
+    assert "Confirmed deadlines stay in today’s plan." in body
+    assert "Outreach resumes Monday" in body
+    assert "3 contacts waiting" in body
+    assert "The plan resumes Monday with up to" in body
 
 
 @pytest.mark.outreach_blackout
@@ -3115,10 +3094,11 @@ def test_the_strip_does_not_point_at_deadlines_that_are_not_there():
     assert ctx["lanes"] == []
     assert ctx["held_total"] == 3
     assert ctx["seeds"] == []
-    assert "Only confirmed deadlines show until then." in body
+    assert "Confirmed deadlines stay in today’s plan." in body
     assert "Confirmed deadlines still show below." not in body
-    assert "Done for today." in body
-    assert "3 more are waiting for Jan 4." in body
+    assert "Your Next Steps" in body
+    assert "3 contacts waiting" in body
+    assert "The plan resumes Jan 4" in body
     assert "pacing out" not in body
 
 
@@ -3147,8 +3127,8 @@ def test_an_ordinary_weekday_renders_byte_identical_with_the_blackout_in_place()
     assert ctx["blackout_resumes"] == ""
     assert "data-blackout" not in after
     assert "Outreach resumes" not in after
-    assert "pacing out at" in after, "the cap's own line must still render"
-    assert "more to go" in after
+    assert "Your plan includes up to" in after, "the cap's own line must still render"
+    assert "more to reach your goal." in after
     everyone = [a for lane in ctx["lanes"] for a in lane["items"]] + ctx["held"]
     assert everyone and all(a["blackout"] is None for a in everyone)
     assert not any(
@@ -3310,7 +3290,7 @@ def test_a_first_outreach_card_is_not_filed_under_follow_ups():
     lanes = {lane["key"]: lane for lane in _cockpit_context(user)["lanes"]}
 
     assert [a["action"] for a in lanes["cold"]["items"]] == ["first_outreach"]
-    assert lanes["cold"]["label"] == "First outreach"
+    assert lanes["cold"]["label"] == "First Outreach"
 
 
 def test_the_cold_lane_still_says_follow_ups_when_that_is_what_it_holds():
@@ -3323,14 +3303,14 @@ def test_the_cold_lane_still_says_follow_ups_when_that_is_what_it_holds():
     lanes = {lane["key"]: lane for lane in _cockpit_context(user)["lanes"]}
 
     assert [a["action"] for a in lanes["cold"]["items"]] == ["follow_up"]
-    assert lanes["cold"]["label"] == "Cold follow-ups"
+    assert lanes["cold"]["label"] == "Cold Follow-Ups"
 
 
 def test_a_mixed_cold_lane_claims_neither():
     """Both kinds on screen at once: the heading must not assert either."""
     from crm.today import _lane_label
     items = [{"action": "first_outreach"}, {"action": "follow_up"}]
-    assert _lane_label("cold", items, "Cold follow-ups") == "Cold outreach"
+    assert _lane_label("cold", items, "Cold Follow-Ups") == "Cold Outreach"
     # The other two lanes hold one kind of work each and keep their labels.
     assert _lane_label("critical", items, "Don't lose these") == "Don't lose these"
 

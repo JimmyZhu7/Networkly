@@ -25,6 +25,9 @@ def test_public_screens_use_networkly(client, route):
     assert response.status_code == 200
     text = visible_copy(response.content.decode())
     assert 'Networkly' in text
+    head = response.content.decode().split('</head>', 1)[0]
+    assert re.search(r'<title>Networkly(?: · |</title>)', head)
+    assert 'img/favicon.ico' in head and 'img/favicon-32.png' in head
     assert not re.search(r'\bcoverage\b', text, re.I)
 
 
@@ -36,6 +39,9 @@ def test_private_screens_use_networkly(client, route):
     assert response.status_code == 200
     text = visible_copy(response.content.decode())
     assert 'Networkly' in text
+    head = response.content.decode().split('</head>', 1)[0]
+    assert re.search(r'<title>Networkly(?: · |</title>)', head)
+    assert 'img/favicon.ico' in head and 'img/favicon-32.png' in head
     assert not re.search(r'\bcoverage\b', text, re.I)
     assert 'aria-label="Networkly home"' in response.content.decode()
 

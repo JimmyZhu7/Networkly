@@ -25,7 +25,7 @@ walks the same URL as a plain page load.
           board can carry 13 of these below the fold.{% endcomment %}
           {% if cl.logo_url %}
             <span class="firmcol-logo has-logo">
-              <img src="{{ cl.logo_url }}" alt="" loading="lazy" decoding="async" width="128" height="128">
+              <img src="{{ cl.logo_url }}" alt="" loading="lazy" decoding="async" width="128" height="128" data-firm-logo><span class="firm-monogram" hidden>{{ cl.monogram }}</span>
             </span>
           {% else %}
             <span class="firmcol-logo" style="--hue: {{ cl.firm_slug|firm_hue }}">{{ cl.monogram }}</span>

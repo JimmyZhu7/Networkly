@@ -215,7 +215,7 @@ def test_rolling_card_renders_the_observed_footer_not_the_fuse(client):
     # The undated row: no date posted, elapsed time stated in words, and its
     # due column carries the honest dash — never a countdown figure.
     assert "Deadline not listed, first seen 15d ago" in body
-    assert "rr-due-none" in body
+    assert 'class="rr-undated"' in body
     # The dated row: a real countdown figure, coloured by its urgency level
     # (10 days out is "upcoming" — see `_urgency_item`'s level bands).
     assert "rr-due-n meta-upcoming" in body
@@ -465,7 +465,7 @@ def test_a_prose_read_deadline_is_marked_on_the_feed(client):
     body = client.get("/opportunities/").content.decode()
     assert "is-reported" in body
     # The caveat must reach a screen reader, not only a hovering mouse.
-    assert "(reported)" in body
+    assert re.search(r'<span class="rr-due-prov"[^>]*>reported</span>', body)
 
 
 @pytest.mark.django_db
@@ -655,7 +655,7 @@ def test_the_fit_toggle_needs_a_profile_to_exist(client, django_user_model):
     client.force_login(blank)
     body = client.get("/opportunities/?fit=1").content.decode()
     assert "Would Hide Intern" in body, "no Settings, no verdicts, no hiding"
-    assert 'name="fit"' not in body, "no toggle offered either"
+    assert not re.search(r'<input\b[^>]*name="fit"', body), "no toggle offered either"
 
 
 # ---------------------------------------------------------------------------
@@ -1566,7 +1566,7 @@ def test_a_stale_row_prints_its_age_where_the_countdown_is(client):
         last_verified=NOW - timedelta(days=6), last_checked=NOW - timedelta(days=6))
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())
-    assert "6d old" in body, (
+    assert re.search(r'<span class="rr-due-age"[^>]*>Last confirmed live 6 days ago</span>', body), (
         "a row last confirmed six days ago must say so beside its countdown"
     )
     # Not sighted-only, same rule the provenance mark follows on this page.

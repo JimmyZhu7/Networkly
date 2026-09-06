@@ -107,7 +107,7 @@ def test_comparison_table_renders_every_row_in_both_columns(client):
     assert table, "the side-by-side table should render inside the Individual panel"
     table = table.group(0)
 
-    for group in ("The board", "Your workspace", "The advisor", "Your data"):
+    for group in ("The Board", "Your Workspace", "The Assistant", "Your Data"):
         assert f'<td class="cmp-group" colspan="3">{group}</td>' in table
 
     rows = re.findall(r"<tr>(.*?)</tr>", table, re.S)
@@ -191,7 +191,7 @@ def test_free_card_no_longer_claims_gmail_live(client):
 
     assert "Gmail Live: connect Gmail and it logs itself" not in body
     assert "Optional Gmail and Calendar sync" not in body
-    assert "Gmail Live: real-time sync that logs itself." in body
+    assert "Gmail Live: real-time sync that logs recruiting interactions." in body
 
     free_card = re.search(
         r'<article class="price-card featured.*?</article>', body, re.S
@@ -216,7 +216,7 @@ def test_supporting_copy_agrees_with_the_rebalanced_story(client):
 
     # 2026-08-20 lead sentence (founder-decisions-2026-08-20.md §2d): Pro's
     # anchor is the sync, not a vague "engine".
-    assert "Find the plan for your recruiting search." in body
+    assert "Choose Your Recruiting Plan" in " ".join(re.sub(r"<[^>]*>", " ", re.search(r"<h1>.*?</h1>", body, re.S).group()).split())
     assert "The board is free. The engine is Pro." not in body
     assert "Free while we earn the right to charge." not in body
     assert "Browse roles and manage your recruiting. No payment card required." in body

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% comment %}
 ================================================================================
@@ -50,112 +51,130 @@ DO NOT REWORD: the "Google API Limited Use" section
 ================================================================================
 {% endcomment %}
 
-{% block title %}Privacy · Networkly{% endblock %}
+{% block title %}Networkly · Privacy{% endblock %}
+
+{% block head %}<link rel="stylesheet" href="{% static 'css/legal.css' %}">{% endblock %}
 
 {% block content %}
-<div class="page page--narrow legal support-legal">
-  <h1 class="support-title">Privacy</h1>
-  <p class="lede">What Networkly collects, how it uses your data, and your controls.</p>
+<div class="page legal-page">
+  <header class="legal-header">
+    <nav class="legal-tabs" aria-label="Legal pages"><a href="{% url 'accounts:privacy' %}" aria-current="page">Privacy</a><a href="{% url 'accounts:terms' %}">Terms</a></nav>
+    <h1>Privacy Policy</h1><p class="legal-lede">Your data, your choices, and how Networkly works.</p>
+    <p class="legal-updated">Last updated <time datetime="2026-09-05">5 September 2026</time></p>
+  </header>
+  <div class="legal-layout">
+    <nav class="legal-index" aria-label="On this page"><span>On This Page</span><a href="#what-we-collect">Your Data</a><a href="#optional-mail-access">Connections</a><a href="#who-we-share-data-with">Providers</a><a href="#retention">Retention</a><a href="#your-rights">Your Controls</a><a href="#contact">Contact</a></nav>
+    <article class="legal-document" aria-label="Privacy Policy">
 
-  <p class="muted">Last updated 1 September 2026.</p>
-
-  <h2>The short version</h2>
-  <ul>
-    <li>Your recruiting data is yours. No other user can see it, and we do not sell it.</li>
-    <li>We share data with four kinds of company: the one that hosts the database, the one that signs you in, the one that answers when you use the AI advisor, and the ones that send mail and catch crashes. All four are named below.</li>
-    <li>You can export everything and delete everything yourself, right now, without asking us.</li>
+<section id="the-short-version" aria-labelledby="the-short-version-title"><h2 id="the-short-version-title">The Short Version</h2>
+<ul>
+    <li>Your recruiting workspace is private to your account. We do not sell your personal data.</li>
+    <li>Gmail and Google Calendar connections are optional. AI features send relevant information to Anthropic when you use them.</li>
+    <li>You can export your recruiting records, disconnect integrations, and delete your account from Settings.</li>
   </ul>
-
-  <h2>Who runs Networkly</h2>
-  <p>Networkly is operated by [LEGAL ENTITY NAME], [REGISTERED ADDRESS]. For anything on this page, including a request about your data, write to [PRIVACY CONTACT EMAIL].</p>
-
-  <h2>What we collect</h2>
-  <p>We collect these categories of data.</p>
+</section>
+<section id="who-runs-networkly" aria-labelledby="who-runs-networkly-title"><h2 id="who-runs-networkly-title">Who Runs Networkly</h2>
+<p>Networkly is operated by [LEGAL ENTITY NAME], [REGISTERED ADDRESS]. For privacy questions or requests, contact [PRIVACY CONTACT EMAIL].</p>
+</section>
+<section id="what-we-collect" aria-labelledby="what-we-collect-title"><h2 id="what-we-collect-title">What We Collect</h2>
+<p>We collect these categories of data.</p>
   <ul>
     <li><strong>Your account.</strong> Email address, and either a password (stored only as a one-way hash, never in readable form) or the identity your sign-in provider hands us. Plus what you tell us about yourself in Settings: name, school, class year, study level, recruiting cycle, target regions and tracks, work authorization, languages you work in, affiliations you list, timezone, and an optional profile picture.</li>
     <li><strong>Your recruiting data.</strong> Contacts (names, email addresses, firms, roles, your notes and angles), logged interactions, tasks, target firms and the tier you gave each, roles you are tracking, interview dates, calendar events, chat debriefs, fit scores, and the CSVs you import.</li>
-    <li><strong>Your use of the product.</strong> Which pages and actions you use, as an event name and a small set of properties. This is how we tell whether the product actually works. No email bodies go into it.</li>
+    <li><strong>Your use of the product.</strong> Which pages and actions you use, as an event name and a small set of properties. We use these events to improve the product. Usage events do not include email bodies. Security systems also process technical information, such as IP addresses and failed sign-in attempts, to prevent abuse.</li>
     <li><strong>Your AI conversations, if you use them.</strong> If you use the assistant, the conversation is stored on your account so it is still there tomorrow, along with any facts the advisor was told to remember and any files you attached to a message.</li>
   </ul>
-
-  <h2>Optional mail access</h2>
-  <p>Networkly logs your recruiting mail only through a path you switch on yourself, and it is not on by default.</p>
+</section>
+<section id="optional-mail-access" aria-labelledby="optional-mail-access-title"><h2 id="optional-mail-access-title">Optional Mail Access</h2>
+<p>Mail access is optional and starts only after you connect Gmail through a separate Google consent screen. Google sign-in alone does not give Networkly access to your mail.</p>
   <ul>
     <li><strong>A Gmail account you connect.</strong> If Gmail Live is enabled on this deployment and you complete Google's consent screen, Networkly reads your Gmail with Google's read-only scope in order to log recruiting interactions automatically. This grants access to your mailbox, as described below.</li>
   </ul>
-  <p>On the Gmail path we store a Google refresh token, encrypted at rest, plus the mailbox address and a position marker so we know where we last read. Networkly reads the whole message. It asks Gmail for the full message, decodes the body and any calendar attachment, and works over that text in memory to decide what happened. None of that text is written down. What lands in your recruiting data is the structured result: who the message was from, whether it was a reply, a bounce or an auto-reply, the time and title of any calendar invite, and a short evidence line of up to 300 characters, which is normally the subject line or Gmail's own preview snippet. That evidence line is stored on the interaction so you can see why Networkly logged what it logged.</p>
-  <p>Limited evidence retention. When a message states something Networkly is going to act on, such as a person having left the firm or an address that no longer works, we keep one verbatim sentence from that message, up to 500 characters, stored next to the fact it grounds. Nothing is acted on without one: that sentence is how you check the action against what was actually said, and Networkly refuses to act when it cannot quote a reason. It is shown to you on the card, it is never copied into your notes, and it is the only body text we keep. For a delivery failure the sentence comes from the mail server's own report rather than from a person's message.</p>
-  <p>One part of the Gmail path sends message text to an AI provider. When you press Scan Now, a few messages come back with no clear answer to the one question Networkly cares about: was that a real reply from a person, or an out-of-office. To settle those, and only those, Networkly sends that message's subject line and Gmail's own preview snippet to Anthropic. Never the message body, never an attachment, never the whole mailbox, and never more than 100 messages in one scan. What comes back is one of three fixed answers, and it decides whether the interaction gets logged as a reply. This happens only when you press Scan Now, and not at all if no Anthropic key is configured on the deployment.</p>
-  <p>You can disconnect Gmail at any time from Settings, which deletes the stored token. You can also revoke Networkly's access directly in your Google account at any time, and that revocation wins.</p>
-
-  <h2>Google API Limited Use</h2>
-  <p>Networkly's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
-  <p>What that means here, in full: Gmail data is used only to log interactions in your own CRM. It is never sold, never used for advertising, never used to build a profile of you, and never used to train any AI model, ours or anyone else's. The only place it goes outside the app is the classification call described above, to answer that one question about that one message. Nobody operating Networkly reads it either, except in the narrow cases that policy allows: you ask us to look at a problem, we are chasing a security issue, or the law requires it.</p>
-
-  <h2>What we use it for</h2>
-  <p>To run your recruiting workspace: Logging interactions, updating a contact’s relationship stage, building your weekly list and your fit scores, and answering you when you ask the advisor a question. Your data works for you and no one else.</p>
-  <p>We do not use your recruiting data to train any AI model, ours or anybody else's, and we do not authorise our providers to do so either.</p>
-
-  <h2>Data use restrictions</h2>
-  <ul>
+  <p>For a connected mailbox, we store an encrypted refresh token, the mailbox address, and sync markers. Networkly reads the whole message, including its body and calendar attachments, and processes that text in memory to identify recruiting activity. We retain structured results such as the sender, reply status, and meeting details. Interactions may include a subject line or preview snippet of up to 300 characters. We do not retain complete messages through this sync.</p>
+  <p><strong>Limited evidence retention.</strong> A mail fact, such as a stated departure or delivery failure, may retain one verbatim sentence of up to 500 characters. This quote supports the fact and is shown for your review. A delivery-failure quote can come from the mail server’s report. These retained excerpts are an exception to the rule against storing complete message bodies.</p>
+  <p><strong>AI-assisted scans.</strong> When you press Scan Now, messages that cannot be classified deterministically may be checked by Anthropic. The request includes the subject line and Gmail preview snippet, not the full body or attachments. This is limited to one representative message from each of at most 100 unresolved threads per scan, and only runs when the AI service is enabled.</p>
+  <p>Disconnect Gmail in Settings to remove the stored connection token and stop future syncs. Networkly also attempts to revoke the Google grant. You can revoke it directly in your Google account. Disconnecting does not remove recruiting records already created; those remain until you delete them or your account.</p>
+</section>
+<section id="optional-calendar-access" aria-labelledby="optional-calendar-access-title"><h2 id="optional-calendar-access-title">Optional Calendar Access</h2>
+<p>If you connect Google Calendar, Networkly requests separate read-only permission to display calendar events in your workspace. It stores an encrypted connection token, sync markers, event titles, descriptions, locations, start and end times, and event identifiers. It does not create, edit, delete, or RSVP to events in Google Calendar.</p>
+  <p>Calendar and Gmail connections are separate. You can disconnect either from Settings without disconnecting the other. Imported events remain in Networkly until removed or your account is deleted. Calendar details may also be included as context when you use an AI feature that works with your schedule.</p>
+</section>
+<section id="google-api-limited-use" aria-labelledby="google-api-limited-use-title"><h2 id="google-api-limited-use-title">Google API Limited Use</h2>
+<p>Networkly's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+  <p>Google data is used to provide the connected recruiting and calendar features you choose. It is not sold, used for advertising, or used to train a general-purpose AI model. Relevant Gmail-derived information may be sent to Anthropic for the scan and Autopilot features described below. Operator access is limited to the cases allowed by Google’s policy, including your specific consent for support, security investigations, and legal obligations.</p>
+</section>
+<section id="what-we-use-it-for" aria-labelledby="what-we-use-it-for-title"><h2 id="what-we-use-it-for-title">What We Use It For</h2>
+<p>We use your information to maintain your account, organize contacts and applications, log interactions, show your schedule, personalize recommendations, answer AI requests, and provide support. We also use technical and product events to secure and improve the service.</p>
+  <p>We do not use your recruiting data to train AI models or authorize that use by our providers. Anthropic’s commercial API has separate <a href="https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training" target="_blank" rel="noopener">data-use terms</a>; this is not a claim of zero retention by the provider.</p>
+</section>
+<section id="data-use-restrictions" aria-labelledby="data-use-restrictions-title"><h2 id="data-use-restrictions-title">Data Use Restrictions</h2>
+<ul>
     <li>We do not sell your data, and we do not share it with advertisers or data brokers.</li>
-    <li>No other user can see your contacts, your interactions, or who you are talking to. Ever. Private data is scoped to your account at the database level: every private table carries your user id, and querying one without a tenant scope raises an error rather than returning somebody else's rows.</li>
-    <li>The only thing your activity contributes to anyone else is an aggregate, anonymous count: whether mail to a firm's domain tends to bounce. That is a number, never an address, and it cannot be traced back to you.</li>
+    <li>Your private recruiting records are scoped to your account. We do not make them visible to other users through the shared opportunity directory.</li>
+    <li>Aggregated delivery statistics may help assess whether mail to a firm’s domain tends to bounce. The shared statistic does not display your name or a contact’s email address.</li>
     <li>We do not put email bodies in our logs.</li>
-    <li>We do not run third-party advertising or analytics scripts. Networkly loads no code from anyone else's servers.</li>
+    <li>We do not use third-party advertising trackers. Sign-in, connected services, and optional error monitoring involve the providers described below.</li>
   </ul>
-
-  <h2>Who we share data with</h2>
-  <p>We share data with these providers for the purposes described below.</p>
+</section>
+<section id="who-we-share-data-with" aria-labelledby="who-we-share-data-with-title"><h2 id="who-we-share-data-with-title">Who We Share Data With</h2>
+<p>We share data with these providers for the purposes described below.</p>
   <ul>
-    <li><strong>Render</strong> hosts the app and the Postgres database. Everything you store in Networkly sits there.</li>
-    <li><strong>Anthropic</strong> answers when an AI feature runs. This only happens when you set one off, and there are five ways to: sending a message in the assistant, generating a coffee-chat brief, generating a relationship summary on a contact, pressing Scan Now on a connected Gmail account, or running Autopilot on Today. For the first three, what leaves the app is the relevant slice of your own CRM, which can include contact names, firms, roles, your private notes, and your logged interactions. Contact email addresses are deliberately excluded from those three: the advisor is told only whether a contact has an email on file, never what it is. If you attach a file to an advisor message, that file goes too. <strong>Scan Now is different, and it is the one place Gmail content itself leaves Networkly:</strong> for each message the deterministic pass could not classify, capped at 100 per scan, the subject line and Gmail's preview snippet are sent so the model can say whether it was a real reply or an auto-responder. No message body, no attachment, nothing about the messages that classified cleanly. <strong>Autopilot is the one place a contact's own email address is sent:</strong> when you press it on Today, each pending contact card is sent to the model, capped at 200 cards in one run, together with the person's name and email address, the firm your scan matched them to, the same subject-line-or-snippet evidence Scan Now uses, and any mail fact already on your account about that address (a stated departure, a bounce, an out-of-office) — so the model can flag anything that argues the card would be wrong before it is ever offered to you to add. Nothing is written to your recruiting data by this pass; adding a card still takes your own tap. If no Anthropic key is configured on the deployment, every AI feature is dark and nothing is sent.</li>
-    <li><strong>Google</strong> receives a sign-in request if you sign in with Google, and serves your mail if you connect Gmail. The sign-in path asks for identity only and can never read mail. Gmail Live is a separate, second consent with its own credentials, and turning it down does not affect your ability to log in.</li>
+    <li><strong>Render</strong> hosts the app and the Postgres database. It processes stored account and recruiting information to operate the service.</li>
+    <li><strong>Anthropic</strong> processes requests for enabled AI features:
+      <ul>
+        <li><strong>The assistant, a coffee-chat brief, or a relationship summary:</strong> relevant profile and recruiting context, which can include contact names, firms, roles, notes, interactions, and schedule details. Context supplied automatically for these features excludes contact email addresses. Text you enter or files you attach can still contain personal information and are sent with your request.</li>
+        <li><strong>Scan Now:</strong> the subject line and preview snippet for unresolved Gmail threads, as described in Optional Mail Access.</li>
+        <li><strong>Autopilot:</strong> up to 200 pending contact cards per run, including each person’s name and email address, matched firm, subject-line or snippet evidence, and relevant stored mail facts. The model reviews whether a proposed card is supported by the evidence. Adding contacts still requires your action.</li>
+      </ul>
+      These calls run only when the relevant feature is triggered and the AI service is configured.
+    </li>
+    <li><strong>Google</strong> receives a sign-in request if you sign in with Google, and provides mail or calendar data if you connect those services. The sign-in path asks for identity only and can never read mail. Gmail Live is a separate, second consent with its own credentials, and turning it down does not affect your ability to log in.</li>
     <li><strong>Your other sign-in provider,</strong> if the deployment offers Apple, Microsoft or LinkedIn and you choose one. Same identity-only scopes, same rule: no mailbox access.</li>
     <li><strong>An email provider,</strong> when one is configured, to deliver transactional mail such as password resets and deadline digests. It sees the address the mail is going to and what is in that mail.</li>
     <li><strong>A push service,</strong> if you turn on deadline alerts. Your browser's own push endpoint delivers the notification.</li>
-    <li><strong>Sentry,</strong> if error monitoring is configured on the deployment, to report crashes. It is configured not to send personal information with those reports.</li>
+    <li><strong>Sentry,</strong> if error monitoring is configured on the deployment, to report crashes. Default personal-information collection is disabled. Error reports may still contain technical request and diagnostic information.</li>
   </ul>
   <p>We may also disclose data where the law actually requires it, or to protect someone's safety. If that ever happens and we are permitted to tell you, we will.</p>
-
-  <h2>Cookies and sessions</h2>
-  <p>Networkly sets two cookies. One keeps you signed in. One carries the token that stops other sites forging requests as you. Both are marked secure on the live site. That is the entire list. No advertising cookies, no tracking pixels, no third-party cookies, which is also why you are not reading a consent banner right now.</p>
-
-  <h2>Retention</h2>
-  <p>Your recruiting data stays until you delete it, either row by row or by deleting your account. Nothing expires on its own while your account is open.</p>
-  <p>On the Gmail path we store no messages, only the structured result described above and the quoted sentence behind any fact Networkly acted on.</p>
-  <p>When you delete your account, deletion is immediate and is a hard delete, not a flag. See below.</p>
-
-  <h2>Security</h2>
-  <p>Traffic is encrypted in transit with TLS, and HTTPS is forced on the live site. Passwords are stored as one-way hashes. A connected Gmail refresh token is encrypted at rest with a key held outside the database. Tenant isolation is enforced in the data layer rather than by convention, and is covered by tests.</p>
-  <p>No system is perfectly secure, and we are not going to pretend otherwise. We do not guarantee that Networkly cannot be breached. We do commit to the paragraph below if it happens.</p>
-
-  <h2>If there is a breach</h2>
-  <p>If personal data is exposed in a way likely to put you at risk, we will tell affected users directly, by email, without undue delay and in any case within 72 hours of confirming it, and we will notify any regulator the law requires us to notify. The notice will say what happened, what data was involved, and what you should do. We will not wait until we have a complete story to tell you there is a problem.</p>
-
-  <h2>Your rights</h2>
-  <p>You do not have to file a request to exercise most of these. The tools are in the product.</p>
+</section>
+<section id="cookies-and-sessions" aria-labelledby="cookies-and-sessions-title"><h2 id="cookies-and-sessions-title">Cookies and Sessions</h2>
+<p>Networkly uses essential cookies for sign-in sessions and request-forgery protection. Authentication or short-lived status messages may also use cookies. Browser storage remembers preferences such as your theme. We do not use advertising cookies or tracking pixels. Connected providers apply their own policies when you visit their consent or sign-in pages.</p>
+</section>
+<section id="retention" aria-labelledby="retention-title"><h2 id="retention-title">Retention</h2>
+<p>Your recruiting records are retained while your account is open, unless you delete them. Connection tokens are removed when you disconnect a service. Temporary sessions, rate-limit counters, and sync state follow their own operational expiry rules.</p>
+  <p>Gmail sync retains the structured records and limited evidence excerpts described above, rather than complete messages.</p>
+  <p>Account deletion removes your account and associated private database records from the active service. This does not erase data you exported, messages in your mailbox, or copies already held by connected providers. Hosting backups follow [BACKUP RETENTION PERIOD]; provider retention is governed by the applicable service arrangements.</p>
+</section>
+<section id="security" aria-labelledby="security-title"><h2 id="security-title">Security</h2>
+<p>Production settings require HTTPS and secure cookies. Passwords are stored as one-way hashes. Gmail and Google Calendar refresh tokens are encrypted with a key held separately from the database. Account scoping and access controls help protect private records.</p>
+  <p>No service can guarantee absolute security. Report a suspected security issue to [PRIVACY CONTACT EMAIL].</p>
+</section>
+<section id="if-there-is-a-breach" aria-labelledby="if-there-is-a-breach-title"><h2 id="if-there-is-a-breach-title">If There Is a Breach</h2>
+<p>If personal data is exposed in a way likely to put you at risk, we will tell affected users directly, by email, without undue delay and in any case within 72 hours of confirming it, and we will notify any regulator the law requires us to notify. The notice will say what happened, what data was involved, and what you should do. We will not wait until we have a complete story to tell you there is a problem.</p>
+</section>
+<section id="your-rights" aria-labelledby="your-rights-title"><h2 id="your-rights-title">Your Rights</h2>
+<p>You do not have to file a request to exercise most of these. The tools are in the product.</p>
   <ul>
-    <li><strong>Access and portability.</strong> <a href="{% url 'accounts:export' %}">Export everything</a> as one ZIP of CSVs, one file per table, including your assistant conversations, advisor memories, and calendar events. The export page lists every file it contains, so you can check the claim rather than trust it.</li>
-    <li><strong>Correction.</strong> Every field you can see, you can edit, in Settings or on the record itself.</li>
-    <li><strong>Deletion.</strong> <a href="{% url 'accounts:delete' %}">Delete your account and all of its data</a> yourself, immediately. No email to support, no waiting period, no cooling-off window during which we quietly keep it.</li>
-    <li><strong>Objection and restriction.</strong> Write to [PRIVACY CONTACT EMAIL]. If you would rather not use a feature, every optional data flow on this page has an off switch, and the off switch is the default.</li>
+    <li><strong>Access and portability.</strong> <a href="{% url 'accounts:export' %}">Export your recruiting records</a> as CSVs in a ZIP, including conversation text, advisor memories, and calendar events. The export page lists the included records. Passwords, connection secrets, the shared opportunity directory, and original uploaded files are not part of this record export.</li>
+    <li><strong>Correction.</strong> Update your profile and editable recruiting records in Settings or on the record. Contact us if information cannot be corrected through those controls.</li>
+    <li><strong>Deletion.</strong> <a href="{% url 'accounts:delete' %}">Delete your account</a> through Settings. The Retention section explains the scope of deletion and separately held copies.</li>
+    <li><strong>Objection and restriction.</strong> Write to [PRIVACY CONTACT EMAIL]. You can also disconnect optional integrations and stop using AI features at any time.</li>
   </ul>
-  <p>If you are in the EU, the UK, or California, you also have these rights under your own law, including the right to complain to your data protection authority and, in California, the right not to be discriminated against for exercising them. We do not sell or share personal information as those laws define it. We are describing the rights we honour, not claiming a certification we have not been through.</p>
+  <p>Depending on where you live and which laws apply, you may have rights to access, correct, delete, or obtain a copy of your personal information; restrict or object to processing; withdraw consent; or complain to a data-protection authority. We do not sell personal information or share it for cross-context behavioral advertising. We will not discriminate against you for exercising applicable privacy rights.</p>
   <p>We answer rights requests within 30 days. We will not charge you for one.</p>
-
-  <h2>Age</h2>
-  <p>Networkly is built for university students and is not intended for children. You need to be at least 16 to use it. We do not knowingly collect data from anyone under 16, and if we learn we have, we delete the account and its data rather than asking for proof.</p>
-
-  <h2>Where your data lives</h2>
-  <p>Networkly runs on Render, and the database and application servers sit in Render's United States region. If you are outside the United States, using Networkly means your data is processed there. Our AI provider and sign-in providers may also process requests outside [JURISDICTION]. Where the law requires a transfer safeguard, we rely on our providers' standard contractual clauses.</p>
-
-  <h2>Changes to this policy</h2>
-  <p>We may update this page as the product changes. The date at the top is the version you are reading. If a change materially affects what we collect or who we send it to, we will tell you in the app or by email before it takes effect, rather than changing the page and hoping you do not look. Continuing to use Networkly after that means you accept the new version.</p>
-
-  <h2>Contact</h2>
-  <p>Questions, requests, or something on this page that does not match what you see the product doing: [PRIVACY CONTACT EMAIL]. </p>
-
-  <p class="muted"><a href="{% url 'accounts:terms' %}">Terms</a></p>
+</section>
+<section id="age" aria-labelledby="age-title"><h2 id="age-title">Age</h2>
+<p>Networkly is built for university students and is not intended for children. You need to be at least 16 to use it. We do not knowingly collect data from anyone under 16, and if we learn we have, we delete the account and its data rather than asking for proof.</p>
+</section>
+<section id="where-your-data-lives" aria-labelledby="where-your-data-lives-title"><h2 id="where-your-data-lives-title">Where Your Data Lives</h2>
+<p>Our hosting provider is Render. The operating jurisdiction is [JURISDICTION] and the hosting location is [HOSTING REGION]. Providers may process information in other countries. Where required, transfers must use an applicable legal safeguard. Contact us for details of the arrangements relevant to your data.</p>
+</section>
+<section id="changes-to-this-policy" aria-labelledby="changes-to-this-policy-title"><h2 id="changes-to-this-policy-title">Changes to This Policy</h2>
+<p>We may update this policy as the product changes. The date above identifies the revision. We will notify you in the app or by email before material changes take effect and obtain consent where required. A policy update does not remove rights you have under applicable law.</p>
+</section>
+<section id="contact" aria-labelledby="contact-title"><h2 id="contact-title">Contact</h2>
+<p>For privacy questions or requests, contact [PRIVACY CONTACT EMAIL].</p>
+</section>
+    </article>
+  </div>
 </div>
 {% endblock %}

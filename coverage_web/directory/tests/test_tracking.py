@@ -71,7 +71,9 @@ def test_track_is_per_user(client):
     assert UserOpportunity.objects.for_user(b).count() == 0
     resp = client.get(reverse("my_applications"))
     assert resp.status_code == 200
-    assert b"No roles saved yet" in resp.content
+    assert b"No Roles Saved Yet" in resp.content
+    assert resp.context["total"] == 0
+    assert o.title.encode() not in resp.content
 
 
 @pytest.mark.django_db

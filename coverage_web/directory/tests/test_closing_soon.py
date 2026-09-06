@@ -340,9 +340,9 @@ def test_lens_rows_show_the_stage_they_are_counted_in(client, board, tracked):
     # fraction below is the arithmetic that backs it up.
     # "Cross-section, not extra roles" retired with the duplication it
     # apologised for; the eyebrow now states the band's order instead.
-    assert "Soonest first" in body
+    assert "By Deadline" in body
     assert "sorted by deadline instead of stage" not in body
-    assert f"of {resp.context['live_total']} live" in body
+    assert body.count('data-app-stage="') == resp.context["total"]
 
 
 # ---------------------------------------------------------------------------

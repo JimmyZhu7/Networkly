@@ -127,5 +127,5 @@ def test_the_live_count_itself_is_still_reported(path, marker):
     html = Client().get(path).content.decode()
 
     # The decorative eyebrow was removed; the factual summary keeps its count.
-    assert re.search(r'class="dash-num">\d+</span><span class="dash-lbl">Open campus roles', html)
+    assert re.search(r'class="dash-num">\d+</span>\s*<span>Open campus roles', html)
     assert marker in html, f"{path} no longer reports the live roles count"

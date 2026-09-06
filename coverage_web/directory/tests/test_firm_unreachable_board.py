@@ -33,7 +33,7 @@ def test_the_firm_page_says_it_does_not_read_the_campus_board(client):
 
     body = _page(client, "blackrock")
 
-    assert "We do not scrape BlackRock's campus board" in body
+    assert "We do not track BlackRock's campus board" in body
     assert "robots.txt" in body
 
 

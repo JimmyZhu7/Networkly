@@ -34,7 +34,7 @@ that day for an unrelated reason: the getting-started rail checklist
 instead of only on a silent-queue render, so the two stopped telling the
 student the same thing in two registers at once. What is left in this file
 is the rest of SETUP — mailbox connected, list imported, track set — which
-is the honest remaining scope for a lane headed "Start here".
+is the honest remaining scope for a lane headed "Start Here".
 
 Its own module rather than an append to `test_today.py`: this is a distinct
 feature with a distinct premise, and the file it would otherwise land in is
@@ -100,9 +100,9 @@ def test_one_contact_just_touched_is_never_called_caught_up(client):
     assert not ctx["lanes"], "precondition: the cadence has nothing due yet"
 
     body = _login_and_get(client, user)
-    assert "You're all caught up." not in body
-    assert "Nothing due today." in body
-    assert "Start here" in body
+    assert "You're All Caught Up." not in body
+    assert "Nothing Due Today." in body
+    assert "Start Here" in body
 
 
 def test_a_queue_of_nothing_but_parks_still_gets_seeds(client):
@@ -116,8 +116,8 @@ def test_a_queue_of_nothing_but_parks_still_gets_seeds(client):
     _touch(user, c, "follow_up", days_ago=30)
 
     body = _login_and_get(client, user)
-    assert "Gone quiet" in body, "precondition: this contact is park-eligible"
-    assert "Start here" in body
+    assert "Gone Quiet" in body, "precondition: this contact is park-eligible"
+    assert "Start Here" in body
 
 
 # ---------------------------------------------------------------------------
@@ -175,8 +175,8 @@ def test_a_handled_queue_keeps_the_line_the_student_earned(client):
     assert ctx["seeds"] == []
 
     body = _login_and_get(client, user)
-    assert "You're all caught up." in body
-    assert "Start here" not in body
+    assert "You're All Caught Up." in body
+    assert "Start Here" not in body
 
 
 def test_the_same_silence_over_an_unbuilt_network_does_get_seeds(client):
@@ -200,7 +200,7 @@ def test_the_same_silence_over_an_unbuilt_network_does_get_seeds(client):
         "and not a network to be caught up on"
     )
     body = _login_and_get(client, user)
-    assert "You're all caught up." not in body
+    assert "You're All Caught Up." not in body
 
 
 def test_seeds_stay_silent_while_the_cap_is_still_pacing_work_out():
@@ -290,7 +290,7 @@ def test_the_gmail_seed_survives_the_cap_on_a_brand_new_account(settings):
     A brand-new account offers firms, import and track — three seeds, which
     is exactly `SEED_MAX`. The Gmail seed used to be appended last and was
     therefore truncated away on the one render it exists for: verified on a
-    live fresh account (2026-08-27), Today said "Start here 3" and Connect
+    live fresh account (2026-08-27), Today said "Start Here 3" and Connect
     Gmail was not among the three.
 
     It leads now because of what connecting does on an EMPTY account: the

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load csp textstyle %}
 
-{% block title %}Calendar · Networkly{% endblock %}
+{% block title %}Networkly · Calendar{% endblock %}
 
 {% block head %}<style>
   /* ---- The month grid ---------------------------------------------------
@@ -891,31 +891,17 @@
         </div>
       </form>
     </details>
-    {% comment %}Feed URL for the calendar app the user already lives in.
-    webcal:// so Calendar.app opens a subscribe dialog instead of downloading
-    a one-off snapshot.
-
-    "Subscribe in Calendar", not "Subscribe". The bare verb named no object,
-    and the object is the part a student who has read no documentation cannot
-    supply: on a product that sells subscriptions, a lone "Subscribe" on a
-    page with a Pricing link in its footer can just as easily read as "start
-    paying". Naming the destination app settles both questions — what is
-    subscribed, and that it is not a plan. The word "Subscribe" itself stays,
-    because it is the verb Apple and Google use in the dialog this link opens
-    and the one Settings' Calendar Link row already refers back to.
-
-    A link, not a `.btn` — see `.cal-sub` for why this one control recedes.
-    The arrow marks it as going somewhere and is hidden from the accessible
-    name, which stays the four words of the label.{% endcomment %}
-    <a class="cal-sub" title="Live-updating feed for Apple/Google Calendar"
-       href="webcal://{{ request.get_host }}{% url 'crm:calendar_ics' token=user.calendar_token %}">Subscribe in Calendar <span aria-hidden="true">→</span></a>
+    {% comment %}The live calendar subscription is a distinct action. Period counts explain the events below and remain separate from subscription.{% endcomment %}
+    <div class="cal-context-bar">
+    <a class="btn cal-sub" title="Live-updating feed for Apple/Google Calendar"
+       href="webcal://{{ request.get_host }}{% url 'crm:calendar_ics' token=user.calendar_token %}">Subscribe to calendar</a>
     {% comment %}A colour nothing on the grid uses this month is not worth a
     key entry, and "0 Events" next to three real counts reads as a fourth
     fact when it is really the absence of one. Written as a plain {% if %}
     per span, not a loop over CAL_KINDS, so each key keeps its own label
     text and the opening/deadline split below stays a comment on the row
     that needs it.{% endcomment %}
-    <p class="cal-legend">
+    <p class="cal-legend"><span class="cal-legend-label">This {{ period_noun }}</span>
       {% if counts.chat %}<span class="cal-key cal-key-chat"><b>{{ counts.chat }}</b> Chat{{ counts.chat|pluralize }}</span>{% endif %}
       {% if counts.event %}<span class="cal-key cal-key-event"><b>{{ counts.event }}</b> Event{{ counts.event|pluralize }}</span>{% endif %}
       {% if counts.deadline %}<span class="cal-key cal-key-deadline"><b>{{ counts.deadline }}</b> Deadline{{ counts.deadline|pluralize }}</span>{% endif %}
@@ -927,6 +913,7 @@
       {% endcomment %}
       {% if counts.opening %}<span class="cal-key cal-key-opening"><b>{{ counts.opening }}</b> Opening{{ counts.opening|pluralize }}</span>{% endif %}
     </p>
+    </div>
   </div>
 
   {% if view == 'day' %}

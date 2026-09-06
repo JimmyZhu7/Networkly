@@ -80,8 +80,8 @@ def test_the_ai_sharing_section_counts_scan_now_among_the_triggers(page):
     user-triggered Anthropic call the founder's own account has 53 decisions
     from, and it was missing from this list entirely). The list and the code
     have to stay in step."""
-    section = page.split("Who we share data with", 1)[1]
-    section = section.split("Cookies and sessions", 1)[0]
+    section = page.split("Who We Share Data With", 1)[1]
+    section = section.split("Cookies and Sessions", 1)[0]
     for trigger in (
         "the assistant",
         "coffee-chat brief",
@@ -89,7 +89,7 @@ def test_the_ai_sharing_section_counts_scan_now_among_the_triggers(page):
         "Scan Now",
         "Autopilot",
     ):
-        assert trigger in section, f"{trigger} is an AI trigger and must be listed"
+        assert trigger.lower() in section.lower(), f"{trigger} is an AI trigger and must be listed"
 
 
 def test_the_ai_sharing_section_discloses_autopilot_sends_the_email_address(page):
@@ -98,8 +98,8 @@ def test_the_ai_sharing_section_discloses_autopilot_sends_the_email_address(page
     only whether a contact has an email on file. The blanket "email
     addresses are deliberately excluded" line only covers the advisor's
     three triggers; Autopilot needs its own, separate, honest sentence."""
-    section = page.split("Who we share data with", 1)[1]
-    section = section.split("Cookies and sessions", 1)[0]
+    section = page.split("Who We Share Data With", 1)[1]
+    section = section.split("Cookies and Sessions", 1)[0]
     assert "Autopilot" in section and "email address" in section
 
 
@@ -113,7 +113,7 @@ def test_the_policy_admits_the_whole_message_is_read(page):
     than what runs. A student who reads this has to be able to tell that
     Coverage sees the body, even though it does not keep it.
     """
-    section = page.split("Optional mail access", 1)[1]
+    section = page.split("Optional Mail Access", 1)[1]
     section = section.split("Google API Limited Use", 1)[0]
     assert "reads the whole message" in section
     assert "in memory" in section
@@ -126,7 +126,7 @@ def test_the_policy_admits_one_sentence_of_body_text_is_stored(page):
     read as "no body text at all". Naming it is also the honest thing: the
     quote exists so the student can audit an automated action, and a
     justification nobody is told about cannot do that job."""
-    section = page.split("Optional mail access", 1)[1]
+    section = page.split("Optional Mail Access", 1)[1]
     section = section.split("Google API Limited Use", 1)[0]
     assert "one verbatim sentence" in section
     assert "500 characters" in section
@@ -155,3 +155,20 @@ def test_the_page_is_still_marked_a_draft():
 
     source = Path(settings.BASE_DIR) / "templates" / "legal" / "privacy.html"
     assert "DRAFT. NOT REVIEWED BY A LAWYER." in source.read_text()
+
+
+def test_calendar_connection_scope_and_retained_imports_are_disclosed(page):
+    section = page.split("Optional Calendar Access", 1)[1].split("Google API Limited Use", 1)[0]
+    for fact in ("separate read-only permission", "encrypted connection token", "descriptions", "locations", "start and end times", "event identifiers"):
+        assert fact in section
+    assert "does not create, edit, delete, or RSVP" in section
+    assert "Imported events remain" in section
+    assert "AI feature" in section
+
+
+def test_export_and_deletion_scope_do_not_overpromise(page):
+    assert "original uploaded files are not part of this record export" in page
+    assert "private database records from the active service" in page
+    assert "[BACKUP RETENTION PERIOD]" in page
+    assert "[HOSTING REGION]" in page
+    assert "[LEGAL ENTITY NAME]" in page

@@ -624,11 +624,11 @@ def test_the_mobile_filter_disclosure_carries_its_active_count(client, db):
     Opportunity.objects.create(firm=f, url="https://x/1", title="Summer Analyst",
                                bucket="internship", status="open", region="us")
     plain = client.get(reverse("opportunities")).content.decode()
-    assert ">Filters</summary>" in plain
+    assert re.search(r'<summary class="filters-more-summary">Filters<span data-filter-active-count></span></summary>', plain)
 
     two = client.get(reverse("opportunities"), {"region": "us", "track": "ib"})
     assert two.context["filters_more_active"] == 2
-    assert "Filters · 2</summary>" in two.content.decode()
+    assert 'Filters<span data-filter-active-count> · 2</span></summary>' in two.content.decode()
 
 
 # ---------------------------------------------------------------------------

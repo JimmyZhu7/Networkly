@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load textstyle %}
 
-{% block title %}{{ firm.name|smart_title }} · Networkly{% endblock %}
+{% block title %}Networkly · {{ firm.name|smart_title }}{% endblock %}
 
 {% block head %}{% include "directory/_styles.html" %}{% endblock %}
 
@@ -10,7 +10,7 @@
   <nav class="directory-back" aria-label="Breadcrumb"><a href="{% url 'opportunities' %}"><svg class="nav-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m11 5-5 5 5 5M6 10h10"/></svg>Opportunities</a></nav>
   <header class="pagehead">
     <div class="pagehead-text">
-      <h1 class="pagehead-title">{{ firm.name|smart_title }}</h1>
+      <div class="directory-firm-identity"><span class="directory-firm-mark{% if firm.logo %} has-logo{% endif %}">{% if firm.logo %}<img src="{{ firm.logo.url }}" alt="" width="48" height="48" decoding="async" data-firm-logo><span class="firm-monogram" hidden>{{ firm.name|slice:":2"|upper }}</span>{% else %}{{ firm.name|slice:":2"|upper }}{% endif %}</span><h1 class="pagehead-title">{{ firm.name|smart_title }}</h1></div>
     </div>
     {% if user.is_authenticated %}
       <div class="pagehead-actions">
@@ -21,7 +21,7 @@
 
   {% if user.is_authenticated %}
     <section class="section fd-mine">
-      <h2>Your contacts here
+      <h2>{% include "directory/_section_icon.html" with name="contacts" %}Your Contacts Here
         <span class="scrub-count">{{ my_total }}</span>
         {% if my_advocates %}<span class="fd-adv">{{ my_advocates }} advocate{{ my_advocates|pluralize }}</span>{% endif %}
       </h2>
@@ -53,14 +53,14 @@
   {% endif %}
 
   <section class="section">
-    <h2>Recruiting dates</h2>
+    <h2>{% include "directory/_section_icon.html" with name="dates" %}Recruiting Dates</h2>
     <p class="lede">Confirmed and estimated dates are labeled separately. Estimates show their confidence.</p>
     {% include "directory/_timeline.html" %}
   </section>
 
   {% if cycle_observed %}
     <section class="section">
-      <h2>Observed activity</h2>
+      <h2>{% include "directory/_section_icon.html" with name="activity" %}Observed Activity</h2>
       <p class="lede">Changes observed on this firm’s careers pages. These are historical observations, not forecasts.</p>
       <ul class="cyc-obs">
         {% for row in cycle_observed %}
@@ -75,13 +75,13 @@
   {% endif %}
 
   <section class="section">
-    <h2>Open roles <span class="scrub-count">{{ total }}</span></h2>
+    <h2>{% include "directory/_section_icon.html" with name="roles" %}Open Roles <span class="scrub-count">{{ total }}</span></h2>
     {% if unreachable_board %}
-      <p class="scope-line scope-hidden">We do not scrape {{ firm.name }}'s campus board<span class="scope-sep">·</span>{{ unreachable_board.reason }}<span class="scope-sep">·</span><a href="{{ unreachable_board.url }}" rel="noopener noreferrer" target="_blank">Open it yourself</a></p>
+      <p class="scope-line scope-hidden">We do not track {{ firm.name }}'s campus board<span class="scope-sep">·</span>{{ unreachable_board.reason }}<span class="scope-sep">·</span><a href="{{ unreachable_board.url }}" rel="noopener noreferrer" target="_blank">Open it yourself</a></p>
     {% endif %}
     {% if cards %}
       {% if role == "all" %}
-        <p class="scope-line scope-hidden">Showing everything we scraped<span class="scope-sep">·</span>{{ campus_total }} campus, {{ other_total }} experienced<span class="scope-sep">·</span><a href="{% url 'directory:firm_detail' firm.slug %}">Campus roles only</a></p>
+        <p class="scope-line scope-hidden">Showing all tracked roles<span class="scope-sep">·</span>{{ campus_total }} campus, {{ other_total }} experienced<span class="scope-sep">·</span><a href="{% url 'directory:firm_detail' firm.slug %}">Campus roles only</a></p>
       {% elif role == "other" %}
         <p class="scope-line scope-hidden">Showing experienced roles only<span class="scope-sep">·</span>{{ campus_total }} campus role{{ campus_total|pluralize }} hidden<span class="scope-sep">·</span><a href="{% url 'directory:firm_detail' firm.slug %}">Campus roles only</a></p>
       {% elif other_total %}
@@ -106,16 +106,15 @@
     {% else %}
       <div class="empty">
         {% if role == "other" %}
-          <h2>No experienced roles open here.</h2>
+          <h2>No Experienced Roles Open Here.</h2>
           <p>Everything this firm has open is campus.
             <a href="{% url 'directory:firm_detail' firm.slug %}">Show campus roles</a>.</p>
         {% elif other_total %}
-          <h2>No campus roles open right now.</h2>
-          <p>{{ other_total }} experienced role{{ other_total|pluralize }} open here, which this
-            product doesn't cover.
+          <h2>No Campus Roles Open Right Now.</h2>
+          <p>{{ other_total }} experienced role{{ other_total|pluralize }} open here, outside the campus view.
             <a href="{% url 'directory:firm_detail' firm.slug %}?role=all">Show everything</a>.</p>
         {% else %}
-          <h2>No open roles right now.</h2>
+          <h2>No Open Roles Right Now.</h2>
           <p>We'll list this firm's openings as soon as the next check finds any.</p>
         {% endif %}
       </div>

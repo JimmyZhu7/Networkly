@@ -14,7 +14,7 @@ def test_a_wrong_url_gets_the_branded_404(client):
     with override_settings(DEBUG=False):
         resp = client.get("/definitely-not-a-page/")
     assert resp.status_code == 404
-    assert b"That page doesn't exist." in resp.content
+    assert b"That Page Doesn't Exist." in resp.content
     assert b"/opportunities/" in resp.content, "a lost visitor gets a way back"
 
 
@@ -24,7 +24,7 @@ def test_the_500_page_renders_without_any_context():
     from django.template.loader import render_to_string
 
     html = render_to_string("500.html", {})
-    assert "Something broke" in html
+    assert "Something Went Wrong" in html
     assert "{% static" not in html, "must not depend on the static machinery"
 
 
@@ -116,14 +116,14 @@ def test_a_new_user_is_nudged_to_finish_setup(client, django_user_model):
     u = django_user_model.objects.create_user(email="fresh@x.com", password="x")
     client.force_login(u)
     body = client.get("/app/").content.decode()
-    assert "Finish setting up" in body
+    assert "Finish Setup" in body
 
     from django.utils import timezone
 
     u.onboarded_at = timezone.now()
     u.save(update_fields=["onboarded_at"])
     body = client.get("/app/").content.decode()
-    assert "Finish setting up" not in body
+    assert "Finish Setup" not in body
 
 
 def test_the_favicon_survives_the_pushstate_fallback(client):

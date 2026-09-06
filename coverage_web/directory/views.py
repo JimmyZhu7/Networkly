@@ -2991,6 +2991,7 @@ def _urgency_item(o, *, now, today, my_firm_ids, profile=None, cutoffs=None):
         "firm_name": o.firm.name,
         "firm_slug": o.firm.slug,
         "monogram": _monogram(o.firm.name),
+        "logo_url": o.firm.logo.url if o.firm.logo else "",
         "category": FIRM_CATEGORIES.get(o.firm.slug, ""),
         # Minus a trailing city the place line below already prints — see
         # `_title_without_place_echo`. Never minus anything else.
@@ -5625,7 +5626,7 @@ def _my_applications_context(request):
         # student's own Done marking and a different fact entirely.
         {
             "key": "posting_closed",
-            "label": "Posting closed",
+            "label": "Posting Closed",
             "items": shut,
             # Kept short on purpose — see the template's own note on why the
             # lens band cut its prose (2026 redesign: "cleaner, less words").
@@ -5653,7 +5654,7 @@ def _my_applications_context(request):
         },
         {
             "key": "closing",
-            "label": "Closing soon",
+            "label": "Closing Soon",
             "items": closing,
             "note": f"Within {CLOSING_SOON_DAYS} days.",
             "empty_state": True,
@@ -5682,7 +5683,7 @@ def _my_applications_context(request):
             # about all of them, which also made the two row markers under it
             # read as two spellings of the heading rather than as the
             # different facts they are.
-            "label": "Deadline not listed",
+            "label": "Deadline Not Listed",
             "items": rolling,
             # No note: "No posted deadline" was the heading in other words.
             "note": "",

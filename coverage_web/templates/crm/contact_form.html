@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %} · Networkly{% endblock %}
+{% block title %}Networkly · {% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %}{% endblock %}
 
 {% block head %}
 <style>
@@ -52,7 +52,7 @@
 <div class="page crm-page cf-wrap">
   <header class="pagehead">
     <div class="pagehead-text">
-      <h1 class="pagehead-title">{% if mode == "edit" %}Edit contact{% else %}Add contact{% endif %}</h1>
+      <h1 class="pagehead-title">{% if mode == "edit" %}Edit Contact{% else %}Add Contact{% endif %}</h1>
     </div>
   </header>
 
@@ -127,7 +127,7 @@
       </div>
       {% else %}
       <details class="cf-more"{% if mode == "edit" or form.region.errors or form.linkedin.errors %} open{% endif %}>
-        <summary>More details</summary>
+        <summary>More Details</summary>
 
         <div class="cf-grid">
           <div>

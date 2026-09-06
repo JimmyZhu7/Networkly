@@ -1506,7 +1506,6 @@ form p { margin: 0 0 var(--s2); }        /* allauth {{ form.as_p }} */
 .aff-line-text { display: block; overflow-wrap: anywhere; }
 .aff-line.is-long .aff-line-text { color: var(--ink); }
 .aff-line-note { display: block; color: var(--stale-t); font-size: var(--fs-xs); }
-.aff-empty { margin: var(--s2) 0 0; color: var(--ink-3); font-size: var(--fs-s); }
 
 /* The one-time note about ties already saved in the wrong shape. Sits at the
    very top of the Profile card, so it is on screen without scrolling, and

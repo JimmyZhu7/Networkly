@@ -238,10 +238,10 @@ def test_the_undated_cell_carries_no_em_dash_and_speaks():
     card = TEMPLATES / "directory" / "_rolecard.html"
     text = card.read_text(encoding="utf-8")
     assert "—" not in text and "&mdash;" not in text
-    assert '<span class="rr-due-n rr-due-none"><span class="vh">Deadline not listed</span></span>' in text
-    # The mark itself is drawn, so it is never announced.
-    styles = (TEMPLATES.parent / "static" / "css" / "presentation-directory.css").read_text(encoding="utf-8")
-    assert ".rr-due-none::before" in styles
+    undated = re.search(r'<span class="rr-undated".*?</span>', text, re.S).group(0)
+    assert "Deadline not listed" in undated
+    assert 'class="vh"' not in undated and 'aria-hidden="true"' not in undated
+    assert "{% if r.rolling_stated %}Rolling{% else %}Deadline not listed" in undated
 
 
 @pytest.mark.django_db
@@ -255,8 +255,10 @@ def test_an_undated_row_renders_the_spoken_cell(client):
     )
     body = client.get(reverse("opportunities")).content.decode()
     body = re.sub(r"<style.*?</style>", "", body, flags=re.S)
-    assert "rr-due-none" in body
-    assert '<span class="vh">Deadline not listed</span>' in body
+    undated = re.search(r'<span class="rr-undated"[^>]*>(.*?)</span>', body, re.S).group(1)
+    assert "Deadline not listed" in undated
+    assert "Rolling" not in undated and "Closes in" not in undated
+    assert 'class="vh"' not in undated and 'aria-hidden="true"' not in undated
     assert "&mdash;" not in body
 
 

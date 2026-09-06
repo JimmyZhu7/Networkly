@@ -551,7 +551,22 @@ def test_the_result_count_announces_from_outside_the_swap_target(client, bar):
     #    may declare itself a live region, because everything in there is
     #    destroyed and rebuilt on every filter change.
     assert full.count('id="cov-live"') == 1
-    _, _, results = full.partition('<div id="cov-results">')
+    # Bound the assertion to the actual result DOM. The page's later drawer
+    # script contains a separate loading status, outside this swap target.
+    from django.test.html import parse_html
+
+    def find_results(node):
+        if dict(getattr(node, "attributes", [])).get("id") == "cov-results":
+            return node
+        for child in getattr(node, "children", []):
+            found = find_results(child)
+            if found is not None:
+                return found
+        return None
+
+    results_node = find_results(parse_html(full))
+    assert results_node is not None
+    results = str(results_node)
     assert 'role="status"' not in results, (
         "a live region inside the swap target is replaced rather than "
         "updated, so it announces nothing — the exact defect this test was "

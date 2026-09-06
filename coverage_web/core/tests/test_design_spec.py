@@ -168,13 +168,13 @@ def test_the_labels_the_case_decision_named_still_ship():
         # longer a literal between two tags and cannot be read the way the
         # rest of this list is. "Covered Firms" replaces both: same page, same
         # Title Case rule, still a literal.
-        "crm/contact_list.html": ["Firm network", "Log interaction"],
-        "account/login.html": ["Welcome back"],
-        "core/home.html": ["Create account"],
-        "accounts/import.html": ["Import contacts"],
+        "crm/contact_list.html": ["Firm Network", "Log interaction"],
+        "account/login.html": ["Welcome Back"],
+        "core/home.html": ["Get started free"],
+        "accounts/import.html": ["Import Contacts"],
         "accounts/delete.html": ["Permanently delete account"],
     }
     for path, labels in named.items():
         body = (TEMPLATES / path).read_text(encoding="utf-8")
         for label in labels:
-            assert f">{label}<" in body, f"{path} no longer renders {label!r}"
+            assert re.search(r">" + re.escape(label) + r"\s*<", body), f"{path} no longer renders {label!r}"

@@ -190,7 +190,9 @@ def test_the_live_fraction_survives(client, pipeline):
 
     assert resp.context["total"] == 4
     assert resp.context["live_total"] == 3
-    assert "of 3 live" in resp.content.decode()
+    body = resp.content.decode()
+    assert body.count('data-app-stage="') == resp.context["total"]
+    assert sum(int(n) for n in re.findall(r'data-apps-lens-count>(\d+) role', body)) == resp.context["total"]
 
 
 @pytest.mark.django_db
@@ -246,7 +248,7 @@ def test_the_residue_lenses_stay_off_the_page_when_they_hold_nothing(client, pip
     appears when it has rows to show."""
     body = client.get(reverse("my_applications")).content.decode()
 
-    assert "Closing soon" in body
+    assert "Closing Soon" in body
     assert "Further Out" not in body
     assert "Deadline Passed" not in body
 
@@ -782,9 +784,9 @@ def test_the_band_no_longer_explains_its_own_structure_in_prose(client, pipeline
     # the sentence is simply false. The eyebrow now states the one thing the
     # six headings cannot state for themselves — the order.
     assert "Cross-section, not extra roles" not in body
-    assert "Soonest first" in body
-    assert "Everything you're tracking" in body
-    assert "of 3 live" in body
+    assert "By Deadline" in body
+    assert "Tracked Roles" in body
+    assert body.count('data-app-stage="') == 4
     # The third affordance was the row's link down to its stage section. That
     # section no longer exists, so the pill is a control rather than a
     # pointer — the row still declares its stage, it just does it by being
@@ -869,7 +871,7 @@ def test_the_undated_lens_stops_claiming_rolling_about_every_row(client, db):
     by_key = {lens["key"]: lens for lens in resp.context["lenses"]}
 
     assert by_key["rolling"]["key"] == "rolling", "the key is a call site, not copy"
-    assert by_key["rolling"]["label"] == "Deadline not listed"
+    assert by_key["rolling"]["label"] == "Deadline Not Listed"
 
     body = resp.content.decode()
     assert "Deadline not listed" in body

@@ -82,7 +82,7 @@ def test_marketing_pages_keep_their_hero(path):
     """The other half of the split, pinned so a future sweep doesn't
     "standardise" the landing page into a dashboard header."""
     body = _body(Client().get(path).content.decode())
-    assert ("desk-hero" if path == "/" else "kin-hero") in body, f"{path} lost the marketing hero"
+    assert ("mk-hero" if path == "/" else "pricing-hero") in body, f"{path} lost the marketing hero"
     assert 'class="pagehead"' not in body
 
 

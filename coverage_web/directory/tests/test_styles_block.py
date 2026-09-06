@@ -116,7 +116,7 @@ def test_the_feeds_core_layout_rules_survive_rendering():
     blocks = _style_blocks("/opportunities/")
     assert blocks, "the feed should render its own <style> block"
     css = "\n".join(blocks)
-    for selector in (".rolerow {", ".firmcols", ".rolling-dot", ".recbar"):
+    for selector in (".rolerow {", ".firmcols", ".rr-due-age", ".recbar"):
         assert selector in css, f"{selector} missing from the feed's rendered CSS"
 
 
@@ -204,8 +204,10 @@ def _coarse_block(css: str) -> str:
 def test_role_rows_grow_with_titles_facts_and_controls():
     rule = _rule_all(_feed_css(), ".rolerow")
     assert not re.search(r"(?<!min-)(?<!-)height:\s*\d", rule)
-    assert "display: grid" in rule
-    assert "minmax(0, 1fr)" in rule
+    assert "display: block" in rule
+    main = _rule(_feed_css(), ".rr-main")
+    assert "display: grid" in main
+    assert "minmax(0, 1fr)" in main
 
 
 def test_offscreen_rows_do_not_reserve_a_fixed_clipping_box():
@@ -286,7 +288,7 @@ def test_first_seen_is_stated_once_and_only_where_it_is_the_answer(
     assert "rolling-tag" not in html, "the retired duplicate tag is back"
 
     # One meta line per row; the age on the undated one only, and once.
-    assert html.count('class="rr-meta"') == rows
+    assert html.count('class="rr-identity"') == rows
     assert html.count("first seen") == 1
     # The dated row's due column carries a real countdown figure instead of
     # the retired fuse bar — see `_rolecard.html`'s header comment on why
@@ -346,7 +348,9 @@ def test_the_viewport_clamp_helper_exists_and_both_dropdowns_call_it():
     # menu, and only clamping the menu would leave the search box (and the
     # panel's own border) hanging off the edge of the screen it was
     # supposed to be clamped inside of.
-    assert base.count("covKeepInViewport(panel)") >= 2, "csel must call the clamp"
+    assert "function positionPanel()" in base
+    assert "covKeepInViewport(panel)" in base, "csel must call the clamp"
+    assert base.count("positionPanel()") >= 2, "opening and repositioning share the clamped function"
     assert "covKeepInViewport(menu)" in _OPPS.read_text(), "Companies must call it"
 
 
@@ -578,16 +582,18 @@ def test_every_label_the_product_can_build_fits_the_chip_cap():
         f"{budget:.2f}ch of label. Labels: {labels}")
 
 
-def test_meta_facts_wrap_and_only_location_can_be_ellipsized():
+def test_meta_facts_and_locations_remain_fully_readable():
     css = _feed_css()
-    meta = _rule(css, ".rr-meta")
+    meta = _rule(css, ".rr-identity")
     assert "flex-wrap: wrap" in meta
     assert "white-space: nowrap" not in meta
     truncators = {sel for sel, body in presentation_rules(css)
                   if sel.startswith(".directory-page .rr-") and "text-overflow" in body}
     assert truncators == {".directory-page .rr-loc"}
     loc = _rule(css, ".rr-loc")
-    assert "max-width" in loc and "overflow: hidden" in loc
+    assert "max-width" in loc and "overflow: visible" in loc
+    assert "white-space: normal" in loc
+    assert "text-overflow: ellipsis" not in loc
     assert ".rr-meta > *:last-child" not in css
     assert "nowrap" not in _rule(css, ".rr-why")
 
@@ -618,9 +624,8 @@ def test_the_abbreviated_countdown_still_reads_the_full_sentence_aloud(client):
     body = client.get("/opportunities/").content.decode()
 
     # The eye gets the abbreviation, hidden from assistive tech.
-    assert '<span aria-hidden="true">5d</span>' in body
-    # The ear gets the sentence the comment promised.
-    assert '<span class="vh">Closes in 5 days</span>' in body
+    assert re.search(r'<span class="rr-due-n[^"]*"[^>]*>Closes in 5 days</span>', body)
+    assert 'aria-hidden="true">Closes in 5 days' not in body
 
 
 # ---------------------------------------------------------------------------
@@ -642,10 +647,9 @@ def test_the_abbreviated_countdown_still_reads_the_full_sentence_aloud(client):
 
 def test_meta_separators_do_not_leave_orphans_on_wrapped_lines():
     css = _feed_css()
-    separator = _rule(css, ".rr-meta > * + *::before")
-    assert "position: absolute" in separator
-    assert re.search(r"left:\s*-\d", separator)
-    assert "overflow: hidden" in _rule(css, ".rr-meta")
+    identity = _rule(css, ".rr-identity")
+    assert "flex-wrap: wrap" in identity and "gap:" in identity
+    assert not any("rr-identity" in selector and "::before" in selector for selector, _ in presentation_rules(css))
     assert ".rr-meta > *:not(:last-child)" not in css
 
 
@@ -845,7 +849,7 @@ def test_the_due_columns_prose_does_not_borrow_the_figure_font(selector, word):
 
 def test_deadline_and_role_have_separate_tracks_and_can_shrink_on_mobile():
     css = _feed_css()
-    row = _rule(css, ".rolerow")
+    row = _rule(css, ".rr-main")
     assert "grid-template-columns:" in row and "minmax(0, 1fr)" in row
     assert "min-width: 0" in _rule(css, ".rr-main")
     assert "display: flex" in _rule(css, ".rr-due")

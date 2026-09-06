@@ -272,8 +272,8 @@ def test_the_quiet_header_appears_when_the_page_is_genuinely_empty(client):
 
     body = _login_and_get(client, user)
     assert ctx["quiet_line"] in body
-    assert "Done for today." not in body
-    assert "You're all caught up." not in body
+    assert "Done for Today." not in body
+    assert "You're All Caught Up." not in body
 
 
 def test_the_quiet_header_does_not_appear_when_the_lane_has_content(client):
@@ -350,7 +350,7 @@ def test_the_quiet_header_does_not_appear_over_a_real_park_backlog(client):
     assert ctx["quiet"] is False
 
     body = _login_and_get(client, user)
-    assert "Done for today." in body
+    assert "Done for Today." in body
     assert "gone quiet" in body
 
 
@@ -361,11 +361,11 @@ def test_the_quiet_header_never_shows_for_a_brand_new_account_with_no_contacts(c
     ctx = _cockpit_context(user)
     assert ctx["quiet"] is False
     body = _login_and_get(client, user)
-    assert "No contacts yet." in body
+    assert "No Contacts Yet." in body
 
 
 def test_the_quiet_header_never_shows_while_starter_seeds_are_offered(client):
-    """A thin, still-being-built network gets "Start here", not the quiet
+    """A thin, still-being-built network gets "Start Here", not the quiet
     header — the two zero states mean opposite things and must not
     collide."""
     user = _user()
@@ -376,4 +376,4 @@ def test_the_quiet_header_never_shows_while_starter_seeds_are_offered(client):
     assert ctx["seeds"], "precondition: this thin network gets starter seeds"
     assert ctx["quiet"] is False
     body = _login_and_get(client, user)
-    assert "Start here" in body
+    assert "Start Here" in body

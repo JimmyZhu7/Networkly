@@ -74,7 +74,7 @@ def test_the_unbuilt_four_are_still_stated_under_a_planned_heading(client):
     body = client.get("/pricing/").content.decode()
     card = _pro_card(body)
 
-    assert "Planned, not yet built" in card
+    assert "Planned, Not Yet Built" in card
     planned = _planned(card)
     for claim in UNBUILT:
         assert claim in planned, f"{claim!r} should still be visible, as a plan"
@@ -84,7 +84,7 @@ def test_the_unbuilt_four_are_still_stated_under_a_planned_heading(client):
 def test_pro_feature_list_sells_the_three_gates_that_exist(client):
     features = _features(_pro_card(client.get("/pricing/").content.decode()))
 
-    assert "Gmail Live: real-time sync that logs itself." in features
+    assert "Gmail Live: real-time sync that logs recruiting interactions." in features
     assert "Scan your inbox any time" in features
     assert "Assistant on a stronger model" in features
 

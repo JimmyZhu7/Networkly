@@ -1,639 +1,110 @@
 {% extends "base.html" %}
-{% load textstyle %}
-
-{% block title %}Networkly{% endblock %}
-
+{% load static textstyle %}
+{% block title %}Networkly · Your Next Career Move{% endblock %}
+{% block meta_description %}Find campus recruiting roles, keep your conversations together, and know who to follow up with. Your recruiting workspace, in Networkly.{% endblock %}
+{% block og_title %}Networkly · Your Next Career Move{% endblock %}
+{% block og_description %}Find the role. Know the people. Keep the conversation going.{% endblock %}
 {% block head %}
-<style>
-  /* ---- Landing-page-only styles. Everything shared lives in networkly.css. -- */
-
-  /* ---- The hero sheen runs once ------------------------------------------
-     `.kin-hero::after` is a 7.5s diagonal sheen declared `infinite` in
-     networkly.css §15, and this page and /pricing/ are the only two that wear
-     it. Nothing about a marketing hero changes, so an animation that never
-     stops is decoration on a static thing: it draws the eye back to the
-     masthead every 7.5 seconds while the visitor is reading the section
-     below it. Once, on arrival, is the whole of what it was for.
-
-     `both` keeps the end state, which the shared rule's own comment says is
-     the sheen resting OFF-SCREEN; without it the band snaps back to a
-     visible resting position and stays there.
-
-     Longhands, not the `animation` shorthand, and that is the point:
-     networkly.css's reduced-motion block sets `animation: none`, which sets
-     animation-NAME to none. Nothing here touches the name, so under
-     `prefers-reduced-motion` there is still no animation at all. Written in
-     this page's own style block rather than in networkly.css because that
-     file belongs to another pass; when the shared rule becomes one-shot,
-     this block and pricing.html's copy of it can both go. */
-  .kin-hero::after { animation-iteration-count: 1; animation-fill-mode: both; }
-
-  /* ---- Hero: the live desk ------------------------------------------------
-     The product is the hero. Copy left, a framed mock of the Today queue
-     right, so the first screen shows the thing rather than describing it.
-
-     The card keeps `.kin-hero` — its gradient, sheen sweep, border and
-     rise-in are already the marketing card treatment. That rule is SHARED
-     with /pricing/ and both auth screens, so every override here is scoped
-     to `.desk-hero`; nothing in networkly.css changes and those three pages
-     render exactly as before. Every colour is a token, so dark mode comes
-     for free through the palette in networkly.css §2. */
-  .desk-hero { display: grid; align-items: center; gap: var(--s7);
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    padding: var(--s7) var(--s6); }
-  .desk-copy { min-width: 0; }
-  /* Beats `.kin-hero h1` (0,1,1) on specificity without touching it. */
-  .desk-hero .desk-title {
-    font: var(--w-black) clamp(var(--fs-display-2), 3.6vw, var(--fs-display-1))/1.05 var(--font-display);
-    letter-spacing: -0.015em; color: var(--ink); margin: 0; max-width: 16ch; }
-  .desk-sub { color: var(--ink-2); font-size: var(--fs-m);
-    margin: var(--s3) 0 0; max-width: 48ch; }
-
-  /* The ledger, demoted. It used to be a 44px centred band; the panel now
-     carries the visual weight, so the numbers run inline under a hairline
-     and read as a footer to the copy rather than as the headline. */
-  .desk-stats { display: flex; flex-wrap: wrap; gap: var(--s3) var(--s5);
-    margin-top: var(--s5); padding-top: var(--s4);
-    border-top: 1px solid var(--line); }
-  .desk-stat { display: flex; align-items: baseline; gap: var(--s2); }
-  .desk-stat .dash-num { font-size: var(--fs-display-3); color: var(--ink); }
-  .desk-stat .dash-lbl { white-space: nowrap; }
-
-  /* The panel: a mini Today screen, framed like a real window. */
-  .desk-panel { min-width: 0; margin: 0; overflow: hidden; }
-  .desk-bar { display: flex; align-items: center; justify-content: space-between;
-    gap: var(--s3); padding: 9px var(--s4);
-    border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--accent) 5%, var(--surface));
-    font-family: var(--font-mono); font-size: var(--fs-micro);
-    text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
-  {% comment %}
-  DELIBERATELY UNCHANGED, AND HERE IS THE MEASUREMENT.
-
-  The 2026-09-01 audit reported this bar's label at 3.77:1 and the "live"
-  word at 3.25:1, both under AA. Both figures are wrong, and the reason is
-  worth writing down so the next pass does not "fix" them either.
-
-  This bar's background is `color-mix(in srgb, var(--accent) 5%, var(--surface))`.
-  Chromium serialises that through `getComputedStyle` as
-  `color(srgb 0.944902 0.957843 0.951373)` — components in 0..1, not 0..255 —
-  and the audit's contrast helper parses the numbers out and treats them as
-  0..255, so it measured this text against a near-black ground that does not
-  exist. Computed by hand against the real #f1f4f3 the bar actually paints:
-  --ink-3 is 5.01:1 and --ok is 5.81:1. Both clear AA at 11px.
-
-  An earlier cut of this commit moved both to --ink-2 on the strength of the
-  reported numbers, which bought nothing and cost the "live" word its green.
-  Reverted. The monogram below, whose 4.3:1 the same pass reported, IS real
-  (its colours are hsl(), which that helper parses correctly) and is fixed.
-  {% endcomment %}
-  .desk-bar-live { display: inline-flex; align-items: center; gap: 6px;
-    color: var(--ok); flex: none; }
-  .desk-body { display: flex; align-items: center; gap: var(--s4);
-    padding: var(--s4); }
-  .desk-queue { flex: 1; min-width: 0; display: flex; flex-direction: column;
-    gap: var(--s2); }
-
-  /* Rows arrive in a short staggered slide, so the panel reads as a queue
-     filling itself rather than a static screenshot. Transform + opacity
-     only: nothing reflows. Killed under reduced motion below. */
-  /* `panel panel--inset panel--flat`, keeping its own corner: these mockups
-     are a scale model of the product at about half size, and the radius is
-     part of the scale, not a divergence from the panel. */
-  .desk-row { display: flex; align-items: center; justify-content: space-between;
-    gap: var(--s3); min-width: 0;
-    border-radius: 10px; padding: var(--s2) var(--s3);
-    animation: desk-row-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: calc(300ms + var(--i, 0) * 120ms); }
-  @keyframes desk-row-in {
-    from { opacity: 0; transform: translateX(-12px); }
-    to   { opacity: 1; transform: none; }
-  }
-  .desk-row-main { min-width: 0; }
-  .desk-row b { display: block; font-size: var(--fs-s); font-weight: var(--w-bold);
-    color: var(--ink); overflow: hidden; text-overflow: ellipsis;
-    white-space: nowrap; }
-  .desk-why { display: block; font-size: 11px; color: var(--ink-3);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .desk-go { flex: none; font-size: 11px; font-weight: var(--w-med);
-    border-radius: 999px; padding: 3px 10px;
-    background: var(--accent); color: var(--on-accent); }
-  .desk-go.is-done { background: var(--ok-soft); color: var(--ok);
-    box-shadow: inset 0 0 0 1px var(--ok-line); }
-
-  .desk-pace { flex: none; display: flex; flex-direction: column;
-    align-items: center; gap: var(--s2);
-    animation: desk-pace-in 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
-    animation-delay: 680ms; }
-  @keyframes desk-pace-in {
-    from { opacity: 0; transform: scale(0.9); }
-    to   { opacity: 1; transform: none; }
-  }
-  .desk-ring { width: 84px; height: 84px; border-radius: 50%; flex: none;
-    display: flex; align-items: center; justify-content: center;
-    background: conic-gradient(var(--accent) 0deg 252deg, var(--line) 252deg 360deg); }
-  .desk-ring::before { content: "7/10"; width: 62px; height: 62px;
-    border-radius: 50%; background: var(--surface);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-mono); font-weight: var(--w-bold);
-    font-size: var(--fs-s); color: var(--ink); }
-  .desk-pace-lbl { font-family: var(--font-mono); font-size: var(--fs-nano);
-    text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
-
-  /* Says outright that the panel is a mock. A logged-out visitor has no
-     queue, and a live-dot panel labelled "your queue" would otherwise
-     read as their data. */
-  .desk-note { margin: 0; padding: 0 var(--s4) var(--s4);
-    font-size: var(--fs-xs); color: var(--ink-3); }
-
-  /* Section scaffolding: generous vertical rhythm, one centered eyebrow per
-     section, display-family section titles. */
-  .land-section { margin: var(--s8) 0 0; }
-  .land-title { font: var(--w-black) clamp(var(--fs-display-3), 3vw, var(--fs-display-2))/1.15 var(--font-display);
-    letter-spacing: -0.01em; text-align: center; margin: 0 auto var(--s2);
-    max-width: 28ch; }
-
-  /* Firm marquee: tracked firms as tinted chips flowing across the band.
-     Two identical groups; the track slides one group-width and loops, so the
-     motion is seamless. Pauses on hover; falls back to a static wrapped row
-     under reduced-motion. */
-  .marquee { overflow: hidden; margin-top: var(--s5);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
-  .marquee-track { display: flex; width: max-content;
-    animation: marquee 36s linear infinite; }
-  .marquee:hover .marquee-track { animation-play-state: paused; }
-  .marquee-group { display: flex; gap: var(--s3); padding-right: var(--s3); }
-  @keyframes marquee { to { transform: translateX(-50%); } }
-  .strip-chip { display: inline-flex; align-items: center; gap: var(--s2);
-    border: 1px solid var(--line); border-radius: 999px; flex: none;
-    background: var(--surface); padding: 6px 14px 6px 6px;
-    font-size: var(--fs-s); font-weight: var(--w-med); color: var(--ink-2);
-    white-space: nowrap; }
-  /* 24% lightness on the ink, not 31%. Measured on the rendered page the old
-     pair was 4.3:1 at 11px, under AA — and the directory's copy of this exact
-     monogram had already been corrected to 24% (directory/_styles.html), so
-     the landing page was the last surface still failing on a tile that
-     appears ~40 times across the marquee. Same hue, same tint, darker ink. */
-  .strip-chip .mono { width: 26px; height: 26px; border-radius: 50%;
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: var(--w-bold); overflow: hidden;
-    background: hsl(var(--hue, 210) 52% 90%); color: hsl(var(--hue, 210) 55% 24%); }
-  /* The real mark when we have one. The landing page is where these earn
-     the most — it is the page making the claim that Networkly checks these
-     firms directly — and it was still showing two-letter monograms after the
-     app had 78 logos. White tile, `contain` so wordmarks are not cropped.
-
-     The padding used to leave a 20px inner box inside a 26px circle. A
-     circle only fully contains a square up to its INSCRIBED square, which
-     at 26px is ~18.4px on a side — 20px is bigger than that, so a squarish
-     mark (McKinsey's, and any other firm whose logo is closer to a square
-     than a wide wordmark) filled the whole inner box and its corners landed
-     outside the circle. `overflow: hidden` above is the backstop; the real
-     fix is sizing the inner box to the inscribed square so a square logo
-     never reaches the edge in the first place, and a wide wordmark — the
-     shape this was built for — still renders uncropped at its natural
-     narrower height. */
-  .strip-chip .mono.has-logo { background: #fff;
-    box-shadow: inset 0 0 0 1px var(--line); padding: 4px; }
-  .strip-chip .mono.has-logo img { width: 100%; height: 100%;
-    object-fit: contain; display: block; }
-  @media (prefers-reduced-motion: reduce) {
-    .marquee { -webkit-mask-image: none; mask-image: none; }
-    .marquee-track { animation: none; width: auto; }
-    .marquee-group { flex-wrap: wrap; justify-content: center; padding-right: 0; }
-    .marquee-group[aria-hidden] { display: none; }
-  }
-
-  /* Feature rows: copy on one side, a pure-CSS product vignette on the other,
-     alternating. */
-  .feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s7);
-    align-items: center; margin-top: var(--s7); }
-  .feature-row.flip .feature-copy { order: 2; }
-  .feature-copy h3 { font: var(--w-black) var(--fs-display-3)/1.2 var(--font-display);
-    letter-spacing: -0.01em; margin: 0 0 var(--s3); }
-  .feature-copy p { color: var(--ink-2); margin: 0 0 var(--s3); max-width: 44ch; }
-  .feature-points { list-style: none; margin: 0; padding: 0;
-    display: flex; flex-direction: column; gap: var(--s2); }
-  .feature-points li { display: flex; gap: var(--s2); align-items: baseline;
-    font-size: var(--fs-s); color: var(--ink-2); }
-  .feature-points li::before { content: ""; flex: none; width: 6px; height: 6px;
-    border-radius: 50%; background: var(--accent); transform: translateY(-2px); }
-
-  /* Vignette shell: a framed mini-screen the CSS mockups sit inside. */
-  .vig { padding: var(--s5); overflow: hidden; position: relative; }
-  .vig::before { content: ""; position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(120% 130% at 100% 0%,
-      color-mix(in srgb, var(--accent) 6%, transparent), transparent 60%); }
-  .vig-label { font-family: var(--font-mono); font-size: var(--fs-micro);
-    text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3);
-    margin: 0 0 var(--s3); }
-
-  /* Vignette 1: a role card with a live fuse countdown. */
-  .v-role { border-left-color: var(--danger); padding: var(--s3) var(--s4);
-    margin-bottom: var(--s3); }
-  .v-role.rolling { border-left-color: var(--ok-line); }
-  .v-role-tag { display: inline-block; font-size: 11px; font-weight: var(--w-med);
-    border-radius: 999px; padding: 2px 10px; background: var(--accent-soft);
-    color: var(--accent-ink); margin-bottom: 6px; }
-  .v-role-title { font-weight: var(--w-bold); font-size: var(--fs-s); margin: 0 0 8px; }
-  .v-fuse { display: flex; align-items: center; gap: var(--s3); }
-  .v-fuse-track { flex: 1; height: 5px; border-radius: 999px; background: var(--line);
-    overflow: hidden; }
-  .v-fuse-fill { display: block; height: 100%; border-radius: 999px;
-    background: var(--danger); width: 30%; animation: v-fuse-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .v-role.rolling .v-fuse-fill { background: var(--ok); width: 78%; }
-  @keyframes v-fuse-in { from { width: 0; } }
-  .v-fuse-label { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2);
-    white-space: nowrap; }
-  .v-live { display: inline-flex; align-items: center; gap: 6px;
-    font-size: 11px; color: var(--ink-2); }
-
-  /* Vignette 2: one card off the queue, opened.
-
-     This used to be the Today queue with the pace ring — the exact picture
-     the hero now shows, two screens apart. Repeating it taught the visitor
-     nothing on the second look, so this vignette drops a level instead: the
-     hero shows WHAT the queue looks like, this shows what a row is FOR —
-     why Networkly ranked this person today, the angle to open with, and the
-     four one-click outcomes the copy beside it promises. */
-  .v-decide { border-left-color: var(--accent);
-    padding: var(--s3) var(--s4); position: relative; }
-  .v-flag { display: inline-block; font-size: 11px; font-weight: var(--w-med);
-    border-radius: 999px; padding: 2px 10px; margin-right: 6px;
-    background: var(--danger-soft); color: var(--danger); }
-  .v-decide-why { font-size: 11px; color: var(--ink-3); margin: 0 0 var(--s2);
-    font-family: var(--font-mono); }
-  .v-decide-name { font-weight: var(--w-bold); font-size: var(--fs-s); margin: 0 0 4px; }
-  .v-decide-name span { font-weight: var(--w-reg); color: var(--ink-3); }
-  .v-decide-angle { font-size: 12px; color: var(--ink-2); margin: 0 0 var(--s3); }
-  .v-rail { display: flex; flex-wrap: wrap; gap: 6px; }
-  .v-rail span { font-size: 11px; font-weight: var(--w-med); border-radius: 999px;
-    padding: 4px 12px; border: 1px solid var(--line-strong); color: var(--ink-2);
-    background: var(--surface); }
-  .v-rail span.is-primary { background: var(--accent); border-color: var(--accent);
-    color: var(--on-accent); }
-  .v-decide-next { font-size: 11px; color: var(--ink-3); margin: var(--s3) 0 0;
-    font-family: var(--font-mono); }
-  .v-decide-next b { color: var(--ink-2); font-weight: var(--w-med); }
-
-  /* Vignette 3: the warmth board. */
-  .v-board { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3);
-    position: relative; }
-  .v-col { border: 1px dashed var(--line-strong); border-radius: 10px;
-    padding: var(--s2); display: flex; flex-direction: column; gap: var(--s2); }
-  .v-col-h { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--ink-3); padding: 0 2px; }
-  .v-card { border-radius: 8px;
-    padding: 6px 8px; font-size: 11px; font-weight: var(--w-med); color: var(--ink-2); }
-  .v-card.hot { border-color: var(--accent-line); color: var(--accent-ink); }
-  .v-card.lift { transform: rotate(-3deg) translateY(-2px); box-shadow: var(--shadow-2); }
-
-  /* Vignette 4: Gmail Live. */
-  .v-mail { border-radius: 10px;
-    padding: var(--s3) var(--s4); font-size: var(--fs-s); margin-bottom: var(--s3); }
-  .v-mail .hd { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);
-    display: flex; flex-direction: column; gap: 2px; margin-bottom: var(--s2); }
-  .v-mail .hd b { color: var(--accent-ink); font-weight: var(--w-med); }
-  .v-mail .bd { color: var(--ink-2); font-size: 12px; }
-  .v-logline { display: flex; align-items: center; gap: var(--s2);
-    font-size: var(--fs-s); color: var(--ink-2); }
-  .v-logline .ok-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
-  .v-logline b { color: var(--ink); }
-
-  /* Trust band: three flat claims, no cards-in-cards. */
-  .trust-band { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s5);
-    margin-top: var(--s6); }
-  .trust-item h4 { font: var(--w-bold) var(--fs-m)/1.3 var(--font-display);
-    margin: 0 0 var(--s2); }
-  .trust-item p { color: var(--ink-2); font-size: var(--fs-s); margin: 0; }
-
-  /* Final CTA band. */
-  .cta-band { text-align: center; margin: var(--s8) 0 var(--s5);
-    padding: var(--s7) var(--s5);
-    background:
-      radial-gradient(110% 160% at 50% -40%,
-        color-mix(in srgb, var(--accent) 11%, transparent), transparent 60%),
-      var(--surface); }
-  .cta-band h2 { font: var(--w-black) clamp(var(--fs-display-3), 3vw, var(--fs-display-2))/1.1 var(--font-display);
-    letter-spacing: -0.01em; margin: 0 0 var(--s2); }
-  .cta-band p { color: var(--ink-2); margin: 0 auto var(--s5); max-width: 52ch; }
-  .cta-band .actions { display: flex; justify-content: center; gap: var(--s3);
-    flex-wrap: wrap; }
-
-  @media (max-width: 820px) {
-    /* Copy first, panel second — that is already the DOM order, so the
-       single column needs no reordering. */
-    .desk-hero { grid-template-columns: 1fr; gap: var(--s5);
-      padding: var(--s5) var(--s4); }
-    .desk-hero .desk-title { max-width: 20ch; }
-    .desk-sub { max-width: none; }
-    .feature-row { grid-template-columns: 1fr; gap: var(--s5); }
-    .feature-row.flip .feature-copy { order: 0; }
-    .trust-band { grid-template-columns: 1fr; }
-    .v-board { grid-template-columns: repeat(2, 1fr); }
-    .v-board .v-col:last-child { display: none; }
-  }
-
-  /* Phone: 84px of ring beside a queue row leaves the name ~110px wide and
-     everything ellipses. The pace turns into a footer strip under the queue
-     instead, which keeps the rows full-width and readable. */
-  @media (max-width: 520px) {
-    .desk-body { flex-direction: column; align-items: stretch; gap: var(--s3); }
-    .desk-pace { flex-direction: row; align-items: center; gap: var(--s3);
-      align-self: flex-start; }
-    .desk-ring { width: 62px; height: 62px; }
-    .desk-ring::before { width: 46px; height: 46px; font-size: 11px; }
-    .desk-stats { gap: var(--s2) var(--s4); }
-  }
-
-  /* Reduced motion: the hero's two entrances are the only new animations on
-     this page. networkly.css §17 already collapses every duration to 0.01ms,
-     which lands `both`-filled animations on their end state — this states it
-     outright so a future edit can't reintroduce a delayed reveal that leaves
-     rows invisible. */
-  @media (prefers-reduced-motion: reduce) {
-    .desk-row, .desk-pace { animation: none; opacity: 1; transform: none; }
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/marketing.css' %}">
+<script src="{% static 'js/marketing.js' %}" defer></script>
 {% endblock %}
-
+{% block body_class %} class="marketing-page"{% endblock %}
 {% block content %}
-<div class="page support-public support-home">
-  {% comment %}
-  No flash-message loop here. base.html renders `.page-msgs` inside <main>
-  for EVERY page, and this template used to render its own second copy —
-  so the account-deletion receipt ("Deleted 137 contacts, 138 touches, …"),
-  the strongest honesty gesture the product makes, printed TWICE on the one
-  page a just-deleted user can still see. base.html's copy is the canonical
-  one (it also covers every view that redirects somewhere else); this page
-  needs nothing of its own. Pinned by core/tests/test_home_flash_once.py.
-  {% endcomment %}
-  {% comment %}
-  The hero is the product, not a poster of it: copy on the left, a framed mock
-  of the Today queue on the right. `.kin-hero` is kept for the shared card
-  treatment (tinted gradient, sheen sweep, border, rise-in) — but that rule
-  also dresses /pricing/ and both auth screens, so every layout override for
-  this page is scoped to `.desk-hero` in the style block above and nothing in
-  networkly.css is touched.
-
-  The panel is illustrative. A logged-out visitor has no queue, so the names
-  are fictional and the caption says so outright — the same honesty the
-  "Your data behaves like it's yours" band further down claims.
-  {% endcomment %}
-  <header class="desk-hero">
-    <div class="desk-copy">
-      <h1 class="desk-title">Your next role. Your next conversation.</h1>
-      <p class="desk-sub">Find recruiting opportunities, keep track of your contacts, and see who to follow up with each day.</p>
-      <div class="actions">
-        <a class="btn btn-primary" href="/opportunities/">Browse roles</a>
+<div class="networkly-marketing">
+  <header class="mk-hero mk-wrap">
+    <div class="mk-hero-copy">
+      <h1>Your Next<br>Career Move.<br><span>Connected.</span></h1>
+      <p>Find the role. Know the people. Keep the conversation going. Your recruiting search belongs in one place.</p>
+      <div class="mk-actions">
         {% if user.is_authenticated %}
-          <a class="btn" href="/app/">Open Today</a>
+        <a class="mk-button mk-button-primary" href="/app/">Open Today <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
         {% else %}
-          <a class="btn" href="/accounts/signup/">Create account</a>
+        <a class="mk-button mk-button-primary" href="/accounts/signup/">Get started free <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
         {% endif %}
+        <a class="mk-text-link" href="/opportunities/">Browse roles <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
       </div>
-      <div class="desk-stats">
-        <div class="desk-stat"><span class="dash-num">{{ open_count|default:"0" }}</span><span class="dash-lbl">Open campus roles</span></div>
-        <div class="desk-stat"><span class="dash-num">{{ firm_count|default:"0" }}</span><span class="dash-lbl">Firms tracked</span></div>
-        <div class="desk-stat"><span class="dash-num">6</span><span class="dash-lbl">Career tracks</span></div>
-      </div>
+      <p class="mk-hero-note">Built for campus recruiting. Your network stays private.</p>
     </div>
-
-    <figure class="desk-panel">
-      <div class="desk-bar">
-        <span>Today · your queue</span>
-        <span class="desk-bar-live">Example</span>
-      </div>
-      {% comment %}
-      EVERY WORD ON THIS MOCK IS A WORD THE PRODUCT SAYS.
-
-      It used to read "Reply" and "Sent", both of which Today retired
-      (docs/specs/today-page.md F5): "Sent" invited a one-click sweep that
-      left the CRM believing 29 notes went out, and "Reply" read as "compose
-      a reply" when the button logs THEIR reply. `crm/_act_card.html` says
-      "Done" and "They replied"; so does this. The done pill says "Logged",
-      which is the state "Done" produces, not "Sent", which is a claim
-      about an email nobody watched leave.
-
-      Pinned by core/tests/test_home_product_vocabulary.py, which fails on
-      any retired verb reappearing here.
-      {% endcomment %}
-      <div class="desk-body">
-        <div class="desk-queue">
-          <div class="desk-row" style="--i:0">
-            <span class="desk-row-main">
-              <b>Sarah Lin</b>
-              <span class="desk-why">VP · coffee chat 12d ago</span>
-            </span>
-            <span class="desk-go">Draft email</span>
-          </div>
-          <div class="desk-row" style="--i:1">
-            <span class="desk-row-main">
-              <b>Marcus Ito</b>
-              <span class="desk-why">Analyst · wrote back Tuesday</span>
-            </span>
-            <span class="desk-go">Log sent</span>
-          </div>
-          <div class="desk-row" style="--i:2">
-            <span class="desk-row-main">
-              <b>Priya Nair</b>
-              <span class="desk-why">Associate · new intro</span>
-            </span>
-            <span class="desk-go is-done">Logged</span>
-          </div>
+    <div class="mk-hero-visual">
+      <svg class="mk-connection" viewBox="0 0 680 600" preserveAspectRatio="none" fill="none" aria-hidden="true"><path class="mk-connection-base" d="M35 540V170C35 75 100 10 200 10H440C554 10 650 100 650 215V450C650 540 565 588 474 588H290"/><path class="mk-connection-line" d="M35 540V170C35 75 100 10 200 10H440C554 10 650 100 650 215V450C650 540 565 588 474 588H290"/><circle cx="35" cy="540" r="9"/><circle cx="290" cy="588" r="9"/></svg>
+      <figure class="mk-product" data-product-demo>
+        <div class="mk-product-top"><span class="mk-product-brand">{% include "_nav_icon.html" with name="network" %} Your Workspace</span><span class="mk-example">Interactive Preview</span></div>
+        <div class="mk-demo-tabs" aria-label="Explore the workspace">
+          <button type="button" class="mk-demo-tab" data-demo-tab="today" aria-pressed="true" aria-controls="mk-demo-today">Today</button>
+          <button type="button" class="mk-demo-tab" data-demo-tab="network" aria-pressed="false" aria-controls="mk-demo-network">Network</button>
+          <button type="button" class="mk-demo-tab" data-demo-tab="applications" aria-pressed="false" aria-controls="mk-demo-applications">Applications</button>
         </div>
-        <div class="desk-pace">
-          <span class="desk-pace-lbl">Weekly outreach · 7 of 10</span>
+        <div class="mk-demo-body">
+          <section class="mk-demo-panel" id="mk-demo-today" aria-label="Today example">
+            <div class="mk-demo-heading"><h2>A Clear Next Step</h2><span class="mk-date">Your Daily Queue</span></div>
+            <div class="mk-demo-record"><span class="mk-avatar">SL</span><div><strong>Sarah Lin</strong><p>VP · coffee chat 12 days ago</p></div><span class="desk-go mk-demo-action">Draft email</span></div>
+            <div class="mk-demo-record"><span class="mk-avatar mk-avatar-alt">MI</span><div><strong>Marcus Ito</strong><p>Analyst · replied Tuesday</p></div><span class="desk-go mk-demo-action">Log sent</span></div>
+            <div class="mk-demo-record"><span class="mk-avatar mk-avatar-plain">PN</span><div><strong>Priya Nair</strong><p>Associate · new introduction</p></div><span class="desk-go mk-demo-action">Log reply</span></div>
+            <div class="mk-context"><span class="v-flag">Don't Lose These</span><p>Sarah mentioned the Hong Kong desk rotation. Pick up where you left off.</p></div>
+          </section>
+          <section class="mk-demo-panel" id="mk-demo-network" aria-label="Network example">
+            <div class="mk-demo-heading"><h2>People, With Context</h2><span class="mk-date">Your Private Network</span></div>
+            <div class="mk-demo-record"><span class="mk-avatar">SL</span><div><strong>Sarah Lin</strong><p>Investment banking · Hong Kong</p></div><span class="mk-stage">Chatted</span></div>
+            <div class="mk-demo-record"><span class="mk-avatar mk-avatar-alt">MI</span><div><strong>Marcus Ito</strong><p>Investment banking · New York</p></div><span class="mk-stage">Emailed, Replied</span></div>
+            <div class="mk-demo-record"><span class="mk-avatar mk-avatar-plain">PN</span><div><strong>Priya Nair</strong><p>Asset management · Singapore</p></div><span class="mk-stage">Emailed, No Reply</span></div>
+            <div class="mk-context"><strong>Remember the Conversation</strong><p>Keep notes, relationship history, and the next follow-up beside each person.</p></div>
+          </section>
+          <section class="mk-demo-panel" id="mk-demo-applications" aria-label="Applications example">
+            <div class="mk-demo-heading"><h2>Keep Your Search Moving</h2><span class="mk-date">Saved Roles &amp; Stages</span></div>
+            <div class="mk-application-record"><div><strong>Summer Analyst</strong><p>Investment banking · Hong Kong</p></div><span class="mk-stage">Applied</span></div>
+            <div class="mk-application-record"><div><strong>Graduate Programme</strong><p>Asset management · London</p></div><span class="mk-stage">Interviewing</span></div>
+            <div class="mk-application-record"><div><strong>Spring Insight</strong><p>Consulting · London</p></div><span class="mk-stage">Saved</span></div>
+            <div class="mk-context"><strong>The People at Each Firm</strong><p>Keep your application stage and the people you know at that firm together.</p></div>
+          </section>
         </div>
-      </div>
-      <figcaption class="desk-note">Example queue. Yours is built from your own contacts.</figcaption>
-    </figure>
+        <figcaption>Illustrative records. Your workspace uses your own contacts and applications.</figcaption>
+      </figure>
+      <div class="mk-connection-label" aria-hidden="true"><span></span>Every Conversation Has a Next Step</div>
+    </div>
   </header>
 
-  {% if strip_firms %}
-  <section class="land-section" style="margin-top: var(--s6);">
-    <div class="marquee">
-      <div class="marquee-track">
-        <div class="marquee-group">
-          {% for f in strip_firms %}
-            <span class="strip-chip">
-              {% if f.logo %}
-                <span class="mono has-logo"><img src="{{ f.logo.url }}" alt="" width="128" height="128" loading="lazy" decoding="async"></span>
-              {% else %}
-                <span class="mono" style="--hue: {{ f.slug|firm_hue }}">{{ f.slug|slice:":2"|upper }}</span>
-              {% endif %}
-              {{ f.name|smart_title }}
-            </span>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <p class="hint" style="text-align: center; margin-top: var(--s3);">Roles checked on firms’ recruiting sites.</p>
+  <section class="mk-evidence mk-wrap" aria-label="Current opportunities directory">
+    <div class="mk-evidence-intro"><a href="/opportunities/"><span class="dash-num">{{ open_count|default:"0" }}</span> <span>Open campus roles</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a><p>{{ firm_count|default:"0" }} firms tracked. Roles checked on firms’ recruiting sites.</p></div>
+    {% if strip_firms %}<div class="mk-firms" aria-label="Firms in the directory, not endorsements">{% for f in strip_firms|slice:":6" %}<span>{{ f.name|smart_title }}</span>{% endfor %}</div>{% endif %}
   </section>
-  {% endif %}
 
-  <section class="land-section">
-    <h2 class="land-title">Keep your search and your network together.</h2>
-
-    <div class="feature-row">
-      <div class="feature-copy">
-        <h3>Roles from firms’ careers pages.</h3>
-        <p>Ranked by what closes next.</p>
-        <ul class="feature-points">
-          <li>Confirmed deadlines with time remaining</li>
-          <li>Rolling roles show when we last saw them live</li>
-          <li>{{ region_names|join:", " }}</li>
-        </ul>
-      </div>
-      <div class="vig">
-        <p class="vig-label">Opportunities · example</p>
-        <div class="v-role">
-          <span class="v-role-tag">Insight Programme</span>
-          <p class="v-role-title">Women in Banking Networking Dinner</p>
-          <div class="v-fuse">
-            <span class="v-fuse-label">Closes in 9 days</span>
-          </div>
-        </div>
-        <div class="v-role rolling">
-          <span class="v-role-tag">Internship · 2027</span>
-          <p class="v-role-title">Summer Analyst, Investment Banking</p>
-          <div class="v-fuse">
-            <span class="v-live"><span class="live-dot"></span> Rolling · seen today</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="feature-row flip">
-      <div class="feature-copy">
-        <h3>Know who to contact next.</h3>
-        <p>Follow-ups ordered by timing and priority.</p>
-        {% comment %}Lane names off `crm/today.py::_TODAY_LANES`, verbs off
-        `crm/_act_card.html`. The old copy sold "Overdue first, then due",
-        which was the priority-echo lane set today-page.md F6 replaced with
-        semantic ones, and "One-click Sent, Reply", which F5 retired.
-        {% endcomment %}
-        <ul class="feature-points">
-          <li>Log sent emails and replies, or snooze a follow-up</li>
-          <li>Your saved notes stay beside each contact</li>
-          <li>See urgent follow-ups before routine outreach</li>
-        </ul>
-      </div>
-      <div class="vig">
-        <p class="vig-label">Today · example</p>
-        <div class="v-decide">
-          <p class="v-decide-why"><span class="v-flag">Don't lose these</span> Tier 1 · no reply in 12 days</p>
-          <p class="v-decide-name">Sarah Lin <span>· VP, Investment Banking</span></p>
-          <p class="v-decide-angle">Angle: she mentioned the Hong Kong desk rotation on your last call.</p>
-          <div class="v-rail">
-            <span class="is-primary">Log sent</span>
-            <span>Log reply</span>
-            <span>Snooze</span>
-            <span>Skip</span>
-          </div>
-        </div>
-        <p class="v-decide-next">Next · <b>Marcus Ito</b>, due today, then four more</p>
-      </div>
-    </div>
-
-    <div class="feature-row">
-      <div class="feature-copy">
-        <h3>A clear view of every relationship.</h3>
-        <p>Log an interaction to update a relationship and its next follow-up.</p>
-        <ul class="feature-points">
-          <li>Tier your firms; the queue works Tier 1 first</li>
-          <li>Import your spreadsheet in one CSV</li>
-        </ul>
-      </div>
-      <div class="vig">
-        <p class="vig-label">Network · example</p>
-        {% comment %}
-        Column headers read straight off the real board's own vocabulary
-        (crm.views._WARMTH_SECTIONS — "Emailed, No Reply / Emailed, Replied /
-        Chatted / Advocate") rather than the marketing shorthand this
-        vignette used to invent ("Cold / In touch / Warm").
-        Three columns still stand in for the real board's four lanes — this
-        is a preview, not the board — but every word on it is now a word a
-        new user will see again on Network, not a fourth vocabulary that
-        made the real page look like the wrong feature.
-        {% endcomment %}
-        <div class="v-board">
-          <div class="v-col">
-            <span class="v-col-h">Emailed, No Reply</span>
-            <div class="v-card">David Park · PE</div>
-            <div class="v-card">Ana Sousa · S&amp;T</div>
-          </div>
-          <div class="v-col">
-            <span class="v-col-h">Emailed, Replied</span>
-            <div class="v-card lift">Marcus Ito · IBD</div>
-            <div class="v-card">Priya Nair · AM</div>
-          </div>
-          <div class="v-col">
-            <span class="v-col-h">Advocate</span>
-            <div class="v-card hot">Sarah Lin · IBD</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="feature-row flip">
-      <div class="feature-copy">
-        <h3>Capture recruiting updates from Gmail.</h3>
-        <p>Gmail Live, planned for Pro, captures replies, delivery failures, and calendar invites. It reads only what’s needed to record recruiting updates.</p>
-        <ul class="feature-points">
-          <li>A reply lands and relationship updates itself</li>
-          <li>Revoke access any time from your Google account</li>
-        </ul>
-      </div>
-      <div class="vig">
-        <p class="vig-label">Gmail sync · example</p>
-        <div class="v-mail">
-          <div class="hd">
-            <span>From: sarah.lin@bank.com</span>
-            <span>Subject: <b>Re: coffee chat</b></span>
-          </div>
-          <p class="bd">Hi, thank you for reaching out! Tuesday at 2pm works…</p>
-        </div>
-        {% comment %}"Emailed, Replied", not "Warm": `crm/views.py`'s
-        `_WARMTH_SECTIONS` is the board's own vocabulary and the warmth-board
-        vignette above already reads off it. This line was the last place on
-        the page still using the marketing shorthand that comment says was
-        dropped.{% endcomment %}
-        <p class="v-logline"><span class="ok-dot"></span> Logged reply from <b>Sarah Lin</b> · relationship updated to Emailed, Replied</p>
-      </div>
+  <section class="mk-workflow mk-wrap" id="how-it-works">
+    <div class="mk-section-intro" data-mk-reveal><h2>A Role Is Only<br>the Start.</h2><p>The application, the person you met, the note you meant to send. Networkly keeps them connected, so you can take the next step.</p></div>
+    <div class="mk-flow" data-mk-reveal>
+      <article class="mk-flow-step"><div class="mk-flow-symbol" aria-hidden="true">{% include "_nav_icon.html" with name="opportunities" %}</div><h3>Find Your Opening</h3><p>Browse campus roles by firm and market. Check published deadlines and see when rolling roles were last found live.</p><a class="mk-text-link" href="/opportunities/">Explore opportunities <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></article>
+      <article class="mk-flow-step"><div class="mk-flow-symbol" aria-hidden="true">{% include "_nav_icon.html" with name="network" %}</div><h3>Know Your People</h3><p>Bring in your contacts with a CSV. Keep conversation notes and relationship history beside the firms you are targeting.</p><a class="mk-text-link" href="{% if user.is_authenticated %}/app/contacts/{% else %}/accounts/signup/{% endif %}">Build your network <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></article>
+      <article class="mk-flow-step"><div class="mk-flow-symbol" aria-hidden="true">{% include "_nav_icon.html" with name="today" %}</div><h3>Keep It Going</h3><p>Open Today for follow-ups ordered by timing and priority. Your saved notes give you a place to start.</p><ul class="feature-points"><li>Log sent emails and replies, or snooze a follow-up.</li></ul></article>
     </div>
   </section>
 
-  <section class="land-section">
-    <h2 class="land-title">Your contacts stay private.</h2>
-    <div class="trust-band">
-      <div class="trust-item kin-reveal" style="--i:0">
-        <h4>Clear source labels</h4>
-        <p>Every deadline carries its confidence and freshness. Rumored says rumored.</p>
-      </div>
-      <div class="trust-item kin-reveal" style="--i:1">
-        <h4>Private by default</h4>
-        <p>The feed is shared. Your contacts, notes, and touches never are.</p>
-      </div>
-      <div class="trust-item kin-reveal" style="--i:2">
-        <h4>Export or delete</h4>
-        <p>Export everything as CSV, or delete it all yourself, immediately.</p>
-      </div>
+  <section class="mk-network-band">
+    <div class="mk-wrap mk-network-layout">
+      <div class="mk-network-story" data-mk-reveal><h2>Walk Into the<br>Next Conversation<br><span>Remembering<br>the Last.</span></h2><p>Who introduced you. What you talked about. When to check in. Give every relationship the context it deserves.</p><a class="mk-text-link" href="{% if user.is_authenticated %}/app/contacts/{% else %}/accounts/signup/{% endif %}">Start with your contacts <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
+      <figure class="mk-journal" data-mk-reveal>
+        <div class="mk-journal-person"><span class="mk-avatar">SL</span><div><h3>Sarah Lin</h3><p>VP, Investment Banking · Hong Kong</p></div><span class="mk-stage">Chatted</span></div>
+        <div class="mk-journal-entry"><span>Coffee Chat</span><h4>A Better Sense of the Team</h4><p>Sarah explained how analysts rotate across desks. She suggested asking about cross-border work in the interview.</p></div>
+        <div class="mk-journal-entry"><span>Next Follow-Up</span><h4>Pick Up the Conversation</h4><p>Thank her for the advice and share an update on your application.</p></div>
+        <figcaption>Example contact and notes.</figcaption>
+      </figure>
     </div>
   </section>
 
-  <section class="cta-band">
-    <h2>Start your recruiting workspace.</h2>
-    <p>Create an account to save roles and manage your contacts.</p>
-    <div class="actions">
-      {% if user.is_authenticated %}
-        <a class="btn btn-primary" href="/app/">Open Today</a>
-      {% else %}
-        <a class="btn btn-primary" href="/accounts/signup/">Create account</a>
-      {% endif %}
-      <a class="btn" href="{% url 'core:pricing' %}">View plans</a>
+  <section class="mk-details mk-wrap">
+    <div class="mk-section-intro" data-mk-reveal><h2>Less to Keep<br>in Your Head.</h2><p>Your calendar, conversations, and recruiting updates stay close to the work.</p></div>
+    <div class="mk-detail-grid">
+      <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true">{% include "_nav_icon.html" with name="calendar" %}</div><h3>Your Dates, Together</h3><p>See scheduled conversations and recruiting dates in Calendar. Keep track of what is coming up.</p></article>
+      <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true">{% include "_nav_icon.html" with name="talk" %}</div><h3>An Assistant With Context</h3><p>Ask questions about your own records and get help preparing your next outreach. You decide what to send.</p></article>
+      <article data-mk-reveal><div class="mk-detail-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg></div><h3>Connect Gmail, If You Want</h3><p>Gmail connection is optional and separate from sign-in. Gmail Live, planned for Pro, captures recruiting replies and calendar invites.</p><a class="mk-text-link" href="{% url 'core:pricing' %}">See plan details <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></article>
     </div>
+  </section>
+
+  <section class="mk-trust mk-wrap" data-mk-reveal>
+    <h2>Public Opportunities.<br>Private Relationships.</h2>
+    <div class="mk-trust-copy"><p>The roles feed is shared. Your contacts, notes, and interactions belong to your account. Export your records as CSV or delete them yourself.</p><p>Source labels show what is confirmed and what is uncertain. An unknown deadline stays unknown.</p><a class="mk-text-link" href="/welcome/privacy/">Read our privacy policy <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
+  </section>
+
+  <section class="mk-close">
+    <div class="mk-wrap"><h2>Make Your<br>Next Move.</h2><div class="mk-close-copy"><p>Your next role starts with an opportunity.<br>Your next conversation starts here.</p><div class="mk-actions">{% if user.is_authenticated %}<a class="mk-button" href="/app/">Open Today <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>{% else %}<a class="mk-button" href="/accounts/signup/">Get started free <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>{% endif %}<a class="mk-text-link" href="{% url 'core:pricing' %}">View plans</a></div></div></div>
   </section>
 </div>
 {% endblock %}

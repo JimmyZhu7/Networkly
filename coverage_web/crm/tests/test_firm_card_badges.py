@@ -26,6 +26,7 @@ Rumored dates still say nothing, here as everywhere else.
 
 from __future__ import annotations
 
+import re
 from datetime import timedelta
 
 import pytest
@@ -52,7 +53,7 @@ def _tier_board(body: str) -> str:
     visas" swatch that would make "no firm here sponsors" indistinguishable
     from "the legend always shows one anyway" if it were left in scope."""
     start = body.index('<div class="tier-section"')
-    return body[start : body.index('<p class="net-legend-mini"', start)]
+    return body[start : body.index('</section>', start)]
 
 
 def _card(board: str, name: str) -> str:
@@ -122,7 +123,7 @@ def test_the_sponsors_pill_is_not_a_count_and_stays(client, student):
     _busy_firm(student, sponsors=True)
     board = _board(client, student)
 
-    assert "pill fc-spon" in board and ">SP<" in board, (
+    assert "pill fc-spon" in board and ">Visa sponsorship<" in board, (
         "the Sponsors pill went with the count badges. It is not a count, "
         "and it was not what was asked to be removed."
     )
@@ -147,7 +148,7 @@ def test_the_progress_bar_and_the_suggestion_are_what_stayed(client, student):
     _busy_firm(student)
     board = _board(client, student)
 
-    assert 'class="firm-bar"' in board, "the warmth progress bar is gone"
+    assert 'class="firm-mix"' in board, "the warmth progress bar is gone"
     assert "Talk to Nick Tehle" in board, (
         "the reach-out suggestion is gone — with the badges removed it is the "
         "only thing on the card telling a student what to do next."
@@ -181,7 +182,7 @@ def test_sockets_return_once_a_firm_has_an_advocate(client, student):
     Contact.all_objects.create(user=student, name="Amy Advocate", firm=firm, warmth="advocate")
     board = _board(client, student)
 
-    assert "adv-socket" in board and "is-filled" in board, (
+    assert "1 of 2 advocates" in board and "firm-mix-advocate" in board, (
         "a firm with a real advocate no longer shows the fill it earned."
     )
 
@@ -204,11 +205,11 @@ def test_a_firm_with_nobody_added_shows_a_bar_but_no_sockets(client, student):
 
     assert "Untouched Co" in board
     card = _card(board, "Untouched Co")
-    assert 'class="firm-bar" title="No contacts yet"' in card, (
+    assert "0 contacts" in card and "Start by adding someone at this firm." in card, (
         "an untouched firm should still draw its bar, honestly titled"
     )
     assert "adv-socket" not in card, "an untouched firm still draws empty sockets"
-    assert "＋ Add a contact" in card, "the one verb a bare card owes a student is gone"
+    assert re.search(r'href="/app/contacts/new/\?firm=untouched-co">Add contact</a>', card), "the empty firm must link to its prefilled contact form"
 
 
 def test_a_confirmed_close_date_survives_the_badges_it_came_in_with(client, student):
@@ -226,7 +227,7 @@ def test_a_confirmed_close_date_survives_the_badges_it_came_in_with(client, stud
         "That urgency arrived on this card as the 'N Soon' badge and has to "
         "outlive it — nothing else on the card can say it."
     )
-    assert ">6d<" in board
+    assert ">Closes 6d<" in board
     assert "Applications close in 6 days (confirmed date)." in board
 
 
@@ -240,7 +241,7 @@ def test_the_countdown_says_today_rather_than_zero_days(client, student):
     )
     board = _board(client, student)
 
-    assert ">today<" in board, (
+    assert ">Closes today<" in board, (
         "a firm whose applications close TODAY shows no deadline at all — "
         "either the tag is gone or 0 days fell through a falsy check."
     )
@@ -328,7 +329,7 @@ def test_the_sp_chip_explains_itself_without_a_legend(client, student):
     board = _board(client, student)
 
     assert '<div class="net-legend"' not in board, "the legend row is back"
-    assert "pill fc-spon" in board and ">SP<" in board
+    assert "pill fc-spon" in board and ">Visa sponsorship<" in board
     assert "Sponsors visas" in board, (
         "the chip's own title attribute no longer explains what SP means, "
         "and there is no legend left to do it for it."

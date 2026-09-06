@@ -5,6 +5,7 @@
   var reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
   var stage = "all", stagePath = location.pathname, restoreStageFocus = false;
   var pending = new WeakMap();
+  var openedByUser = new WeakSet();
   var widgetSelector = ".act-card,.contact-card,.rolerow,.apps-lens-row,.cd-card,.set-card,.as-composer";
 
   function applyStage(announce) {
@@ -55,10 +56,11 @@
     var button = panel.querySelector("[data-widget-expand]");
     if (!list || !button) return;
     var open = panel.classList.contains("is-expanded"), row = 0, remainder = 0, conceal = false;
+    var previewCount = panel.classList.contains("firmcol--picked") ? 4 : 3;
     Array.from(list.children).forEach(function (child) {
       if (child.matches(".rolerow,.rolerow-dismissed")) {
         row++;
-        conceal = row > 3;
+        conceal = row > previewCount;
         if (conceal) remainder++;
         child.hidden = conceal && !open;
       } else if (child.matches(".variant-fold")) {
@@ -83,6 +85,17 @@
       { duration: 200, easing: "cubic-bezier(.16,1,.3,1)" });
   }
   document.addEventListener("click", function (event) {
+    // Pointer clicks do not focus summaries in every browser. Track intent
+    // directly so keyboard and pointer disclosures receive the same feedback.
+    var summary = event.target.closest("summary");
+    if (summary && summary.parentElement.tagName === "DETAILS") {
+      openedByUser.add(summary.parentElement);
+    }
+    var disclosureButton = event.target.closest("[data-widget-disclosure]");
+    if (disclosureButton) {
+      var controlled = document.getElementById(disclosureButton.getAttribute("aria-controls"));
+      if (controlled && controlled.tagName === "DETAILS") openedByUser.add(controlled);
+    }
     var filter = event.target.closest("[data-stage-filter]");
     if (filter && !filter.disabled) {
       stage = filter.dataset.stageFilter;
@@ -101,9 +114,13 @@
   });
   // Run only for user-opened disclosures, never choreograph the initial page.
   document.addEventListener("toggle", function (event) {
-    if (!event.target.matches("details[open]") || !event.target.contains(document.activeElement)) return;
-    var content = Array.from(event.target.children).find(function (child) { return child.tagName !== "SUMMARY"; });
-    reveal(content);
+    var disclosure = event.target;
+    if (!disclosure.matches("details") || !openedByUser.has(disclosure)) return;
+    openedByUser.delete(disclosure);
+    if (!disclosure.open) return;
+    Array.from(disclosure.children).forEach(function (child) {
+      if (child.tagName !== "SUMMARY") reveal(child);
+    });
   }, true);
   document.addEventListener("htmx:beforeRequest", function (event) {
     var detail = event.detail, source = detail.elt;

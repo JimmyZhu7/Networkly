@@ -1,336 +1,58 @@
 {% load textstyle %}
 {% comment %}
-COMPACT ROW (2026-08-30). Was a 168px card; is now a ~62px two-line row.
-
-WHY. The feed rendered 771 cards into ~2.0 MB and 32k tags, and a founder
-review plus the product's first outside user both landed on the same
-defect from opposite ends: "everything competes at the same level" and
-"it looks AI-generated". The three things producing that were a
-colour-tinted left rail on a rounded card, up to seven 999px pills per
-card (role type, Save, class year, three facts, Read), and 771 identical
-fixed-height boxes down the page.
-
-The stylesheet already names the identity, a ledger, and a ledger is
-ruled rows and aligned figures, not boxes with badges in them. This is
-that: the deadline in a fixed left column so the figures stack and the
-eye scans one axis, the title and its facts as text, and hairlines
-instead of card borders.
-
-WHAT DID NOT CHANGE, deliberately (see the design contract):
-  - every honesty marker. `is-unconfirmed` on the link, `is-reported`'s
-    dotted underline on a prose-read deadline, the literal words "No date
-    posted" for a role that states nothing, and the .vh spans that carry
-    each of those to a screen reader rather than leaving them in a title.
-  - the fact ORDER. views.py::_FACT_CHIP_ORDER sorts by what can end the
-    decision soonest and the verdict leads it, so the reader meets the
-    decisive facts first however the line breaks. That was already true of
-    the chip row.
-
-    ORDER IS NO LONGER THE TRUNCATION POLICY (2026-08-31). It was, and the
-    policy failed in the direction its own comments did not anticipate: with
-    every part `flex: none` and only `:last-child` allowed to shrink, the
-    line cut whatever the template rendered LAST, which on an undated row is
-    "No date posted, first seen 39d ago", the answer the mute dash in
-    `.rr-due` used to withhold. Measured live on the founder's board,
-    that span was rendering at 5px of the 193px it needs. The meta line now
-    WRAPS, and the single cut is a named 205px cap on `.rr-loc`. Order still
-    governs what a reader meets first; it no longer governs what survives.
-  - the Save/track control and Read, unchanged behaviour.
-
-Row height is a FLOOR (min-height), not a fixed height. The old card
-fixed the box to standardise it; here the two lines are each clamped, so
-the row is already uniform without pinning it, and a fixed height would
-only reintroduce the clipping bug this file's history is full of.
+One role, one reading order: identity, deadline evidence, stated requirements,
+recommendation context, then actions. All labels and provenance come from the
+existing role builder. Hidden dates never become a countdown or a forecast.
+The same row is used in picked roles and ordinary firm groups; show_firm
+controls whether the surrounding group already supplies the company name.
 {% endcomment %}
-<div class="rolerow urg-{{ r.level }}">
-  {% comment %}
-  The deadline, in its own fixed column so the figures form a real column
-  down the page; tabular-nums in the stylesheet is what makes them line
-  up. Undated rows print a dash HERE and the words "No date posted" in the
-  meta line below: the dash alone would be an invented fact, and the words
-  are what a screen reader and a stylesheet-less render get.
-  {% endcomment %}
-  {% comment %}
-  HOW OLD THE EVIDENCE IS, on the column that asserts the date.
-
-  The countdown in this column is a claim about a page Networkly read at some
-  point; until now the only place the product said WHEN it read it was the
-  drawer, which a student reaches by opening it. Measured 2026-09-01, a
-  quarter of the rows under Today's "Closing in 10 days" ribbon were counting
-  down off pages six days old, and 23 of them were HSBC rows whose board had
-  been throwing an SSL error since 2026-08-25.
-
-  So: the age rides on THIS column's own `title`, on every row that has one,
-  and becomes visible text on the ~3% of rows the `unconfirmed` note fires
-  for. The title is on the outer span rather than the figure inside it
-  because the figure already carries the `reported` provenance tooltip and a
-  nested `title` wins on hover. Two different facts, two different hover
-  targets, neither swallowing the other.
-  {% endcomment %}
-  {% comment %}
-  HOW LONG IT HAS BEEN OPEN RIDES HERE TOO (2026-09-02). "Open 14d" used to
-  be the last span of the meta line below. It is a fact about the EVIDENCE,
-  how long Networkly has watched this posting stay open, not about the reader
-  or their eligibility, which its own comment there said outright, and it was
-  the item that pushed 66% of dated rows onto a second meta line and left the
-  orphan separator at the end of the first. So it joins the other
-  evidence-age fact, on the hover of the column that makes the date claim.
-  Nothing is softened: the "not a forecast" sentence travels with it, because
-  the whole reason this figure exists rather than a "typically open N days"
-  one is that it predicts nothing (see `directory.open_runs`).
-  {% endcomment %}
-  <span class="rr-due"{% if r.verified_days is not None or r.dated and r.open_run_days is not None %} title="{% if r.verified_days is not None %}Networkly last confirmed this posting live {% if r.verified_days == 0 %}today{% elif r.verified_days == 1 %}1 day ago{% else %}{{ r.verified_days }} days ago{% endif %}.{% endif %}{% if r.dated and r.open_run_days is not None %}{% if r.verified_days is not None %} {% endif %}Networkly watched this posting open {% if r.open_run_days == 0 %}today{% elif r.open_run_days == 1 %}1 day ago{% else %}{{ r.open_run_days }} days ago{% endif %} and it is still open. Not a forecast of when it closes.{% endif %}"{% endif %}>
-    {% if r.dated %}
-      {% comment %}
-      The abbreviation is deliberate (views.py: "Closes in 12 days" does not
-      fit 44px), and that comment also promised "the full sentence stays the
-      accessible name". It did not: this span shipped "22d" with no aria-label
-      and no title, so a screen reader read it aloud as "22 d". The visually
-      hidden span below is that promise, kept -- same `.vh` technique the
-      reported/unconfirmed markers on this row already use, so nothing about
-      the rendered pixels changes.
-      {% endcomment %}
-      <span class="rr-due-n meta-{{ r.level }}{% if r.reported %} is-reported{% endif %}"
-            {% if r.reported %}title="{{ r.reported.why }}"{% endif %}><span aria-hidden="true">{{ r.countdown_short|default:r.countdown }}</span><span class="vh">{{ r.countdown }}</span>{% if r.reported and not r.show_firm %}<span class="vh"> ({{ r.reported.label }})</span>{% endif %}</span>
-      {% comment %}
-      IN WORDS ON THE PICKED COLUMN. The dotted underline above carries the
-      provenance of a prose-read date to a pointer that hovers; the Picked
-      column is where a student reads a countdown and acts on it without
-      hovering anything, because the product has just said "this one". So
-      there, and only there, the word is printed under the figure: same
-      dotted rule, the same `title`, and it REPLACES the `.vh` copy rather
-      than joining it, so a screen reader hears "reported" once. Firm
-      columns keep the hidden copy: printing it on 790 rows would make the
-      one column that needs it indistinguishable from the ones that don't.
-      {% endcomment %}
-      {% if r.reported and r.show_firm %}<span class="rr-due-prov" title="{{ r.reported.why }}">{{ r.reported.label }}</span>{% endif %}
-    {% elif r.rolling_stated %}
-      <span class="rr-due-n rr-due-rolling" title="{{ r.rolling_why }}"><span class="rolling-dot"></span></span>
-    {% else %}
-      {% comment %}
-      A DRAWN rule, not a typed character, and a spoken sentence rather than
-      silence. The cell used to hold an `aria-hidden` em dash, which meant a
-      sighted reader saw "no date" and a screen-reader user heard nothing at
-      all in the column the whole page is sorted by. It was also the last em
-      dash left in the feed's markup, and the product does not use that
-      character.
-
-      So: `.rr-due-none::before` paints a 12px hairline in the stylesheet
-      (a pseudo-element is never announced, which is what makes it the right
-      place for a mark that means nothing on its own), and the `.vh` span
-      gives the cell the accessible name the sighted column already has.
-      {% endcomment %}
-      <span class="rr-due-n rr-due-none"><span class="vh">Deadline not listed</span></span>
-    {% endif %}
-    {% comment %}
-    THE AGE, IN WORDS, on the rows where it changes the answer. The condition
-    is `r.unconfirmed`, not a second day comparison written here: that dict is
-    `views._unconfirmed_note`, which owns the "how stale is too stale"
-    threshold (`_UNCONFIRMED_AFTER_DAYS`, borrowed from `health.py`'s own
-    CONSECUTIVE_FAILURES so the operator alarm and the student-facing note
-    fire on the same evidence). One definition, two renderings.
-
-    ON EVERY COLUMN, not just Picked. The `reported` word above prints only
-    in the Picked column because it would otherwise appear on 790 rows and
-    stop distinguishing anything; this one prints on about 90 board-wide, so
-    scarcity is doing the same job here without a scope rule.
-
-    `unconfirmed.days` is absent from no firing branch, but the `{% if %}`
-    guards it anyway: a check-failed row with no elapsed days would otherwise
-    render "d" on its own.
-    {% endcomment %}
-    {% if r.unconfirmed and r.unconfirmed.days %}<span class="rr-due-age" title="{{ r.unconfirmed.why }}"><span aria-hidden="true">{{ r.unconfirmed.days }}d old</span><span class="vh">Last confirmed live {{ r.unconfirmed.days }} days ago</span></span>{% endif %}
-  </span>
-
+<div class="rolerow urg-{{ r.level }}{% if r.show_firm %} rolerow--picked{% endif %}">
   <div class="rr-main">
-    {% comment %}h3 keeps the 1→2→3 outline the firm column headers set.{% endcomment %}
-    {% comment %}
-    THE FULL TITLE ALWAYS RIDES THE `title` (2026-09-02), because this was
-    the one part of the row that could be cut with no way to read what was
-    cut.
-
-    `.rr-title a` is `-webkit-line-clamp: 2`. Measured on the founder's own
-    board with `content-visibility` forced off so off-screen rows reported
-    real geometry: 25 of 311 rows overflow that clamp at 1280px and 64 of
-    311 at 375px, and every one of them but one had NO `title` at all. The
-    attribute was emitted only on the ~3% of rows carrying an `unconfirmed`
-    note. So a student met "Central Relationship Management Corporate and
-    Institutional Banking Interns…" and the only way to see the end was to
-    open the posting.
-
-    That is the opposite of what every other truncating part of this row
-    does. `.rr-loc` is capped at 205px and states its own comment's rule:
-    "the full string has to survive the cut somewhere". `.rr-why` ellipsises
-    at the row's edge and keeps every sentence in `pick_why_title`. The
-    title was the exception, and it is the row's most important string.
-
-    ON EVERY ROW, not only the clipped ones. Whether the clamp bites depends
-    on the rendered width, the viewport and the reader's font, none of which
-    the template can know, the same argument `.rr-loc` makes for always
-    carrying its own text. Repeating a short title in its tooltip adds no
-    claim: it is the same string the anchor already holds.
-
-    THE STALENESS SENTENCE IS APPENDED, NOT REPLACED. It used to own this
-    attribute alone. It stays, in the parentheses the `.vh` span beside it
-    already uses for the same note, so one hover answers both "what is this
-    role called" and "why is it greyed out" instead of the second fact
-    evicting the first.
-    {% endcomment %}
-    <h3 class="rr-title"><a href="{{ r.url }}" target="_blank" rel="nofollow noopener"
-        {% if r.unconfirmed %}class="is-unconfirmed" {% endif %}title="{{ r.title|smart_title }}{% if r.unconfirmed %} ({{ r.unconfirmed.why }}){% endif %}"
-        >{{ r.title|smart_title }}{% if r.unconfirmed %}<span class="vh"> ({{ r.unconfirmed.label }})</span>{% endif %}</a></h3>
-
-    <div class="rr-line">
-      <div class="rr-meta">
-      {% comment %}
-      One line, ordered by how decisive each part is, so the ellipsis eats
-      the least decisive tail first. The firm name leads only in the Picked
-      column, where the column header no longer names it (same `show_firm`
-      rule the card used).
-      {% endcomment %}
-      {% comment %}
-      ORDER IS READING ORDER. It used to be the truncation policy too, and
-      that second job is what broke (see the header comment): the line now
-      wraps and cuts only at `.rr-loc`'s stated cap, so no position on this
-      line is a death sentence any more. The ordering still decides what a
-      student meets FIRST, which on a line that can run to three rows of
-      text is the job that actually matters.
-
-      Measured on the live feed, a first pass put location and role type
-      ahead of the verdict and cut the line at "Entry-Le…", losing the visa
-      and year answers entirely.
-
-      So: the verdict leads (the one fact about the READER, and the one
-      that can end the decision outright), then the posting's own facts in
-      views.py::_FACT_CHIP_ORDER's decisiveness order, and only then the
-      descriptive parts. The firm name is the exception and stays first,
-      but only in the Picked column, where nothing else names the firm.
-      {% endcomment %}
-      {% if r.show_firm %}<span class="rr-firm">{{ r.firm_name|smart_title }}</span>{% endif %}
-      {% comment %}
-      WHAT THE CITY-VARIANT FOLD DID, said out loud. The Picked column keeps
-      one card per distinct JOB, so a firm running one programme in nine
-      branch offices is one card here rather than nine (`picked_roles`, via
-      `dupes.fold_families`). Folding them and saying nothing would make the
-      column read as if the other eight addresses did not exist, and "Save
-      all" would then write one address of a job the student picked once
-      without ever admitting there were others. The chip names the count, so
-      a student who wants a particular town knows to open the firm's own
-      column and pick it. `places` is set only on a survivor that stands for
-      two or more STATED places (P4).
-      {% endcomment %}
-      {% if r.places %}<span class="rr-places" title="One card per role. This one is open in {{ r.places }} places; the firm's own column lists them all.">{{ r.places }} cities</span>{% endif %}
-      {% if r.verdict %}<span class="rr-vd vd-{{ r.verdict.kind }}" title="{{ r.verdict.why }}">{{ r.verdict.label }}</span>{% endif %}
-      {% comment %}
-      HOW THIS FIRM HIRES. Directly after the verdict and before the
-      posting's own facts, because it is the same KIND of fact as the
-      verdict, a statement about the reader's route in rather than about the
-      posting, and it changes what the rest of the row is worth reading
-      for. On a Jane Street row, "you know someone here" is not the lever;
-      the assessment is.
-
-      A LINK, not a chip, and that is the honesty part: the tooltip states
-      the limit ("Networkly does not score your network here") and the firm
-      page is where the fuller answer lives. The wording says the firm hires
-      by assessment and stops there. It never says networking hurts. No
-      source shows that, only that no mechanism is documented
-      (`research-st-quant.md` Q3), and the difference between those two
-      claims is the whole reason this chip is allowed to exist.
-
-      Fires on 302 open campus rows at 15 firms and on none of the founder's
-      own board, where every firm in play is `campus`.
-      {% endcomment %}
-      {% if r.assessment %}<a class="rr-assess" href="{% url 'directory:firm_detail' r.firm_slug %}" title="{{ r.assessment.why }}">{{ r.assessment.label }}</a>{% endif %}
-      {% for f in r.facts %}<span class="rr-fact {{ f.css }}" title="{{ f.why }}">{{ f.label }}</span>{% endfor %}
-      {% comment %}
-      THE LOCATION ALWAYS CARRIES A `title`. It is the one part of the meta
-      line allowed to truncate (see `.rr-loc`'s 205px cap in _styles.html:
-      it holds ~95% of locations whole and bites on the multi-city dumps,
-      the widest of which is 762px of ten cities), so the full string has to
-      survive the cut somewhere. `_place`'s own `why` covers the tidied and
-      market-fallback cases and is the better sentence when it exists
-      (it says WHY the text differs from what the posting stated), but it is
-      deliberately empty when the text IS what the posting stated, and that
-      is exactly a raw multi-city list. Falling back to the text itself adds
-      no claim: it is the same string the span already holds.
-      {% endcomment %}
-      {% if r.place.text %}<span class="rr-loc{% if not r.place.exact %} is-market{% endif %}"
-        title="{% if r.place.why %}{{ r.place.why }}{% else %}{{ r.place.text|smart_location }}{% if r.place.more %} +{{ r.place.more }}{% endif %}{% endif %}">{{ r.place.text|smart_location }}{% if r.place.more %} +{{ r.place.more }}{% endif %}</span>{% endif %}
-      <span class="rr-kind"{% if r.cohort %} title="{{ r.cohort }} programme year"{% endif %}>{{ r.bucket_label }}{% if r.cohort %} {{ r.cohort }}{% endif %}</span>
-      {% if r.class_year %}<span class="rr-cls" title="Class year stated in the posting">Class of {{ r.class_year }}</span>{% endif %}
-      {% comment %}
-      HOW LONG THIS ONE HAS BEEN OPEN used to render here, last in the meta
-      line, as "Open 14d". It moved to the deadline column's `title` on
-      2026-09-02. See that span at the top of this file for the wording and
-      the argument.
-
-      WHY IT WAS THE ONE TO GO. Everything else on this line is about the
-      READER (the verdict, the assessment route) or about what the POSTING
-      states (sponsorship, pay, grad years, GPA, location, programme, the
-      deadline or its absence). This one was about our own observation
-      history, which is the definition of provenance on this board, and it
-      said so in its own comment: "LAST IN READING ORDER, because it is about
-      the posting's HISTORY, not about the reader and not about their
-      eligibility". It fires on 66% of dated rows, and measured at 1280px it
-      was the span that carried the line onto a second row and left the
-      trailing separator hanging at the end of the first.
-
-      NOT a duration prediction, and the distinction is the reason this
-      feature shipped in this shape. See `directory.open_runs`: the obvious
-      "typically open N days" figure is measurable but wrong, because a
-      39-day observation window can only pair the postings that closed inside
-      it, and 77% of the still-open rows have already outlived the median
-      that pairing produces. It counts up from an open we watched, and
-      predicts nothing, which is why the tooltip it moved to says so.
-
-      DATED ROWS ONLY, unchanged. An undated row's `.rr-undated` span below
-      already ends with "first seen 12d ago", the same measurement, in
-      wording pinned by a test, and stating both would be one fact twice.
-      {% endcomment %}
-      {% comment %}
-      "first seen", never "posted": this is when the row entered OUR
-      database, and a bulk import once wore "New" on 794 of 805 roles at
-      once. Shortening it to "seen" in a first pass lost exactly that
-      distinction, which is why the wording is pinned by a test.
-      {% endcomment %}
-      {% if not r.dated %}
-        <span class="rr-undated">{% if r.rolling_stated %}Rolling{% else %}Deadline not listed{% endif %}{% if r.seen_days is not None %}, first seen {% if r.seen_days == 0 %}today{% elif r.seen_days == 1 %}1d ago{% else %}{{ r.seen_days }}d ago{% endif %}{% endif %}</span>
-      {% endif %}
-      </div>
-      {% comment %}
-      Actions ride the SECOND line, not a third grid column. Measured at
-      302px (the real column width): as a column they took 160px and left
-      the title 70px, about twelve characters, which inverted the row's
-      whole hierarchy. On this line they take their width from the meta
-      instead, which is the part that can afford to give ground: it wraps
-      now rather than ellipsising, so the ground it gives is a line break.
-      {% endcomment %}
-      <div class="rr-act">
-        {% if request.user.is_authenticated %}{% include "directory/_track_control.html" %}{% endif %}
-        {% if r.has_text %}
-          <button type="button" class="meta-read" data-role-read data-role-id="{{ r.id }}"
-                  hx-get="{% url 'role_description' r.id %}"
-                  hx-target="#role-drawer-body" hx-swap="innerHTML">View role</button>
+    <div class="rr-top">
+      <div class="rr-heading">
+        {% if r.show_firm %}
+          <div class="rr-company">
+            <span class="rr-company-mark{% if r.logo_url %} has-logo{% endif %}" aria-hidden="true">
+              {% if r.logo_url %}<img src="{{ r.logo_url }}" alt="" width="38" height="38" loading="lazy" decoding="async" data-firm-logo><span class="rr-monogram" hidden>{{ r.monogram }}</span>{% else %}<span class="rr-monogram">{{ r.monogram }}</span>{% endif %}
+            </span>
+            <a class="rr-firm" href="{% url 'directory:firm_detail' r.firm_slug %}">{{ r.firm_name|smart_title }}</a>
+          </div>
         {% endif %}
+        <h3 class="rr-title"><a href="{{ r.url }}" target="_blank" rel="nofollow noopener"
+            {% if r.unconfirmed %}class="is-unconfirmed" {% endif %}title="{{ r.title|smart_title }}{% if r.unconfirmed %} ({{ r.unconfirmed.why }}){% endif %}"
+            >{{ r.title|smart_title }}{% if r.unconfirmed %}<span class="vh"> ({{ r.unconfirmed.label }})</span>{% endif %}</a></h3>
+        <div class="rr-identity">
+          {% if r.place.text %}<span class="rr-loc{% if not r.place.exact %} is-market{% endif %}" title="{% if r.place.why %}{{ r.place.why }}{% else %}{{ r.place.text|smart_location }}{% if r.place.more %} +{{ r.place.more }}{% endif %}{% endif %}">{{ r.place.text|smart_location }}{% if r.place.more %} +{{ r.place.more }}{% endif %}</span>{% endif %}
+          {% if r.places %}<span class="rr-places" title="One card per role. This one is open in {{ r.places }} places; the firm's own column lists them all.">{{ r.places }} cities</span>{% endif %}
+          <span class="rr-kind"{% if r.cohort %} title="{{ r.cohort }} programme year"{% endif %}>{{ r.bucket_label }}{% if r.cohort %} {{ r.cohort }}{% endif %}</span>
+          {% if r.class_year %}<span class="rr-cls" title="Class year stated in the posting">Class of {{ r.class_year }}</span>{% endif %}
+        </div>
+      </div>
+      <div class="rr-due"{% if r.verified_days is not None or r.dated and r.open_run_days is not None %} title="{% if r.verified_days is not None %}Networkly last confirmed this posting live {% if r.verified_days == 0 %}today{% elif r.verified_days == 1 %}1 day ago{% else %}{{ r.verified_days }} days ago{% endif %}.{% endif %}{% if r.dated and r.open_run_days is not None %}{% if r.verified_days is not None %} {% endif %}Networkly watched this posting open {% if r.open_run_days == 0 %}today{% elif r.open_run_days == 1 %}1 day ago{% else %}{{ r.open_run_days }} days ago{% endif %} and it is still open. Not a forecast of when it closes.{% endif %}"{% endif %}>
+        {% if r.show_firm %}{% include "directory/_section_icon.html" with name="dates" %}{% endif %}
+        {% if r.dated %}
+          <span class="rr-due-n meta-{{ r.level }}{% if r.reported %} is-reported{% endif %}"{% if r.reported %} title="{{ r.reported.why }}"{% endif %}>{{ r.countdown }}</span>
+          {% if r.reported %}<span class="rr-due-prov" title="{{ r.reported.why }}">{{ r.reported.label }}</span>{% endif %}
+        {% else %}
+          <span class="rr-undated"{% if r.rolling_stated %} title="{{ r.rolling_why }}"{% endif %}>{% if r.rolling_stated %}Rolling{% else %}Deadline not listed{% endif %}{% if r.seen_days is not None %}, first seen {% if r.seen_days == 0 %}today{% elif r.seen_days == 1 %}1d ago{% else %}{{ r.seen_days }}d ago{% endif %}{% endif %}</span>
+        {% endif %}
+        {% if r.unconfirmed and r.unconfirmed.days %}<span class="rr-due-age" title="{{ r.unconfirmed.why }}">Last confirmed live {{ r.unconfirmed.days }} days ago</span>{% endif %}
       </div>
     </div>
-    {% comment %}
-    WHY THIS ONE, on the Picked column only (`pick_why` is set on the copies
-    that column makes, never on the firm columns' rows). ONE quiet line, in
-    the meta line's own size and colour, ellipsised at the row's edge with
-    every full sentence in the `title`. The same one-line-not-pills call
-    the column header makes for the shared reasons (_results.html), and for
-    the same reason: a pile of chips wrapped and staggered the column.
 
-    The header prints what every pick shares; this prints what is left for
-    this pick: the firm's tier, the track the title states, the intake
-    year. It is the scorer's own chip texts joined the way `Recommendation.
-    why` joins them, so a caveat chip ("2027 intake, a year early for you")
-    reads as the caveat it is, here and in the digest email that prints the
-    same string. Until 2026-09-01 the header was the only place any reason
-    rendered, and on the founder's own rail it was empty: six picks, no
-    reason common to all six, six cards with no justification at all.
-    {% endcomment %}
-    {% if r.pick_why %}<div class="rr-why" title="{{ r.pick_why_title }}">{{ r.pick_why }}</div>{% endif %}
+    {% if r.verdict or r.assessment or r.facts %}
+      <div class="rr-qualifications" aria-label="Role requirements and your fit">
+        {% if r.verdict %}<span class="rr-vd vd-{{ r.verdict.kind }}" title="{{ r.verdict.why }}"><span class="rr-fact-label">Fit:</span> {{ r.verdict.label }}</span>{% endif %}
+        {% if r.assessment %}<a class="rr-assess" href="{% url 'directory:firm_detail' r.firm_slug %}" title="{{ r.assessment.why }}">{{ r.assessment.label }}</a>{% endif %}
+        {% for f in r.facts %}{% include "directory/_role_fact.html" with fact_class="rr-fact" %}{% endfor %}
+      </div>
+    {% endif %}
+    {% if r.pick_why %}<details class="rr-why" title="{{ r.pick_why_title }}"><summary><span class="rr-why-label">Why Picked</span><span class="rr-why-preview">{{ r.pick_why }}</span><svg class="rr-why-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><p class="rr-why-detail">{{ r.pick_why_title }}</p></details>{% endif %}
+    <div class="rr-act">
+      {% if request.user.is_authenticated %}{% include "directory/_track_control.html" %}{% endif %}
+      {% if r.has_text %}<button type="button" class="meta-read" data-role-read data-role-id="{{ r.id }}"
+              hx-get="{% url 'role_description' r.id %}"
+              hx-target="#role-drawer-body" hx-swap="innerHTML" hx-sync="#role-drawer:replace">View role</button>{% endif %}
+    </div>
   </div>
 </div>

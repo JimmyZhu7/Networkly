@@ -73,40 +73,21 @@ survives even if it was in the batch.
   funnel's.
   {% endcomment %}
   <section class="apps-lenses" aria-labelledby="lenses-h">
-    <div class="directory-section-heading"><h2 class="apps-lenses-h" id="lenses-h">Everything you're tracking</h2><p>Soonest first</p></div>
-    {% comment %}
-    Cut from three sentences to one (2026 redesign, "cleaner, less words"),
-    and now to none. The last sentence read "The same N live roles, sorted by
-    deadline instead of stage" — it explained the page's structure to a
-    student who had not asked, and every clause in it is stated by something
-    that has to be on the screen anyway: the eyebrow above makes the
-    same-roles claim, the h2 says "by deadline", and each lens fraction below
-    prints the live total itself as "of N live". Nothing that was only here
-    is gone. The three affordances the band's own comment names — eyebrow,
-    fraction, stage pill — are all still standing; the intro was a fourth,
-    repeating the first.
-    {% endcomment %}
-    {% comment %}
-    Every live row lands in exactly one lens, so the fractions sum to the
-    denominator. They did not before: the band ran Closing Soon + Rolling
-    only, and a live role dated further out than the window (or already past
-    it) appeared in neither while still being counted in "of N live" — a
-    subtraction the page invited and never answered. Lenses that carry no
-    coaching copy when empty (`empty_state` false) stay off the page rather
-    than adding a permanent "0 of 12" band.
-    {% endcomment %}
+    <div class="directory-section-heading"><h2 class="apps-lenses-h" id="lenses-h">Tracked Roles</h2><p>By Deadline</p></div>
+    {% comment %}Each role appears once. Group counts describe posting timing;
+    the row's stage control separately describes the student's application.{% endcomment %}
     {% for lens in lenses %}
       {% if lens.items or lens.empty_state %}
       <div class="apps-lens" data-apps-lens>
         <h3>{{ lens.label }}
-          {% if lens.counts_live %}<span class="apps-lens-frac" data-apps-lens-count>{{ lens.items|length }} of {{ live_total }} live</span>{% else %}<span class="apps-lens-frac" data-apps-lens-count>{{ lens.items|length }}</span>{% endif %}
+          <span class="apps-lens-frac" data-apps-lens-count>{{ lens.items|length }} role{{ lens.items|length|pluralize }}</span>
         </h3>
         {% comment %}A note only when it says something the heading cannot —
         a window, a boundary, what happens to the row next. "Deadline Passed"
         and "No Deadline" say their own note, so they carry none, and an
         empty <p> would leave their heading floating on a note's margin.
         {% endcomment %}
-        {% if lens.note %}<p class="apps-lens-note">{{ lens.note }}</p>{% endif %}
+        {% if lens.note and lens.key != "posting_closed" %}<p class="apps-lens-note">{{ lens.note }}</p>{% endif %}
         {% if lens.items %}
           <ul class="apps-lens-list">
             {% for r in lens.items %}
@@ -119,6 +100,40 @@ survives even if it was in the batch.
               arrive in sequence instead of already-settled.
               {% endcomment %}
               <li class="apps-lens-row u-{{ r.urgency.key }}{% if r.posting_closed %} is-shut{% endif %}" style="--i: {{ forloop.counter0 }}" data-app-stage="{{ r.stage }}">
+                <div class="lens-record-head">
+                <span class="lens-role">
+                  <a href="{{ r.url }}" target="_blank" rel="nofollow noopener">{{ r.title|smart_title }}</a>
+                  {% comment %}
+                  `r.place`, not `r.location` — views._place, the same
+                  resolver the Opportunities feed card and firm row use. This
+                  lens was printing whatever a careers site emitted raw
+                  ("9-10 TAUNUSANLAGE:FRANKFURT AM MAIN", "NY 10001", "2
+                  Locations"), the same defect `_place` already closed on the
+                  feed card two clicks away from every one of these rows.
+                  {% endcomment %}
+                  <span class="lens-firm">{{ r.firm_name|smart_title }}{% if r.place.text %} · <span{% if r.place.why %} title="{{ r.place.why }}"{% endif %}>{{ r.place.text|smart_location }}{% if r.place.more %} +{{ r.place.more }} more{% endif %}</span>{% endif %}</span>
+                  {% comment %}Same sentence the role drawer shows for the
+                  same fact one click away, and it changes with the stage:
+                  a posting closing after you applied leaves your
+                  application standing, which is a different piece of news
+                  from a posting closing on one you only saved.{% endcomment %}
+                  {% if r.posting_closed %}<span class="lens-shut-note">{{ r.posting_closed.note }}</span>{% endif %}
+                  {% comment %}What the posting states about applying, same
+                  chips as the feed and the firm page. This page is where a
+                  student decides what to do this week, and it knew none of
+                  it.{% endcomment %}
+                  {% if r.facts %}<span class="lens-facts">{% for f in r.facts %}{% include "directory/_role_fact.html" with fact_class="fact-chip" %}{% endfor %}</span>{% endif %}
+
+                  {% comment %}
+                  WHO YOU ALREADY KNOW THERE. This was the one thing on the
+                  deleted stage cards that the row could not otherwise say,
+                  and it is the reason this page sits beside a CRM: the
+                  useful sentence before you move a role to Applied is "you
+                  know two people at this firm and have not spoken in 24
+                  days". Same builder and same partial the cards used, so
+                  there was never a second version of it to drift.
+                  {% endcomment %}
+                </span>
                 <span class="lens-when{% if not r.deadline.posted and not r.posting_closed %}{% if r.rolling_stated %} lens-rolling{% else %} lens-unstated{% endif %}{% endif %}{% if r.posting_closed %} lens-shut{% endif %}">
                   {% if r.posting_closed %}
                     {% comment %}The firm took this posting down, so the
@@ -127,7 +142,7 @@ survives even if it was in the batch.
                     "closes in 3 days" on a dead posting is the exact lie
                     this page used to tell.{% endcomment %}
                     <svg class="lens-gl" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M3.8 3.8l8.4 8.4" stroke-linecap="round"/></svg>
-                    <span>Closed</span>
+                    <span>Posting closed</span>
                   {% elif r.deadline.posted %}
                     {% if r.urgency.key == 'now' %}
                       <svg class="lens-gl" viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M8 2.2 15 14H1L8 2.2Z" stroke-linejoin="round"/><path d="M8 6.6v3.1" stroke-linecap="round"/><circle cx="8" cy="11.7" r=".85" fill="currentColor" stroke="none"/></svg>
@@ -153,41 +168,7 @@ survives even if it was in the batch.
                     {{ r.deadline.label }}
                   {% endif %}
                 </span>
-                <span class="lens-role">
-                  <a href="{{ r.url }}" target="_blank" rel="nofollow noopener">{{ r.title|smart_title }}</a>
-                  {% comment %}
-                  `r.place`, not `r.location` — views._place, the same
-                  resolver the Opportunities feed card and firm row use. This
-                  lens was printing whatever a careers site emitted raw
-                  ("9-10 TAUNUSANLAGE:FRANKFURT AM MAIN", "NY 10001", "2
-                  Locations"), the same defect `_place` already closed on the
-                  feed card two clicks away from every one of these rows.
-                  {% endcomment %}
-                  <span class="lens-firm">{{ r.firm_name|smart_title }}{% if r.place.text %} · <span{% if r.place.why %} title="{{ r.place.why }}"{% endif %}>{{ r.place.text|smart_location }}{% if r.place.more %} +{{ r.place.more }} more{% endif %}</span>{% endif %}</span>
-                  {% comment %}Same sentence the role drawer shows for the
-                  same fact one click away, and it changes with the stage:
-                  a posting closing after you applied leaves your
-                  application standing, which is a different piece of news
-                  from a posting closing on one you only saved.{% endcomment %}
-                  {% if r.posting_closed %}<span class="lens-shut-note">{{ r.posting_closed.note }}</span>{% endif %}
-                  {% comment %}What the posting states about applying, same
-                  chips as the feed and the firm page. This page is where a
-                  student decides what to do this week, and it knew none of
-                  it.{% endcomment %}
-                  {% if r.facts %}<span class="lens-facts">{% for f in r.facts %}<span class="fact-chip {{ f.css }}" title="{{ f.why }}">{{ f.label }}</span>{% endfor %}</span>{% endif %}
-                  {% if r.has_text %}<button type="button" class="meta-read lens-read" data-role-read data-role-id="{{ r.id }}"
-                          hx-get="{% url 'role_description' r.id %}"
-                          hx-target="#role-drawer-body" hx-swap="innerHTML">View role</button>{% endif %}
-                  {% comment %}
-                  WHO YOU ALREADY KNOW THERE. This was the one thing on the
-                  deleted stage cards that the row could not otherwise say,
-                  and it is the reason this page sits beside a CRM: the
-                  useful sentence before you move a role to Applied is "you
-                  know two people at this firm and have not spoken in 24
-                  days". Same builder and same partial the cards used, so
-                  there was never a second version of it to drift.
-                  {% endcomment %}
-                </span>
+                </div>
                 {% comment %}
                 THE ROW'S OWN STAGE CONTROL. This was an anchor down to the
                 stage section that counted the row; the sections are gone, so
@@ -205,6 +186,10 @@ survives even if it was in the batch.
                 select the student changes and then submits with the keyboard,
                 which is worse than one click but is not a dead end.
                 {% endcomment %}
+                <div class="lens-actions">
+                  {% if r.has_text %}<button type="button" class="meta-read lens-read" data-role-read data-role-id="{{ r.id }}"
+                          hx-get="{% url 'role_description' r.id %}"
+                          hx-target="#role-drawer-body" hx-swap="innerHTML" hx-sync="#role-drawer:replace">View role</button>{% endif %}
                 <form class="lens-act" method="post"
                       action="{% url 'track_opportunity' r.id %}"
                       hx-post="{% url 'track_opportunity' r.id %}"
@@ -219,6 +204,7 @@ survives even if it was in the batch.
                     <option value="offer"{% if r.stage == 'offer' %} selected{% endif %}>Offer</option>
                     <option value="closed"{% if r.stage == 'closed' %} selected{% endif %}>Finished</option>
                   </select>
+                  <noscript><button type="submit" class="btn">Update stage</button></noscript>
                 </form>
                 {% comment %}
                 Untracking was only ever reachable from the stage cards. It
@@ -238,6 +224,7 @@ survives even if it was in the batch.
                           aria-label="Remove {{ r.title }} at {{ r.firm_name }} from your list"
                           title="Remove from your list">Remove</button>
                 </form>
+                </div>
                 {% if r.net %}
                   {% if r.net.people %}
                     <details class="lens-network">
@@ -275,7 +262,7 @@ survives even if it was in the batch.
       {% endif %}
     {% endfor %}
     <div class="apps-filter-empty" data-apps-filter-empty hidden>
-      <h3>No roles in this stage</h3>
+      <h3>No Roles in This Stage</h3>
       <p>Your other applications are still on your list.</p>
       <button type="button" class="btn" data-stage-filter="all" data-stage-label="All roles">Show all roles</button>
     </div>
@@ -299,7 +286,7 @@ survives even if it was in the batch.
   {% endcomment %}
 {% else %}
   <div class="empty">
-    <h2>No roles saved yet.</h2>
+    <h2>No Roles Saved Yet.</h2>
     <p>Save a role to track it here. If you connect Gmail, Networkly can also capture application confirmations.
       <a href="{% url 'opportunities' %}">Browse openings</a>.</p>
   </div>

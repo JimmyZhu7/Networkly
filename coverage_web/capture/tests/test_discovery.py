@@ -648,7 +648,7 @@ def test_proposals_render_on_today(student, firm, client):
     resp = client.get(reverse("crm:week"))
     assert resp.status_code == 200
     body = resp.content.decode()
-    assert "Found in your inbox" in body
+    assert "Found in Your Inbox" in body
     assert "Alex Banker" in body
 
 
@@ -922,7 +922,7 @@ def test_settings_lists_dismissed_people_with_their_evidence(student, firm, clie
     discovery.dismiss(p)
     client.force_login(student)
     body = client.get(reverse("accounts:settings")).content.decode()
-    assert "Dismissed From Your Inbox" in body
+    assert "Dismissed Suggestions" in body
     assert "Alex Banker" in body
     assert "Fall 2026 ICC Alumni Digital Panel Outreach" in body
     assert reverse("crm:proposal_restore", args=[p.id]) in body
@@ -932,7 +932,7 @@ def test_settings_hides_the_card_when_nothing_was_dismissed(student, firm, clien
     consider(student, finding())
     client.force_login(student)
     body = client.get(reverse("accounts:settings")).content.decode()
-    assert "Dismissed From Your Inbox" not in body
+    assert "Dismissed Suggestions" not in body
 
 
 def test_restore_from_settings_returns_the_person_to_pending(student, firm, client):

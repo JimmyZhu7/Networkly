@@ -290,7 +290,7 @@ class TestTheSettingsOption:
         assert 'id="google-calendar"' in html
         assert reverse("capture:gcal_connect") in html
         assert "Connect Calendar" in html
-        assert "View only" in html
+        assert "Read-only" in html
 
     def test_a_connected_calendar_offers_disconnect(self, client, student, configured):
         GoogleCalendarConnection.all_objects.create(
@@ -339,4 +339,4 @@ class TestTheSettingsOption:
         html = client.get(reverse("accounts:settings")).content.decode()
 
         assert "never message bodies" not in html
-        assert html.count("View only") >= 2
+        assert html.count("Read-only") >= 2

@@ -1,83 +1,53 @@
-"""The two marketing pages: contrast, motion, and the mobile comparison table.
-
-Three defects from the 2026-09-01 UI audit, each measured on the rendered
-page rather than argued about:
-
-  * the landing marquee's monogram tiles ran `hsl(h 55% 31%)` on
-    `hsl(h 52% 90%)`, which measures 4.3:1 at 11px and fails AA. The
-    directory's copy of the same tile had already been corrected to 24%, so
-    the landing page was the last surface still failing it, on a component
-    that repeats about forty times across the strip.
-  * `.kin-hero::after` is a 7.5s sheen declared `infinite` in networkly.css.
-    Nothing about a marketing hero changes, so it pulled the eye back to the
-    masthead every 7.5 seconds forever. Both pages now stop it after one
-    pass, in their own style blocks, because networkly.css belongs to another
-    pass.
-  * the comparison table held a 480px min-width inside a 375px scroller, so
-    the Pro column was off-screen with no fade, no shadow and no hint. Below
-    560 the table stacks and every value carries its plan's name.
-"""
-
-from __future__ import annotations
-
+"""Marketing contrast, bounded motion, and accessible comparison navigation."""
+from pathlib import Path
 import re
 
 import pytest
 
+STATIC = Path(__file__).resolve().parents[2] / "static"
 
-def _style_block(body: str) -> str:
-    return " ".join(re.findall(r"<style>(.*?)</style>", body, re.S))
+
+def _css(name):
+    return (STATIC / "css" / name).read_text()
+
+
+def _luminance(hex_color):
+    values = [int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    channels = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in values]
+    return sum(c * weight for c, weight in zip(channels, (.2126, .7152, .0722)))
 
 
 @pytest.mark.django_db
 def test_home_monogram_ink_clears_AA(client):
-    """24%, matching directory/_styles.html, not the 4.3:1 31%."""
-    css = _style_block(client.get("/").content.decode())
-
-    assert "hsl(var(--hue, 210) 55% 24%)" in css
-    assert "55% 31%" not in css, (
-        "31% lightness on the 90% tint measures 4.3:1 at 11px, under AA"
-    )
+    """Illustrative initials inherit accessible semantic colors in both themes."""
+    html = client.get("/").content.decode()
+    css = _css("marketing.css")
+    assert 'class="mk-avatar"' in html
+    assert re.search(r'\.mk-avatar\s*\{[^}]*background: var\(--accent-soft\);[^}]*color: var\(--accent-ink\)', css)
+    for fg, bg in [("#214ba9", "#eef2fc"), ("#c6d5ff", "#2b374d")]:
+        light, dark = sorted((_luminance(fg), _luminance(bg)), reverse=True)
+        assert (light + .05) / (dark + .05) >= 4.5
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("url", ["/", "/pricing/"])
-def test_hero_sheen_plays_once(client, url):
-    """Both marketing pages, because both draw `.kin-hero`.
-
-    Longhands, deliberately: networkly.css's reduced-motion block sets the
-    `animation` shorthand to none, which sets the NAME to none, and nothing
-    here touches the name. So the override cannot resurrect the animation for
-    a reader who asked for no motion.
-    """
-    css = _style_block(client.get(url).content.decode())
-
-    assert re.search(r"\.kin-hero::after\s*\{[^}]*animation-iteration-count:\s*1", css), (
-        f"{url} should stop the hero sheen after one pass"
-    )
-    assert re.search(r"\.kin-hero::after\s*\{[^}]*animation-fill-mode:\s*both", css), (
-        "without `both` the sheen snaps back to a visible resting position"
-    )
-    assert not re.search(r"\.kin-hero::after\s*\{[^}]*animation-name", css), (
-        "the override must not set animation-name, or it would beat the "
-        "prefers-reduced-motion rule that switches the animation off"
-    )
+@pytest.mark.parametrize("url,asset", [("/", "marketing.css"), ("/pricing/", "pricing.css")])
+def test_hero_sheen_plays_once(client, url, asset):
+    """The replacement heroes have bounded motion and honor reduced motion."""
+    html = client.get(url).content.decode()
+    css = _css(asset)
+    assert f'css/{asset}' in html
+    assert "infinite" not in css
+    assert re.search(r"prefers-reduced-motion:\s*reduce", css)
+    assert "animation: none" in css or "animation:none" in css
+    assert 'class="kin-hero' not in html
 
 
 @pytest.mark.django_db
 def test_pricing_table_stacks_instead_of_scrolling_on_a_phone(client):
-    css = _style_block(client.get("/pricing/").content.decode())
-
-    stack = re.search(r"@media \(max-width: 560px\)\s*\{(.*)", css, re.S)
-    assert stack, "the comparison table needs a phone breakpoint"
-    block = stack.group(1)
-
-    assert ".cmp { min-width: 0; }" in block, (
-        "the 480px min-width is what forces the horizontal scroll; it has to "
-        "go, or the stack scrolls too"
-    )
-    assert ".cmp-scroll { overflow-x: visible; }" in block
-    assert 'content: "Free"' in block and 'content: "Pro"' in block, (
-        "each stacked value must say which plan it belongs to, since the "
-        "header row is no longer beside it"
-    )
+    """The native table keeps named columns and an explicit keyboard-scroll region."""
+    html = client.get("/pricing/").content.decode()
+    assert re.search(r'<div class="cmp-scroll"[^>]*tabindex="0"[^>]*role="region"[^>]*aria-label="[^"]*scroll horizontally', html)
+    assert "overflow-x:auto" in _css("pricing.css")
+    assert "<table" in html
+    assert re.search(r'<th[^>]*>\s*Free', html)
+    assert re.search(r'<th[^>]*>\s*Pro', html)

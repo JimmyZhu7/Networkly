@@ -59,7 +59,8 @@ def test_the_receipt_itemises_what_was_destroyed(client, student):
     assert "3 contacts" in flash
     assert "3 touches" in flash
     assert "1 target firm" in flash  # singular, not "1 target firms"
-    assert "Nothing is retained" in flash
+    assert "and your account." in flash
+    assert "Nothing is retained" not in flash  # Backups/provider copies are separate.
 
 
 def test_an_empty_account_gets_an_honest_sentence_not_a_row_of_zeros(client, student):

@@ -83,7 +83,7 @@ def test_get_asks_and_writes_nothing(client, reader):
     response = client.get(_url(unsub.make_token(reader)))
 
     assert response.status_code == 200
-    assert "Stop the weekly digest?" in response.content.decode()
+    assert "Stop the Weekly Digest?" in response.content.decode()
     reader.refresh_from_db()
     assert reader.weekly_digest_opt_out is False, (
         "a mail gateway prefetching the link must not unsubscribe anyone"

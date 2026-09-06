@@ -35,7 +35,7 @@ User = get_user_model()
 TODAY = date(2026, 7, 25)
 
 _HEAD = re.compile(
-    r'<div class="firm-card-head">\s*'
+    r'<div class="firm-card-head">.*?'
     r'<div class="firm-card-name">(?P<name>.*?)</div>(?P<marks>.*?)</div>',
     re.S,
 )
@@ -52,13 +52,13 @@ def _cards(body: str) -> str:
     trap `test_firm_card_badges._tier_board` documents for "SP".
     """
     start = body.index('<div class="tier-section"')
-    return body[start : body.index('<p class="net-legend-mini"', start)]
+    return body[start : body.index('</section>', start)]
 
 
 def _tagged(body: str) -> list[str]:
     """The firm names whose CARD carries the CG pill, in board order."""
     return [
-        m.group("name").strip()
+        re.sub(r"<[^>]+>", "", m.group("name")).strip()
         for m in _HEAD.finditer(_cards(body))
         if "pill fc-cg" in m.group("marks")
     ]
@@ -380,7 +380,8 @@ def test_network_page_shows_gaps_and_advocate_fractions(client):
     # The covered card's advocate progress. The fraction became advocate
     # SOCKETS — dots that fill — with the words kept in the accessible name.
     assert "2 of 2 advocates" in body
-    assert 'adv-socket is-filled' in body
+    assert 'class="firm-advocate-target"' in body
+    assert 'class="firm-mix"' in body
     # Exposed Co has zero contacts, so its card renders no bar and no
     # sockets at all — an empty bar next to two empty dots said nothing its
     # own "＋ Add a contact" line (already asserted via the gap strip above)
@@ -576,8 +577,9 @@ def test_the_tag_shows_no_number_and_explains_itself_in_words(client):
         assert number not in cards, f"a number leaked back onto a card: {number!r}"
     assert not re.search(r">\s*1 of \d", cards), "a rank is back on a card"
     # The tag's own tooltip is a sentence, not a formula.
-    assert ('title="Relationship gap. You ranked this firm high and nobody here '
-            'is warm yet."') in cards
+    assert 'title="Prioritized relationship gap based on firm tier, relationship strength, recruiting fit and upcoming deadlines."' in cards
+    label = re.search(r'<span class="pill fc-cg"[^>]*>([^<]+)</span>', cards)
+    assert label and label.group(1).strip() == "No contacts"
 
 
 @pytest.mark.django_db
@@ -770,16 +772,13 @@ def test_the_key_explains_the_tag_without_a_hover(client):
     body = client.get(reverse("crm:contact_list")).content.decode()
     assert _tagged(body) == []
 
-    legend = body[body.index('class="net-legend-mini"'):]
-    legend = legend[: legend.index("</p>")]
-    assert 'class="pill fc-cg"' in legend, "the key lost its CG swatch"
-    assert "Relationship gap, nobody warm yet" in legend, (
-        "the key shows a CG swatch with no words beside it, which explains "
-        "nothing a reader did not already see on a card"
-    )
-    # Beside the entry it was built to match, not instead of it.
-    assert "Sponsors visas" in legend
-    assert legend.index("Sponsors visas") < legend.index("Relationship gap")
+    # Each status now says what it means directly on its card. A fully
+    # covered board owes no empty abbreviation key.
+    assert 'class="net-legend-mini"' not in body
+    assert '>CG<' not in _cards(body)
+    assert '>SP<' not in _cards(body)
+    assert '2 of 2 advocates' in _cards(body)
+
 
 
 @pytest.mark.django_db

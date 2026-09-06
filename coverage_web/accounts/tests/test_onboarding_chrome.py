@@ -101,7 +101,7 @@ def test_step_one_no_longer_asks_for_what_the_feed_does_not_read(client, newcome
     assert 'name="languages"' not in re.sub(r'<input type="hidden"[^>]*>', "", body)
     assert 'name="affiliations"' not in re.sub(r'<input type="hidden"[^>]*>', "", body)
     assert 'id="id_timezone"' not in body
-    assert "<label>Languages</label>" not in body
+    assert 'class="profile-choice-title">Languages</span>' not in body
     assert "Affiliations</label>" not in body
 
     # Still asked: everything the Opportunities feed and the eligibility
@@ -111,6 +111,7 @@ def test_step_one_no_longer_asks_for_what_the_feed_does_not_read(client, newcome
         assert kept in body, f"{kept} feeds the preview panel and must stay on step 1"
 
     assert "Languages, affiliations and timezone: set later in Settings." in body
+    assert body.count('<details class="profile-choices" open>') == 3
 
 
 @pytest.mark.django_db
@@ -121,9 +122,11 @@ def test_settings_still_asks_for_all_three(client, newcomer):
     client.force_login(newcomer)
 
     body = client.get(reverse("accounts:settings")).content.decode()
-    assert "<label>Languages</label>" in body
+    assert 'class="profile-choice-title">Languages</span>' in body
     assert 'name="affiliations"' in body
     assert 'name="timezone"' in body
+    assert 'name="languages"' in body
+    assert body.count('<details class="profile-choices">') == 4
 
 
 @pytest.mark.django_db

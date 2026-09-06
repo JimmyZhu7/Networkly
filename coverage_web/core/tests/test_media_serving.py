@@ -69,7 +69,9 @@ def test_the_nav_avatar_falls_back_to_initials_if_the_file_is_missing(client, se
     body = client.get("/app/").content.decode()
     assert "onerror=" not in body, "an inline handler attribute would be CSP-blocked"
     assert "data-nav-avatar" in body
-    assert 'addEventListener("error"' in body and '"[data-nav-avatar]"' in body
+    assert 'addEventListener("error"' in body
+    assert 'img[data-nav-avatar]' in body
+    assert 'img.nextElementSibling.hidden = false' in body
     assert 'class="site-user-avatar site-user-avatar-fallback" hidden' in body
 
 

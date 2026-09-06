@@ -24,6 +24,8 @@ from __future__ import annotations
 from dataclasses import replace
 from datetime import timedelta
 
+import re
+
 import pytest
 from django.urls import reverse
 from django.utils import timezone
@@ -557,9 +559,11 @@ def test_a_prose_read_deadline_says_reported_in_words_on_the_picked_column(clien
     client.force_login(user)
 
     body = client.get(reverse("opportunities")).content.decode()
-    assert body.count('class="rr-due-prov"') == 1
+    reported_count = len(re.findall(r'class="rr-due-n[^"]*is-reported[^"]*"', body))
+    assert reported_count > 0
+    assert body.count('class="rr-due-prov"') == reported_count
     assert '<span class="rr-due-prov" title="Read from the posting' in body
-    assert body.count("(reported)") == 1
+    assert "(reported)" not in body
     # The visible word and the hidden copy sit on different rows.
     picked = body.split('class="firmcol firmcol--picked')[1].split("</article>")[0]
     assert "rr-due-prov" in picked and "(reported)" not in picked

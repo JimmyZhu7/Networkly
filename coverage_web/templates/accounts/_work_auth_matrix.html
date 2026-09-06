@@ -1,40 +1,23 @@
 {% comment %}
-The work-authorization MATRIX — one kinetic widget in place of six repeated
-rows.
-
-The old rendering said the same explanation sentence six times, named the
-three-state vocabulary inside six closed <select>s, and gave the page's one
-structural fact the visual weight of a settings miscellany. As a matrix the
-vocabulary is said ONCE (the column captions), the sentence is said ONCE
-(the footnote), and the whole answer is legible at a glance — six rows of
-dots, coloured by state.
-
-Interaction is pure CSS over NATIVE radios (see `.wa-` in networkly.css):
-click a cell and its dot fills with the state's colour, stamps a glyph
-(✓ can work / ! needs visa / – abstain: never colour alone) and springs with
-the same `chip-check` pop the Regions/Tracks chips use. No JS; keyboard and
-screen-reader behaviour is the browser's own — arrows move within a region's
-radiogroup, and each row is labelled by its region name.
-
-Used by BOTH the settings page and the onboarding step: pass the bound form
-as `form`. Field names and values are unchanged, so saved data and every
-POST contract stay exactly as they were.
+One native select per region. Keep the exact field names, values and labels
+from the bound form, including the blank unknown state and validation errors.
+The shared menu enhances this control while the native field keeps submission and fallback behavior.
 {% endcomment %}
 <div class="wa-matrix">
   {% for field in form.rows %}
-    <div class="wa-row" role="radiogroup"
-         aria-labelledby="{{ field.auto_id }}-lab" aria-describedby="wa-note">
-      <span class="wa-region" id="{{ field.auto_id }}-lab">{{ field.label }}</span>
-      {{ field }}
-      {% if field.errors %}<span class="wa-err">{{ field.errors }}</span>{% endif %}
+    <div class="wa-row">
+      <label class="wa-region" for="{{ field.auto_id }}">{{ field.label }}</label>
+      <select name="{{ field.html_name }}" id="{{ field.auto_id }}"
+              aria-describedby="wa-note{% if field.errors %} {{ field.auto_id }}-errors{% endif %}"{% if field.errors %} aria-invalid="true"{% endif %}>
+        {% for value, label in field.field.choices %}{% if not value %}
+          <option value=""{% if not field.value %} selected{% endif %}>{{ label }}</option>
+        {% endif %}{% endfor %}
+        {% for value, label in field.field.choices %}{% if value %}
+          <option value="{{ value }}"{% if field.value == value %} selected{% endif %}>{{ label }}</option>
+        {% endif %}{% endfor %}
+      </select>
+      {% if field.errors %}<span class="wa-err" id="{{ field.auto_id }}-errors">{{ field.errors }}</span>{% endif %}
     </div>
   {% endfor %}
 </div>
-{% comment %}
-Visually hidden (2026-08-29), not deleted: every .wa-row's radiogroup
-points aria-describedby at this id, so a sighted user drops the sentence
-but a screen reader still gets it announced. `.vh` (networkly.css) rather
-than local markup, since this partial is also the onboarding step's own
-widget and needs a class that resolves there too.
-{% endcomment %}
 <p class="field-hint" id="wa-note">Used to assess eligibility by region. Unspecified regions remain unknown.</p>

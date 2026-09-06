@@ -736,10 +736,10 @@ def test_subscribe_recedes_to_a_link_without_leaving_the_bar(client, logged_in):
     body = client.get(reverse("crm:calendar")).content.decode()
     bar = _bar_markup(body)
 
-    link = re.search(r'<a class="cal-sub"[^>]*>', bar)
+    link = re.search(r'<a class="[^"]*\bcal-sub\b[^"]*"[^>]*>', bar)
     assert link, "the Subscribe control left the calendar bar"
     assert "webcal://" in link.group(0) and "calendar/feed/" in link.group(0)
-    assert "btn" not in link.group(0), "it is a link now, not a button"
+    assert "btn-primary" not in link.group(0), "subscription remains secondary to Add event"
 
     css = _outside_media(_style_block(body))
     rule = re.search(r"\.cal-sub \{(.*?)\}", css, re.DOTALL)
@@ -775,7 +775,7 @@ def test_the_bars_labels_say_their_object_without_saying_the_page(
     # The commit still names what it commits to.
     assert ">Add to calendar</button>" in body
 
-    assert "Subscribe in Calendar" in bar
+    assert "Subscribe to calendar" in bar
     assert not re.search(r">\s*Subscribe\s*<", bar), (
         "the bare verb named no object"
     )

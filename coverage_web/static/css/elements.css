@@ -22,12 +22,15 @@ textarea { resize: vertical; min-height: 96px; }
 summary::marker { color: var(--ink-3); font-size: .8em; }
 :is(.cd-opener,.as-evidence,.drawer-fold)[open] > summary { color: var(--accent-ink); }
 /* Menus are flat lists with spacious individual choices, not miniature cards. */
-:is(.csel-panel,.cmulti-panel,.quickadd-menu,.as-history-menu,.as-sidebar-more-menu) { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: var(--shadow-2); padding: 6px; }
+:is(.csel-panel,.cmulti-menu,.quickadd-menu,.as-history-menu,.as-sidebar-more-menu) { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: var(--shadow-2); padding: 6px; }
 .csel-panel { max-width: min(520px,calc(100vw - 40px)); }
 :is(.csel-opt,.cmulti-opt,.quickadd-menu a,.as-menu-item) { min-height: var(--control-size); padding: 10px 12px; border-radius: 6px; font: 400 14px/1.4 var(--font-ui); }
 .csel-opt { white-space: normal; overflow-wrap: anywhere; }
 .csel-search-wrap { padding: 4px 4px 8px; }
 .csel-search { background: var(--paper); }
+.csel[data-open="true"] > .csel-btn, .cmulti[data-open="true"] > .cmulti-btn { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
+.csel-caret { transition: transform var(--motion-state) var(--ease-widget), color var(--motion-state); }
+.csel[data-open="true"] .csel-caret, .cmulti[data-open="true"] .csel-caret { color: var(--accent); }
 :is(.csel-opt[aria-selected="true"],.cmulti-opt[aria-selected="true"]) { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
 :is(.csel-opt,.cmulti-opt,.as-menu-item):focus-visible { outline-offset: -2px; }
 :is(.theme-pick,.seg-pick) { background: var(--paper); border: 1px solid var(--line); padding: 4px; border-radius: var(--r-ctl); gap: 4px; }

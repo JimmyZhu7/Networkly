@@ -1052,7 +1052,7 @@ def _deletion_receipt(counts: dict[str, int]) -> str:
     ]
     if not parts:
         return "Your account has been deleted. There was no other data on it."
-    return "Deleted " + ", ".join(parts) + ", and your account. Nothing is retained."
+    return "Deleted " + ", ".join(parts) + ", and your account."
 
 
 @login_required
@@ -1281,12 +1281,12 @@ def digest_unsubscribe(request, token):
 # ---------------------------------------------------------------------------
 @require_GET
 def privacy(request):
-    return render(request, "legal/privacy.html")
+    return render(request, "legal/privacy.html", {"hide_site_nav": True})
 
 
 @require_GET
 def terms(request):
-    return render(request, "legal/terms.html")
+    return render(request, "legal/terms.html", {"hide_site_nav": True})
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,16 @@
+.support-auth .auth-form-title { display: flex; align-items: center; gap: 10px; }
+.support-auth .auth-heading-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; color: var(--accent-ink); background: var(--accent-soft); }
+.support-auth .auth-heading-mark svg { width: 18px; height: 18px; }
+.support-auth .auth-password { position: relative; margin-bottom: 20px; }
+.support-auth .auth-form .auth-password input { display: block; min-height: 46px; padding-right: 66px; margin-bottom: 0; width: 100%; }
+.support-auth .auth-password-toggle { position: absolute; top: 1px; right: 1px; bottom: 1px; min-width: 58px; border: 0; border-radius: 0 8px 8px 0; padding: 8px 12px; background: transparent; color: var(--ink-2); font: 550 12px/1.4 var(--font-ui); cursor: pointer; transition: color 160ms, background 160ms; }
+.support-auth .auth-password-toggle:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.support-auth .auth-password-toggle[aria-pressed="true"] { color: var(--accent-ink); }
+.support-auth .auth-browse { gap: 8px; }
+.support-auth .auth-browse svg { width: 16px; height: 16px; transition: transform 160ms; }
+.support-auth .auth-browse:hover svg { transform: translateX(3px); }
+.support-auth .auth-form :is(input:focus-visible, .auth-password:focus-within input) { box-shadow: 0 0 0 4px var(--accent-soft); }
+@media (prefers-reduced-motion: reduce) {
+  .support-auth .auth-password-toggle, .support-auth .auth-browse svg { transition: none; }
+  .support-auth .auth-browse:hover svg { transform: none; }
+}

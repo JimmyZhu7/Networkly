@@ -105,10 +105,12 @@ replacement for one.
   </div>
 </div>
 
+<div class="profile-identity-grid"><div>
 <label for="id_name">Display name</label>
 {{ form.name }}
 {{ form.name.errors }}
 
+</div><div>
 <label for="id_school">School</label>
 {% comment %}Autocompletes from the bundled world-universities list — htmx fills the datalist as you type; no external API call.{% endcomment %}
 <input type="text" name="school" id="id_school" list="uni-options"
@@ -119,6 +121,7 @@ replacement for one.
        hx-target="#uni-options" hx-swap="innerHTML">
 <datalist id="uni-options"></datalist>
 {{ form.school.errors }}
+</div></div>
 
 {% comment %}
 Two-up on the settings page (.set-form scopes the grid); a plain stack
@@ -202,9 +205,7 @@ its own <label> per checkbox, so there is no single control to point at, and
 the styling for a group heading lives on the element. Every SINGLE control on
 this page does get a real `for` — see the a11y note in settings.html.
 {% endcomment %}
-<label>Target recruiting cycle</label>
-<div class="chipset">{{ form.target_cycles }}</div>
-{{ form.target_cycles.errors }}
+{% include "accounts/_profile_choices.html" with field=form.target_cycles group_label="Target Recruiting Cycle" %}
 {% comment %}
 The deadline-density band that used to sit here (twelve months of real
 board data captioning the cycle picker) came off Settings entirely,
@@ -216,13 +217,9 @@ untouched, not deleted: `cycle_months()` carries its own tested logic
 independent of whether anything currently renders it.
 {% endcomment %}
 
-<label>Regions of Interest</label>
-<div class="chipset">{{ form.regions }}</div>
-{{ form.regions.errors }}
+{% include "accounts/_profile_choices.html" with field=form.regions group_label="Regions of Interest" %}
 
-<label>Tracks of Interest</label>
-<div class="chipset">{{ form.tracks }}</div>
-{{ form.tracks.errors }}
+{% include "accounts/_profile_choices.html" with field=form.tracks group_label="Tracks of Interest" %}
 
 {% comment %}
 `compact` is passed by onboarding step 1 and by nothing else, so Settings
@@ -274,10 +271,7 @@ run on Mandarin) and mostly unstated (about one HK posting in seven says
 so), so the honest reading of a posting's language line is a warning, not a
 wall, and the honest reading of silence is nothing at all.
 {% endcomment %}
-<label>Languages</label>
-<p class="field-hint">Languages you can work in. Hong Kong desks often want Mandarin.</p>
-<div class="chipset">{{ form.languages }}</div>
-{{ form.languages.errors }}
+{% include "accounts/_profile_choices.html" with field=form.languages group_label="Languages" group_hint="Languages you can work in. Hong Kong desks often want Mandarin." %}
 
 {% comment %}
 Free text, one tie per line, capped at six (ProfileForm.clean_affiliations).
@@ -305,8 +299,8 @@ box is still a plain textarea bound to the same field, saved by the same
 
 1. The lede names the SHAPE, not the categories.
 2. The placeholder is four proper nouns (ProfileForm.affiliations).
-3. A per-line readout under the box says, for each line, whether it reads as
-   a name. Server-rendered from `form.shape_report` so it is right on first
+3. A per-line readout under the box flags long entries that may need review.
+   Valid entries appear only in the editor. Server-rendered from `form.shape_report` so it is right on first
    paint with no JS at all, then re-rendered live as the student types by the
    enhancer at the bottom of this file.
 
@@ -315,35 +309,31 @@ The readout never blocks and never edits. A long line saves exactly as typed
 product's rule). `aria-live="polite"` because the readout changes under the
 cursor while typing and a screen reader has to hear it without being yanked.
 {% endcomment %}
-<label for="id_affiliations">Affiliations</label>
-<p class="field-hint">Names, not sentences. A club, a firm, a school, a hometown. One per line, up to six.</p>
+<details class="profile-choices profile-affiliations"{% if form.affiliations.errors %} open{% endif %}>
+  <summary><span class="profile-choice-title">Affiliations</span><span class="profile-choice-values" data-aff-summary>{% if form.shape_report %}{{ form.shape_report|length }} affiliation{{ form.shape_report|length|pluralize }}{% else %}Not set{% endif %}</span></summary>
+<label class="vh" for="id_affiliations">Affiliations</label>
+<p class="field-hint">Add a school, employer, club, or hometown. One name per line, up to six.</p>
 <div class="aff-field" data-aff-field
      data-aff-max="{{ form.affiliation_word_max }}"
      data-aff-note="{{ form.affiliation_long_note }}">
   {{ form.affiliations }}
   <ul class="aff-lines" data-aff-lines aria-live="polite">
     {% for row in form.shape_report %}
-      <li class="aff-line{% if row.long %} is-long{% endif %}">
+      {% if row.long %}<li class="aff-line is-long">
         <span class="aff-line-mark" aria-hidden="true"></span>
         <span class="aff-line-body">
           <span class="aff-line-text">{{ row.text }}</span>
           {% if row.long %}<span class="aff-line-note">{{ row.words }} words. {{ row.note }}</span>{% endif %}
         </span>
-      </li>
+      </li>{% endif %}
     {% endfor %}
   </ul>
-  {% comment %}
-  The empty state, which deliberately does NOT repeat the placeholder's four
-  examples one line below the placeholder. It says the one thing nothing
-  else on the page says: the MECHANISM. Not knowing it is the whole reason a
-  student writes a résumé line here, and it is the sentence that makes the
-  lede's "names, not sentences" an instruction rather than a preference.
-  Only while the box is empty; once there are lines, the readout is what
-  belongs in this space.
-  {% endcomment %}
-  <p class="aff-empty" data-aff-empty{% if form.shape_report %} hidden{% endif %}>Networkly looks for each one word for word in a contact's own notes.</p>
+  <div class="aff-meta"><span data-aff-count aria-live="polite">{{ form.shape_report|length }} of 6 affiliations</span><span>Names are matched word for word in contact details.</span></div>
+
+
 </div>
 {{ form.affiliations.errors }}
+</details>
 
 <label for="{{ form.timezone.id_for_label }}">Timezone</label>
 {{ form.timezone }}
@@ -658,7 +648,7 @@ Nothing here rewrites the textarea. It reads it.
 
     var box = field.querySelector("textarea");
     var list = field.querySelector("[data-aff-lines]");
-    var empty = field.querySelector("[data-aff-empty]");
+    var count = field.querySelector("[data-aff-count]");
     var max = parseInt(field.dataset.affMax, 10) || 4;
     var note = field.dataset.affNote || "";
     if (!box || !list) return;
@@ -666,8 +656,12 @@ Nothing here rewrites the textarea. It reads it.
     box.addEventListener("input", function () {
       var ties = lines(box.value);
       list.textContent = "";
-      ties.forEach(function (tie) { list.appendChild(row(tie, max, note)); });
-      if (empty) empty.hidden = ties.length > 0;
+      ties.forEach(function (tie) {
+        if (tie.split(/\s+/).length > max) list.appendChild(row(tie, max, note));
+      });
+      if (count) count.textContent = ties.length + " of 6 affiliations";
+      var summary = field.closest("details").querySelector("[data-aff-summary]");
+      if (summary) summary.textContent = ties.length ? ties.length + " affiliation" + (ties.length === 1 ? "" : "s") : "Not set";
     });
   }
 
@@ -706,7 +700,11 @@ Nothing here rewrites the textarea. It reads it.
     if (go) {
       go.addEventListener("click", function () {
         var box = document.getElementById("id_affiliations");
-        if (box) box.focus({ preventScroll: true });
+        if (box) {
+          var group = box.closest("details");
+          if (group) group.open = true;
+          box.focus({ preventScroll: true });
+        }
       });
     }
   }
@@ -719,5 +717,25 @@ Nothing here rewrites the textarea. It reads it.
   if (document.readyState !== "loading") enhanceAll();
   else document.addEventListener("DOMContentLoaded", function () { enhanceAll(); });
   document.body.addEventListener("htmx:afterSettle", function (e) { enhanceAll(e.target); });
+})();
+{% endscript %}
+
+{% script %}
+(function () {
+  if (document.documentElement.dataset.profileChoicesBound) return;
+  document.documentElement.dataset.profileChoicesBound = "1";
+  document.addEventListener("change", function (event) {
+    var group = event.target.closest(".profile-choices");
+    if (!group || event.target.type !== "checkbox") return;
+    var output = group.querySelector("[data-profile-choice-values]");
+    output.textContent = "";
+    var selected = group.querySelectorAll('input[type="checkbox"]:checked');
+    selected.forEach(function (input) {
+      var value = document.createElement("span");
+      value.textContent = input.closest("label").textContent.trim();
+      output.appendChild(value);
+    });
+    if (!selected.length) output.textContent = "Not set";
+  });
 })();
 {% endscript %}

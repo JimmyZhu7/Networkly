@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load textstyle %}
 
-{% block title %}Debrief · {{ contact.name|smart_person_name|smart_title }} · Networkly{% endblock %}
+{% block title %}Networkly · Debrief · {{ contact.name|smart_person_name|smart_title }}{% endblock %}
 
 {% block head %}
 {% include "crm/_styles.html" %}
@@ -51,7 +51,7 @@
   <header class="pagehead">
     <div class="pagehead-text">
 
-      <h1 class="pagehead-title">Chat notes</h1>
+      <h1 class="pagehead-title">Chat Notes</h1>
       <p class="pagehead-sub">Chat on {{ touch.ts|date:"N j, Y" }}</p>
       {% comment %}One sentence, not two: the first question of the form
       below is literally "What did you learn?", so asking it again in the

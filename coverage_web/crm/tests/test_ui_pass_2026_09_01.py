@@ -87,7 +87,7 @@ def test_the_empty_funnel_cell_links_somewhere():
     )
     assert cell, "the empty funnel cell is not an anchor"
     assert "Save a role" in cell.group(1)
-    assert 'href="/opportunities/"' in cell.group(0)
+    assert 'href="/opportunities/mine/"' in cell.group(0)
 
 
 def test_a_student_with_no_target_firms_is_asked_to_pick_some():
@@ -403,31 +403,53 @@ def test_a_finished_reply_is_announced_once():
 # Settings
 # ---------------------------------------------------------------------------
 def test_the_cadence_day_labels_clear_aa():
-    """Measured 3.96:1 at 10px — the only visible text on the site failing
-    AA once the collapsed-details false positives were excluded. The colour
-    moves, not the size: the number is the quiet half of a two-part label
-    and 11px would make it the same weight as the name beside it.
-    """
-    css = _styles(_get(SETTINGS, "ui-cad@example.com"))
-    # `findall`, not `search`: the phone breakpoint declares its own
-    # `.cad-lab u { display: none }` EARLIER in the sheet (it hides the day
-    # number where the rail has no room for it), and `search` would stop
-    # there and never reach the colour this test is about.
-    rules = re.findall(r"\.cad-lab u \{(.*?)\}", css, re.S)
-    coloured = [r for r in rules if "color:" in r]
-    assert coloured, "the day-number label declares no colour at all"
-    assert all("color: var(--ink-2)" in r for r in coloured), coloured
+    """The current preview uses primary values and secondary labels on an
+    inset surface. Both theme palettes must clear AA at ordinary text size."""
+    html = _get(SETTINGS, "ui-cad@example.com")
+    css_root = Path(__file__).resolve().parents[2] / "static" / "css"
+    css = (css_root / "presentation-support.css").read_text(encoding="utf-8")
+    palette = (css_root / "workspace.css").read_text(encoding="utf-8")
+    assert "css/presentation-support.css" in html and "css/workspace.css" in html
+    value_rule = re.search(r"\.cad-lab u \{(.*?)\}", css, re.S).group(1)
+    label_rule = re.search(r"\.cad-lab b \{(.*?)\}", css, re.S).group(1)
+    preview_rule = re.search(r"\.cad-viz \{(.*?)\}", css, re.S).group(1)
+    assert "color: var(--ink)" in value_rule
+    assert "color: var(--ink-2)" in label_rule
+    assert "background: var(--surface-subtle)" in preview_rule
+
+    def luminance(hex_color):
+        channels = [int(hex_color[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4
+                  for v in channels]
+        return sum(v * weight for v, weight in zip(linear, (.2126, .7152, .0722)))
+
+    backgrounds = re.findall(r"--surface-subtle:\s*(#[0-9a-fA-F]{6})", palette)
+    for token in ("ink", "ink-2"):
+        colors = re.findall(rf"--{token}:\s*(#[0-9a-fA-F]{{6}})", palette)
+        assert len(colors) == len(backgrounds) >= 2, "check light and dark theme declarations"
+        for foreground, background in zip(colors, backgrounds):
+            brighter, darker = sorted((luminance(foreground), luminance(background)), reverse=True)
+            assert (brighter + .05) / (darker + .05) >= 4.5, (token, foreground, background)
 
 
 def test_the_cadence_diagram_stops_travelling():
-    """Three infinite animations on a static explanation, on a page a
-    student opens about twice a cycle. Motion rule M1 reserves an infinite
-    animation for a state that is actually live.
-    """
-    css = _styles(_get(SETTINGS, "ui-travel@example.com"))
-    rule = re.search(r"\.cad-fill::before \{(.*?)\}", css, re.S).group(1)
-    assert "animation: cad-travel 3.2s linear 3 both" in rule
-    assert "infinite" not in rule
+    """The diagram is static. A changed value gets one short color cue,
+    and reduced motion disables even that cue; no dot travels on a timer."""
+    html = _get(SETTINGS, "ui-travel@example.com")
+    css = (Path(__file__).resolve().parents[2] / "static" / "css"
+           / "presentation-support.css").read_text(encoding="utf-8")
+    assert 'class="cad-fill"' not in html
+    assert "cad-travel" not in css
+    marker = re.search(r"\.cad-mark \{(.*?)\}", css, re.S).group(1)
+    arrow = re.search(r"\.cad-mark::after \{(.*?)\}", css, re.S).group(1)
+    assert "transition: none" in marker and "transform: none" in marker
+    assert "animation: none" in arrow
+    cue = re.search(r"\.cad-rail\.is-live u \{(.*?)\}", css, re.S).group(1)
+    assert "animation: cadence-value 220ms ease-out" in cue
+    assert "infinite" not in cue
+    reduced = re.search(r"@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{\s*"
+                        r"\.support-settings #cadence \.cad-rail\.is-live u\s*\{([^}]+)\}", css)
+    assert reduced and "animation: none" in reduced.group(1)
 
 
 def test_checked_chips_do_not_pop_on_a_plain_page_load():

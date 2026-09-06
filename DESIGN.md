@@ -1,27 +1,33 @@
 ---
 name: "Networkly"
-description: "A personal recruiting index with editorial headings, open records, and clear actions."
+description: "A clear daily recruiting workspace with cool surfaces, cobalt actions, and purposeful feedback."
 colors:
-  paper: "#f7f7f2"
+  paper: "#f4f6fa"
   surface: "#ffffff"
-  ink: "#252b2e"
-  ink-2: "#596365"
-  ink-3: "#697371"
-  line: "#dedfd8"
-  line-strong: "#a6afaa"
+  surface-subtle: "#f8fafc"
+  surface-hover: "#eef3fb"
+  ink: "#19283f"
+  ink-2: "#54647a"
+  ink-3: "#607087"
+  line: "#e1e7f0"
+  control-border: "#7e8da4"
+  line-strong: "#7e8da4"
   accent: "#2857c7"
   accent-ink: "#214ba9"
   accent-soft: "#eef2fc"
   accent-line: "#c8d5f4"
   on-accent: "#ffffff"
   on-accent-2: "#e0e9ff"
-  dark-paper: "#191e20"
-  dark-surface: "#22282b"
-  dark-ink: "#edf0ec"
-  dark-ink-2: "#b6c0bf"
-  dark-ink-3: "#a6b1ae"
-  dark-line: "#3b4446"
-  dark-line-strong: "#6e7c78"
+  dark-paper: "#111827"
+  dark-surface: "#1b2536"
+  dark-surface-subtle: "#222f43"
+  dark-surface-hover: "#293950"
+  dark-ink: "#eef3fb"
+  dark-ink-2: "#b8c5d8"
+  dark-ink-3: "#a7b7ce"
+  dark-line: "#334158"
+  dark-control-border: "#64748d"
+  dark-line-strong: "#64748d"
   dark-accent: "#a4bbff"
   dark-accent-ink: "#c6d5ff"
   dark-accent-soft: "#2b374d"
@@ -38,22 +44,38 @@ colors:
   w-replied-t: "#7d5410"
   w-replied-s: "#f6ecd6"
   w-replied-l: "#e8d7ad"
+  dark-ok: "#74c095"
+  dark-ok-soft: "#1c2a22"
+  dark-ok-line: "#2f4a3a"
+  dark-danger: "#e2867c"
+  dark-danger-ink: "#e69890"
+  dark-danger-soft: "#2e1e1d"
+  dark-danger-line: "#4d302d"
+  dark-w-replied-t: "#d8b467"
+  dark-w-replied-s: "#2b2519"
+  dark-w-replied-l: "#463a22"
 typography:
+  display:
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "clamp(58px, 5.85vw, 84px)"
+    fontWeight: 650
+    lineHeight: 1.015
+    letterSpacing: "-.04em"
   headline:
-    fontFamily: "Fraunces, Georgia, Times New Roman, serif"
-    fontSize: "38px"
-    fontWeight: 400
-    lineHeight: 1.15
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "30px"
+    fontWeight: 650
+    lineHeight: 1.2
     letterSpacing: "-.025em"
-  headline-phone:
-    fontFamily: "Fraunces, Georgia, Times New Roman, serif"
-    fontSize: "34px"
-    fontWeight: 400
-    lineHeight: 1.15
+  support-headline:
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "30px"
+    fontWeight: 650
+    lineHeight: 1.13
     letterSpacing: "-.025em"
   title:
     fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    fontSize: "18px"
+    fontSize: "17px"
     fontWeight: 600
     lineHeight: 1.4
     letterSpacing: "normal"
@@ -75,16 +97,37 @@ typography:
     fontWeight: 550
     lineHeight: 1.2
     letterSpacing: "normal"
+  field:
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "normal"
+  field-touch:
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: "normal"
   label:
     fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "12px"
     fontWeight: 500
     lineHeight: 1.45
     letterSpacing: "normal"
+  legal-body:
+    fontFamily: "Instrument Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.8
+    letterSpacing: "normal"
 rounded:
-  r-ctl: "8px"
-  r-panel: "12px"
+  r-ctl: "9px"
+  control-radius: "9px"
+  r-panel: "16px"
   r-badge: "999px"
+  contact-card: "12px"
+  task-card: "14px"
   menu: "10px"
   utility: "6px"
 spacing:
@@ -113,18 +156,22 @@ components:
     rounded: "{rounded.r-ctl}"
     padding: "9px 16px"
   input:
+    backgroundColor: "{colors.surface-subtle}"
+    textColor: "{colors.ink}"
+    typography: "{typography.field}"
+    rounded: "{rounded.control-radius}"
+    padding: "10px 12px"
+  input-hover:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.r-ctl}"
-    padding: "9px 14px"
   nav-active:
-    backgroundColor: "transparent"
+    backgroundColor: "{colors.accent-soft}"
     textColor: "{colors.accent-ink}"
-    rounded: "0"
-    padding: "0"
+    rounded: "{rounded.r-ctl}"
+    padding: "8px 10px"
   status-chip:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.ink-2}"
+    backgroundColor: "{colors.w-replied-s}"
+    textColor: "{colors.w-replied-t}"
     typography: "{typography.label}"
     rounded: "{rounded.r-badge}"
     padding: "4px 9px"
@@ -133,143 +180,174 @@ components:
     textColor: "{colors.accent-ink}"
     rounded: "{rounded.r-ctl}"
     padding: "9px 14px"
-  record-row:
-    backgroundColor: "transparent"
+  contact-card:
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    rounded: "0"
-    padding: "22px 0"
-  capture-surface:
+    rounded: "{rounded.contact-card}"
+    padding: "14px"
+  firm-surface:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
     rounded: "{rounded.r-panel}"
+    padding: "24px"
+  picked-role-card:
+    backgroundColor: "{colors.surface-subtle}"
+    textColor: "{colors.ink}"
+    rounded: "12px"
     padding: "20px"
+  today-context-expanded:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.r-panel}"
+    height: "320px"
+  disclosure:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.r-panel}"
+    padding: "16px 20px"
+  marketing-primary:
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.on-accent}"
+    rounded: "{rounded.r-ctl}"
+    padding: "13px 21px"
 ---
 # Design System: Networkly
 
 ## Overview
 
-**Creative North Star: "The Personal Recruiting Index"**
+**Creative North Star: "The Daily Recruiting Workspace"**
 
-Networkly uses the order and reading comfort of a contemporary university library catalogue. Warm neutral ground, editorial page titles, cobalt actions, and open ruled records give recruiting information a clear place. The material is digital: flat fills, real evidence, and familiar controls.
+Networkly is a mature, concise, and harmonious SaaS workspace for recruiting and relationships. Cool white and gray layers, dark navy, cobalt actions, and Instrument Sans give the product a consistent identity. A meaningful task, collection, or form owns a bounded surface; facts and actions inside it stay easy to scan.
 
-The built system gives records more space than their containers. Identity, context, timing, and actions form readable groups; supporting information sits beside the work on wide screens and follows it on phones. Forms and floating menus retain useful boundaries. Clear status wording carries meaning alongside color.
+The approved public pages use larger type, product examples, and finite kinetic details to explain the product. The application uses restrained feedback tied to an action or state. Legal pages prioritize reading, section navigation, and stable anchors. These surfaces share their palette, type family, control language, and factual standards without sharing one page composition.
 
-This document records the implemented September 2026 redesign. The visual cascade in `coverage_web/templates/base.html` is `networkly.css`, route styles, `workspace.css`, `elements.css`, then `presentation-crm.css`, `presentation-directory.css`, and `presentation-support.css`. Base styles own self-hosted fonts, semantic palettes, and control behavior; the later layers own the shell and page compositions. Read specificity as well as load order. This file supersedes historical visual prescriptions in `docs/design-spec.md` and `design-system/coverage/MASTER.md`; their functional contracts still apply. The build is code-led; no external comp is a pixel authority.
+This is the implemented direction approved during the September 2026 refurbishment. It supersedes the warm editorial prescriptions previously in this file, `docs/design-spec.md`, and `design-system/coverage/MASTER.md`; their applicable functional contracts remain. Earlier review artifacts remain historical evidence. The direction and its final addendum live in `.impeccable/review/saas/direction.md`.
 
-The approved Networkly lockup is binding. `_wordmark.html` preserves the original raster silhouette through a luminance mask with unique IDs per placement; theme-aware blue and ink fill its original color regions. Preserve the connected two-person N symbol, custom lettering, source asset, and full-lockup proportions. Header and footer links expose the accessible name Networkly home. Compact marks and email raster exports remain the same identity.
+The runtime source of truth is the cascade in `coverage_web/templates/base.html`: `networkly.css`, route head styles, `workspace.css`, `elements.css`, `presentation-crm.css`, `presentation-directory.css`, `presentation-support.css`, then `controls.css`. Route scopes and selector specificity also matter. `marketing.css`, `pricing.css`, `auth.css`, and `legal.css` own their named surfaces. The base stylesheet retains legacy declarations; the later shared and scoped layers determine the current design. Documentation tokens below record effective values, not a proposal to add another CSS theme.
 
 **Key Characteristics:**
 
-- Normal-weight serif page titles with a quiet sans-serif working hierarchy.
-- Warm neutral surfaces, cobalt interaction, and distinct semantic states.
-- Open ruled records with visible actions and restrained form enclosures.
-- Horizontal navigation, responsive reading order, and paired light and dark themes.
+- Instrument Sans throughout the current interface, with Title Case headings and subtitles.
+- Cool light surfaces and paired navy dark surfaces, with cobalt interaction and labeled semantic states.
+- Bounded widgets, natural record heights, useful icons, and visible actions.
+- Stored company logos with an initial fallback, preserving the approved Networkly identity.
+- Responsive reading order, keyboard access, and restrained motion with a reduced-motion alternative.
 
 ## Colors
 
 ### Primary
 
-Cobalt (`accent`) identifies primary actions and active navigation. `accent-ink` supplies selected text and primary hover; `accent-soft` and `accent-line` identify selected filters and choices. Text on accent fills uses `on-accent`, which changes with the theme. Secondary text on the same fill uses `on-accent-2`.
+Cobalt `accent` identifies primary actions, selected controls, useful icons, and links. `accent-ink` supplies stronger interaction text and primary hover; `accent-soft` and `accent-line` provide the corresponding selected surface and boundary. `on-accent` and `on-accent-2` are paired text roles for accent fills. The frontmatter is normative for their exact values.
 
 ### Neutral
 
-Warm paper (`paper`) grounds the page; `surface` provides white form and overlay areas. Ink, secondary ink, and quiet ink establish three text roles. Fine lines divide records; strong lines define controls or section boundaries. Frontmatter records light tokens and their `dark-` counterparts. Runtime CSS reuses the same variable names for both themes.
+`paper` is the cool workspace ground; `surface` is the primary white widget surface. `surface-subtle` separates insets and resting fields, while `surface-hover` is available for supporting interaction states. `ink`, `ink-2`, and `ink-3` establish the text hierarchy. `line` divides content. `control-border` is the stronger field boundary; `line-strong` aliases it in runtime CSS and records the resolved value here.
 
-Explicit theme selection and system preference both set native `color-scheme`, so date/time picker affordances match the page. The persisted `coverage-theme` key and `data-theme` contract remain compatible. The base stylesheet owns the full light/dark semantic families for warmth, score, confidence, sponsorship, freshness, success, and danger; the frontmatter's semantic samples do not replace those families.
+`workspace.css` owns the light and dark pairs. Dark mode uses navy layers with pale blue interaction colors, not inverted white cards. Explicit `data-theme` selection and system preference both set native `color-scheme`; retain the persisted `coverage-theme` contract. Frontmatter prefixes dark counterparts with `dark-` only for documentation; runtime CSS reuses the same property names.
 
-**The Semantic Color Rule.** Use cobalt for interaction. Preserve the existing domain colors and visible labels for their named states, including unknown and unverified facts.
+`networkly.css` owns the complete domain families for relationship warmth, score, confidence, sponsorship, freshness, success, and danger. The semantic samples in frontmatter demonstrate the paired treatment and do not replace that inventory. The public closing bands intentionally retain fixed cobalt and white. Pricing's preview plan intentionally uses fixed navy with its own pale text, field, and button colors; keep the scoped pair from `pricing.css` together.
+
+The sidecar's tonal ramps are generated swatch previews only. Its canonical colors match frontmatter; the ramps introduce no runtime tokens.
+
+**The Semantic Color Rule.** Use cobalt for interaction. Keep visible labels beside domain colors, including unknown, unverified, pending, and unavailable states.
 
 ## Typography
 
-**Display Font:** Fraunces, with Georgia and Times New Roman fallbacks.
-**Body Font:** Instrument Sans, with the platform sans-serif stack.
-**Data Font:** Spline Sans Mono remains available for explicit code and numeric treatments.
+**Display and Body Font:** Instrument Sans, with the platform sans-serif stack in frontmatter. `workspace.css` resolves `--font-display` to `--font-ui`. Instrument Sans is self-hosted as variable WOFF2 with swap loading. Fraunces and Spline Sans Mono remain declared for compatibility; Fraunces is not the current page-heading direction. Mono remains available for explicit code, while ordinary counts use tabular numerals in Instrument Sans.
 
-All three families are self-hosted variable WOFF2 fonts declared in the base stylesheet with swap loading. Serif titles establish page identity; sans-serif labels, facts, and actions support scanning. The approved logo is an asset, not a typeset approximation.
+The primary CRM and directory heading is `headline`; supporting account and assistant headings use `support-headline`. Common section headings use `title`; working copy uses `body`, secondary explanations `detail`, and semantic chips `label`. Shared field text is `field`, changing to `field-touch` at 640px or on coarse pointers. These roles come from `workspace.css`, the three presentation stylesheets, `elements.css`, and `controls.css`.
 
-The primary CRM and directory title role uses the frontmatter headline. CRM titles reduce to the phone headline at (600px); directory titles do so at (720px). Supporting page titles use (38px/1.13) and usually reduce to (32px) at (680px). Authentication retains its local (38px) phone title. Public hero headings have their own larger responsive scale. These are route variants, not a universal display-size clamp.
+Public typography has deliberate route variants. The marketing hero uses `display`, with explicit 1100px, 820px, 420px, and 350px adjustments in `marketing.css`; its desktop clamp is not a universal scale. Pricing uses a `clamp(42px,5.5vw,76px)` headline and a 72px price figure. Legal titles use `clamp(30px,4vw,44px)` and legal prose uses `legal-body`. Authentication's orientation title is 36px on desktop. Preserve these local scales rather than forcing all headings to one size.
 
-Section titles generally use (17–18px), weight (600); settings section titles use (22px). Working body text follows the frontmatter body role. Secondary explanations use the detail role; chips use the label role. Native field text starts at (15px/1.4), with directory filter fields at (14px/1.4). Phone field rules raise common inputs to (16px), with some route-specific composer styles retained. Descriptions typically constrain reading width to (65–72ch). Counts use tabular numerals; they do not require a monospace face.
+Working descriptions usually cap at 65–72ch; legal paragraphs wrap within the reading column. Long names, timing, role facts, and URLs wrap where needed. Body and control text is not artificially tracked or uppercased. The approved wordmark is an asset rather than an editable text heading.
 
-**The Readable Label Rule.** Navigation, labels, chips, and actions use normal or sentence case without forced uppercase or tracking. Proper names, stored values, and quoted evidence preserve their original meaning.
+**The Case Rule.** Use Title Case for headings and short subtitles; use sentence case for controls, body copy, and explanatory sentences. Preserve acronyms, brand names, and the meaning of stored facts through the existing text-formatting helpers.
 
 ## Layout
 
-The sticky horizontal masthead has an (80px) desktop height, a bottom divider, and a (1440px) maximum inner width. The logo, six destinations, search, and account controls share one line. At (1050px), the workspace uses a compact (72px) header with a Menu control and three-column destination grid; at (640px), destinations use two columns. Without JavaScript the grid stays visible. Public navigation instead becomes a horizontal scrollable destination row below the logo and account actions.
+The shared horizontal header is sticky, with an 80px desktop minimum and a 1440px inner maximum. Destinations use soft selected tabs. At 1050px the app has a 72px compact header, Menu control, and a three-column destination grid; at 640px that grid has two columns. The compact navigation remains available without JavaScript. Public navigation becomes a scrollable destination row below the brand and account actions. `workspace.css` owns this shell.
 
-Default page padding is (40px 40px 64px), with ordinary workspace pages capped at (1200px) and wide pages at (1440px) above (1100px). Shared padding becomes (24px 20px 40px) at (820px) and (28px 20px 44px) at (640px), with deliberate page-local exceptions. Spacing uses the base scale and recurring (20px), (28px), and (40px) gaps.
+Page padding starts at `40px 40px 64px`, changes to `24px 20px 40px` at 820px, and to `28px 20px 44px` at 640px. Ordinary app pages cap at 1200px and wide app pages at 1440px above 1100px, with route-specific widths for focused forms and public surfaces. The base spacing scale is 4/8/12/16/24/32/48/64px; repeated 20px, 28px, and 40px values are deliberate local composition values.
 
-Today has a ruled factual summary, a collapsed weekly-updates disclosure, open action records, and a (290px) supporting column separated by a vertical rule. At (900px), that support moves below the main work. The action queue uses its own container width: below (680px), records stack identity, evidence, and actions; the final phone spacing uses compact section gaps while retaining (44px) primary targets. This places the first action group in the reviewed phone arrival view; arbitrary content length can extend it.
+| Surface | Implemented Composition |
+| --- | --- |
+| Today | Four summary shortcuts above the main plan and supporting rail. Market assignment and the Firm Updates / Recent Activity pair sit beneath the plan. Both context panels have 320px outer heights, fixed headers, and independently scrollable, keyboard-accessible lists; they stack below a 650px queue width. Firm Updates starts open and becomes naturally shorter when collapsed. The right rail holds Weekly Outreach, Outreach Schedule, Upcoming Deadlines, and setup, preserving market and timezone context. |
+| Network Contacts | Four columns at 1280px and above, two at 1100–1279px, and one below. Cards are naturally sized with 12px gaps; a tall record does not stretch its neighbors. Relationship groups use full-row summary controls and complete-row scroll previews. |
+| Network Firms | Three columns at 1200px and above, two at intermediate widths, and one on phones. `grid-auto-rows: max-content`, `align-items: start`, and `align-content: start` preserve natural rows in capped collections. |
+| Opportunities | Ordinary firm surfaces preview three complete lead rows with grouped locations. Picked roles use individual cards in two columns above 1000px and one at or below it, with 16px gaps and four complete cards in the initial preview. Both variants have a counted expansion footer; without enhancement, the full list remains visible. |
+| Applications | Wrapping labeled count filters above bounded application records. Role identity, stage editing, timing, and contact disclosure remain separate. The records stack at 820px; actions wrap without covering facts. |
+| Contact, Calendar, and Assistant | Contact history and capture have distinct surfaces; capture fields stack on phones. Calendar preserves its time grids and agenda geometry. Assistant has a bounded history area, optional starters, and a clear composer with reachable actions. |
+| Settings and Onboarding | A 200px settings index sits beside 24px-inset sections with a 32px gap. At 820px the index becomes a disclosure and the content stacks. Firm choosers reveal complete matches and preserve selected values during search. Cadence pairs fields in a shared row grid, aligns control centers and dividers, and reserves 68px number / 82px unwrapped unit tracks; phones use one column with compact descriptions. |
+| Marketing and Pricing | Marketing uses a 1280px wrap, large split hero, explicit example panels, open sections, and a cobalt close; major sections stack at 820px. Pricing caps at 1120px, pairs plan cards, and stacks them at 760px. The comparison table keeps horizontal scrolling inside its own boundary. |
+| Authentication and Legal | Authentication pairs orientation with a 400px form column and stacks before clipping. Legal uses a 200px section index and document column with a 40px gap; at 860px the index wraps above the document. The legal page caps at 1180px, with 32px/40px document insets and smaller phone insets. |
 
-Opportunities groups each firm in one horizontal band: a (250px) identity column and a broad role column with a (36px) gap. Each role list previews three complete lead rows with their grouped-location disclosures. A counted footer reveals the remaining rows; lists have natural height and show every rendered row when JavaScript is unavailable. At (720px), firm identity sits above roles. Applications uses wrapping labeled count filters above ruled rows, not boxed metric tiles. Network is a roster whose firm context and actions reflow beneath identity as space narrows. Its firm grid uses natural content-sized rows; a collapsed viewport never compresses cards into shorter tracks. Application stage controls precede a disclosure containing contacts at that firm. Contact records use open journal sections, a separate capture form, and supporting facts beside them.
-
-Settings has a (200px) section index beside open ruled sections, with a (64px) gap at wide sizes. The index becomes an inset disclosure and the layout becomes one column at (820px). Selected firm lists use natural height. Add-firm search previews five complete matching rows with a result count and an explicit control to show all matches; the no-JavaScript fallback shows all rows. Assistant keeps an open reading area with divided starters and an enclosed composer. Calendar uses time-based grids and agenda rows; responsive forms and day views retain their own geometry. Legal reading content caps at (760px). Public examples and authentication layouts stack at (820px) so their narrower columns cannot clip headings or content.
+The exact breakpoints and narrow-phone exceptions remain in the source styles. Today context is composed in `crm/_today_context.html`; cadence fields are in `accounts/settings.html` and `presentation-support.css`. The explicitly requested 320px Today context panels are a deliberate exception to natural outer height. Contact and firm record cards remain content-sized; picked-role cards share their content-defined grid row height. Do not add fixed record heights or pixel-cropped role previews. Content, errors, and controls must retain usable space.
 
 ## Elevation & Depth
 
-Page content is flat at rest. Warm ground, white working surfaces, spacing, and single-pixel rules establish depth. Menus, dialogs, drawers, and the raised panel use the second shadow token; the sidecar records both theme pairs. Inputs retain their soft accent focus glow. Selected theme and segmented choices have a small local shadow.
+White widgets sit on cool ground with single-pixel borders; inset surfaces group related work. Most app cards are shadowless at rest. `shadow-1` is a low interaction shadow, `shadow-widget` is available for small bounded widgets, and `shadow-2` separates floating menus, dialogs, and drawers. Their exact light/dark values are recorded in the sidecar from `workspace.css`. Legal documents remain quiet and flat. The marketing product illustration and journal use scoped diffuse shadows; pricing uses a restrained card hover.
 
-Shared page entrances are disabled. Feedback is local: press (120ms), color/border state (180ms), and overlay reveal (240ms), with shorter menu reveals. A pending mutation uses a slim progress mark; failure uses a danger outline. Reduced motion removes spatial transitions and leaves a static pending mark. This feedback describes actual activity, not decoration.
+Application feedback uses `--motion-press: 120ms`, `--motion-state: 180ms`, `--motion-reveal: 240ms`, and `--ease-widget: cubic-bezier(.16, 1, .3, 1)`. Buttons have local press and subtle hover feedback; ordinary contact and task cards do not lift. User-opened disclosures and updated filter results receive a short 200ms reveal in `widgets.js`. A 900ms alternating pending mark exists only during actual POST work; it is not a decorative idle animation. Errors use a visible danger outline.
 
-**The Stable Surface Rule.** Record collections and page sections stay still on hover. Use color or border emphasis for interaction and reserve substantial shadow for floating content.
+Public motion is finite and scoped: the marketing connection draws once over 1.8s, observed sections reveal over 800ms, and demo tabs switch over 400ms. Pricing has short arrival, panel-switch, and pointer-hover feedback. `marketing.js` controls the public reveals without requiring motion to read the content. The app has no shared page-arrival choreography. Legal has no decorative motion. All surfaces honor `prefers-reduced-motion`; the app's pending mark becomes static and spatial effects are removed.
+
+**The Stable Layout Rule.** Keep record geometry stable on hover, focus, and loading. Let contact and firm records size to content, retain the explicitly sized Today context panels, and reveal complete role previews. Reserve logo dimensions. Finite transforms may provide local feedback without changing document flow.
 
 ## Shapes
 
-Controls have gently curved corners through `r-ctl`; grouped form surfaces use `r-panel`. Status badges keep rounded ends through `r-badge`. Menus use their smaller local radius and utility choices use the utility radius. Most recurring records have square corners with a bottom rule and transparent fill. These open records are the default reading structure; capture forms, composers, and overlays have their own bounded shape. Calendar event labels retain compact local corners.
+Shared controls use `r-ctl` and `control-radius`; major groups use `r-panel`. Task and firm cards use the 14px local radius, compact contact and picked-role cards 12px, menus 10px, and small utilities 6px. These documented local names describe existing CSS values, not new runtime custom properties. Semantic status chips retain `r-badge`. Inner records usually use dividers rather than another enclosing card. Reserved, contained logo boxes keep the row stable as images load or fail.
 
 ## Components
 
-### Buttons
+### Buttons and Fields
 
-Primary buttons pair accent fill with on-accent text; secondary buttons use surface fill, ink text, and a strong border. Shared buttons have a (40px) desktop minimum and (44px) phone minimum. Page-local compact controls retain their explicit variants. Hover changes fill or border without lift. Keyboard focus uses a (2px) accent outline with a (3px) offset; press feedback scales widget buttons to (.975) unless reduced motion is enabled. Disabled state remains visible and noninteractive. Destructive actions retain the danger palette.
+Primary buttons pair accent fill with on-accent text; secondary buttons use surface, ink, and a strong border. The shared `.btn` baseline is 40px high with `9px 16px` padding and 14px/550 text; local controls deliberately vary. Common text fields, search fields, native selects, and enhanced select buttons use the final `controls.css` baseline: 42px minimum, 9px corners, `10px 12px` padding, 14px text, and `surface-subtle`. On phones at 640px or coarse pointers, fields become 44px with 16px text. Shared phone buttons are 44px; authentication's password input and wrapper are 46px, marketing CTAs are 52px, and pricing CTAs are 48px. Do not claim every desktop control is one height.
 
-### Inputs / Fields
+Common fields have visible labels, a persistent strong border, accent focus, a visible invalid state, and separate help/error copy. Select carets reserve 36px of right padding and switch color with the theme. `controls.css` is loaded last so the same resting field shape is used across route families. Search has one frame around its icon and input. Native textareas remain vertically resizable; embedded composers own their enclosure.
 
-Fields use surface fill, strong borders, control corners, visible labels, and separate explanatory or error text. Focus uses an accent outline at zero offset and a soft (3px) accent glow. Native and enhanced selects retain form submission and keyboard contracts. Checkbox and radio indicators remain visible; invalid fields use danger. Date and time affordances follow the root color scheme. Native textareas remain vertically resizable.
+### Selects, Navigation, and Dialogs
 
-### Navigation
+The enhanced select keeps the original native value and form contract. A browser top-layer popover escapes clipped cards where supported; the menu remains next to the control in the DOM, wraps long choices, and preserves selected/disabled state, keyboard handling, and focus. See `base.html` and `controls.css`. Keep per-region work-authorization selectors individually labeled and retain accessible alternatives for firm tier changes.
 
-Desktop destinations are plain text with an accent bottom rule and stronger weight on the active page. Navigation icons appear in the compact menu. Menu exposes expanded state; Escape closes it and restores focus. Directory scope tabs use soft selected fills, while shared scope tabs use an underline. Preserve the actual route variant and its accessible current-page state. Search and account affordances remain separate from destinations.
+Navigation uses a rounded accent-tinted current destination, with useful icons in the compact app menu. Preserve active-page, expanded, pressed, selected, and disabled semantics. Menu closes on Escape and returns focus. Dialogs and drawers have defined headings, wrapping actions, controlled scrolling, and `shadow-2`; shared dialogs use 24px padding and a `calc(100dvh - 32px)` height bound. Command search keeps its close control visible and its result list scrollable within the viewport.
 
-### Chips and choices
+### Widgets, Status, and Disclosures
 
-Status chips use normal-case wording, semantic text/surface/border pairings, and rounded ends. Selected filters use control corners, accent tint, and explicit pressed or checked state. Relationship stages are wrapping categorical labels with the current category highlighted; the contact record does not render them as a numerical progress bar. Work-authorization choices retain native radio indicators and equal-height labeled targets.
+A task or collection owns its surface. Contact and firm identity, contextual facts, time, and actions form distinct groups with visible controls. Status wording carries meaning alongside its semantic palette. Relationship stages remain named categories, not a numerical progress meter. Application filters expose `aria-pressed` and announce the current visible count; preserve the authoritative server rows and no-JavaScript behavior.
 
-### Records and grouped surfaces
+Use a full-width summary target for a group disclosure, with a clear indicator and complete revealed content. Opportunities previews and Network collection caps reveal complete records. Today context is different: fixed headers stay visible above independently scrolling lists with accessible names, tab stops, focus outlines, and stable scrollbar gutters. Its expanded 320px panels retain their outer height as lists scroll; collapsing Firm Updates intentionally reduces its height. Hover, loading, or entrance effects must not cause incidental layout shifts.
 
-Today tasks, firm bands, application rows, roster entries, and settings sections use open dividers. Identity and evidence remain separate from actions, and actions wrap without overlaying facts. Role and contact actions are persistently visible. Forms, composers, dialogs, and selected supporting widgets use bounded surfaces where they help users act. Avoid carrying obsolete card padding or hover lifts into open page sections.
+Picked-role cards use the company logo or monogram, the full wrapping title, grouped requirements and fit facts, a divided deadline/provenance strip, a native Why Picked disclosure, and bottom-aligned actions. Their inset is 20px, reducing to 16px at 640px; action targets are 42px on desktop and 44px at 640px. At 480px, Save and View share two equal columns while Not for me spans the row. Hover changes the border and subtle fill without lifting the card. Preserve existing date uncertainty, underlying role links, and form actions. See `directory/_rolecard.html`, `presentation-directory.css`, and the four-versus-three preview rule in `widgets.js`.
 
-### Collection controls
+### Logos and Icons
 
-Application stage filters expose `aria-pressed` and operate on the authoritative rows. Preserve the live visible-count announcement, empty-filter guidance, focus restoration after replacement, and disabled enhancement when JavaScript is unavailable. Firm expansion uses a real button with Expand/Collapse wording and `aria-expanded`; it reveals complete hidden records while keeping the header reachable on collapse. Preserve the natural-height full list when the enhancement is unavailable.
+Preserve the approved Networkly connected two-person N, custom lettering, full-lockup proportions, source raster silhouette, theme-aware mask, and unique per-placement IDs in `_wordmark.html`. Header and footer links keep the accessible name “Networkly home.” Favicon and compact exports use the same supplied identity.
 
-### Calendar and capture
+Company marks come from stored `Firm.logo` assets. `crm/_firm_mark.html`, directory firm templates, and account firm lists use a contained image on white with an initial fallback if absent or failed. CRM's standard mark is 28px, with 21px contact context and 32px firm-card variants; directory list marks are 38px and the firm detail mark is 60px, reducing to 48px on small phones. Keep explicit dimensions, `object-fit: contain`, decorative empty alt text beside the visible firm name, and the shared failure handler. Do not invent or retrieve substitute external logos for presentation.
 
-Calendar categories retain their colors and text. Month-cell add controls appear on hover or focus and remain available for coarse pointers. Agenda events and form actions use larger targets. Contact capture has a white, rounded form surface with visible labels and optional wording; its history remains a separate open section. Outreach schedules state timing in text, and native progress represents actual completed/goal values only.
+Use the existing inline SVG icon vocabulary in `_nav_icon.html`, `_icon.html`, and `directory/_section_icon.html` when it identifies an action, category, or firm context. Most icons are 16–20px, with larger page-heading variants. Text labels remain where an icon alone would be ambiguous. Decorative icons must not duplicate the accessible label.
 
-### Assistant and overlays
+### Surface Variants and Truthfulness
 
-Assistant starters form an open divided list. The bordered composer marks the editing area; draft subject, body, and actions remain distinct. Dialogs and drawers use the raised shadow, clear headings, constrained scrolling, and grouped wrapping actions. Dialogs have (24px) padding and a maximum height of (100dvh - 32px). Command search uses vertically grouped, fully wrapping result names and context, a visible close button, and keyboard selection announced through the search field. Its result list scrolls inside a dialog bounded by the viewport, including short landscape windows.
-
-### Identity and compatibility
-
-Preserve the approved lockup and mark, asset paths, per-placement mask IDs, accessible link names, and theme-aware fills. Styling changes keep existing URLs, field names, named IDs, data attributes, htmx targets, stored categories, and browser persistence keys. Product facts and uncertainty remain literal; examples on public pages stay labeled. These contracts allow the recorded visual system to evolve without changing user data or behavior.
+Public examples are labeled as examples; source inventory, prices, availability, account state, and legal copy come from the current templates and data. The design system does not authorize new claims. Marketing can explain a workflow with finite motion. App feedback must describe a real interaction or pending state. Legal content preserves its section anchors, readable text, and print treatment. Shared styling must retain route, form, HTMX, theme, and data contracts.
 
 ## Do's and Don'ts
 
-### Do:
+### Do
 
-- Do use runtime CSS variables so explicit and system-selected dark themes remain paired.
-- Do use Fraunces for page identity and Instrument Sans for working information and controls.
-- Do organize records with spacing and dividers, retaining useful boundaries around forms and overlays.
-- Do keep role and contact actions visible, with their larger phone targets.
-- Do preserve native controls, keyboard focus, disclosure state, reduced motion, and persistence compatibility.
-- Do preserve the approved Networkly logo and explicit wording for categorical or uncertain facts.
+- Do reuse the final runtime tokens and scoped page styles, including explicit and system-selected dark themes.
+- Do use Instrument Sans and the approved case hierarchy across public and private surfaces.
+- Do give a task, form, or collection a clear surface; separate its internal facts with spacing and dividers.
+- Do keep full labels, useful icons, stored firm logos, native form values, keyboard focus, and visible actions.
+- Do size contact and firm records naturally, preserve the explicitly sized Today context panels, and keep role previews complete.
+- Do tie application motion to user input or actual pending state, and honor reduced motion.
+- Do preserve product truth, uncertainty, example labels, supported routes, and theme compatibility.
 
-### Don't:
+### Don't
 
-- Don't reintroduce the discarded vertical navigation rail, cool blue page ground, boxed summary tiles, or page-header eyebrows.
-- Don't replace semantic labels with color alone or style unknown facts as confirmed outcomes.
-- Don't revive uppercase small labels, hover lifts, decorative page entrances, or literal paper textures.
-- Don't copy historical CSS fragments without checking the final page-family cascade.
-- Don't turn relationship categories into a numerical meter or use decorative progress to imply activity.
+- Don't revive the superseded warm paper, serif page titles, transparent newspaper-style widgets, or vertical navigation rail.
+- Don't replace company logos with invented brands, fetch new external logos for decoration, or recreate the Networkly lockup in type.
+- Don't hide required actions on hover, clip labels to force alignment, compress card rows, or animate layout dimensions.
+- Don't add endless decorative motion, fabricated counters, activity pulses, or numerical progress for categorical relationship stages.
+- Don't apply a public hero's type scale or entrance choreography to working app pages or legal documents.
+- Don't treat historical CSS comments or review artifacts as authority over the current cascade and approved direction.

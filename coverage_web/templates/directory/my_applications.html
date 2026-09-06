@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load csp textstyle %}
 
-{% block title %}My applications · Networkly{% endblock %}
+{% block title %}Networkly · My Applications{% endblock %}
 
 {% block head %}{% include "directory/_styles.html" %}{% endblock %}
 
@@ -9,7 +9,7 @@
 <div class="page page--full directory-page directory-applications">
   <header class="pagehead">
     <div class="pagehead-text">
-      <h1 class="pagehead-title">My applications</h1>
+      <h1 class="pagehead-title"><span class="directory-title-icon">{% include "directory/_section_icon.html" with name="applications" %}</span>My Applications</h1>
       <p class="pagehead-sub">Follow each role from saved to offer.</p>
     </div>
     <div class="pagehead-actions">
@@ -28,12 +28,26 @@
         e.target.form.requestSubmit();
       }
     });
+    // The selected attribute is the last stage confirmed by the server.
+    // Failed saves restore it without dispatching another form submission.
+    document.body.addEventListener("htmx:afterRequest", function (event) {
+      var detail = event.detail || {};
+      var form = detail.elt;
+      if (!detail.failed || !form || !form.matches(".lens-act")) return;
+      var select = form.querySelector("[data-stage-select]");
+      if (!select) return;
+      var index = Array.prototype.findIndex.call(select.options, function (option) { return option.defaultSelected; });
+      if (index < 0) return;
+      select.selectedIndex = index;
+      select.dispatchEvent(new Event("change"));
+    });
   {% endscript %}
 
   {% if hidden %}
     <section class="section" id="hidden">
-      <h2>Not for me <span class="scrub-count">{{ hidden|length }}</span></h2>
-      <p class="lede">Hidden from the feed. Put any of them back.</p>
+      <details class="apps-hidden-disclosure">
+        <summary><h2>Hidden Roles <span class="scrub-count">{{ hidden|length }}</span></h2><span class="hidden-show">Show roles</span><span class="hidden-hide">Hide roles</span></summary>
+        <p class="lede">Dismissed from Opportunities. Restore any role to the feed.</p>
       <div class="apps-hidden">
         {% for uo in hidden %}
           <div class="apps-hidden-row">
@@ -54,6 +68,7 @@
           </div>
         {% endfor %}
       </div>
+      </details>
     </section>
   {% endif %}
 </div>

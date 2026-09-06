@@ -1,611 +1,86 @@
 {% extends "base.html" %}
-
-{% block title %}Pricing · Networkly{% endblock %}
-
+{% load static %}
+{% block title %}Networkly · Pricing{% endblock %}
 {% block head %}
-<style>
-  /* ---- Pricing-page-only styles ------------------------------------------- */
-
-  /* ---- One icon family for the whole page ----------------------------------
-     Three marks used to appear here and they did not agree with each other:
-     a white check inside a filled navy disc (Free), a white minus inside a
-     filled grey disc (Pro), and a bare en-dash character (the table). Two
-     different metaphors, three different optical weights, and eight filled
-     discs stacked down a card read as a column of blobs rather than a list.
-
-     Now there is one check and one dash, drawn on the same 16px grid at the
-     same 1.9 stroke with the same round caps, so the dash is literally the
-     check's geometric opposite rather than a different idea. They are
-     rendered as MASKS, not as coloured SVGs: the shape is defined once and
-     the colour comes from `background`, which is what lets the same glyph
-     say "live" in --accent and "pending" in --ink-3 without a second asset
-     and without a colour baked into a data URI where dark mode cannot
-     reach it. */
-  .aud, .price-compare {
-    --icon-check: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3.3 8.5l3.1 3.2 6.3-7.1" fill="none" stroke="black" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>');
-    --icon-dash: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M3.6 8h8.8" fill="none" stroke="black" stroke-width="1.9" stroke-linecap="round"/></svg>');
-  }
-
-  /* Audience switcher: CSS-only segmented control (hidden radios + labels).
-     The checked radio shows its panel via sibling selectors; no JS, and with
-     CSS off both panels simply render stacked. */
-  /* One column for the whole page, 960px wide.
-
-     `.page` is --page-w-full (1440px), so the hero was running to ~1390px
-     over an 860px card grid: a masthead half again as wide as the thing it
-     introduces, with the eye having to re-find the left edge on every
-     section. Every band on this page — hero, cards, table, the honesty
-     note, the FAQ — now shares one measure and one pair of edges. This is
-     scoped to the pricing template's own style block, so no other page that
-     renders .kin-hero is touched. */
-  .page > .kin-hero { max-width: var(--page-w); margin-inline: auto; }
-
-  /* The hero sheen runs once. Same override, same reasoning, same removal
-     condition as core/home.html's copy — see the long note there. Longhands
-     only, so networkly.css's `prefers-reduced-motion` block (which sets the
-     animation NAME to none) still wins. */
-  .kin-hero::after { animation-iteration-count: 1; animation-fill-mode: both; }
-
-  .aud { max-width: var(--page-w); margin: 0 auto; }
-  .aud > input { position: absolute; opacity: 0; pointer-events: none; }
-  .seg { display: flex; justify-content: center; align-items: center; gap: 4px;
-    width: max-content; margin: 0 auto var(--s6); padding: 4px;
-    border: 1px solid var(--line); border-radius: 999px;
-    background: var(--surface); box-shadow: var(--shadow-1); }
-  /* Beat the global form-label rule (display:block + top margin), which
-     otherwise inflates the capsule. */
-  .seg label { display: inline-flex; align-items: center; margin: 0;
-    border-radius: 999px; padding: 8px 22px; line-height: 1.2; cursor: pointer;
-    font-size: var(--fs-s); font-weight: var(--w-med); color: var(--ink-2);
-    transition: background var(--t-fast), color var(--t-fast); }
-  .seg label:hover { color: var(--ink); background: var(--accent-soft); }
-  /* The capsule stays a capsule: this is a SEGMENTED CHOICE, which is the one
-     shape exempt from the "a control you press takes --r-ctl" rule (the site
-     nav's own `.subnav` keeps its pill for the same reason). What it does not
-     get to keep is a 33px tap target on the first control a phone visitor
-     meets on this page. The container's 4px padding is what turns two 44px
-     labels into a 52px capsule, so it gives that up at the same breakpoint. */
-  @media (pointer: coarse) {
-    .seg { padding: 0; }
-    .seg label { min-height: 44px; }
-  }
-  #aud-ind:checked ~ .seg label[for="aud-ind"],
-  #aud-team:checked ~ .seg label[for="aud-team"] {
-    background: var(--accent); color: var(--on-accent); }
-  .aud-panel { display: none; }
-  #aud-ind:checked ~ .panel-ind { display: block; }
-  #aud-team:checked ~ .panel-team { display: block; }
-
-  /* 960px, not 860, and 32px of padding on all four sides rather than 24 on
-     the sides. Both are in service of the same thing: a 13px line of body
-     copy wants roughly 55-65 characters, and the old 860px grid gave each
-     card about 370px of text width, which is where a bullet of sixty-odd
-     characters broke onto a second line for no reason other than the
-     column being narrow. The measure is the layout problem; shortening the
-     words alone would not have fixed it. 960px is --page-w, so the cards
-     now line up with the page rather than sitting inside it at an
-     arbitrary width. */
-  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5);
-    max-width: var(--page-w); margin: 0 auto; align-items: stretch; }
-  .price-card { padding: var(--s6); display: flex; flex-direction: column;
-    position: relative; overflow: hidden; }
-  .price-card.featured { border-color: var(--accent-line);
-    box-shadow: 0 0 0 1px var(--accent-line), var(--shadow-2); }
-  .price-card.featured::before { content: ""; position: absolute; inset: 0;
-    pointer-events: none;
-    background: radial-gradient(120% 130% at 100% 0%,
-      color-mix(in srgb, var(--accent) 7%, transparent), transparent 60%); }
-  /* ---- Status badges --------------------------------------------------------
-     These were mono all-caps chips floated into the card's top-right corner,
-     which is a build-status label — the voice of a CI dashboard, not of a
-     page a student is deciding to trust. Three changes, all of them the
-     ordinary product-marketing treatment:
-
-       the UI face in sentence case, so it reads as a phrase rather than a
-         constant;
-       a hairline ring on the soft fill, which is how every other tinted
-         chip in this product is built and is what stops a pale pill from
-         dissolving into a pale card;
-       inline beside the plan name instead of absolutely positioned, so the
-         card opens with one header line — name, then status — rather than a
-         title with something floating near it.
-
-     "Available now" moves from accent to --ok. Green is the product's own
-     word for live (the landing hero's pulse dot is --ok), and it frees the
-     accent to mean emphasis: the Free card is the featured one and was
-     wearing an accent ring and an accent badge at once. */
-  .plan-head { display: flex; align-items: center; flex-wrap: wrap;
-    gap: var(--s2) var(--s3); margin: 0 0 var(--s1); }
-  .plan-badge { flex: none; border-radius: 999px; padding: 3px 11px;
-    font-size: var(--fs-xs); font-weight: var(--w-med); line-height: 1.5;
-    white-space: nowrap;
-    background: var(--ok-soft); color: var(--ok);
-    box-shadow: inset 0 0 0 1px var(--ok-line); }
-  .plan-badge.soon { background: var(--stale-s); color: var(--stale-t);
-    box-shadow: inset 0 0 0 1px var(--stale-l); }
-  .plan-name { font: var(--w-black) var(--fs-display-3)/1.2 var(--font-display);
-    letter-spacing: -0.01em; margin: 0; }
-  .plan-tagline { color: var(--ink-2); font-size: var(--fs-s);
-    margin: 0 0 var(--s5); max-width: 42ch; }
-  /* The price is the answer to a different question than the feature list,
-     and the card gave the two the same 16px of air, so the eye ran straight
-     out of the amount and into the first bullet with nowhere to stop. A
-     hairline and 24px on each side of it is the resting point: everything
-     above is what it costs, everything below is what you get. Every card
-     has a price, so the rule is universal and needs no per-card variant. */
-  .plan-price { display: flex; align-items: baseline; gap: var(--s2);
-    margin: 0 0 var(--s5); padding-bottom: var(--s5);
-    border-bottom: 1px solid var(--line); }
-  .plan-price .amount { font-family: var(--font-mono); font-weight: var(--w-bold);
-    font-size: var(--fs-display-1); line-height: 1; color: var(--ink);
-    font-variant-numeric: tabular-nums; }
-  .plan-price .per { color: var(--ink-3); font-size: var(--fs-s); }
-  /* Sentence case. "EVERYTHING IN FREE, PLUS" was the third all-caps
-     letter-spaced string on the card, after the two badges; a lead-in to a
-     list is a phrase, and setting it as a constant made the card shout its
-     connective tissue. */
-  .plan-includes { font-size: var(--fs-s); font-weight: var(--w-med);
-    color: var(--ink-3); margin: 0 0 var(--s3); }
-  /* 12px between rows, up from 8. At 8px the gap between two bullets was
-     narrower than the gap between the two lines INSIDE a bullet, so a
-     wrapped bullet and its neighbour fused into one paragraph — which is
-     most of why the list read as prose rather than as a list. */
-  .plan-features { list-style: none; margin: 0 0 var(--s6); padding: 0;
-    display: flex; flex-direction: column; gap: var(--s3); flex: 1; }
-  /* The bullet is positioned, not a flex sibling. As `display: flex` the row
-     had a gap between EVERY child, so the moment a feature line contained a
-     <b> — which the live counts now do — an 8px hole opened on each side of
-     the number: "1183   live campus roles across   72   firms". Absolute
-     positioning lets the text be ordinary inline content again, which is
-     what it always was. */
-  /* `text-wrap: pretty` is doing real work here rather than being a nicety.
-     Several of these lines land a word or two over the column, and a bullet
-     whose second line is the single word "date" reads as a mistake in a way
-     a balanced two-line bullet does not. Browsers without it wrap as before;
-     nothing depends on it. */
-  .plan-features li { position: relative; padding-left: 26px;
-    font-size: var(--fs-s); color: var(--ink-2); line-height: 1.55;
-    text-wrap: pretty; }
-  /* <b> means "this is a measured figure", and only that. A draft of this
-     pass also used it for bold lead-ins ("Gmail Live:", "Assistant")
-     which looked fine and was wrong twice over: it gave one tag two
-     meanings, and it split copy that core/tests/test_pricing.py pins as
-     contiguous strings, because those sentences are founder decisions the
-     tests exist to hold still. */
-  .plan-features li b { color: var(--ink); font-weight: var(--w-med);
-    font-variant-numeric: tabular-nums; }
-  /* Allowances get their own muted line instead of trailing the sentence.
-     A daily-and-monthly ceiling is a spec value, not prose, and pinned to
-     the end of a claim it was the thing that pushed the advisor bullet to
-     three lines. The comparison table below already renders its values in
-     mono for exactly this reason (.cmp-val), so the card and the table now
-     say numbers the same way.
-
-     Note for whoever edits these comments next: CSS comments ship to the
-     browser inside <style>, so core/tests/test_pricing.py sees them. Two of
-     those tests count occurrences of an advisor figure across the whole
-     response body, and an earlier draft of this comment quoted the live
-     numbers and failed them. Describe the copy here; do not quote it. */
-  .plan-features .feat-meta { display: block; margin-top: var(--s1);
-    font-family: var(--font-mono); font-size: var(--fs-xs);
-    color: var(--ink-3); font-variant-numeric: tabular-nums; }
-  .plan-features li::before { content: ""; position: absolute; left: 0; top: 4px;
-    width: 16px; height: 16px; background: var(--accent);
-    -webkit-mask: var(--icon-check) no-repeat center / 16px;
-    mask: var(--icon-check) no-repeat center / 16px; }
-  /* Pro's items are things Pro HAS; the "In the works" badge at the head of
-     the card already says the tier itself is unbuilt, and the comparison
-     table makes exactly this argument for its own Pro column ("per-cell
-     badges would say the same thing sixteen times"). So Pro keeps the
-     check and drops to the muted ink: same glyph, one step back in
-     weight. The old filled minus-in-a-circle was a second metaphor
-     saying "excluded", which is not what a Pro feature is. */
-  .price-card.preview .plan-features li::before { background: var(--ink-3); }
-  /* ---- Planned, not yet built ---------------------------------------------
-     Visibly a different list from the one above it, because it is a different
-     kind of claim. No check glyph (the check means "this is in the plan"),
-     muted ink, and a dash the eye reads as "pending" rather than "included" —
-     the same dash the comparison table's `.cmp-no` uses, so the page has one
-     glyph for "not here".
-
-     The divider between the two lists is a border-BOTTOM on the list above,
-     not a border-top on the heading below, and only on the card that has a
-     planned list. That is the same hairline `.plan-price` already draws for
-     the same reason ("everything above is what it costs, everything below is
-     what you get"), so the card reads as two rules of one kind rather than
-     gaining a third edge treatment — and the measured panel-style count
-     stays at 8 rather than gaining a ninth border signature. */
-  .price-card.preview .plan-features { margin-bottom: var(--s5);
-    padding-bottom: var(--s5); border-bottom: 1px solid var(--line); }
-  .plan-planned-head { margin-top: 0; }
-  .plan-planned { list-style: none; margin: 0 0 var(--s6); padding: 0;
-    display: flex; flex-direction: column; gap: var(--s3); }
-  .plan-planned li { position: relative; padding-left: 26px;
-    font-size: var(--fs-s); color: var(--ink-3); line-height: 1.55;
-    text-wrap: pretty; }
-  .plan-planned li::before { content: ""; position: absolute; left: 0; top: 4px;
-    width: 16px; height: 16px; background: var(--ink-3);
-    -webkit-mask: var(--icon-dash) no-repeat center / 16px;
-    mask: var(--icon-dash) no-repeat center / 16px; }
-
-  .plan-cta { margin-top: auto; }
-  .plan-cta .btn { width: 100%; justify-content: center; display: inline-flex; }
-  .plan-note { font-size: var(--fs-xs); color: var(--ink-3);
-    margin: var(--s2) 0 0; text-align: center; }
-
-  /* Pro's "Notify me" — intent capture standing in for the checkout button
-     Pro doesn't have yet. Stacked, not side-by-side: the card is narrow at
-     the breakpoint where two plan columns already compete for width, so a
-     row-layout email+button would be the first thing to squash. */
-  .plan-waitlist { display: flex; flex-direction: column; gap: var(--s2); }
-  .plan-waitlist input[type="email"] { margin: 0; }
-  .plan-waitlist .plan-note { margin-top: 0; }
-
-  /* ---- Side-by-side comparison table ---------------------------------------
-     The cards are the pitch; this is the inventory. Deliberately NOT a boxed
-     grid: row separators on the bare page ground, one 4% accent wash down the
-     Pro column, and three cell states only (check, mono value, dash). A fully
-     ruled table with vertical lines reads like a settings screen, which is
-     the opposite of what a page a prospect judges the product by should do.
-
-     Every colour here resolves through a token, so the whole component
-     re-themes with the rest of the product — the accent wash is mixed FROM
-     --accent rather than hardcoded, which is why it survives the dark
-     palette's flip from deep navy to light blue. */
-  .price-compare { max-width: var(--page-w); margin: 0 auto; }
-  .price-compare h2 { font: var(--w-black) var(--fs-display-3)/1.2 var(--font-display);
-    letter-spacing: -0.01em; color: var(--ink); text-align: center;
-    margin: var(--s7) 0 var(--s4); }
-  /* Under 720px the table scrolls inside its own container instead of
-     squashing sixteen rows into a phone width. min-width is the contract
-     that makes the overflow actually happen. */
-  .cmp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .cmp { width: 100%; max-width: var(--page-w); min-width: 480px; margin: 0 auto;
-    border-collapse: collapse; }
-  .cmp td, .cmp th { border-bottom: 1px solid var(--line); }
-  .cmp th[scope="row"], .cmp td:first-child { text-align: left;
-    font-size: var(--fs-s); color: var(--ink-2); font-weight: var(--w-reg);
-    padding: var(--s3) var(--s2); }
-  .cmp thead th { font: var(--w-med) var(--fs-s) var(--font-display);
-    color: var(--ink); padding: var(--s3) var(--s2); }
-  .cmp thead th:first-child { border-bottom-color: var(--line); }
-  .cmp td:not(:first-child), .cmp thead th:not(:first-child) {
-    text-align: center; width: 150px; }
-  /* The Pro column reads as a column, not sixteen unrelated cells. The tint
-     is painted as a background IMAGE so the row-hover wash below can use
-     background-color underneath it and the two compose instead of fighting. */
-  .cmp td:last-child:not(.cmp-group), .cmp thead th:last-child {
-    background-image: linear-gradient(
-      color-mix(in srgb, var(--accent) 4%, transparent),
-      color-mix(in srgb, var(--accent) 4%, transparent)); }
-  .cmp thead th:last-child { border-bottom-color: var(--accent-line); }
-  .cmp tbody td { transition: background-color var(--t-fast); }
-  .cmp tbody tr:hover td {
-    background-color: color-mix(in srgb, var(--accent) 5%, transparent); }
-  .cmp tbody tr:hover td:first-child { color: var(--ink); }
-  /* Group headers span all three columns, so they must opt out of both the
-     Pro tint (they ARE :last-child) and the hover wash. */
-  .cmp td.cmp-group { text-transform: uppercase; letter-spacing: 0.06em;
-    font-size: var(--fs-xs); font-weight: var(--w-med); color: var(--ink-3);
-    padding: var(--s4) var(--s2) var(--s2); width: auto; }
-  .cmp tbody tr:hover td.cmp-group { background-color: transparent; }
-
-  /* Three cell states, no fourth. The check and the dash are the same pair
-     the cards use, at the same 16px, so a visitor's eye carries one meaning
-     from the cards down into the table. The en-dash inside .cmp-no stays in
-     the markup as the no-CSS fallback and is masked over here; the cell's
-     aria-label is what actually carries the meaning either way. */
-  .cmp-yes, .cmp-no { display: inline-block; width: 16px; height: 16px;
-    vertical-align: middle; }
-  .cmp-yes { background: var(--accent);
-    -webkit-mask: var(--icon-check) no-repeat center / 16px;
-    mask: var(--icon-check) no-repeat center / 16px; }
-  .cmp-no { font-size: 0; background: var(--ink-3);
-    -webkit-mask: var(--icon-dash) no-repeat center / 16px;
-    mask: var(--icon-dash) no-repeat center / 16px; }
-  .cmp-val { font-family: var(--font-mono); font-size: var(--fs-xs);
-    color: var(--ink); font-variant-numeric: tabular-nums; }
-  /* One "In the works" marker for the whole Pro column. Per-cell badges would
-     say the same thing sixteen times and make the table look unfinished; the
-     tier itself is unlaunched, so stating it once at the head is both
-     cleaner and more honest. */
-  /* Same badge, same voice as the cards' — one step smaller because it sits
-     inline inside a table head rather than on its own header line. */
-  .cmp-badge { font-size: var(--fs-xs); font-weight: var(--w-med);
-    border-radius: 999px; padding: 2px 9px; line-height: 1.5;
-    background: var(--stale-s); color: var(--stale-t);
-    box-shadow: inset 0 0 0 1px var(--stale-l);
-    margin-left: var(--s2); white-space: nowrap; }
-
-  .price-honesty { max-width: 640px; margin: var(--s7) auto 0; text-align: center;
-    color: var(--ink-2); font-size: var(--fs-s); }
-  .price-honesty h2 { font: var(--w-black) var(--fs-display-3)/1.2 var(--font-display);
-    letter-spacing: -0.01em; margin: 0 0 var(--s2); color: var(--ink); }
-
-  .price-faq { max-width: 640px; margin: var(--s6) auto 0; }
-  .price-faq details { padding: var(--s3) var(--s4); margin-bottom: var(--s2); }
-  .price-faq summary { cursor: pointer; font-weight: var(--w-med);
-    font-size: var(--fs-s); color: var(--ink); }
-  .price-faq p { color: var(--ink-2); font-size: var(--fs-s);
-    margin: var(--s2) 0 0; }
-
-  @media (max-width: 720px) {
-    .price-grid { grid-template-columns: 1fr; }
-    /* 32px of padding costs a phone 18% of its text column, which is where
-       one-line bullets start wrapping again. The vertical rhythm is what
-       carries the card's calm, so that stays; only the sides give way. */
-    .price-card { padding: var(--s5) var(--s4); }
-    /* The label column gives up its share first; the two plan columns are
-       already at their floor. Together with .cmp's min-width this is what
-       makes .cmp-scroll actually scroll rather than crush. */
-    .cmp td:not(:first-child), .cmp thead th:not(:first-child) { width: 130px; }
-  }
-
-  /* ---- The table stops being a table on a phone ---------------------------
-     Measured at 375px: `.cmp` held its 480px min-width inside a 375px
-     `.cmp-scroll`, so the Pro column, the whole point of the comparison, sat
-     entirely off-screen with no fade, no shadow and no hint that there was
-     anything to the right of "Free". A horizontal scroller nobody can see is
-     the same as a missing column.
-
-     Below 560 each row becomes a small stack instead: the feature name on its
-     own line, then Free and Pro under it, each labelled. The labels are
-     generated (`::before` on the 2nd and 3rd cell) rather than added to the
-     markup, so the table stays one semantic table with one header row for a
-     screen reader and nothing is duplicated in the DOM.
-
-     `min-width: 0` on `.cmp` is what actually stops the scroll: without it
-     the 480px contract survives the display change and the stack scrolls too.
-
-     `.cmp-group` rows (the four section headings) span all three columns, so
-     they are excluded from the label rule and from the value-row layout. */
-  @media (max-width: 560px) {
-    .cmp-scroll { overflow-x: visible; }
-    .cmp { min-width: 0; }
-    /* The head is redundant once every cell carries its own plan label; it is
-       hidden rather than removed so the "In the works" marker on Pro is still
-       announced, and the caption still names the table. */
-    .cmp thead { position: absolute; width: 1px; height: 1px; padding: 0;
-      margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
-      white-space: nowrap; border: 0; }
-    .cmp, .cmp tbody, .cmp tr, .cmp td { display: block; width: auto; }
-    .cmp tr { border-bottom: 1px solid var(--line); padding: var(--s3) 0; }
-    .cmp td { border-bottom: 0; }
-    .cmp th[scope="row"], .cmp td:first-child { padding: 0 0 var(--s2); }
-    .cmp td:not(:first-child), .cmp thead th:not(:first-child) {
-      width: auto; text-align: left; padding: 3px 0 3px var(--s4); }
-    /* The plan each value belongs to, said once per cell. */
-    .cmp td:not(.cmp-group):nth-child(2)::before { content: "Free"; }
-    .cmp td:not(.cmp-group):nth-child(3)::before { content: "Pro"; }
-    .cmp td:not(.cmp-group):nth-child(2)::before,
-    .cmp td:not(.cmp-group):nth-child(3)::before {
-      display: inline-block; width: 46px; margin-left: calc(var(--s4) * -1);
-      font-family: var(--font-mono); font-size: var(--fs-xs);
-      color: var(--ink-3); }
-    .cmp td.cmp-group { padding: var(--s2) 0; }
-    .cmp tr:has(> .cmp-group) { border-bottom: 0; padding-bottom: 0; }
-  }
-
-  /* .kin-reveal is a page-load rise; nothing here depends on it to be
-     legible, so honour the preference and simply render the panel. */
-  @media (prefers-reduced-motion: reduce) {
-    .price-card.kin-reveal, .price-compare.kin-reveal { animation: none; }
-    .cmp tbody td { transition: none; }
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/pricing.css' %}">
 {% endblock %}
-
 {% block content %}
-<div class="page support-public support-pricing">
-  <header class="support-pricing-head">
-    <h1 class="kin-hero-title">Find the plan for your recruiting search.</h1>
-    <p class="kin-hero-sub">Browse the campus roles we track for free.
-      Pro is planned to add more frequent sync and higher assistant limits.</p>
-    {% comment %}
-    The live counts, promoted out of the Free card's bullets.
+<div class="networkly-pricing">
+  <header class="pricing-hero">
 
-    They used to be bolded numbers buried mid-sentence — "2435 live campus
-    roles across 78 firms hiring today" — which made a pricing card read
-    like a changelog and made the numbers, the most persuasive thing on the
-    page, the hardest part of it to see. Every SaaS pricing page that shows
-    live inventory puts it above the cards, not inside a bullet.
-
-    This is `.kin-hero-stats` from networkly.css, the same component the
-    landing hero uses for the same three figures. No new CSS, no new
-    tokens, and it re-themes and re-flows with everything else. The numbers
-    are still the measured ones from core.views.pricing; nothing here is
-    typed.
-    {% endcomment %}
-    <div class="kin-hero-stats">
-      <div class="kin-hero-stat">
-        <span class="dash-num">{{ open_count }}</span>
-        <span class="dash-lbl">Open campus roles</span>
-      </div>
-      <div class="kin-hero-stat">
-        <span class="dash-num">{{ firm_count }}</span>
-        <span class="dash-lbl">Firms tracked</span>
-      </div>
-      <div class="kin-hero-stat">
-        <span class="dash-num">{{ market_count }}</span>
-        <span class="dash-lbl">Markets tracked</span>
-      </div>
-    </div>
+    <h1>Choose Your<br><span>Recruiting Plan</span></h1>
+    <p class="pricing-intro">Browse roles and build your network for free.<br>More sync and AI capacity are in the works.</p>
+    <a class="pricing-text-link" href="/opportunities/">Explore the free opportunities feed <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none"><path d="M4 12 12 4M4 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
   </header>
-
+  <div class="pricing-inventory" aria-label="Current opportunities">
+    <p>Included in Free,<br><strong>Available Today</strong></p>
+    <div><strong>{{ open_count }}</strong><span>Open campus roles</span></div>
+    <div><strong>{{ firm_count }}</strong><span>Firms with open roles</span></div>
+    <div><strong>{{ market_count }}</strong><span>Markets tracked</span></div>
+  </div>
+  {% if user.is_authenticated %}
+  <div class="pricing-account"><p>Your account is on <strong>{{ user.get_plan_display }}</strong>.</p><a href="{% url 'accounts:settings' %}">Account settings <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none"><path d="M4 12 12 4M4 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
+  {% endif %}
   <div class="aud">
     <input type="radio" name="aud" id="aud-ind" checked>
     <input type="radio" name="aud" id="aud-team">
     <div class="seg" role="group" aria-label="Plan audience">
-      <label for="aud-ind">Individual</label>
-      <label for="aud-team">Team &amp; Enterprise</label>
+      <label for="aud-ind">For you</label><label for="aud-team">For your organization</label>
     </div>
-
     <div class="aud-panel panel-ind">
       <div class="price-grid">
-        <article class="price-card featured kin-reveal panel" style="--i:0">
-          <div class="plan-head">
-            <h2 class="plan-name">Free</h2>
-            <span class="plan-badge">Available now</span>
-          </div>
+        <article class="price-card featured">
+          <div class="plan-head"><h2 class="plan-name">Free</h2><span class="plan-badge">Available now</span></div>
           <p class="plan-tagline">Browse roles and manage your recruiting. No payment card required.</p>
           <p class="plan-price"><span class="amount">$0</span><span class="per">forever, for what's listed here</span></p>
-          {% comment %}
-          Every figure here is measured in core.views.pricing, never typed.
-          This list spent a cycle advertising "four markets" while the board
-          had tracked six for weeks — a pricing page's claims are the ones
-          most likely to go stale and least likely to be re-read.
-
-          One line per claim (2026-08-20). Four of these bullets were
-          multi-line paragraphs with numbers bolded mid-sentence, which is
-          how a spec sheet reads, not a pricing card. Nothing was dropped —
-          every claim was either shortened, split into the two separate
-          things it was always describing, or moved:
-
-            open_count / firm_count -> the hero stat strip above
-            "Today queue AND Network board" -> two bullets, one idea each,
-              which also makes the card mirror the comparison table's two
-              matching rows instead of paraphrasing them
-            "N postings read in full, so deadlines and requirements come
-              from the posting rather than the board's summary" -> the count
-              and the anti-summary promise, one bullet each. Compressing
-              this into a single line meant losing "requirements", which
-              appears nowhere else on the page; splitting keeps every word
-              and still gives two clean one-liners.
-            advisor caps -> .feat-meta, a muted spec line under the claim
-
-          The sponsorship bullet is the deliberate exception and stays two
-          lines: "not stated" is a term a student has no way to decode from
-          context, and the promise not to guess is the whole point of it.
-          {% endcomment %}
+          <div class="plan-cta">
+            {% if user.is_authenticated %}<a class="btn btn-primary" href="/app/">Open Today <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none"><path d="M4 12 12 4M4 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>{% else %}<a class="btn btn-primary" href="/accounts/signup/">Create account <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none"><path d="M4 12 12 4M4 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>{% endif %}
+          </div>
+          <h3 class="plan-includes">Your Recruiting Workspace</h3>
           <ul class="plan-features">
             <li>Open campus roles from the firms we track</li>
             <li>Filters across all <b>{{ market_count }}</b> markets and six verticals</li>
+            <li>The Today queue, with one-click logging</li>
+            <li>Your contacts, relationship stages, and firm priorities</li>
+            <li>Assistant: an advisor that reads your own contacts, firms and deadlines before it answers.<span class="feat-meta">{{ advisor_free_cap }} messages a day, {{ advisor_free_grant }} a month.</span></li>
+            <li>CSV import, export, and instant deletion</li>
+          </ul>
+          <details class="plan-detail"><summary>The Role Details You Can Trust</summary><ul class="plan-features">
             <li><b>{{ read_count }}</b> postings read in full</li>
             <li>Deadlines and requirements from the posting, not the board's summary</li>
             <li>Eligibility checked against your class year and visa</li>
-            <li><b>{{ sponsorship_count }}</b> roles answering sponsorship outright
-              and the rest marked not stated, never guessed</li>
+            <li><b>{{ sponsorship_count }}</b> roles answering sponsorship outright and the rest marked not stated, never guessed</li>
             <li>Confirmed deadlines, rolling roles, and labeled date estimates</li>
-            <li>The Today queue, with one-click logging</li>
-            <li>Your contacts, relationship stages, and firm priorities</li>
-            <li>Assistant: an advisor that reads your own contacts,
-              firms and deadlines before it answers.
-              <span class="feat-meta">{{ advisor_free_cap }} messages a day, {{ advisor_free_grant }} a month.</span></li>
-            <li>CSV import, export, and instant deletion</li>
-          </ul>
-          <div class="plan-cta">
-            {% if user.is_authenticated %}
-              <a class="btn btn-primary" href="/app/">Open Today</a>
-            {% else %}
-              <a class="btn btn-primary" href="/accounts/signup/">Create account</a>
-            {% endif %}
-          </div>
+          </ul></details>
         </article>
-
-        <article class="price-card preview kin-reveal panel" style="--i:1">
-          <div class="plan-head">
-            <h2 class="plan-name">Pro</h2>
-            <span class="plan-badge soon">In the works</span>
-          </div>
+        <article class="price-card preview">
+          <div class="plan-head"><h2 class="plan-name">Pro</h2><span class="plan-badge soon">In the works</span></div>
           <p class="plan-tagline">More sync and AI capacity for active outreach.</p>
           <p class="plan-price"><span class="amount">$69</span><span class="per">one cycle, ~6 months</span></p>
-          <p class="plan-includes">Everything in Free, plus</p>
-          <ul class="plan-features">
-            {% comment %}
-            Pro sells model quality and the credit pool, never "more
-            messages": a Pro turn costs 3 credits against a 45-credit daily
-            burst, so both plans compute to the same 15 a day today. The 3x
-            is real in the monthly grant (60 vs 180) and nowhere else, so
-            that is the only multiple this card is allowed to claim.
-
-            Gmail Live goes first (2026-08-20 reorder, founder-decisions
-            §2d): it is the anchor now, not a footnote after the advisor
-            bullet.
-            {% endcomment %}
-            <li>Gmail Live: real-time sync that logs itself.</li>
-            <li>Scan your inbox any time, instead of once every {{ free_rescan_days }} days.</li>
-            <li>Assistant on a stronger model, with sharper
-              judgement on where your week should go.
-              <span class="feat-meta">Three times the credits: {{ advisor_pro_grant }} a month.</span></li>
-          </ul>
-          {% comment %}
-          WHAT IS BUILT AND WHAT IS NOT, SPLIT ON THIS CARD.
-
-          Four of the six bullets this list used to carry had no code behind
-          them anywhere in the repo: hourly Tier 1 refresh (the board runs one
-          global 6-hourly cron, render.yaml, with no per-user or per-tier
-          cadence), LinkedIn contact import (LinkedIn is a sign-in provider
-          and a URL field on a contact; nothing imports from it), the
-          multi-cycle archive (FirmCycleObservation history is open to
-          everyone and no plan check exists in directory/ at all), and
-          calendar sync (GMAIL_LIVE_SCOPES is gmail.readonly only; there is no
-          Calendar client). An "In the works" badge on the card header does
-          not make a feature list a roadmap — a bullet in a plan column reads
-          as a thing the plan has.
-
-          The three above are the three the code actually gates:
-          capture/gmail_live.py's watch registration and gmail_poll's
-          `user__plan="pro"` filter, `free_rescan_unlocks_at` returning None
-          for Pro, and assistant/plans.py picking the model plus
-          billing/credits.py's 60-vs-180 grant.
-          {% endcomment %}
-          <p class="plan-includes plan-planned-head">Planned, not yet built</p>
-          <ul class="plan-planned">
-            <li>Calendar sync, only if you connect it</li>
-            <li>Hourly refresh on your Tier 1 firms. The board refreshes every
-              six hours for everyone today.</li>
-            <li>LinkedIn contact import</li>
-            <li>Multi-cycle archive of past seasons</li>
-          </ul>
           <div class="plan-cta">
-            {% include "core/_waitlist_form.html" with source="pricing_page" label="Notify Me When Pro Opens" aria="Email for the Pro waitlist" note="Announced in the app first." %}
-            {% comment %}
-            The trial was decided (PRO_TRIAL_DAYS / PRO_TRIAL_TRIGGER,
-            settings/base.py) and shipped (accounts/trials.py, called from
-            capture/gmail_live.py's connect path) and then said nowhere a
-            student looks: not here, not in the wizard, not on the Settings
-            Gmail card. The number is read from the setting through
-            core.views.pricing for the same reason every other figure on this
-            page is — a typed 14 goes stale the day someone changes it.
-            {% endcomment %}
-            <p class="plan-note">Connect Gmail and Pro is free for {{ pro_trial_days }} days. One trial per account.</p>
+            {% include "core/_waitlist_form.html" with source="pricing_page" label="Notify me when Pro opens" aria="Email for the Pro waitlist" note="A launch notification. No payment today." %}
           </div>
+          <h3 class="plan-includes">Everything in Free, Plus</h3>
+          <ul class="plan-features">
+            <li>Gmail Live: real-time sync that logs recruiting interactions.</li>
+            <li>Scan your inbox any time, instead of once every {{ free_rescan_days }} days.</li>
+            <li>Assistant on a stronger model for recruiting questions and planning.<span class="feat-meta">Three times the credits: {{ advisor_pro_grant }} a month.</span></li>
+          </ul>
+          <details class="plan-detail"><summary class="plan-planned-head">Planned, Not Yet Built</summary><ul class="plan-planned">
+            <li>Calendar sync, only if you connect it</li>
+            <li>Hourly refresh on your Tier 1 firms. The board refreshes every six hours for everyone today.</li>
+            <li>LinkedIn contact import</li><li>Multi-cycle archive of past seasons</li>
+          </ul></details>
+          <p class="plan-trial">Connect Gmail and Pro is free for {{ pro_trial_days }} days. One trial per account.</p>
         </article>
       </div>
-
-      {% comment %}
-      The inventory, after the pitch. Three rules govern what may appear here:
-      every number comes from the app's own settings via context (the credit
-      rows, the Free scan interval), every typed string mirrors a claim the
-      Pro card already makes, so the table can never drift away from the cards
-      above it, and NOTHING UNBUILT GETS A ROW.
-
-      That third rule is why four rows came off it (2026-09-01): board refresh
-      "Hourly on Tier 1", Calendar sync, LinkedIn contact import and the
-      season archive all drew a Pro cell for behaviour with no implementation
-      anywhere in the repo. They live in the Pro card's "Planned, not yet
-      built" list now, which is the honest place for them; a table cell is a
-      statement about what the plan does today. See that card's own comment
-      for the search behind each one.
-
-      No "messages a day" row on purpose: Free and Pro both compute to 15
-      today, and a row of two identical numbers sells nothing while implying
-      a difference. If CREDIT_PRO_DAILY_BURST is ever raised (see
-      docs/pricing-rebalance-plan.md §8) that row can be added under the
-      credits row.
-
-      Honesty note: the Gmail Live row claims Pro-only, and the code now
-      backs that up — `capture/gmail_live.py::connect_gmail`,
-      `renew_watches`, and `process_notification` all gate real-time sync on
-      `user.plan == "pro"` (docs/pricing-rebalance-plan.md §7's fast-follow
-      landed in 299430e). What still keeps the claim moot today is
-      `GMAIL_LIVE_CLIENT_ID`/`GMAIL_LIVE_CLIENT_SECRET` being unset on every
-      deploy (docs/gmail-live-setup.md) — nobody can connect Gmail at all
-      until that OAuth setup happens, plan gate or not.
-      {% endcomment %}
-      <section class="price-compare kin-reveal" style="--i:2">
-        <h2>Compare plans</h2>
-        <div class="cmp-scroll">
+      <section class="pricing-credits">
+        <div><h2>Credits for<br>Your AI Tools</h2></div>
+        <div><p>Assistant chats, Gmail AI scans, meeting briefs, and Autopilot decisions share your credits. Credits refill monthly. Stronger models can use more credits per message, so more credits do not necessarily mean more messages.</p><p>Daily limits also apply. See your balance and usage in {% if user.is_authenticated %}<a href="{% url 'accounts:settings' %}">Settings</a>{% else %}Settings once you create an account{% endif %}.</p></div>
+      </section>
+<section class="price-compare">
+        <div class="pricing-section-head"><div><h2>Compare Plans</h2></div><p>What comes with each plan.<br>Pro is still in the works.</p></div>
+        <div class="cmp-scroll" tabindex="0" role="region" aria-label="Plan comparison, scroll horizontally on small screens">
           <table class="cmp">
             <caption class="vh">Free and Pro compared, feature by feature</caption>
             <thead>
@@ -616,7 +91,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td class="cmp-group" colspan="3">The board</td></tr>
+              <tr><td class="cmp-group" colspan="3">The Board</td></tr>
               <tr>
                 <td>Live campus roles, every tracked firm</td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
@@ -638,7 +113,7 @@
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
               </tr>
 
-              <tr><td class="cmp-group" colspan="3">Your workspace</td></tr>
+              <tr><td class="cmp-group" colspan="3">Your Workspace</td></tr>
               <tr>
                 <td>Today queue with one-click logging</td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
@@ -649,28 +124,19 @@
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
               </tr>
-              {% comment %}
-              Two ticks used to sit here, side by side, saying Free and Pro get
-              the same on-demand Gmail scan. They do not: `free_rescan_unlocks_at`
-              (capture/gmail_live.py) returns None for Pro and
-              `last_scan + GMAIL_FREE_RESCAN_INTERVAL_DAYS` for Free, and
-              capture/views.py refuses the request in between. So the ONE real
-              Free limit the product enforces was the one thing the table drew
-              as a match. Both cells are values now, and the Free number comes
-              from the setting through the view.
-              {% endcomment %}
+
               <tr>
                 <td>Gmail scan on demand</td>
                 <td><span class="cmp-val">Every {{ free_rescan_days }} days</span></td>
                 <td><span class="cmp-val">Any time</span></td>
               </tr>
               <tr>
-                <td>Gmail Live: real-time, logs itself</td>
+                <td>Gmail Live: real-time interaction logging</td>
                 <td><span class="cmp-no" role="img" aria-label="Not included">&ndash;</span></td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
               </tr>
 
-              <tr><td class="cmp-group" colspan="3">The advisor</td></tr>
+              <tr><td class="cmp-group" colspan="3">The Assistant</td></tr>
               <tr>
                 <td>Assistant</td>
                 <td><span class="cmp-val">Fast model</span></td>
@@ -682,7 +148,7 @@
                 <td><span class="cmp-val">{{ advisor_pro_grant }}</span></td>
               </tr>
 
-              <tr><td class="cmp-group" colspan="3">Your data</td></tr>
+              <tr><td class="cmp-group" colspan="3">Your Data</td></tr>
               <tr>
                 <td>CSV import and export</td>
                 <td><span class="cmp-yes" role="img" aria-label="Included"></span></td>
@@ -698,21 +164,14 @@
         </div>
       </section>
     </div>
-
     <div class="aud-panel panel-team">
       <div class="price-grid">
-        <article class="price-card kin-reveal panel" style="--i:0">
+        <article class="price-card">
           <div class="plan-head">
             <h2 class="plan-name">Team</h2>
             <span class="plan-badge soon">In the works</span>
           </div>
-          {% comment %}
-          Rewritten 2026-08-20 (founder-decisions §1): Team is a flat club
-          workspace on top of Free accounts. Pro seats are bought at the
-          individual price, club-billed, never pooled or discounted — the
-          $249/"everything in Pro" version sold $1,080/yr of worst-case
-          model spend for $249. See that doc for the full numbers.
-          {% endcomment %}
+
           <p class="plan-tagline">Every member joins free. The club pays
             for the shared board. Pro seats cost the same whether you
             buy one or twenty.</p>
@@ -728,20 +187,12 @@
           <p class="plan-note">26&ndash;60 members: $599/year. First 5
             founding clubs: the workspace is free for year one.</p>
           <div class="plan-cta">
-            {% comment %}
-            The same waitlist component the Pro card uses, tagged "team" —
-            which is what the hook that used to sit here asked for. It was a
-            plain `href="#notify"` pointing at an anchor that exists nowhere
-            in this document: the Team economics rewrite's only CTA went
-            nowhere and left no trace of the club officer who clicked it.
-            The tag is what keeps the two lists apart; see `_WAITLIST_SOURCES`
-            in billing/views.py.
-            {% endcomment %}
+
             {% include "core/_waitlist_form.html" with source="pricing_page_team" label="Run a club? Notify me" aria="Email for the Team waitlist" note="We'll tell you before we open club workspaces." %}
           </div>
         </article>
 
-        <article class="price-card kin-reveal panel" style="--i:1">
+        <article class="price-card">
           <div class="plan-head">
             <h2 class="plan-name">Enterprise</h2>
             <span class="plan-badge soon">In the works</span>
@@ -756,7 +207,7 @@
             <li>A named contact, not a ticket queue</li>
           </ul>
           <div class="plan-cta">
-            <a class="btn" aria-disabled="true">Contact Us · In the Works</a>
+            <button class="btn" type="button" disabled>Contact us · in the works</button>
             <p class="plan-note">Career center? We'll build the pilot with you.</p>
           </div>
         </article>
@@ -764,28 +215,13 @@
     </div>
   </div>
 
-  <section class="price-honesty">
-    <h2>Your data on every plan</h2>
-    <p>Everything in Free stays free. Paid tiers exist to cover what syncing inboxes and serving campuses actually costs. Export or delete everything, on any plan, at any time.</p>
+  <section class="price-honesty"><div><h2>Your Data on Every Plan</h2></div><p>Everything in Free stays free. Paid tiers exist to cover what syncing inboxes and serving campuses actually costs. Export or delete everything, on any plan, at any time.</p></section>
+  <section class="price-faq"><div class="pricing-section-head"><div><h2>A Few Good Questions</h2></div></div>
+    <details><summary>Do I Need an Account to See Opportunities?</summary><p>No. The feed is public. An account adds the CRM: the Today queue and the Network board.</p></details>
+    <details><summary>Will the Free Plan Shrink When Paid Tiers Launch?</summary><p>No. This list is the floor. Free may grow; it will not shrink. Pro is for sync, speed, and heavier AI use, the things that cost real money to run.</p></details>
+    <details><summary>What Would a Team Plan Look Like for My Club?</summary><p>Shared tiers, shared contacts, one flat plan an officer manages, not per-seat billing to negotiate. If you run a finance society, we want your input before it ships.</p></details>
+    <details><summary>What Happens to My Data If I Stop Using Networkly?</summary><p>Export it as CSV whenever you like. Delete your account yourself and everything goes with it, immediately.</p></details>
   </section>
-
-  <section class="price-faq">
-    <details class="panel panel--flat">
-      <summary>Do I need an account to see opportunities?</summary>
-      <p>No. The feed is public. An account adds the CRM: the Today queue and the Network board.</p>
-    </details>
-    <details class="panel panel--flat">
-      <summary>Will the free plan shrink when paid tiers launch?</summary>
-      <p>No. This list is the floor. Free may grow; it will not shrink. Pro is for sync, speed, and heavier AI use, the things that cost real money to run.</p>
-    </details>
-    <details class="panel panel--flat">
-      <summary>What would a Team plan look like for my club?</summary>
-      <p>Shared tiers, shared contacts, one flat plan an officer manages, not per-seat billing to negotiate. If you run a finance society, we want your input before it ships.</p>
-    </details>
-    <details class="panel panel--flat">
-      <summary>What happens to my data if I stop using Networkly?</summary>
-      <p>Export it as CSV whenever you like. Delete your account yourself and everything goes with it, immediately.</p>
-    </details>
-  </section>
+  <div class="pricing-close"><h2>Start with the Next Opportunity</h2><a class="btn btn-primary" href="/opportunities/">Browse roles <svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="none"><path d="M4 12 12 4M4 4h8v8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>
 </div>
 {% endblock %}

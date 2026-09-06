@@ -1517,7 +1517,7 @@ def _gate_and_rank(actions: list[dict], tiers: dict, openings: dict,
             #
             # `advance` rather than the engine's own action, so the card logs
             # an `outreach` touch (an email you sent), sits in the momentum
-            # lane rather than "Don't lose these", and offers Snooze/Skip —
+            # lane rather than "Don't Lose These", and offers Snooze/Skip —
             # a club note is never snooze-exempt. The deadline chip is
             # cleared for the same reason the action is: the user said this
             # relationship is not their recruiting, and the firm's close date
@@ -1832,7 +1832,7 @@ def rendered_proposals_qs(user):
 # bought nothing and cost the queue its best card:
 #
 #   - The PAGE never made the distinction. Both classes render into the same
-#     "Move it forward" lane (`_TODAY_LANES` below has three entries, not
+#     "Move It Forward" lane (`_TODAY_LANES` below has three entries, not
 #     five). The student was shown one lane whose internal order was decided
 #     by a boundary they could not see.
 #   - `ev` already makes the distinction, better. `_NOW_THANK_YOU` (2.6) and
@@ -1889,9 +1889,9 @@ _TODAY_CLASS_DEFAULT = CLASS_COLD
 # ladder above has exactly as many plan-eligible classes as there are lanes
 # here, so no ordering decision is made on a boundary the page does not draw.
 _TODAY_LANES = [
-    ("critical", "Don't lose these"),
-    ("momentum", "Move it forward"),
-    ("cold", "Cold follow-ups"),
+    ("critical", "Don't Lose These"),
+    ("momentum", "Move It Forward"),
+    ("cold", "Cold Follow-Ups"),
 ]
 
 # The cold lane holds TWO action kinds — `first_outreach` and `follow_up` —
@@ -1901,10 +1901,10 @@ _TODAY_LANES = [
 # follow-ups", telling someone who has sent nothing to follow up. The lane
 # says what its cards ARE, so the heading is read off them.
 _COLD_LANE_LABELS = {
-    frozenset({"first_outreach"}): "First outreach",
-    frozenset({"follow_up"}): "Cold follow-ups",
+    frozenset({"first_outreach"}): "First Outreach",
+    frozenset({"follow_up"}): "Cold Follow-Ups",
 }
-_COLD_LANE_MIXED = "Cold outreach"
+_COLD_LANE_MIXED = "Cold Outreach"
 
 
 def _lane_label(key: str, items: list[dict], default: str) -> str:
@@ -2957,9 +2957,8 @@ def _starter_seeds(user, today) -> list[dict]:
         if not live.filter(source="import").exists():
             seeds.append({
                 "key": "import",
-                "title": "Import your contacts",
-                "why": "Already keeping a list? Bring the spreadsheet in and the "
-                       "cadence starts on all of it at once.",
+                "title": "Import Your Contacts",
+                "why": "Import your contact list to get follow-up suggestions.",
                 "cta": "Import a CSV",
                 "href": reverse("accounts:import"),
             })
@@ -2967,9 +2966,8 @@ def _starter_seeds(user, today) -> list[dict]:
     if len(seeds) < SEED_MAX and not user.tracks:
         seeds.append({
             "key": "track",
-            "title": "Set your track",
-            "why": "IB, markets, PE. Pick one and the roles and news on this "
-                   "page narrow to it.",
+            "title": "Set Your Track",
+            "why": "Choose your recruiting track to filter roles and firm updates.",
             "cta": "Set your track",
             "href": f"{reverse('accounts:settings')}#profile",
         })

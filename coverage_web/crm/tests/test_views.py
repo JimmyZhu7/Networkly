@@ -89,6 +89,7 @@ def test_log_touch_moves_warmth_and_response_shows_movement(client):
     resp = client.post(
         reverse("crm:log_touch", args=[contact.id]),
         {"kind": "reply_received", "channel": "email"},
+        HTTP_HX_REQUEST="true",
     )
     assert resp.status_code == 200
     body = resp.content.decode()
@@ -118,6 +119,7 @@ def test_log_touch_rejects_unknown_kind_without_writing(client):
     resp = client.post(
         reverse("crm:log_touch", args=[contact.id]),
         {"kind": "not_a_kind", "channel": "email"},
+        HTTP_HX_REQUEST="true",
     )
     assert resp.status_code == 200
     assert "Pick an interaction type" in resp.content.decode()
@@ -175,7 +177,7 @@ def test_contact_detail_shows_fit_score_axes_and_reasoning(client):
     assert resp.status_code == 200
     body = resp.content.decode()
 
-    assert "Relationship fit" in body
+    assert "Relationship Fit" in body
     for axis in ("Depth", "Responsiveness", "Recency", "Leverage"):
         assert axis in body
     # The deterministic reasoning line rendered.
@@ -343,7 +345,7 @@ def test_the_role_ask_saves_and_the_page_stops_asking(client):
     contact = Contact.all_objects.create(user=user, name="Nameless Role", role="")
     client.force_login(user)
     resp = client.post(reverse("crm:contact_role", args=[contact.id]),
-                       {"role": "  Vice President  "})
+                       {"role": "  Vice President  "}, HTTP_HX_REQUEST="true")
     assert resp.status_code == 200
     contact.refresh_from_db()
     assert contact.role == "Vice President"
@@ -1076,10 +1078,11 @@ def test_the_swap_fragment_is_the_whole_grid(client):
     resp = client.post(
         reverse("crm:log_touch", args=[contact.id]),
         {"kind": "outreach", "channel": "email", "note": ""},
+        HTTP_HX_REQUEST="true",
     )
     body = resp.content.decode()
     assert 'id="contact-live"' in body and "cd-grid" in body
-    assert "Relationship fit" in body, "the rail rides in the swap"
+    assert "Relationship Fit" in body, "the rail rides in the swap"
     assert "Draft email" in body, "so does the reach card"
     assert "Logged" in body, "and the movement flag"
 

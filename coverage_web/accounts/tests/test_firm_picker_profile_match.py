@@ -106,8 +106,8 @@ def test_the_split_never_drops_a_firm(us_ib_student, firm_board):
 def test_onboarding_firms_step_groups_matches_before_the_rest(client, us_ib_student, firm_board):
     client.force_login(us_ib_student)
     body = client.get(reverse("accounts:onboarding") + "?step=firms").content.decode()
-    assert "Matches your profile" in body
-    assert "All firms" in body
+    assert "Matches Your Profile" in body
+    assert "All Firms" in body
     # Every firm is still reachable in the same response — nothing filtered.
     for name in ("JPMorgan", "SIG", "Bain", "Mystery Co"):
         assert name in body
@@ -119,7 +119,7 @@ def test_onboarding_firms_step_groups_matches_before_the_rest(client, us_ib_stud
 def test_onboarding_firms_step_with_no_declared_profile_has_no_headings(client, blank_student, firm_board):
     client.force_login(blank_student)
     body = client.get(reverse("accounts:onboarding") + "?step=firms").content.decode()
-    assert "Matches your profile" not in body
+    assert "Matches Your Profile" not in body
     for name in ("JPMorgan", "SIG", "Bain", "Mystery Co"):
         assert name in body
 
@@ -133,6 +133,12 @@ def test_a_previously_picked_firm_outside_the_profile_never_disappears(client, u
     body = client.get(reverse("accounts:onboarding") + "?step=firms").content.decode()
     assert "SIG" in body
     assert re.search(rf'value="{firm_board["sig"].id}"\s+checked', body)
+    # Preview/search conceal rows, but every checked native field remains
+    # in the original form and the expansion control is not a submit.
+    assert 'id="firm-preview-footer" hidden' in body
+    assert 'type="button" class="btn" id="firm-preview-toggle"' in body
+    assert 'aria-controls="firm-list" aria-expanded="false"' in body
+    assert 'tile.classList.toggle("is-ob-hidden", !visible)' in body
 
 
 # ---------------------------------------------------------------------------
@@ -141,7 +147,7 @@ def test_a_previously_picked_firm_outside_the_profile_never_disappears(client, u
 def test_settings_target_firms_search_uses_the_same_grouping(client, us_ib_student, firm_board):
     client.force_login(us_ib_student)
     body = client.get(reverse("accounts:settings")).content.decode()
-    assert "Matches your profile" in body
+    assert "Matches Your Profile" in body
     for name in ("JPMorgan", "SIG", "Bain", "Mystery Co"):
         assert name in body
     assert body.index("JPMorgan") < body.index("SIG")

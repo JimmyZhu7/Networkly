@@ -89,7 +89,7 @@ values.
         {% if contact.linkedin %}<p class="cd-bcc"><a href="{{ contact.linkedin }}">LinkedIn</a></p>{% endif %}
       {% endif %}
       {% if contact.angle %}
-        <p class="cd-angle"><span class="cd-k">Outreach context</span> {{ contact.angle }}</p>
+        <p class="cd-angle"><span class="cd-k">Outreach Context</span> {{ contact.angle }}</p>
       {% endif %}
       {% if contact.email %}
         {% comment %}The Email draft. Compose has always prefilled its body
@@ -97,8 +97,9 @@ values.
         this textarea is the missing writer. Kept inside the swap fragment so
         saving re-renders in place, mailto included.{% endcomment %}
         <details class="cd-opener"{% if contact.opener %} open{% endif %}>
-          <summary>Email draft{% if contact.opener %} <span class="cd-opener-on">ready</span>{% endif %}</summary>
-          <form hx-post="{% url 'crm:contact_opener' contact.pk %}"
+          <summary>Email Draft{% if contact.opener %} <span class="cd-opener-on">ready</span>{% endif %}</summary>
+          <form method="post" action="{% url 'crm:contact_opener' contact.pk %}"
+                hx-post="{% url 'crm:contact_opener' contact.pk %}"
                 hx-target="#contact-live" hx-swap="outerHTML">
             {% csrf_token %}
             <label class="widget-field" for="contact-opener">Email draft</label>
@@ -117,7 +118,7 @@ values.
       must never discard an unsaved opener draft sitting in the textarea
       above it.{% endcomment %}
       <details class="cd-opener">
-        <summary>Coffee chat brief</summary>
+        <summary>Coffee Chat Brief</summary>
         {% comment %}hx-headers on the WRAPPER, not the button: the button is
         a bare `hx-post` with no surrounding <form>, so htmx has no
         `{% templatetag openblock %} csrf_token {% templatetag closeblock %}`
@@ -154,7 +155,7 @@ values.
       opener draft in the textarea above it.
       {% endcomment %}
       <details class="cd-opener"{% if contact.ai_summary %} open{% endif %}>
-        <summary>Relationship summary</summary>
+        <summary>Relationship Summary</summary>
         <div id="contact-ai-summary" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
           {% include "crm/_contact_ai_summary.html" %}
         </div>
@@ -204,7 +205,7 @@ values.
         {% endif %}
       {% endif %}
 
-      <form class="logform"
+      <form class="logform" method="post" action="{% url 'crm:log_touch' contact.id %}"
             hx-post="{% url 'crm:log_touch' contact.id %}"
             hx-target="#contact-live"
             hx-swap="outerHTML">
@@ -311,7 +312,7 @@ values.
   {# ---- The engine's read, off to the side ---- #}
   <aside class="cd-rail">
     <div class="cd-card kin-reveal panel" style="--i:1">
-      <h2 class="cd-h">Relationship fit
+      <h2 class="cd-h">Relationship Fit
         <span class="band band-{{ contact_score.band }}">
           <span class="num">{{ contact_score.composite }}</span> {{ contact_score.band }}
         </span>
@@ -380,7 +381,7 @@ values.
           a different sentence, kept above.
           {% endcomment %}
           {% if not contact_score.axes.leverage.role_given %}
-            <form class="axis-ask" hx-post="{% url 'crm:contact_role' contact.pk %}"
+            <form class="axis-ask" method="post" action="{% url 'crm:contact_role' contact.pk %}" hx-post="{% url 'crm:contact_role' contact.pk %}"
                   hx-target="#contact-live" hx-swap="outerHTML">
               {% csrf_token %}
               <input type="text" name="role" maxlength="255" autocomplete="off"
@@ -395,7 +396,7 @@ values.
 
     {% if firm_score %}
       <div class="cd-card kin-reveal panel" style="--i:2">
-        <h2 class="cd-h">Firm fit
+        <h2 class="cd-h">Firm Fit
           <span class="band band-{{ firm_score.band }}">
             <span class="num">{{ firm_score.composite }}</span> {{ firm_score.band }}
           </span>
@@ -426,7 +427,7 @@ values.
             <span class="meta">{% if firm_score.axes.timeline.next_event_label %}{{ firm_score.axes.timeline.next_event_label }} in {{ firm_score.axes.timeline.days_until }}d, {{ firm_score.axes.timeline.warm_contacts }} warm{% else %}no confirmed date{% endif %}</span>
           </div>
           <div class="axis" style="--i:3">
-            <span class="name">Profile match</span>
+            <span class="name">Profile Match</span>
             <span class="bar"><i style="--w: {{ firm_score.axes.structural.score }}%"></i></span>
             <span class="val">{{ firm_score.axes.structural.score }}</span>
             {% comment %}"rules v1: region match, track no" was the scoring

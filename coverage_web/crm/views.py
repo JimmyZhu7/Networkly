@@ -2738,6 +2738,14 @@ def log_touch(request: HttpRequest, pk: int) -> HttpResponse:
         "from_state_label": _STATE_LINES.get(before_state, before_state),
         "to_state_label": _STATE_LINES.get(contact.thread_state, contact.thread_state),
     }
+    if request.headers.get("HX-Request") != "true":
+        # Native forms keep private notes in the POST body and finish on the
+        # full contact page; a refresh must not repeat the interaction.
+        if error:
+            messages.error(request, error)
+        else:
+            messages.success(request, "Interaction logged.")
+        return redirect("crm:contact_detail", pk=contact.pk)
     context = _contact_live_context(request, contact, moved=moved)
     return render(request, "crm/_contact_live.html", context)
 
@@ -3200,6 +3208,9 @@ def contact_opener(request: HttpRequest, pk: int) -> HttpResponse:
     contact.opener = (request.POST.get("opener") or "").strip()
     contact.save(update_fields=["opener"])
     record_event("opener_saved", user=request.user)
+    if request.headers.get("HX-Request") != "true":
+        messages.success(request, "Draft saved.")
+        return redirect("crm:contact_detail", pk=contact.pk)
     return render(request, "crm/_contact_live.html",
                   _contact_live_context(request, contact))
 
@@ -3231,6 +3242,9 @@ def contact_role(request: HttpRequest, pk: int) -> HttpResponse:
     contact.role = (request.POST.get("role") or "").strip()[:255]
     contact.save(update_fields=["role"])
     record_event("contact_role_saved", user=request.user)
+    if request.headers.get("HX-Request") != "true":
+        messages.success(request, "Role saved.")
+        return redirect("crm:contact_detail", pk=contact.pk)
     return render(request, "crm/_contact_live.html",
                   _contact_live_context(request, contact))
 

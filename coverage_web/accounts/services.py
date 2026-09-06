@@ -1543,8 +1543,8 @@ def delete_user_and_data(user) -> dict[str, int]:
     THE ONE THING THIS CANNOT DELETE BY ITSELF is an OAuth grant — the
     connected Gmail's, and now the connected Google Calendar's too. Those
     live at Google, not in this database, and until 2026-09-01 the mail one
-    simply stayed live after the account holding it ceased to exist. The privacy policy calls this deletion immediate and complete, so
-    the grant is handed back first. Best-effort and outside the transaction,
+    simply stayed live after the account holding it ceased to exist. The
+    grant is handed back first. Best-effort and outside the transaction,
     both deliberately: `google_revoke` never raises, and a network call has
     no business inside a transaction that is about to delete two dozen
     tables. If it fails the deletion still runs — leaving a stale grant is
@@ -1555,6 +1555,15 @@ def delete_user_and_data(user) -> dict[str, int]:
 
     google_revoke.revoke_all_for_user(user)
 
+    avatar_name = user.avatar.name if user.avatar else None
+    avatar_storage = user.avatar.storage if avatar_name else None
+
+    def remove_avatar():
+        # Media is not removed by Django's ORM cascade. Wait for the account
+        # transaction to commit, and preserve a legacy shared file reference.
+        if not User.objects.filter(avatar=avatar_name).exists():
+            avatar_storage.delete(avatar_name)
+
     counts: dict[str, int] = {}
     with transaction.atomic():
         for label, model in _DELETE_ORDER:
@@ -1562,4 +1571,6 @@ def delete_user_and_data(user) -> dict[str, int]:
             counts[label] = deleted
         counts["account"] = 1
         user.delete()
+        if avatar_name:
+            transaction.on_commit(remove_avatar, robust=True)
     return counts

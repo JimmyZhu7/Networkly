@@ -34,7 +34,7 @@ def test_it_reports_what_the_product_recorded(client, django_user_model):
     client.force_login(staff)
     body = client.get("/instrument/").content.decode()
     assert "touch_logged" in body and "opportunity_tracked" in body
-    assert "Product events" in body
+    assert "Product Events" in body
 
 
 def test_a_pipeline_stage_that_never_ran_says_so(client, django_user_model):

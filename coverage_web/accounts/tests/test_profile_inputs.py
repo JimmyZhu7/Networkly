@@ -292,15 +292,20 @@ def test_the_readout_is_painted_by_the_server_not_the_script(client, user):
     # `<li class=` and not a bare class name: the enhancer at the bottom of
     # the partial builds the same classes in JS, so a looser needle would
     # pass on the script alone and prove nothing about the server render.
-    assert body.count('<li class="aff-line') == 2
+    assert body.count('<li class="aff-line') == 1
     assert '<li class="aff-line is-long"' in body
     # `escape`, because the sentence carries an apostrophe and Django is
     # doing its job.
     from django.utils.html import escape
     assert f'class="aff-line-note">5 words. {escape(AFFILIATION_LONG_NOTE)}<' in body
-    # The short one is listed, and nothing is claimed about it.
-    assert '<li class="aff-line"' in body
-    assert 'class="aff-line-text">USC<' in body
+    # Valid entries appear only in the editor; the readout contains warnings.
+    assert '<li class="aff-line"' not in body
+    assert 'class="aff-line-text">USC<' not in body
+    assert '2 of 6 affiliations' in body
+    textarea = re.search(r'<textarea[^>]*name="affiliations"[^>]*>(.*?)</textarea>', body, re.S)
+    assert textarea is not None
+    assert "USC" in textarea.group(1)
+    assert "Bilingual English/Mandarin, HK desk fit" in textarea.group(1)
 
 
 def test_the_saved_shape_note_speaks_only_for_stored_long_ties(client, user):
@@ -401,7 +406,8 @@ def _assert_controls_and_ledes(body: str):
     assert 'id="id_study_level"' in body
     assert 'id="id_affiliations"' in body
     assert "Languages you can work in" in body
-    assert "Names, not sentences. A club, a firm, a school, a hometown." in body
+    assert "Add a school, employer, club, or hometown. One name per line, up to six." in body
+    assert "Names are matched word for word in contact details." in body
 
 
 def test_the_settings_page_renders_the_three_controls_with_their_ledes(client, user):
@@ -466,12 +472,12 @@ def test_the_ledes_carry_no_em_dash():
 
     partial = Path(settings.BASE_DIR) / "templates" / "accounts" / "_profile_form.html"
     lines = partial.read_text().splitlines()
-    hints = [line for line in lines if "field-hint" in line]
-    assert len(hints) >= 4, "the avatar hint plus the three new ledes"
+    hints = [line for line in lines if "field-hint" in line or "group_hint=" in line]
+    assert len(hints) >= 4, "avatar, set-later, affiliations and disclosed language guidance"
 
     student_copy = hints + [
         line for line in lines
-        if "aff-empty" in line or "aff-notice-text" in line
+        if "aff-empty" in line or "aff-meta" in line or "aff-notice-text" in line
         or "saved ties read as sentences" in line
     ]
     assert len(student_copy) > len(hints), "the affiliations copy is in scope"

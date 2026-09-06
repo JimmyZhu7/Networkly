@@ -1,0 +1,1 @@
+{% load textstyle %}<span class="crm-firm-mark" aria-hidden="true">{% if mark_firm.logo %}<img data-firm-logo src="{{ mark_firm.logo.url }}" alt="" width="28" height="28" loading="lazy" decoding="async"><span class="crm-firm-fallback" hidden>{{ mark_firm.name|first|upper }}</span>{% else %}<span class="crm-firm-fallback">{{ mark_firm.name|first|upper }}</span>{% endif %}</span>

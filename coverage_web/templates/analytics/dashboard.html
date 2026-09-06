@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Product activity · Networkly{% endblock %}
+{% block title %}Networkly · Product activity{% endblock %}
 
 {% block head %}<style>
   /* Deliberately plain. This page is an instrument for one person; every
@@ -64,11 +64,11 @@
 
 {% block content %}
 <div class="page support-analytics">
-  {% include "_pagehead.html" with title="Product activity" sub="Usage, recruiting data, and system activity. Staff only." %}
+  {% include "_pagehead.html" with title="Product Activity" sub="Usage, recruiting data, and system activity. Staff only." %}
 
   <div class="inst-grid">
     <div class="inst-card">
-      <h2>Open campus roles</h2>
+      <h2>Open Campus Roles</h2>
       <div class="inst-n">{{ board.open_campus }}</div>
       <p class="inst-sub">{{ board.dated }} dated · {{ board.with_text }} read · {{ board.firms }} firms</p>
     </div>
@@ -78,7 +78,7 @@
       <p class="inst-sub">{{ crm.touches_30d }} interactions in {{ window_days }}d · {{ crm.with_opener }} with a draft</p>
     </div>
     <div class="inst-card">
-      <h2>Product events · {{ window_days }}d</h2>
+      <h2>Product Events · {{ window_days }}d</h2>
       <div class="inst-n">{{ event_total }}</div>
       <div class="inst-spark" role="img" aria-label="Daily product events over the last {{ window_days }} days">
         {% for a in activity %}<i style="--h: {{ a.pct }}%" title="{{ a.label }}: {{ a.n }}"></i>{% endfor %}
@@ -98,7 +98,7 @@
       </ul>
     </div>
     <div class="inst-card">
-      <h2>What gets used</h2>
+      <h2>What Gets Used</h2>
       <ul class="inst-rows">
         {% for name, n in top_events %}<li><span>{{ name }}</span><b>{{ n }}</b></li>
         {% empty %}<li><span>Nothing recorded in this window.</span></li>{% endfor %}
@@ -118,7 +118,7 @@
   had. Nothing student-facing links here.
   {% endcomment %}
   <div class="inst-wide">
-    <h2>Pilot · per user</h2>
+    <h2>Pilot · per User</h2>
     <p class="inst-sub">Non-staff accounts, oldest first. Pick a row to read that
       person's last {{ drilldown.cap|default:"50" }} events in order.</p>
     <div class="inst-scroll">

@@ -59,7 +59,7 @@ def barclays(db):
 # ---------------------------------------------------------------------------
 def test_open_roles_counts_campus_only(client, barclays):
     body = _page(client, barclays)
-    assert 'Open roles <span class="scrub-count">13</span>' in body
+    assert 'Open Roles <span class="scrub-count">13</span>' in body
 
 
 def test_experienced_rows_are_not_rendered_by_default(client, barclays):
@@ -94,15 +94,15 @@ def test_scope_line_is_silent_when_there_is_nothing_to_disclose(client):
 # ---------------------------------------------------------------------------
 def test_role_all_shows_everything_and_names_both_halves(client, barclays):
     body = _page(client, barclays, "?role=all")
-    assert 'Open roles <span class="scrub-count">33</span>' in body
+    assert 'Open Roles <span class="scrub-count">33</span>' in body
     assert "Active Directory Engineer 0" in body
-    assert "Showing everything we scraped" in body
+    assert "Showing all tracked roles" in body
     assert "13 campus, 20 experienced" in body
 
 
 def test_role_other_shows_only_the_experienced_half(client, barclays):
     body = _page(client, barclays, "?role=other")
-    assert 'Open roles <span class="scrub-count">20</span>' in body
+    assert 'Open Roles <span class="scrub-count">20</span>' in body
     assert "Summer Analyst 0" not in body
     assert "13 campus roles hidden" in body
 
@@ -113,7 +113,7 @@ def test_unrecognised_role_falls_back_to_campus(client, barclays):
     line and the rows disagree."""
     for value in ("banana", "internship"):
         body = _page(client, barclays, f"?role={value}")
-        assert 'Open roles <span class="scrub-count">13</span>' in body
+        assert 'Open Roles <span class="scrub-count">13</span>' in body
         assert "Showing campus roles only" in body
 
 
@@ -134,8 +134,8 @@ def test_no_campus_roles_says_so_without_claiming_the_firm_is_quiet(client):
     for i in range(4):
         _opp(firm, i, bucket=OTHER)
     body = _page(client, firm)
-    assert "No campus roles open right now." in body
-    assert "No open roles right now." not in body
+    assert "No Campus Roles Open Right Now." in body
+    assert "No Open Roles Right Now." not in body
     assert "4 experienced roles open here" in body
     assert 'href="/firms/db/?role=all"' in body
 
@@ -143,7 +143,7 @@ def test_no_campus_roles_says_so_without_claiming_the_firm_is_quiet(client):
 def test_a_genuinely_empty_firm_still_reads_as_empty(client):
     firm = _firm(slug="ms", name="Morgan Stanley")
     body = _page(client, firm)
-    assert "No open roles right now." in body
+    assert "No Open Roles Right Now." in body
 
 
 # ---------------------------------------------------------------------------
@@ -254,7 +254,7 @@ def test_the_heading_still_states_the_whole_group_not_the_printed_slice(
     what it printed would be the 925-vs-13 bug rebuilt: two true numbers,
     neither of them the one the reader asked for."""
     body = _page(client, pwc)
-    assert 'Open roles <span class="scrub-count">35</span>' in body
+    assert 'Open Roles <span class="scrub-count">35</span>' in body
     assert '>Internship <span class="scrub-count">20</span>' in body
     assert '>Entry-Level <span class="scrub-count">15</span>' in body
 
@@ -282,7 +282,7 @@ def test_the_cap_is_per_group_so_no_kind_vanishes(client, pwc):
 
 def test_the_experienced_optin_is_capped_by_the_same_rule(client, pwc):
     body = _page(client, pwc, "?role=other")
-    assert 'Open roles <span class="scrub-count">30</span>' in body
+    assert 'Open Roles <span class="scrub-count">30</span>' in body
     assert "Directory Engineer 100" in body
     assert f"Show the other {30 - ROLE_ROWS_PER_GROUP} in Opportunities" in body
     assert 'href="/opportunities/?firm=pwc&amp;role=other"' in body
@@ -290,8 +290,8 @@ def test_the_experienced_optin_is_capped_by_the_same_rule(client, pwc):
 
 def test_role_all_caps_every_group_and_still_names_both_halves(client, pwc):
     body = _page(client, pwc, "?role=all")
-    assert 'Open roles <span class="scrub-count">65</span>' in body
-    assert "Showing everything we scraped" in body
+    assert 'Open Roles <span class="scrub-count">65</span>' in body
+    assert "Showing all tracked roles" in body
     assert "35 campus, 30 experienced" in body
     # One sample from each of the three kinds, none of them whole.
     for lead in ("Summer Analyst 00", "Graduate Associate 40",

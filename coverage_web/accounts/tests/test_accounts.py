@@ -605,7 +605,8 @@ def test_import_page_renders_unmatched_firms_with_link_controls(client, user, ne
     assert resp.status_code == 200
     body = resp.content.decode()
     assert "Definitely Not A Real Fund LP" in body
-    assert "match the directory" in body
+    assert "Match 1 Firm to the Directory" in body
+    assert "Link a directory firm to update all contacts in this group." in body
     assert 'name="firm_id"' in body
     assert 'name="contact_id"' in body
 

@@ -26,7 +26,7 @@ button on two pages out of three and left the third a pill.
 {% endcomment %}
 <dialog class="drawer directory-drawer" id="role-drawer" aria-label="Posting">
   <button type="button" class="drawer-x" data-drawer-close aria-label="Close">{% include "_icon.html" with name="close" %}</button>
-  <div id="role-drawer-body"></div>
+  <div id="role-drawer-body" aria-busy="false"></div>
 </dialog>
 
 {% script %}
@@ -66,8 +66,11 @@ button on two pages out of three and left the third a pill.
       var read = e.target.closest("[data-role-read]");
       if (read) {
         opener = read;
-        body.innerHTML = '<p class="drawer-loading">Opening…</p>';
-        dlg.showModal();
+        body.setAttribute('aria-busy', 'true');
+        body.innerHTML = '<p class="drawer-loading" role="status">Opening…</p>';
+        if (!dlg.open) dlg.showModal();
+      } else if (e.target.closest("[data-drawer-retry]")) {
+        if (opener && opener.isConnected) opener.click();
       } else if (e.target.closest("[data-drawer-close]")) {
         dlg.close();
       }
@@ -77,7 +80,20 @@ button on two pages out of three and left the third a pill.
     // Emptied on close so the next open cannot flash the previous posting.
     // Escape, the close button and a backdrop click all land here, so this is
     // the one place the return trip has to be made.
-    dlg.addEventListener("close", function () { body.innerHTML = ""; restore(); });
+    dlg.addEventListener("close", function () { body.innerHTML = ""; body.setAttribute("aria-busy", "false"); restore(); });
+
+    function requestFailed(event) {
+      var detail = event.detail || {};
+      var source = detail.elt;
+      if (!dlg.open || !source || !source.matches("[data-role-read]") || source !== opener) return;
+      body.setAttribute("aria-busy", "false");
+      body.innerHTML = '<div class="drawer-error" role="alert"><h2>Couldn’t Load This Role</h2><p>Try again, or close this panel and open the posting from the role title.</p><button type="button" class="btn" data-drawer-retry>Try again</button></div>';
+    }
+    document.body.addEventListener("htmx:responseError", requestFailed);
+    document.body.addEventListener("htmx:sendError", requestFailed);
+    document.body.addEventListener("htmx:afterSwap", function (event) {
+      if (event.detail.target === body) body.setAttribute("aria-busy", "false");
+    });
 
     // ?read=<id> — the Cmd-K palette landing here with a role in mind. The
     // search result narrows the page to that title AND names the role, so the

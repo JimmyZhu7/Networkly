@@ -1,22 +1,22 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-06T01:01:23.611588+00:00",
+  "generatedAt": "2026-09-06T03:51:55.660361Z",
   "title": "Design System: Networkly",
   "extensions": {
     "colorMeta": {
       "paper": {
         "role": "neutral",
         "displayName": "Paper",
-        "canonical": "#f7f7f2",
+        "canonical": "#f4f6fa",
         "tonalRamp": [
-          "oklch(15% 0.0066 106.52)",
-          "oklch(26.43% 0.0066 106.52)",
-          "oklch(37.86% 0.0066 106.52)",
-          "oklch(49.29% 0.0066 106.52)",
-          "oklch(60.71% 0.0066 106.52)",
-          "oklch(72.14% 0.0066 106.52)",
-          "oklch(83.57% 0.0066 106.52)",
-          "oklch(95% 0.0066 106.52)"
+          "oklch(15.00% 0.0057 264.53)",
+          "oklch(26.43% 0.0057 264.53)",
+          "oklch(37.86% 0.0057 264.53)",
+          "oklch(49.29% 0.0057 264.53)",
+          "oklch(60.71% 0.0057 264.53)",
+          "oklch(72.14% 0.0057 264.53)",
+          "oklch(83.57% 0.0057 264.53)",
+          "oklch(95.00% 0.0057 264.53)"
         ]
       },
       "surface": {
@@ -24,89 +24,134 @@
         "displayName": "Surface",
         "canonical": "#ffffff",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.88)",
-          "oklch(26.43% 0.0000 89.88)",
-          "oklch(37.86% 0.0000 89.88)",
-          "oklch(49.29% 0.0000 89.88)",
-          "oklch(60.71% 0.0000 89.88)",
-          "oklch(72.14% 0.0000 89.88)",
-          "oklch(83.57% 0.0000 89.88)",
-          "oklch(95% 0.0000 89.88)"
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
+        ]
+      },
+      "surface-subtle": {
+        "role": "neutral",
+        "displayName": "Surface Subtle",
+        "canonical": "#f8fafc",
+        "tonalRamp": [
+          "oklch(15.00% 0.0034 247.86)",
+          "oklch(26.43% 0.0034 247.86)",
+          "oklch(37.86% 0.0034 247.86)",
+          "oklch(49.29% 0.0034 247.86)",
+          "oklch(60.71% 0.0034 247.86)",
+          "oklch(72.14% 0.0034 247.86)",
+          "oklch(83.57% 0.0034 247.86)",
+          "oklch(95.00% 0.0034 247.86)"
+        ]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Surface Hover",
+        "canonical": "#eef3fb",
+        "tonalRamp": [
+          "oklch(15.00% 0.0120 259.82)",
+          "oklch(26.43% 0.0120 259.82)",
+          "oklch(37.86% 0.0120 259.82)",
+          "oklch(49.29% 0.0120 259.82)",
+          "oklch(60.71% 0.0120 259.82)",
+          "oklch(72.14% 0.0120 259.82)",
+          "oklch(83.57% 0.0120 259.82)",
+          "oklch(95.00% 0.0120 259.82)"
         ]
       },
       "ink": {
         "role": "neutral",
         "displayName": "Ink",
-        "canonical": "#252b2e",
+        "canonical": "#19283f",
         "tonalRamp": [
-          "oklch(15% 0.0101 229.27)",
-          "oklch(26.43% 0.0101 229.27)",
-          "oklch(37.86% 0.0101 229.27)",
-          "oklch(49.29% 0.0101 229.27)",
-          "oklch(60.71% 0.0101 229.27)",
-          "oklch(72.14% 0.0101 229.27)",
-          "oklch(83.57% 0.0101 229.27)",
-          "oklch(95% 0.0101 229.27)"
+          "oklch(15.00% 0.0476 258.69)",
+          "oklch(26.43% 0.0476 258.69)",
+          "oklch(37.86% 0.0476 258.69)",
+          "oklch(49.29% 0.0476 258.69)",
+          "oklch(60.71% 0.0476 258.69)",
+          "oklch(72.14% 0.0476 258.69)",
+          "oklch(83.57% 0.0476 258.69)",
+          "oklch(95.00% 0.0476 258.69)"
         ]
       },
       "ink-2": {
         "role": "neutral",
         "displayName": "Ink 2",
-        "canonical": "#596365",
+        "canonical": "#54647a",
         "tonalRamp": [
-          "oklch(15% 0.0128 211.05)",
-          "oklch(26.43% 0.0128 211.05)",
-          "oklch(37.86% 0.0128 211.05)",
-          "oklch(49.29% 0.0128 211.05)",
-          "oklch(60.71% 0.0128 211.05)",
-          "oklch(72.14% 0.0128 211.05)",
-          "oklch(83.57% 0.0128 211.05)",
-          "oklch(95% 0.0128 211.05)"
+          "oklch(15.00% 0.0404 256.42)",
+          "oklch(26.43% 0.0404 256.42)",
+          "oklch(37.86% 0.0404 256.42)",
+          "oklch(49.29% 0.0404 256.42)",
+          "oklch(60.71% 0.0404 256.42)",
+          "oklch(72.14% 0.0404 256.42)",
+          "oklch(83.57% 0.0404 256.42)",
+          "oklch(95.00% 0.0404 256.42)"
         ]
       },
       "ink-3": {
         "role": "neutral",
         "displayName": "Ink 3",
-        "canonical": "#697371",
+        "canonical": "#607087",
         "tonalRamp": [
-          "oklch(15% 0.0125 182.55)",
-          "oklch(26.43% 0.0125 182.55)",
-          "oklch(37.86% 0.0125 182.55)",
-          "oklch(49.29% 0.0125 182.55)",
-          "oklch(60.71% 0.0125 182.55)",
-          "oklch(72.14% 0.0125 182.55)",
-          "oklch(83.57% 0.0125 182.55)",
-          "oklch(95% 0.0125 182.55)"
+          "oklch(15.00% 0.0410 257.42)",
+          "oklch(26.43% 0.0410 257.42)",
+          "oklch(37.86% 0.0410 257.42)",
+          "oklch(49.29% 0.0410 257.42)",
+          "oklch(60.71% 0.0410 257.42)",
+          "oklch(72.14% 0.0410 257.42)",
+          "oklch(83.57% 0.0410 257.42)",
+          "oklch(95.00% 0.0410 257.42)"
         ]
       },
       "line": {
         "role": "neutral",
         "displayName": "Line",
-        "canonical": "#dedfd8",
+        "canonical": "#e1e7f0",
         "tonalRamp": [
-          "oklch(15% 0.0095 113.18)",
-          "oklch(26.43% 0.0095 113.18)",
-          "oklch(37.86% 0.0095 113.18)",
-          "oklch(49.29% 0.0095 113.18)",
-          "oklch(60.71% 0.0095 113.18)",
-          "oklch(72.14% 0.0095 113.18)",
-          "oklch(83.57% 0.0095 113.18)",
-          "oklch(95% 0.0095 113.18)"
+          "oklch(15.00% 0.0138 258.35)",
+          "oklch(26.43% 0.0138 258.35)",
+          "oklch(37.86% 0.0138 258.35)",
+          "oklch(49.29% 0.0138 258.35)",
+          "oklch(60.71% 0.0138 258.35)",
+          "oklch(72.14% 0.0138 258.35)",
+          "oklch(83.57% 0.0138 258.35)",
+          "oklch(95.00% 0.0138 258.35)"
+        ]
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Control Border",
+        "canonical": "#7e8da4",
+        "tonalRamp": [
+          "oklch(15.00% 0.0387 258.86)",
+          "oklch(26.43% 0.0387 258.86)",
+          "oklch(37.86% 0.0387 258.86)",
+          "oklch(49.29% 0.0387 258.86)",
+          "oklch(60.71% 0.0387 258.86)",
+          "oklch(72.14% 0.0387 258.86)",
+          "oklch(83.57% 0.0387 258.86)",
+          "oklch(95.00% 0.0387 258.86)"
         ]
       },
       "line-strong": {
         "role": "neutral",
         "displayName": "Line Strong",
-        "canonical": "#a6afaa",
+        "canonical": "#7e8da4",
         "tonalRamp": [
-          "oklch(15% 0.0123 161.94)",
-          "oklch(26.43% 0.0123 161.94)",
-          "oklch(37.86% 0.0123 161.94)",
-          "oklch(49.29% 0.0123 161.94)",
-          "oklch(60.71% 0.0123 161.94)",
-          "oklch(72.14% 0.0123 161.94)",
-          "oklch(83.57% 0.0123 161.94)",
-          "oklch(95% 0.0123 161.94)"
+          "oklch(15.00% 0.0387 258.86)",
+          "oklch(26.43% 0.0387 258.86)",
+          "oklch(37.86% 0.0387 258.86)",
+          "oklch(49.29% 0.0387 258.86)",
+          "oklch(60.71% 0.0387 258.86)",
+          "oklch(72.14% 0.0387 258.86)",
+          "oklch(83.57% 0.0387 258.86)",
+          "oklch(95.00% 0.0387 258.86)"
         ]
       },
       "accent": {
@@ -114,14 +159,14 @@
         "displayName": "Accent",
         "canonical": "#2857c7",
         "tonalRamp": [
-          "oklch(15% 0.1823 263.77)",
+          "oklch(15.00% 0.1823 263.77)",
           "oklch(26.43% 0.1823 263.77)",
           "oklch(37.86% 0.1823 263.77)",
           "oklch(49.29% 0.1823 263.77)",
           "oklch(60.71% 0.1823 263.77)",
           "oklch(72.14% 0.1823 263.77)",
           "oklch(83.57% 0.1823 263.77)",
-          "oklch(95% 0.1823 263.77)"
+          "oklch(95.00% 0.1823 263.77)"
         ]
       },
       "accent-ink": {
@@ -129,14 +174,14 @@
         "displayName": "Accent Ink",
         "canonical": "#214ba9",
         "tonalRamp": [
-          "oklch(15% 0.1585 263.25)",
+          "oklch(15.00% 0.1585 263.25)",
           "oklch(26.43% 0.1585 263.25)",
           "oklch(37.86% 0.1585 263.25)",
           "oklch(49.29% 0.1585 263.25)",
           "oklch(60.71% 0.1585 263.25)",
           "oklch(72.14% 0.1585 263.25)",
           "oklch(83.57% 0.1585 263.25)",
-          "oklch(95% 0.1585 263.25)"
+          "oklch(95.00% 0.1585 263.25)"
         ]
       },
       "accent-soft": {
@@ -144,14 +189,14 @@
         "displayName": "Accent Soft",
         "canonical": "#eef2fc",
         "tonalRamp": [
-          "oklch(15% 0.0141 268.49)",
+          "oklch(15.00% 0.0141 268.49)",
           "oklch(26.43% 0.0141 268.49)",
           "oklch(37.86% 0.0141 268.49)",
           "oklch(49.29% 0.0141 268.49)",
           "oklch(60.71% 0.0141 268.49)",
           "oklch(72.14% 0.0141 268.49)",
           "oklch(83.57% 0.0141 268.49)",
-          "oklch(95% 0.0141 268.49)"
+          "oklch(95.00% 0.0141 268.49)"
         ]
       },
       "accent-line": {
@@ -159,14 +204,14 @@
         "displayName": "Accent Line",
         "canonical": "#c8d5f4",
         "tonalRamp": [
-          "oklch(15% 0.0452 267.40)",
+          "oklch(15.00% 0.0452 267.40)",
           "oklch(26.43% 0.0452 267.40)",
           "oklch(37.86% 0.0452 267.40)",
           "oklch(49.29% 0.0452 267.40)",
           "oklch(60.71% 0.0452 267.40)",
           "oklch(72.14% 0.0452 267.40)",
           "oklch(83.57% 0.0452 267.40)",
-          "oklch(95% 0.0452 267.40)"
+          "oklch(95.00% 0.0452 267.40)"
         ]
       },
       "on-accent": {
@@ -174,14 +219,14 @@
         "displayName": "On Accent",
         "canonical": "#ffffff",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.88)",
-          "oklch(26.43% 0.0000 89.88)",
-          "oklch(37.86% 0.0000 89.88)",
-          "oklch(49.29% 0.0000 89.88)",
-          "oklch(60.71% 0.0000 89.88)",
-          "oklch(72.14% 0.0000 89.88)",
-          "oklch(83.57% 0.0000 89.88)",
-          "oklch(95% 0.0000 89.88)"
+          "oklch(15.00% 0.0000 0.00)",
+          "oklch(26.43% 0.0000 0.00)",
+          "oklch(37.86% 0.0000 0.00)",
+          "oklch(49.29% 0.0000 0.00)",
+          "oklch(60.71% 0.0000 0.00)",
+          "oklch(72.14% 0.0000 0.00)",
+          "oklch(83.57% 0.0000 0.00)",
+          "oklch(95.00% 0.0000 0.00)"
         ]
       },
       "on-accent-2": {
@@ -189,119 +234,164 @@
         "displayName": "On Accent 2",
         "canonical": "#e0e9ff",
         "tonalRamp": [
-          "oklch(15% 0.0314 267.97)",
+          "oklch(15.00% 0.0314 267.97)",
           "oklch(26.43% 0.0314 267.97)",
           "oklch(37.86% 0.0314 267.97)",
           "oklch(49.29% 0.0314 267.97)",
           "oklch(60.71% 0.0314 267.97)",
           "oklch(72.14% 0.0314 267.97)",
           "oklch(83.57% 0.0314 267.97)",
-          "oklch(95% 0.0314 267.97)"
+          "oklch(95.00% 0.0314 267.97)"
         ]
       },
       "dark-paper": {
         "role": "neutral",
         "displayName": "Dark Paper",
-        "canonical": "#191e20",
+        "canonical": "#111827",
         "tonalRamp": [
-          "oklch(15% 0.0084 223.83)",
-          "oklch(26.43% 0.0084 223.83)",
-          "oklch(37.86% 0.0084 223.83)",
-          "oklch(49.29% 0.0084 223.83)",
-          "oklch(60.71% 0.0084 223.83)",
-          "oklch(72.14% 0.0084 223.83)",
-          "oklch(83.57% 0.0084 223.83)",
-          "oklch(95% 0.0084 223.83)"
+          "oklch(15.00% 0.0318 264.66)",
+          "oklch(26.43% 0.0318 264.66)",
+          "oklch(37.86% 0.0318 264.66)",
+          "oklch(49.29% 0.0318 264.66)",
+          "oklch(60.71% 0.0318 264.66)",
+          "oklch(72.14% 0.0318 264.66)",
+          "oklch(83.57% 0.0318 264.66)",
+          "oklch(95.00% 0.0318 264.66)"
         ]
       },
       "dark-surface": {
         "role": "neutral",
         "displayName": "Dark Surface",
-        "canonical": "#22282b",
+        "canonical": "#1b2536",
         "tonalRamp": [
-          "oklch(15% 0.0102 229.30)",
-          "oklch(26.43% 0.0102 229.30)",
-          "oklch(37.86% 0.0102 229.30)",
-          "oklch(49.29% 0.0102 229.30)",
-          "oklch(60.71% 0.0102 229.30)",
-          "oklch(72.14% 0.0102 229.30)",
-          "oklch(83.57% 0.0102 229.30)",
-          "oklch(95% 0.0102 229.30)"
+          "oklch(15.00% 0.0351 260.76)",
+          "oklch(26.43% 0.0351 260.76)",
+          "oklch(37.86% 0.0351 260.76)",
+          "oklch(49.29% 0.0351 260.76)",
+          "oklch(60.71% 0.0351 260.76)",
+          "oklch(72.14% 0.0351 260.76)",
+          "oklch(83.57% 0.0351 260.76)",
+          "oklch(95.00% 0.0351 260.76)"
+        ]
+      },
+      "dark-surface-subtle": {
+        "role": "neutral",
+        "displayName": "Dark Surface Subtle",
+        "canonical": "#222f43",
+        "tonalRamp": [
+          "oklch(15.00% 0.0405 258.81)",
+          "oklch(26.43% 0.0405 258.81)",
+          "oklch(37.86% 0.0405 258.81)",
+          "oklch(49.29% 0.0405 258.81)",
+          "oklch(60.71% 0.0405 258.81)",
+          "oklch(72.14% 0.0405 258.81)",
+          "oklch(83.57% 0.0405 258.81)",
+          "oklch(95.00% 0.0405 258.81)"
+        ]
+      },
+      "dark-surface-hover": {
+        "role": "neutral",
+        "displayName": "Dark Surface Hover",
+        "canonical": "#293950",
+        "tonalRamp": [
+          "oklch(15.00% 0.0458 257.43)",
+          "oklch(26.43% 0.0458 257.43)",
+          "oklch(37.86% 0.0458 257.43)",
+          "oklch(49.29% 0.0458 257.43)",
+          "oklch(60.71% 0.0458 257.43)",
+          "oklch(72.14% 0.0458 257.43)",
+          "oklch(83.57% 0.0458 257.43)",
+          "oklch(95.00% 0.0458 257.43)"
         ]
       },
       "dark-ink": {
         "role": "neutral",
         "displayName": "Dark Ink",
-        "canonical": "#edf0ec",
+        "canonical": "#eef3fb",
         "tonalRamp": [
-          "oklch(15% 0.0062 137.77)",
-          "oklch(26.43% 0.0062 137.77)",
-          "oklch(37.86% 0.0062 137.77)",
-          "oklch(49.29% 0.0062 137.77)",
-          "oklch(60.71% 0.0062 137.77)",
-          "oklch(72.14% 0.0062 137.77)",
-          "oklch(83.57% 0.0062 137.77)",
-          "oklch(95% 0.0062 137.77)"
+          "oklch(15.00% 0.0120 259.82)",
+          "oklch(26.43% 0.0120 259.82)",
+          "oklch(37.86% 0.0120 259.82)",
+          "oklch(49.29% 0.0120 259.82)",
+          "oklch(60.71% 0.0120 259.82)",
+          "oklch(72.14% 0.0120 259.82)",
+          "oklch(83.57% 0.0120 259.82)",
+          "oklch(95.00% 0.0120 259.82)"
         ]
       },
       "dark-ink-2": {
         "role": "neutral",
         "displayName": "Dark Ink 2",
-        "canonical": "#b6c0bf",
+        "canonical": "#b8c5d8",
         "tonalRamp": [
-          "oklch(15% 0.0111 189.76)",
-          "oklch(26.43% 0.0111 189.76)",
-          "oklch(37.86% 0.0111 189.76)",
-          "oklch(49.29% 0.0111 189.76)",
-          "oklch(60.71% 0.0111 189.76)",
-          "oklch(72.14% 0.0111 189.76)",
-          "oklch(83.57% 0.0111 189.76)",
-          "oklch(95% 0.0111 189.76)"
+          "oklch(15.00% 0.0303 257.77)",
+          "oklch(26.43% 0.0303 257.77)",
+          "oklch(37.86% 0.0303 257.77)",
+          "oklch(49.29% 0.0303 257.77)",
+          "oklch(60.71% 0.0303 257.77)",
+          "oklch(72.14% 0.0303 257.77)",
+          "oklch(83.57% 0.0303 257.77)",
+          "oklch(95.00% 0.0303 257.77)"
         ]
       },
       "dark-ink-3": {
         "role": "neutral",
         "displayName": "Dark Ink 3",
-        "canonical": "#a6b1ae",
+        "canonical": "#a7b7ce",
         "tonalRamp": [
-          "oklch(15% 0.0130 177.89)",
-          "oklch(26.43% 0.0130 177.89)",
-          "oklch(37.86% 0.0130 177.89)",
-          "oklch(49.29% 0.0130 177.89)",
-          "oklch(60.71% 0.0130 177.89)",
-          "oklch(72.14% 0.0130 177.89)",
-          "oklch(83.57% 0.0130 177.89)",
-          "oklch(95% 0.0130 177.89)"
+          "oklch(15.00% 0.0374 257.40)",
+          "oklch(26.43% 0.0374 257.40)",
+          "oklch(37.86% 0.0374 257.40)",
+          "oklch(49.29% 0.0374 257.40)",
+          "oklch(60.71% 0.0374 257.40)",
+          "oklch(72.14% 0.0374 257.40)",
+          "oklch(83.57% 0.0374 257.40)",
+          "oklch(95.00% 0.0374 257.40)"
         ]
       },
       "dark-line": {
         "role": "neutral",
         "displayName": "Dark Line",
-        "canonical": "#3b4446",
+        "canonical": "#334158",
         "tonalRamp": [
-          "oklch(15% 0.0123 212.59)",
-          "oklch(26.43% 0.0123 212.59)",
-          "oklch(37.86% 0.0123 212.59)",
-          "oklch(49.29% 0.0123 212.59)",
-          "oklch(60.71% 0.0123 212.59)",
-          "oklch(72.14% 0.0123 212.59)",
-          "oklch(83.57% 0.0123 212.59)",
-          "oklch(95% 0.0123 212.59)"
+          "oklch(15.00% 0.0438 260.16)",
+          "oklch(26.43% 0.0438 260.16)",
+          "oklch(37.86% 0.0438 260.16)",
+          "oklch(49.29% 0.0438 260.16)",
+          "oklch(60.71% 0.0438 260.16)",
+          "oklch(72.14% 0.0438 260.16)",
+          "oklch(83.57% 0.0438 260.16)",
+          "oklch(95.00% 0.0438 260.16)"
+        ]
+      },
+      "dark-control-border": {
+        "role": "neutral",
+        "displayName": "Dark Control Border",
+        "canonical": "#64748d",
+        "tonalRamp": [
+          "oklch(15.00% 0.0435 259.24)",
+          "oklch(26.43% 0.0435 259.24)",
+          "oklch(37.86% 0.0435 259.24)",
+          "oklch(49.29% 0.0435 259.24)",
+          "oklch(60.71% 0.0435 259.24)",
+          "oklch(72.14% 0.0435 259.24)",
+          "oklch(83.57% 0.0435 259.24)",
+          "oklch(95.00% 0.0435 259.24)"
         ]
       },
       "dark-line-strong": {
         "role": "neutral",
         "displayName": "Dark Line Strong",
-        "canonical": "#6e7c78",
+        "canonical": "#64748d",
         "tonalRamp": [
-          "oklch(15% 0.0177 176.64)",
-          "oklch(26.43% 0.0177 176.64)",
-          "oklch(37.86% 0.0177 176.64)",
-          "oklch(49.29% 0.0177 176.64)",
-          "oklch(60.71% 0.0177 176.64)",
-          "oklch(72.14% 0.0177 176.64)",
-          "oklch(83.57% 0.0177 176.64)",
-          "oklch(95% 0.0177 176.64)"
+          "oklch(15.00% 0.0435 259.24)",
+          "oklch(26.43% 0.0435 259.24)",
+          "oklch(37.86% 0.0435 259.24)",
+          "oklch(49.29% 0.0435 259.24)",
+          "oklch(60.71% 0.0435 259.24)",
+          "oklch(72.14% 0.0435 259.24)",
+          "oklch(83.57% 0.0435 259.24)",
+          "oklch(95.00% 0.0435 259.24)"
         ]
       },
       "dark-accent": {
@@ -309,14 +399,14 @@
         "displayName": "Dark Accent",
         "canonical": "#a4bbff",
         "tonalRamp": [
-          "oklch(15% 0.1002 269.66)",
+          "oklch(15.00% 0.1002 269.66)",
           "oklch(26.43% 0.1002 269.66)",
           "oklch(37.86% 0.1002 269.66)",
           "oklch(49.29% 0.1002 269.66)",
           "oklch(60.71% 0.1002 269.66)",
           "oklch(72.14% 0.1002 269.66)",
           "oklch(83.57% 0.1002 269.66)",
-          "oklch(95% 0.1002 269.66)"
+          "oklch(95.00% 0.1002 269.66)"
         ]
       },
       "dark-accent-ink": {
@@ -324,14 +414,14 @@
         "displayName": "Dark Accent Ink",
         "canonical": "#c6d5ff",
         "tonalRamp": [
-          "oklch(15% 0.0605 269.68)",
+          "oklch(15.00% 0.0605 269.68)",
           "oklch(26.43% 0.0605 269.68)",
           "oklch(37.86% 0.0605 269.68)",
           "oklch(49.29% 0.0605 269.68)",
           "oklch(60.71% 0.0605 269.68)",
           "oklch(72.14% 0.0605 269.68)",
           "oklch(83.57% 0.0605 269.68)",
-          "oklch(95% 0.0605 269.68)"
+          "oklch(95.00% 0.0605 269.68)"
         ]
       },
       "dark-accent-soft": {
@@ -339,14 +429,14 @@
         "displayName": "Dark Accent Soft",
         "canonical": "#2b374d",
         "tonalRamp": [
-          "oklch(15% 0.0423 262.20)",
+          "oklch(15.00% 0.0423 262.20)",
           "oklch(26.43% 0.0423 262.20)",
           "oklch(37.86% 0.0423 262.20)",
           "oklch(49.29% 0.0423 262.20)",
           "oklch(60.71% 0.0423 262.20)",
           "oklch(72.14% 0.0423 262.20)",
           "oklch(83.57% 0.0423 262.20)",
-          "oklch(95% 0.0423 262.20)"
+          "oklch(95.00% 0.0423 262.20)"
         ]
       },
       "dark-accent-line": {
@@ -354,14 +444,14 @@
         "displayName": "Dark Accent Line",
         "canonical": "#526589",
         "tonalRamp": [
-          "oklch(15% 0.0622 262.82)",
+          "oklch(15.00% 0.0622 262.82)",
           "oklch(26.43% 0.0622 262.82)",
           "oklch(37.86% 0.0622 262.82)",
           "oklch(49.29% 0.0622 262.82)",
           "oklch(60.71% 0.0622 262.82)",
           "oklch(72.14% 0.0622 262.82)",
           "oklch(83.57% 0.0622 262.82)",
-          "oklch(95% 0.0622 262.82)"
+          "oklch(95.00% 0.0622 262.82)"
         ]
       },
       "dark-on-accent": {
@@ -369,14 +459,14 @@
         "displayName": "Dark On Accent",
         "canonical": "#14223f",
         "tonalRamp": [
-          "oklch(15% 0.0582 263.40)",
+          "oklch(15.00% 0.0582 263.40)",
           "oklch(26.43% 0.0582 263.40)",
           "oklch(37.86% 0.0582 263.40)",
           "oklch(49.29% 0.0582 263.40)",
           "oklch(60.71% 0.0582 263.40)",
           "oklch(72.14% 0.0582 263.40)",
           "oklch(83.57% 0.0582 263.40)",
-          "oklch(95% 0.0582 263.40)"
+          "oklch(95.00% 0.0582 263.40)"
         ]
       },
       "dark-on-accent-2": {
@@ -384,14 +474,14 @@
         "displayName": "Dark On Accent 2",
         "canonical": "#273f6b",
         "tonalRamp": [
-          "oklch(15% 0.0817 261.61)",
+          "oklch(15.00% 0.0817 261.61)",
           "oklch(26.43% 0.0817 261.61)",
           "oklch(37.86% 0.0817 261.61)",
           "oklch(49.29% 0.0817 261.61)",
           "oklch(60.71% 0.0817 261.61)",
           "oklch(72.14% 0.0817 261.61)",
           "oklch(83.57% 0.0817 261.61)",
-          "oklch(95% 0.0817 261.61)"
+          "oklch(95.00% 0.0817 261.61)"
         ]
       },
       "ok": {
@@ -399,14 +489,14 @@
         "displayName": "Ok",
         "canonical": "#2f6a45",
         "tonalRamp": [
-          "oklch(15% 0.0865 153.91)",
+          "oklch(15.00% 0.0865 153.91)",
           "oklch(26.43% 0.0865 153.91)",
           "oklch(37.86% 0.0865 153.91)",
           "oklch(49.29% 0.0865 153.91)",
           "oklch(60.71% 0.0865 153.91)",
           "oklch(72.14% 0.0865 153.91)",
           "oklch(83.57% 0.0865 153.91)",
-          "oklch(95% 0.0865 153.91)"
+          "oklch(95.00% 0.0865 153.91)"
         ]
       },
       "ok-soft": {
@@ -414,14 +504,14 @@
         "displayName": "Ok Soft",
         "canonical": "#e6f0e9",
         "tonalRamp": [
-          "oklch(15% 0.0141 155.58)",
+          "oklch(15.00% 0.0141 155.58)",
           "oklch(26.43% 0.0141 155.58)",
           "oklch(37.86% 0.0141 155.58)",
           "oklch(49.29% 0.0141 155.58)",
           "oklch(60.71% 0.0141 155.58)",
           "oklch(72.14% 0.0141 155.58)",
           "oklch(83.57% 0.0141 155.58)",
-          "oklch(95% 0.0141 155.58)"
+          "oklch(95.00% 0.0141 155.58)"
         ]
       },
       "ok-line": {
@@ -429,14 +519,14 @@
         "displayName": "Ok Line",
         "canonical": "#cbdfd2",
         "tonalRamp": [
-          "oklch(15% 0.0277 157.31)",
+          "oklch(15.00% 0.0277 157.31)",
           "oklch(26.43% 0.0277 157.31)",
           "oklch(37.86% 0.0277 157.31)",
           "oklch(49.29% 0.0277 157.31)",
           "oklch(60.71% 0.0277 157.31)",
           "oklch(72.14% 0.0277 157.31)",
           "oklch(83.57% 0.0277 157.31)",
-          "oklch(95% 0.0277 157.31)"
+          "oklch(95.00% 0.0277 157.31)"
         ]
       },
       "danger": {
@@ -444,14 +534,14 @@
         "displayName": "Danger",
         "canonical": "#9d2b23",
         "tonalRamp": [
-          "oklch(15% 0.1514 28.42)",
+          "oklch(15.00% 0.1514 28.42)",
           "oklch(26.43% 0.1514 28.42)",
           "oklch(37.86% 0.1514 28.42)",
           "oklch(49.29% 0.1514 28.42)",
           "oklch(60.71% 0.1514 28.42)",
           "oklch(72.14% 0.1514 28.42)",
           "oklch(83.57% 0.1514 28.42)",
-          "oklch(95% 0.1514 28.42)"
+          "oklch(95.00% 0.1514 28.42)"
         ]
       },
       "danger-ink": {
@@ -459,14 +549,14 @@
         "displayName": "Danger Ink",
         "canonical": "#841f18",
         "tonalRamp": [
-          "oklch(15% 0.1373 28.71)",
+          "oklch(15.00% 0.1373 28.71)",
           "oklch(26.43% 0.1373 28.71)",
           "oklch(37.86% 0.1373 28.71)",
           "oklch(49.29% 0.1373 28.71)",
           "oklch(60.71% 0.1373 28.71)",
           "oklch(72.14% 0.1373 28.71)",
           "oklch(83.57% 0.1373 28.71)",
-          "oklch(95% 0.1373 28.71)"
+          "oklch(95.00% 0.1373 28.71)"
         ]
       },
       "danger-soft": {
@@ -474,14 +564,14 @@
         "displayName": "Danger Soft",
         "canonical": "#f7e8e6",
         "tonalRamp": [
-          "oklch(15% 0.0166 26.65)",
+          "oklch(15.00% 0.0166 26.65)",
           "oklch(26.43% 0.0166 26.65)",
           "oklch(37.86% 0.0166 26.65)",
           "oklch(49.29% 0.0166 26.65)",
           "oklch(60.71% 0.0166 26.65)",
           "oklch(72.14% 0.0166 26.65)",
           "oklch(83.57% 0.0166 26.65)",
-          "oklch(95% 0.0166 26.65)"
+          "oklch(95.00% 0.0166 26.65)"
         ]
       },
       "danger-line": {
@@ -489,14 +579,14 @@
         "displayName": "Danger Line",
         "canonical": "#e9c8c4",
         "tonalRamp": [
-          "oklch(15% 0.0379 26.08)",
+          "oklch(15.00% 0.0379 26.08)",
           "oklch(26.43% 0.0379 26.08)",
           "oklch(37.86% 0.0379 26.08)",
           "oklch(49.29% 0.0379 26.08)",
           "oklch(60.71% 0.0379 26.08)",
           "oklch(72.14% 0.0379 26.08)",
           "oklch(83.57% 0.0379 26.08)",
-          "oklch(95% 0.0379 26.08)"
+          "oklch(95.00% 0.0379 26.08)"
         ]
       },
       "w-replied-t": {
@@ -504,14 +594,14 @@
         "displayName": "W Replied T",
         "canonical": "#7d5410",
         "tonalRamp": [
-          "oklch(15% 0.0950 73.82)",
+          "oklch(15.00% 0.0950 73.82)",
           "oklch(26.43% 0.0950 73.82)",
           "oklch(37.86% 0.0950 73.82)",
           "oklch(49.29% 0.0950 73.82)",
           "oklch(60.71% 0.0950 73.82)",
           "oklch(72.14% 0.0950 73.82)",
           "oklch(83.57% 0.0950 73.82)",
-          "oklch(95% 0.0950 73.82)"
+          "oklch(95.00% 0.0950 73.82)"
         ]
       },
       "w-replied-s": {
@@ -519,14 +609,14 @@
         "displayName": "W Replied S",
         "canonical": "#f6ecd6",
         "tonalRamp": [
-          "oklch(15% 0.0310 86.46)",
+          "oklch(15.00% 0.0310 86.46)",
           "oklch(26.43% 0.0310 86.46)",
           "oklch(37.86% 0.0310 86.46)",
           "oklch(49.29% 0.0310 86.46)",
           "oklch(60.71% 0.0310 86.46)",
           "oklch(72.14% 0.0310 86.46)",
           "oklch(83.57% 0.0310 86.46)",
-          "oklch(95% 0.0310 86.46)"
+          "oklch(95.00% 0.0310 86.46)"
         ]
       },
       "w-replied-l": {
@@ -534,116 +624,351 @@
         "displayName": "W Replied L",
         "canonical": "#e8d7ad",
         "tonalRamp": [
-          "oklch(15% 0.0583 88.60)",
+          "oklch(15.00% 0.0583 88.60)",
           "oklch(26.43% 0.0583 88.60)",
           "oklch(37.86% 0.0583 88.60)",
           "oklch(49.29% 0.0583 88.60)",
           "oklch(60.71% 0.0583 88.60)",
           "oklch(72.14% 0.0583 88.60)",
           "oklch(83.57% 0.0583 88.60)",
-          "oklch(95% 0.0583 88.60)"
+          "oklch(95.00% 0.0583 88.60)"
+        ]
+      },
+      "dark-ok": {
+        "role": "semantic",
+        "displayName": "Dark Ok",
+        "canonical": "#74c095",
+        "tonalRamp": [
+          "oklch(15.00% 0.0987 158.06)",
+          "oklch(26.43% 0.0987 158.06)",
+          "oklch(37.86% 0.0987 158.06)",
+          "oklch(49.29% 0.0987 158.06)",
+          "oklch(60.71% 0.0987 158.06)",
+          "oklch(72.14% 0.0987 158.06)",
+          "oklch(83.57% 0.0987 158.06)",
+          "oklch(95.00% 0.0987 158.06)"
+        ]
+      },
+      "dark-ok-soft": {
+        "role": "semantic",
+        "displayName": "Dark Ok Soft",
+        "canonical": "#1c2a22",
+        "tonalRamp": [
+          "oklch(15.00% 0.0242 159.20)",
+          "oklch(26.43% 0.0242 159.20)",
+          "oklch(37.86% 0.0242 159.20)",
+          "oklch(49.29% 0.0242 159.20)",
+          "oklch(60.71% 0.0242 159.20)",
+          "oklch(72.14% 0.0242 159.20)",
+          "oklch(83.57% 0.0242 159.20)",
+          "oklch(95.00% 0.0242 159.20)"
+        ]
+      },
+      "dark-ok-line": {
+        "role": "semantic",
+        "displayName": "Dark Ok Line",
+        "canonical": "#2f4a3a",
+        "tonalRamp": [
+          "oklch(15.00% 0.0429 157.62)",
+          "oklch(26.43% 0.0429 157.62)",
+          "oklch(37.86% 0.0429 157.62)",
+          "oklch(49.29% 0.0429 157.62)",
+          "oklch(60.71% 0.0429 157.62)",
+          "oklch(72.14% 0.0429 157.62)",
+          "oklch(83.57% 0.0429 157.62)",
+          "oklch(95.00% 0.0429 157.62)"
+        ]
+      },
+      "dark-danger": {
+        "role": "semantic",
+        "displayName": "Dark Danger",
+        "canonical": "#e2867c",
+        "tonalRamp": [
+          "oklch(15.00% 0.1147 26.91)",
+          "oklch(26.43% 0.1147 26.91)",
+          "oklch(37.86% 0.1147 26.91)",
+          "oklch(49.29% 0.1147 26.91)",
+          "oklch(60.71% 0.1147 26.91)",
+          "oklch(72.14% 0.1147 26.91)",
+          "oklch(83.57% 0.1147 26.91)",
+          "oklch(95.00% 0.1147 26.91)"
+        ]
+      },
+      "dark-danger-ink": {
+        "role": "semantic",
+        "displayName": "Dark Danger Ink",
+        "canonical": "#e69890",
+        "tonalRamp": [
+          "oklch(15.00% 0.0953 25.98)",
+          "oklch(26.43% 0.0953 25.98)",
+          "oklch(37.86% 0.0953 25.98)",
+          "oklch(49.29% 0.0953 25.98)",
+          "oklch(60.71% 0.0953 25.98)",
+          "oklch(72.14% 0.0953 25.98)",
+          "oklch(83.57% 0.0953 25.98)",
+          "oklch(95.00% 0.0953 25.98)"
+        ]
+      },
+      "dark-danger-soft": {
+        "role": "semantic",
+        "displayName": "Dark Danger Soft",
+        "canonical": "#2e1e1d",
+        "tonalRamp": [
+          "oklch(15.00% 0.0253 23.02)",
+          "oklch(26.43% 0.0253 23.02)",
+          "oklch(37.86% 0.0253 23.02)",
+          "oklch(49.29% 0.0253 23.02)",
+          "oklch(60.71% 0.0253 23.02)",
+          "oklch(72.14% 0.0253 23.02)",
+          "oklch(83.57% 0.0253 23.02)",
+          "oklch(95.00% 0.0253 23.02)"
+        ]
+      },
+      "dark-danger-line": {
+        "role": "semantic",
+        "displayName": "Dark Danger Line",
+        "canonical": "#4d302d",
+        "tonalRamp": [
+          "oklch(15.00% 0.0432 26.02)",
+          "oklch(26.43% 0.0432 26.02)",
+          "oklch(37.86% 0.0432 26.02)",
+          "oklch(49.29% 0.0432 26.02)",
+          "oklch(60.71% 0.0432 26.02)",
+          "oklch(72.14% 0.0432 26.02)",
+          "oklch(83.57% 0.0432 26.02)",
+          "oklch(95.00% 0.0432 26.02)"
+        ]
+      },
+      "dark-w-replied-t": {
+        "role": "semantic",
+        "displayName": "Dark W Replied T",
+        "canonical": "#d8b467",
+        "tonalRamp": [
+          "oklch(15.00% 0.1047 84.94)",
+          "oklch(26.43% 0.1047 84.94)",
+          "oklch(37.86% 0.1047 84.94)",
+          "oklch(49.29% 0.1047 84.94)",
+          "oklch(60.71% 0.1047 84.94)",
+          "oklch(72.14% 0.1047 84.94)",
+          "oklch(83.57% 0.1047 84.94)",
+          "oklch(95.00% 0.1047 84.94)"
+        ]
+      },
+      "dark-w-replied-s": {
+        "role": "semantic",
+        "displayName": "Dark W Replied S",
+        "canonical": "#2b2519",
+        "tonalRamp": [
+          "oklch(15.00% 0.0228 84.34)",
+          "oklch(26.43% 0.0228 84.34)",
+          "oklch(37.86% 0.0228 84.34)",
+          "oklch(49.29% 0.0228 84.34)",
+          "oklch(60.71% 0.0228 84.34)",
+          "oklch(72.14% 0.0228 84.34)",
+          "oklch(83.57% 0.0228 84.34)",
+          "oklch(95.00% 0.0228 84.34)"
+        ]
+      },
+      "dark-w-replied-l": {
+        "role": "semantic",
+        "displayName": "Dark W Replied L",
+        "canonical": "#463a22",
+        "tonalRamp": [
+          "oklch(15.00% 0.0412 83.88)",
+          "oklch(26.43% 0.0412 83.88)",
+          "oklch(37.86% 0.0412 83.88)",
+          "oklch(49.29% 0.0412 83.88)",
+          "oklch(60.71% 0.0412 83.88)",
+          "oklch(72.14% 0.0412 83.88)",
+          "oklch(83.57% 0.0412 83.88)",
+          "oklch(95.00% 0.0412 83.88)"
         ]
       }
     },
     "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Marketing hero desktop role; marketing.css owns the responsive variants."
+      },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Primary CRM and directory page title."
+        "purpose": "CRM and directory page titles in presentation-crm.css and presentation-directory.css."
       },
-      "headline-phone": {
-        "displayName": "Headline Phone",
-        "purpose": "CRM at 600px and directory at 720px; supporting titles have local variants."
+      "support-headline": {
+        "displayName": "Support Headline",
+        "purpose": "Supporting account and assistant page titles in presentation-support.css."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Common sans-serif section heading."
+        "purpose": "Common section title; route-specific weights and tracking remain scoped."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Working text and shared interface base."
+        "purpose": "Shared working text in workspace.css."
       },
       "detail": {
         "displayName": "Detail",
-        "purpose": "Secondary explanations and metadata."
+        "purpose": "Secondary explanations and metadata in elements.css and scoped pages."
       },
       "button": {
         "displayName": "Button",
-        "purpose": "Shared button typography."
+        "purpose": "Shared .btn typography after workspace.css."
+      },
+      "field": {
+        "displayName": "Field",
+        "purpose": "Shared desktop input and select typography in controls.css."
+      },
+      "field-touch": {
+        "displayName": "Field Touch",
+        "purpose": "Shared field typography at 640px or coarse pointers in controls.css."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Normal-case status labels."
+        "purpose": "Semantic chip typography from elements.css."
+      },
+      "legal-body": {
+        "displayName": "Legal Body",
+        "purpose": "Readable document prose in legal.css."
       }
     },
     "shadows": [
       {
         "name": "shadow-1",
-        "value": "0 2px 8px rgb(27 44 76 / 5%)",
-        "purpose": "Shared low-elevation token; ordinary page sections suppress shadow."
+        "value": "0 2px 8px rgb(22 40 72 / 5%)",
+        "purpose": "Low interaction elevation. Source: workspace.css."
+      },
+      {
+        "name": "shadow-widget",
+        "value": "0 2px 6px rgb(22 40 72 / 5%), 0 0 0 1px rgb(22 40 72 / 5%)",
+        "purpose": "Small bounded widget elevation. Source: workspace.css."
       },
       {
         "name": "shadow-2",
-        "value": "0 12px 36px rgb(27 44 76 / 13%)",
-        "purpose": "Menus, raised panels, dialogs, and drawers."
+        "value": "0 12px 32px rgb(22 40 72 / 14%)",
+        "purpose": "Floating menus, dialogs, and drawers. Source: workspace.css."
       },
       {
         "name": "dark-shadow-1",
-        "value": "0 2px 8px rgb(0 0 0 / 12%)",
-        "purpose": "Dark low-elevation counterpart."
+        "value": "0 2px 8px rgb(0 0 0 / 14%)",
+        "purpose": "Low interaction elevation. Source: workspace.css."
+      },
+      {
+        "name": "dark-shadow-widget",
+        "value": "0 2px 8px rgb(0 0 0 / 14%), 0 0 0 1px rgb(186 204 234 / 8%)",
+        "purpose": "Small bounded widget elevation. Source: workspace.css."
       },
       {
         "name": "dark-shadow-2",
         "value": "0 12px 36px rgb(0 0 0 / 28%)",
-        "purpose": "Dark floating-content counterpart."
+        "purpose": "Floating menus, dialogs, and drawers. Source: workspace.css."
       },
       {
-        "name": "field-focus",
-        "value": "0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent)",
-        "purpose": "Native and enhanced field focus."
+        "name": "marketing-product",
+        "value": "0 28px 65px -24px rgb(16 33 65 / 24%)",
+        "purpose": "Scoped public product example in marketing.css."
+      },
+      {
+        "name": "marketing-journal",
+        "value": "0 16px 42px -28px rgb(16 33 65 / 30%)",
+        "purpose": "Scoped public journal example in marketing.css."
       },
       {
         "name": "selected-choice",
         "value": "0 1px 3px rgb(0 0 0 / 8%)",
-        "purpose": "Selected theme and segmented choices."
+        "purpose": "Selected theme and segmented choices in elements.css."
       }
     ],
     "motion": [
       {
         "name": "motion-press",
         "value": "120ms",
-        "purpose": "Local press feedback."
+        "purpose": "Local widget press; workspace.css."
       },
       {
         "name": "motion-state",
         "value": "180ms",
-        "purpose": "Color and border transitions."
+        "purpose": "Color, border, and local state; workspace.css."
       },
       {
         "name": "motion-reveal",
         "value": "240ms",
-        "purpose": "Overlay opening."
+        "purpose": "Overlay opening; workspace.css."
       },
       {
         "name": "ease-widget",
         "value": "cubic-bezier(.16, 1, .3, 1)",
-        "purpose": "Widget press and reveal easing."
+        "purpose": "Shared widget easing; workspace.css."
+      },
+      {
+        "name": "widget-disclosure",
+        "value": "200ms",
+        "purpose": "User-triggered content reveal; widgets.js."
+      },
+      {
+        "name": "widget-working",
+        "value": "900ms",
+        "purpose": "Alternates only while a POST is pending; static under reduced motion; workspace.css."
+      },
+      {
+        "name": "marketing-connect",
+        "value": "1.8s",
+        "purpose": "Finite connection draw; marketing.css."
+      },
+      {
+        "name": "marketing-reveal",
+        "value": "800ms",
+        "purpose": "Finite observed section reveal; marketing.css and marketing.js."
+      },
+      {
+        "name": "marketing-switch",
+        "value": "400ms",
+        "purpose": "User-selected demo panel; marketing.css."
+      },
+      {
+        "name": "pricing-panel",
+        "value": "300ms",
+        "purpose": "Audience panel change; pricing.css."
       }
     ],
     "breakpoints": [
       {
+        "name": "contacts-four-columns",
+        "value": "1280px"
+      },
+      {
+        "name": "firms-three-columns",
+        "value": "1200px"
+      },
+      {
+        "name": "contacts-two-columns",
+        "value": "1100px"
+      },
+      {
         "name": "compact-navigation",
         "value": "1050px"
+      },
+      {
+        "name": "picked-roles-single-column",
+        "value": "1000px"
       },
       {
         "name": "crm-single-column",
         "value": "900px"
       },
       {
-        "name": "settings-index-disclosure",
+        "name": "legal-index-wrap",
+        "value": "860px"
+      },
+      {
+        "name": "settings-index-and-marketing-stack",
         "value": "820px"
       },
       {
-        "name": "directory-stacked",
+        "name": "pricing-stack",
+        "value": "760px"
+      },
+      {
+        "name": "directory-phone",
         "value": "720px"
       },
       {
@@ -651,121 +976,148 @@
         "value": "680px"
       },
       {
-        "name": "shared-phone",
+        "name": "today-context-container",
+        "value": "650px"
+      },
+      {
+        "name": "shared-phone-and-fields",
         "value": "640px"
       },
       {
         "name": "crm-phone",
         "value": "600px"
+      },
+      {
+        "name": "legal-phone",
+        "value": "480px"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary button",
+      "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Primary button with the shared desktop, phone, focus, and reduced-motion treatment.",
+      "description": "Shared 40px desktop / 44px phone button. Source: networkly.css and workspace.css.",
       "html": "<button class=\"ds-primary\">Save changes</button>",
-      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 16px;border-radius:var(--r-ctl, 8px);font:550 14px/1.2 var(--font-ui, \"Instrument Sans\", sans-serif);cursor:pointer;transition:background-color 180ms,border-color 180ms,color 180ms,transform 120ms cubic-bezier(.16,1,.3,1);background:var(--accent, #2857c7);color:var(--on-accent, #fff);border:1px solid var(--accent, #2857c7);}.ds-primary:hover{background:var(--accent-ink, #214ba9);border-color:var(--accent-ink, #214ba9);}.ds-primary:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:3px;}.ds-primary:active:not(:disabled){transform:scale(.975)}.ds-primary:disabled{opacity:.5;pointer-events:none}@media(max-width:640px){.ds-primary{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}.ds-primary:active{transform:none}}"
+      "css": ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:.2em;min-height:40px;padding:9px 16px;border-radius:var(--r-ctl,9px);font:550 14px/1.2 var(--font-ui,\"Instrument Sans\",sans-serif);cursor:pointer;transition:background-color 180ms,border-color 180ms,color 180ms,box-shadow 180ms,transform 120ms cubic-bezier(.16,1,.3,1);background:var(--accent,#2857c7);color:var(--on-accent,#ffffff);border:1px solid var(--accent,#2857c7);}.ds-primary:hover{transform:translateY(-1px);background:var(--accent-ink,#214ba9);border-color:var(--accent-ink,#214ba9);box-shadow:0 3px 10px color-mix(in srgb,var(--accent,#2857c7) 22%,transparent);}.ds-primary:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}.ds-primary:active:not(:disabled){transform:scale(.975)}.ds-primary:disabled{opacity:.5;pointer-events:none}@media(max-width:640px){.ds-primary{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}.ds-primary:hover,.ds-primary:active:not(:disabled){transform:none}}"
     },
     {
-      "name": "Secondary button",
+      "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Secondary button with the shared desktop, phone, focus, and reduced-motion treatment.",
+      "description": "Shared 40px desktop / 44px phone button. Source: networkly.css and workspace.css.",
       "html": "<button class=\"ds-secondary\">Cancel</button>",
-      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:9px 16px;border-radius:var(--r-ctl, 8px);font:550 14px/1.2 var(--font-ui, \"Instrument Sans\", sans-serif);cursor:pointer;transition:background-color 180ms,border-color 180ms,color 180ms,transform 120ms cubic-bezier(.16,1,.3,1);background:var(--surface, #fff);color:var(--ink, #252b2e);border:1px solid var(--line-strong, #a6afaa);}.ds-secondary:hover{border-color:var(--ink-3, #697371);}.ds-secondary:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:3px;}.ds-secondary:active:not(:disabled){transform:scale(.975)}.ds-secondary:disabled{opacity:.5;pointer-events:none}@media(max-width:640px){.ds-secondary{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}.ds-secondary:active{transform:none}}"
+      "css": ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;gap:.2em;min-height:40px;padding:9px 16px;border-radius:var(--r-ctl,9px);font:550 14px/1.2 var(--font-ui,\"Instrument Sans\",sans-serif);cursor:pointer;transition:background-color 180ms,border-color 180ms,color 180ms,box-shadow 180ms,transform 120ms cubic-bezier(.16,1,.3,1);background:var(--surface,#ffffff);color:var(--ink,#19283f);border:1px solid var(--line-strong,#7e8da4);}.ds-secondary:hover{transform:translateY(-1px);border-color:var(--ink-3,#607087);box-shadow:var(--shadow-1,0 2px 8px rgb(22 40 72 / 5%));}.ds-secondary:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}.ds-secondary:active:not(:disabled){transform:scale(.975)}.ds-secondary:disabled{opacity:.5;pointer-events:none}@media(max-width:640px){.ds-secondary{min-height:44px}}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}.ds-secondary:hover,.ds-secondary:active:not(:disabled){transform:none}}"
     },
     {
-      "name": "Labeled field",
+      "name": "Labeled Field",
       "kind": "input",
       "refersTo": "input",
-      "description": "A native field with a persistent label and soft keyboard focus.",
+      "description": "Final 42px desktop / 44px touch field. Source: controls.css; visible label from workspace.css.",
       "html": "<label class=\"ds-field\">Name<input class=\"ds-input\" type=\"text\" placeholder=\"Contact name\"></label>",
-      "css": ".ds-field{display:flex;flex-direction:column;gap:7px;color:var(--ink, #252b2e);font:600 12px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif);}.ds-input{width:100%;font:400 15px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif);padding:9px 14px;color:var(--ink, #252b2e);background:var(--surface, #fff);border:1px solid var(--line-strong, #a6afaa);border-radius:var(--r-ctl, 8px);caret-color:var(--accent, #2857c7);}.ds-input:hover{border-color:var(--ink-3, #697371)}.ds-input:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent, #2857c7) 16%,transparent)}@media(max-width:640px){.ds-input{font-size:16px}}"
+      "css": ".ds-field{display:flex;flex-direction:column;gap:7px;color:var(--ink,#19283f);font:600 12px/1.4 var(--font-ui,\"Instrument Sans\",sans-serif)}.ds-input{box-sizing:border-box;min-height:42px;padding:10px 12px;border:1px solid var(--control-border,#7e8da4);border-radius:9px;background:var(--surface-subtle,#f8fafc);color:var(--ink,#19283f);font:400 14px/1.4 var(--font-ui,\"Instrument Sans\",sans-serif);caret-color:var(--accent,#2857c7);transition:border-color 180ms,background-color 180ms}.ds-input::placeholder{color:var(--ink-3,#607087);opacity:1}.ds-input:hover{border-color:var(--ink-2,#54647a);background:var(--surface,#ffffff)}.ds-input:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:2px}.ds-input:disabled{opacity:.65;cursor:not-allowed}.ds-input[aria-invalid=true]{border-color:var(--danger,#9d2b23)}@media(max-width:640px),(pointer:coarse){.ds-input{min-height:44px;font-size:16px}}@media(prefers-reduced-motion:reduce){.ds-input{transition:none}}"
     },
     {
-      "name": "Header destinations",
+      "name": "Header Destinations",
       "kind": "nav",
       "refersTo": "nav-active",
-      "description": "The desktop destination line uses an active bottom rule.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Preview destinations\"><a class=\"ds-nav-link\" href=\"#today\" aria-current=\"page\">Today</a><a class=\"ds-nav-link\" href=\"#opportunities\">Opportunities</a><a class=\"ds-nav-link\" href=\"#network\">Network</a></nav>",
-      "css": ".ds-nav{display:flex;gap:20px;background:var(--paper, #f7f7f2);border-bottom:1px solid var(--line, #dedfd8);}.ds-nav-link{display:inline-flex;align-items:center;min-height:80px;padding:0;color:var(--ink-2, #596365);font:500 14px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif);text-decoration:none;border-bottom:2px solid transparent;}.ds-nav-link:hover{color:var(--ink, #252b2e)}.ds-nav-link[aria-current]{color:var(--accent-ink, #214ba9);border-bottom-color:var(--accent, #2857c7);font-weight:600}.ds-nav-link:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:3px;}"
+      "description": "Current destination uses a rounded accent tint. Source: final navigation rules in workspace.css.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Example destinations\"><a class=\"ds-nav-link\" href=\"#today\" aria-current=\"page\">Today</a><a class=\"ds-nav-link\" href=\"#opportunities\">Opportunities</a><a class=\"ds-nav-link\" href=\"#network\">Network</a></nav>",
+      "css": ".ds-nav{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface,#ffffff)}.ds-nav-link{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 10px;border-radius:9px;background:transparent;color:var(--ink-2,#54647a);font:500 14px/1.4 var(--font-ui,\"Instrument Sans\",sans-serif);text-decoration:none}.ds-nav-link:hover{background:var(--surface-subtle,#f8fafc);color:var(--ink,#19283f)}.ds-nav-link[aria-current=page]{background:var(--accent-soft,#eef2fc);color:var(--accent-ink,#214ba9);font-weight:600}.ds-nav-link:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}@media(max-width:1050px){.ds-nav-link{min-height:44px}}"
     },
     {
-      "name": "Relationship status",
+      "name": "Relationship Status",
       "kind": "chip",
       "refersTo": "status-chip",
-      "description": "A semantic status reports a category with visible wording.",
+      "description": "Categorical wording and a paired semantic palette. Source: networkly.css and elements.css.",
       "html": "<span class=\"ds-chip\">Replied</span>",
-      "css": ".ds-chip{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--w-replied-l, #e8d7ad);border-radius:var(--r-badge, 999px);background:var(--w-replied-s, #f6ecd6);color:var(--w-replied-t, #7d5410);font:500 12px/1.45 var(--font-ui, \"Instrument Sans\", sans-serif);white-space:nowrap;}"
+      "css": ".ds-chip{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--w-replied-l,#e8d7ad);border-radius:var(--r-badge,999px);background:var(--w-replied-s,#f6ecd6);color:var(--w-replied-t,#7d5410);font:500 12px/1.45 var(--font-ui,\"Instrument Sans\",sans-serif);white-space:nowrap}"
     },
     {
-      "name": "Application stage filter",
+      "name": "Application Stage Filter",
       "kind": "button",
       "refersTo": "application-filter-selected",
-      "description": "A labeled count filter with explicit selected state.",
-      "html": "<button class=\"ds-filter\" aria-pressed=\"true\"><span class=\"ds-filter-label\">Applied</span><span class=\"ds-filter-count\">3</span></button>",
-      "css": ".ds-filter{display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:9px 14px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ink-2, #596365);font:500 14px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif);cursor:pointer;transition:background-color 180ms,border-color 180ms,color 180ms;}.ds-filter[aria-pressed=true]{color:var(--accent-ink, #214ba9);background:var(--accent-soft, #eef2fc);border-color:var(--accent-line, #c8d5f4)}.ds-filter:hover{border-color:var(--line-strong, #a6afaa)}.ds-filter:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:3px;}.ds-filter-count{font-weight:600;font-variant-numeric:tabular-nums}@media(prefers-reduced-motion:reduce){.ds-filter{transition:none}}"
+      "description": "A labeled count and explicit selected state. Source: presentation-directory.css and widgets.js; preview count is an example.",
+      "html": "<button class=\"ds-filter\" aria-pressed=\"true\"><span class=\"ds-filter-count\">3</span><span class=\"ds-filter-label\">Applied</span></button>",
+      "css": ".ds-filter{display:inline-flex;flex-direction:row-reverse;align-items:center;justify-content:center;gap:10px;min-height:42px;padding:9px 14px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink-2,#54647a);cursor:pointer;transition:background-color 180ms,border-color 180ms,color 180ms,transform 120ms}.ds-filter[aria-pressed=true]{color:var(--accent-ink,#214ba9);background:var(--accent-soft,#eef2fc);border-color:var(--accent-line,#c8d5f4)}.ds-filter:hover:not([aria-pressed=true]){border-color:var(--line-strong,#7e8da4);background:var(--surface-subtle,#f8fafc)}.ds-filter:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}.ds-filter:active{transform:scale(.975)}.ds-filter-label{font:500 14px/1.4 var(--font-ui,\"Instrument Sans\",sans-serif)}.ds-filter-count{font:600 14px/1.4 var(--font-ui,\"Instrument Sans\",sans-serif);font-variant-numeric:tabular-nums}@media(prefers-reduced-motion:reduce){.ds-filter{transition:none}.ds-filter:active{transform:none}}"
     },
     {
-      "name": "Open application record",
-      "kind": "custom",
-      "refersTo": "record-row",
-      "description": "A ruled record keeps timing, role, stage, and removal in separate columns. Preview content is an example.",
-      "html": "<article class=\"ds-record\"><span class=\"ds-record-when\">Deadline not listed</span><div class=\"ds-record-role\"><a class=\"ds-record-link\" href=\"#role\">Summer Analyst</a><span class=\"ds-record-firm\">Example firm</span></div><select class=\"ds-record-stage\" aria-label=\"Application stage\"><option>Applied</option><option>Interviewing</option></select><button class=\"ds-record-remove\">Remove</button></article>",
-      "css": ".ds-record{display:grid;grid-template-columns:138px minmax(0,1fr) 148px 72px;align-items:start;gap:24px;padding:22px 0;border-bottom:1px solid var(--line, #dedfd8);background:transparent;color:var(--ink, #252b2e);font:400 14px/1.6 var(--font-ui, \"Instrument Sans\", sans-serif);}.ds-record-when{color:var(--ink-2, #596365);font-size:13px}.ds-record-link{color:var(--ink, #252b2e);font-size:15px;font-weight:600;text-decoration:none}.ds-record-link:hover{color:var(--accent-ink, #214ba9);text-decoration:underline}.ds-record-firm{display:block;color:var(--ink-2, #596365);font-size:13px}.ds-record-stage,.ds-record-remove{min-height:40px;padding:9px 8px;border:1px solid var(--line-strong, #a6afaa);border-radius:8px;color:var(--ink-2, #596365);background:var(--surface, #fff);font:500 13px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif)}.ds-record-remove{border-color:transparent;background:transparent;cursor:pointer}.ds-record-remove:hover{border-color:var(--danger-line, #e9c8c4);color:var(--danger, #9d2b23);background:var(--danger-soft, #f7e8e6)}.ds-record-link:focus-visible,.ds-record-stage:focus-visible,.ds-record-remove:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:3px;}@media(max-width:720px){.ds-record{grid-template-columns:minmax(0,1fr);gap:12px}}"
-    },
-    {
-      "name": "Capture surface",
+      "name": "Contact Card",
       "kind": "card",
-      "refersTo": "capture-surface",
-      "description": "A bounded white form surface is distinct from the open journal around it.",
-      "html": "<form class=\"ds-capture\"><label class=\"ds-capture-field\">Interaction type<select class=\"ds-capture-input\"><option>Conversation</option><option>Email</option></select></label><label class=\"ds-capture-field\">Date<input class=\"ds-capture-input\" type=\"date\"></label><label class=\"ds-capture-field ds-capture-wide\">Notes<textarea class=\"ds-capture-input\" rows=\"3\"></textarea></label></form>",
-      "css": ".ds-capture{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:20px;border:0;border-radius:12px;background:var(--surface, #fff);color:var(--ink, #252b2e);}.ds-capture-field{display:flex;flex-direction:column;gap:7px;min-width:0;font:600 12px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif);}.ds-capture-wide{grid-column:1/-1}.ds-capture-input{min-width:0;max-width:100%;padding:9px 14px;border:1px solid var(--line-strong, #a6afaa);border-radius:8px;color:var(--ink, #252b2e);background:var(--surface, #fff);font:400 15px/1.4 var(--font-ui, \"Instrument Sans\", sans-serif);}.ds-capture-input:hover{border-color:var(--ink-3, #697371)}.ds-capture-input:focus-visible{outline:2px solid var(--accent, #2857c7);outline-offset:0;box-shadow:0 0 0 3px color-mix(in srgb,var(--accent, #2857c7) 16%,transparent)}@media(max-width:600px){.ds-capture{grid-template-columns:1fr;padding:18px}.ds-capture-input{font-size:16px}}"
+      "refersTo": "contact-card",
+      "description": "A compact, naturally sized contact record. Source: presentation-crm.css; names are examples and the initial is the real fallback pattern.",
+      "html": "<article class=\"ds-contact\"><a class=\"ds-contact-name\" href=\"#contact\">Example Contact</a><div class=\"ds-contact-firm\"><span class=\"ds-firm-mark\" aria-hidden=\"true\">E</span><span>Example Firm</span></div><span class=\"ds-contact-role\">Analyst</span><div class=\"ds-contact-foot\"><a class=\"ds-contact-action\" href=\"#record\">View contact</a></div></article>",
+      "css": ".ds-contact{display:flex;flex-direction:column;align-items:stretch;gap:12px;height:auto;min-height:0;padding:14px;border:1px solid var(--line,#e1e7f0);border-radius:12px;background:var(--surface,#ffffff);color:var(--ink,#19283f);font:400 13px/1.5 var(--font-ui,\"Instrument Sans\",sans-serif)}.ds-contact:hover{border-color:var(--line-strong,#7e8da4)}.ds-contact-name{color:inherit;font-size:14px;font-weight:600;text-decoration:none;overflow-wrap:anywhere}.ds-contact-firm{display:flex;align-items:center;gap:7px;font-weight:550}.ds-firm-mark{display:inline-flex;align-items:center;justify-content:center;flex:none;width:21px;height:21px;border-radius:5px;background:var(--accent-soft,#eef2fc);color:var(--accent-ink,#214ba9);font-size:10px;font-weight:600}.ds-contact-role{font-size:12px;color:var(--ink-2,#54647a)}.ds-contact-foot{padding-top:10px;border-top:1px solid var(--line,#e1e7f0)}.ds-contact-action{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 10px;border:1px solid var(--line-strong,#7e8da4);border-radius:9px;color:var(--ink,#19283f);text-decoration:none;font-size:13px}.ds-contact-name:hover,.ds-contact-action:hover{color:var(--accent-ink,#214ba9)}.ds-contact a:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}@media(max-width:600px){.ds-contact-action{min-height:44px}}"
+    },
+    {
+      "name": "Firm Surface",
+      "kind": "card",
+      "refersTo": "firm-surface",
+      "description": "Ordinary firm group with divided inner rows and a three-role preview; picked roles use a separate two-column card variant with four previews. Source: presentation-directory.css and widgets.js; preview is an example.",
+      "html": "<article class=\"ds-firm\"><header class=\"ds-firm-head\"><span class=\"ds-firm-initial\" aria-hidden=\"true\">E</span><div><a class=\"ds-firm-name\" href=\"#firm\">Example Firm</a><p class=\"ds-firm-meta\">1 role</p></div></header><div class=\"ds-role\"><a href=\"#role\">Summer Analyst</a><p>Deadline not listed</p></div></article>",
+      "css": ".ds-firm{height:auto;padding:24px;border:1px solid var(--line,#e1e7f0);border-radius:16px;background:var(--surface,#ffffff);color:var(--ink,#19283f);font:400 14px/1.6 var(--font-ui,\"Instrument Sans\",sans-serif);transition:border-color 180ms,box-shadow 180ms}.ds-firm:hover,.ds-firm:focus-within{border-color:var(--line-strong,#7e8da4);box-shadow:var(--shadow-1,0 2px 8px rgb(22 40 72 / 5%))}.ds-firm-head{display:grid;grid-template-columns:38px minmax(0,1fr);gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line,#e1e7f0)}.ds-firm-initial{display:flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--accent-line,#c8d5f4);border-radius:9px;background:var(--accent-soft,#eef2fc);color:var(--accent-ink,#214ba9);font-weight:600}.ds-firm-name{font-size:17px;font-weight:600;letter-spacing:-.015em;color:var(--ink,#19283f);text-decoration:none}.ds-firm-meta{margin:5px 0 0;font-size:13px;color:var(--ink-2,#54647a)}.ds-role{padding:12px 12px 18px}.ds-role>a{color:var(--ink,#19283f);font-size:15px;font-weight:600;text-decoration:none}.ds-role p{margin:8px 0 0;font-size:13px;color:var(--ink-2,#54647a)}.ds-role:hover{border-radius:9px;background:var(--surface-subtle,#f8fafc)}.ds-firm a:hover{color:var(--accent-ink,#214ba9)}.ds-firm a:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}@media(max-width:720px){.ds-firm{padding:16px}}@media(prefers-reduced-motion:reduce){.ds-firm{transition:none}}"
+    },
+    {
+      "name": "Group Disclosure",
+      "kind": "custom",
+      "refersTo": "disclosure",
+      "description": "Natural-height Network group with a full-row native summary. Today uses a separate fixed 320px context-panel variant with independently scrolling lists. Source: presentation-crm.css; example content.",
+      "html": "<details class=\"ds-disclosure\"><summary><span>Replied</span><span class=\"ds-disclosure-meta\">2 contacts<svg aria-hidden=\"true\" viewBox=\"0 0 16 16\"><path d=\"m6 4 4 4-4 4\"/></svg></span></summary><div class=\"ds-disclosure-body\">Contact records appear here.</div></details>",
+      "css": ".ds-disclosure{border:1px solid var(--line,#e1e7f0);border-radius:16px;background:var(--surface,#ffffff);color:var(--ink,#19283f);font:400 14px/1.6 var(--font-ui,\"Instrument Sans\",sans-serif)}.ds-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:16px 20px;border-radius:16px;list-style:none;cursor:pointer;font-size:17px;font-weight:600;transition:background 180ms}.ds-disclosure>summary::-webkit-details-marker{display:none}.ds-disclosure>summary:hover{background:var(--surface-subtle,#f8fafc)}.ds-disclosure>summary:focus-visible{outline:2px solid var(--accent,#2857c7);outline-offset:3px}.ds-disclosure[open]>summary{border-bottom:1px solid var(--line,#e1e7f0);border-radius:16px 16px 0 0}.ds-disclosure-meta{display:flex;align-items:center;gap:12px;color:var(--ink-2,#54647a);font-size:12px;font-weight:400}.ds-disclosure-meta svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.5}.ds-disclosure[open] svg{transform:rotate(90deg)}.ds-disclosure-body{padding:16px 20px;background:var(--surface-subtle,#f8fafc);border-radius:0 0 16px 16px}@media(max-width:600px){.ds-disclosure>summary{padding:14px 16px}.ds-disclosure-body{padding-inline:16px}}@media(prefers-reduced-motion:reduce){.ds-disclosure>summary{transition:none}}"
+    },
+    {
+      "name": "Marketing Primary Link",
+      "kind": "button",
+      "refersTo": "marketing-primary",
+      "description": "Larger public CTA with the shared accent identity. Source: marketing.css.",
+      "html": "<a class=\"ds-marketing-button\" href=\"#signup\">Get started<svg aria-hidden=\"true\" viewBox=\"0 0 24 24\"><path d=\"M5 12h14m-6-6 6 6-6 6\"/></svg></a>",
+      "css": ".ds-marketing-button{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:22px;min-height:52px;padding:13px 21px;border-radius:9px;background:var(--accent,#2857c7);color:var(--on-accent,#ffffff);font:600 15px/1.4 var(--font-ui,\"Instrument Sans\",sans-serif);text-decoration:none;transition:background .2s,box-shadow .2s}.ds-marketing-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.ds-marketing-button:hover{background:var(--accent-ink,#214ba9);box-shadow:0 5px 16px color-mix(in srgb,var(--accent,#2857c7) 18%,transparent)}.ds-marketing-button:focus-visible{outline:3px solid var(--accent,#2857c7);outline-offset:5px}@media(max-width:420px){.ds-marketing-button{gap:16px;padding-inline:16px;font-size:14px}}@media(prefers-reduced-motion:reduce){.ds-marketing-button{transition:none}}"
     }
   ],
   "narrative": {
-    "northStar": "The Personal Recruiting Index",
-    "overview": "Networkly uses the order and reading comfort of a contemporary university library catalogue. Warm neutral ground, editorial page titles, cobalt actions, and open ruled records give recruiting information a clear place. The material is digital: flat fills, real evidence, and familiar controls.\n\nThe built system gives records more space than their containers. Identity, context, timing, and actions form readable groups; supporting information sits beside the work on wide screens and follows it on phones. Forms and floating menus retain useful boundaries. Clear status wording carries meaning alongside color.",
+    "northStar": "The Daily Recruiting Workspace",
+    "overview": "Networkly is a mature, concise, and harmonious SaaS workspace for recruiting and relationships. Cool white and gray layers, dark navy, cobalt actions, and Instrument Sans give the product a consistent identity. A meaningful task, collection, or form owns a bounded surface; facts and actions inside it stay easy to scan.\n\nThe approved public pages use larger type, product examples, and finite kinetic details to explain the product. The application uses restrained feedback tied to an action or state. Legal pages prioritize reading, section navigation, and stable anchors. These surfaces share their palette, type family, control language, and factual standards without sharing one page composition.",
     "keyCharacteristics": [
-      "Normal-weight serif page titles with a quiet sans-serif working hierarchy.",
-      "Warm neutral surfaces, cobalt interaction, and distinct semantic states.",
-      "Open ruled records with visible actions and restrained form enclosures.",
-      "Horizontal navigation, responsive reading order, and paired light and dark themes."
+      "Instrument Sans throughout the current interface, with Title Case headings and subtitles.",
+      "Cool light surfaces and paired navy dark surfaces, with cobalt interaction and labeled semantic states.",
+      "Bounded widgets, natural record heights, useful icons, and visible actions.",
+      "Stored company logos with an initial fallback, preserving the approved Networkly identity.",
+      "Responsive reading order, keyboard access, and restrained motion with a reduced-motion alternative."
     ],
     "rules": [
       {
         "name": "The Semantic Color Rule",
-        "body": "Use cobalt for interaction. Preserve the existing domain colors and visible labels for their named states, including unknown and unverified facts.",
+        "body": "Use cobalt for interaction. Keep visible labels beside domain colors, including unknown, unverified, pending, and unavailable states.",
         "section": "colors"
       },
       {
-        "name": "The Readable Label Rule",
-        "body": "Navigation, labels, chips, and actions use normal or sentence case without forced uppercase or tracking. Proper names, stored values, and quoted evidence preserve their original meaning.",
+        "name": "The Case Rule",
+        "body": "Use Title Case for headings and short subtitles; use sentence case for controls, body copy, and explanatory sentences. Preserve acronyms, brand names, and the meaning of stored facts through the existing text-formatting helpers.",
         "section": "typography"
       },
       {
-        "name": "The Stable Surface Rule",
-        "body": "Record collections and page sections stay still on hover. Use color or border emphasis for interaction and reserve substantial shadow for floating content.",
+        "name": "The Stable Layout Rule",
+        "body": "Keep record geometry stable on hover, focus, and loading. Let contact and firm records size to content, retain the explicitly sized Today context panels, and reveal complete role previews. Reserve logo dimensions. Finite transforms may provide local feedback without changing document flow.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do use runtime CSS variables so explicit and system-selected dark themes remain paired.",
-      "Do use Fraunces for page identity and Instrument Sans for working information and controls.",
-      "Do organize records with spacing and dividers, retaining useful boundaries around forms and overlays.",
-      "Do keep role and contact actions visible, with their larger phone targets.",
-      "Do preserve native controls, keyboard focus, disclosure state, reduced motion, and persistence compatibility.",
-      "Do preserve the approved Networkly logo and explicit wording for categorical or uncertain facts."
+      "Do reuse the final runtime tokens and scoped page styles, including explicit and system-selected dark themes.",
+      "Do use Instrument Sans and the approved case hierarchy across public and private surfaces.",
+      "Do give a task, form, or collection a clear surface; separate its internal facts with spacing and dividers.",
+      "Do keep full labels, useful icons, stored firm logos, native form values, keyboard focus, and visible actions.",
+      "Do size contact and firm records naturally, preserve the explicitly sized Today context panels, and keep role previews complete.",
+      "Do tie application motion to user input or actual pending state, and honor reduced motion.",
+      "Do preserve product truth, uncertainty, example labels, supported routes, and theme compatibility."
     ],
     "donts": [
-      "Don't reintroduce the discarded vertical navigation rail, cool blue page ground, boxed summary tiles, or page-header eyebrows.",
-      "Don't replace semantic labels with color alone or style unknown facts as confirmed outcomes.",
-      "Don't revive uppercase small labels, hover lifts, decorative page entrances, or literal paper textures.",
-      "Don't copy historical CSS fragments without checking the final page-family cascade.",
-      "Don't turn relationship categories into a numerical meter or use decorative progress to imply activity."
+      "Don't revive the superseded warm paper, serif page titles, transparent newspaper-style widgets, or vertical navigation rail.",
+      "Don't replace company logos with invented brands, fetch new external logos for decoration, or recreate the Networkly lockup in type.",
+      "Don't hide required actions on hover, clip labels to force alignment, compress card rows, or animate layout dimensions.",
+      "Don't add endless decorative motion, fabricated counters, activity pulses, or numerical progress for categorical relationship stages.",
+      "Don't apply a public hero's type scale or entrance choreography to working app pages or legal documents.",
+      "Don't treat historical CSS comments or review artifacts as authority over the current cascade and approved direction."
     ]
   }
 }

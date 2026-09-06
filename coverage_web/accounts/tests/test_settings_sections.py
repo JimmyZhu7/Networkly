@@ -372,16 +372,13 @@ def test_cadence_error_leaves_the_other_sections_intact(client, logged_in):
 
     resp = _post(client, **_cadence_post(max_cold_touches=99))
     body = resp.content.decode()
-    # Work authorization still shows the saved value. It is a radio matrix
-    # now rather than six selects, so the saved state reads as a checked
-    # radio — the behaviour under test (an error in ONE section must not
-    # blank another) is unchanged. Matched on the ONE input that must carry
-    # it: `"checked" in body` would pass on any checked radio anywhere.
+    # Match the specific region: another field's selection cannot establish
+    # that the saved US answer survived this unrelated validation error.
     import re
 
-    citizen = re.search(
-        r'<input[^>]*name="work_auth_us"[^>]*value="citizen"[^>]*>', body)
-    assert citizen and "checked" in citizen.group(0), (
+    region = re.search(
+        r'<select[^>]*name="work_auth_us"[^>]*>.*?</select>', body, re.S)
+    assert region and '<option value="citizen" selected>' in region.group(0), (
         "the saved US answer must survive an error in another section")
 
 
@@ -662,7 +659,7 @@ def test_advocate_target_initial_drops_an_out_of_range_stored_value(logged_in):
 
 def test_the_cadence_card_renders_the_advocate_target_row(client, logged_in):
     body = client.get(reverse(SETTINGS)).content.decode()
-    assert "Advocate Target" in body
+    assert "Advocates per firm" in body
     assert 'name="advocate_target"' in body
 
 

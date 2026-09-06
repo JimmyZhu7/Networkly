@@ -3,7 +3,7 @@
 {% load textstyle %}
 {% load assistant_extras %}
 
-{% block title %}Today · Networkly{% endblock %}
+{% block title %}Networkly · Today{% endblock %}
 
 {% block head %}{% include "crm/_styles.html" %}{% endblock %}
 
@@ -23,7 +23,7 @@
   <header class="pagehead">
     <div class="pagehead-text">
       <h1 class="pagehead-title">Today</h1>
-      <p class="pagehead-sub">Your next steps, all in one place.</p>
+      <p class="pagehead-sub">Contacts to follow up with and deadlines to track.</p>
     </div>
     {% comment %}
     Quick add. Something worth recording — a person you just met, a chat that
@@ -37,13 +37,13 @@
         <summary class="btn btn-primary">Quick add</summary>
         <div class="quickadd-menu panel panel--raised">
           <a href="{% url 'crm:contact_new' %}?quick=1">
-            <span>A person</span><span class="quickadd-hint">Name and firm, ten seconds</span>
+            <span>A contact</span><span class="quickadd-hint">Add a name and firm</span>
           </a>
           <a href="{% url 'crm:calendar' %}?day={% now 'j' %}#add">
-            <span>Something dated</span><span class="quickadd-hint">A chat, superday, or flight</span>
+            <span>An event</span><span class="quickadd-hint">A chat, superday, or flight</span>
           </a>
           <a href="{% url 'crm:contact_list' %}">
-            <span>A touch you sent</span><span class="quickadd-hint">Find them in Network</span>
+            <span>A sent email</span><span class="quickadd-hint">Find them in Network</span>
           </a>
         </div>
       </details>
@@ -51,187 +51,42 @@
   </header>
 
   {% comment %}
-  The directory stats. They led the page once, then spent a stretch at its
-  foot after a hero plus four stat cards ate the whole fold — the queue is
-  the moat, the board is the commodity, and the commodity had the pixels.
-  Back on top after that, in a 56px hairline strip instead of a card row —
-  and then drifted back down anyway, one include at a time: the daily brief
-  and the situation strip both landed ABOVE it later, each a reasonable
-  addition on its own, each pushing this bar one section further from "the
-  first thing on the page" until the claim in this comment stopped being
-  true of the actual DOM. Moved back above both, directly under the header,
-  so the numbers checked on arrival are load-bearing again rather than
-  aspirational.
-
-  The first and third cells used to be "Open now" (every open campus role,
-  board-wide) and "Tracked live" (every open role including the 4,238 the
-  Opportunities feed itself hides as not-yours, plus an HK/US split that
-  never moved day to day). Three of four cells on a personal daily page were
-  describing the BOARD, and the one number this page never said — that the
-  pipeline below sat at zero — went unsaid. Replaced with the two personal
-  counts Opportunities already computes: open roles at the firms this user
-  actually targets, and how many of those name the user's own class year
-  and are still unsaved — the most actionable number on the page.
-  Board-wide totals still exist for the founder view at /instrument/.
-
-  Deliberately NOT `.dash-num`: base.html count-animates that class from 0
-  on first paint, and the intermediate frames are wrong numbers that
-  screenshot as data (80, 152 and 886 were all captured for the same "Open
-  now" figure). The entrance here moves the CELL, never the digits.
+  Personal role counts and application stages. Numbers render directly so
+  entrance animations never display intermediate values as account facts.
+  Reported deadline dates retain their qualification in visible copy and
+  the source explanation in the link title.
   {% endcomment %}
   <section class="ribbon" aria-label="Your firms and deadlines">
     <div class="ribbon-row panel">
-      {% comment %}
-      ZERO IS NOT A NUMBER WORTH PRINTING HERE. "0 Open at your firms" is the
-      first figure a student who skipped firm selection meets, and it reads as
-      a product that found nothing rather than as a setup step nobody took —
-      the same mistake the class-year cell below already fixed for itself
-      ("Zero with NO class year stated is not 'caught up' — the check never
-      ran"). This cell follows that cell exactly: at zero it drops the digit,
-      states the action, and links to where the action happens.
-
-      One cell covers both routes to zero, deliberately. A student with no
-      target firms lands here, and so does a student with twenty whose firms
-      have nothing open this week — and "pick your target firms" is the right
-      next move for both, since the count only ever grows by adding firms.
-      Which of the two it is stays visible on the Settings page the link
-      goes to, in one click, rather than being guessed at here: this template
-      has no target-firm count to read, and `_dashboard_context` belongs to
-      another workstream this week.
-      {% endcomment %}
-      {% if dash.at_your_firms %}
-        <a class="ribbon-stat kin-reveal" style="--i: 0" href="{% url 'opportunities' %}">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="opportunities" %}</span>
-          <span class="ribbon-num">{{ dash.at_your_firms }}</span>
-          <span class="ribbon-lbl"><span class="live-dot"></span> Open at your firms</span>
-        </a>
-      {% else %}
-        <a class="ribbon-stat kin-reveal" style="--i: 0" href="{% url 'accounts:settings' %}#firms">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="opportunities" %}</span>
-          <span class="ribbon-lbl">Pick your target firms</span>
-        </a>
-      {% endif %}
-      {% comment %}
-      MIXED EVIDENCE, SAID OUT LOUD. The number is a count of deadlines, and
-      `Opportunity.confidence` says where each of those deadlines came from:
-      1.0 is a field the board published, anything under it is Networkly's own
-      regex reading the posting's prose. On the live board that is the large
-      majority of dated open roles, so a bare urgent figure here was quoting
-      our reading back as the market's calendar — the exact claim every other
-      surface refuses to make (`views.deadline_provenance`, the .ics SUMMARY,
-      the feed card, the drawer, both My Applications lenses).
-
-      "reported" and not a new word: the whole product marks this one fact one
-      way, and a second vocabulary for it on the busiest page would be worse
-      than the missing marker. The count carries it rather than a caveat
-      sentence, because a stat cell that grows prose stops being a stat cell;
-      the `title` holds the full provenance for anyone who wants it, which
-      works here in a way it cannot in the digest email.
-      {% endcomment %}
-      <a class="ribbon-stat kin-reveal{% if dash.closing_10 %} is-urgent{% endif %}" style="--i: 1" href="{% url 'opportunities' %}"{% if dash.closing_10_reported %} title="{{ dash.closing_10_reported }} of these dates were read from the posting's own text, not a field the board published"{% endif %}>
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="calendar" %}</span>
-        <span class="ribbon-num">{{ dash.closing_10 }}</span>
-        <span class="ribbon-lbl">Closing in 10 days{% if dash.closing_10_reported %}, {{ dash.closing_10_reported }} reported{% endif %}</span>
+      <a class="ribbon-stat" href="{% if dash.at_your_firms %}{% url 'opportunities' %}{% else %}{% url 'accounts:settings' %}#firms{% endif %}">
+        <span class="ribbon-title">{% include "_nav_icon.html" with name="opportunities" %}Open Roles</span>
+        <span class="ribbon-num">{{ dash.at_your_firms|floatformat:"0g" }}</span>
+        <span class="ribbon-note">{% if dash.at_your_firms %}At your target firms{% else %}Pick your target firms{% endif %}</span>
       </a>
-      {% comment %}
-      THE SAME NUMBER THE PICKED COLUMN'S "SAVE ALL" WILL WRITE, and it is
-      that number by construction: `crm.today` calls
-      `directory.views.picked_roles` and `pick_save_ids`, the very functions
-      the Opportunities feed builds that column and its button out of. It
-      used to read the retired bulk-save banner's own count (roles whose text
-      NAMED the class year, unranked and uncapped), which answered a
-      different question from the column beside it — measured on the
-      founder's board 2026-09-02, 2 of the 9 it counted were among his 6
-      picks. The banner is gone; a ribbon still pointing at its function
-      would have been a number with nothing on the other end.
-
-      "Picked for you", not the class year, because the year is no longer
-      what the number is about. What the label still owes the reader is the
-      distinction the year spelled out: this is a count of things WAITING,
-      not a count of things missing. "Not saved yet" carries that, and the
-      destination is the column itself.
-
-      Honest at zero too: nothing unsaved is a real state worth naming, not a
-      bare "0" that reads like the feature is broken.
-      {% endcomment %}
-      {% if dash.picked_unsaved %}
-        <a class="ribbon-stat kin-reveal is-invite" style="--i: 2" href="{% url 'opportunities' %}">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
-          <span class="ribbon-num">{{ dash.picked_unsaved }}</span>
-          <span class="ribbon-lbl">Picked for you, not saved yet</span>
-        </a>
-      {% elif dash.has_picks %}
-        <a class="ribbon-stat kin-reveal" style="--i: 2" href="{% url 'opportunities' %}">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
-          <span class="ribbon-lbl">Every pick saved</span>
-        </a>
-      {% else %}
-        {% comment %}
-        Zero with NO picks is not "caught up" — there was nothing to catch up
-        on. The day-zero walkthrough caught the old version of this cell
-        congratulating a ten-minute-old account on clearing a check it had
-        never taken. Say what is actually missing, and link to where it gets
-        fixed: the scorer reads target firms, tracks, regions and class year,
-        and all four live in Settings.
-        {% endcomment %}
-        <a class="ribbon-stat kin-reveal" style="--i: 2" href="{% url 'accounts:settings' %}#profile">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="bookmark" %}</span>
-          <span class="ribbon-lbl">Fill in Settings to get picks</span>
-        </a>
-      {% endif %}
-      {% comment %}
-      A funnel reading 0 › 0 › 0 is a diagram of nothing. While there is
-      genuinely nothing in it, say so in words instead.
-      {% endcomment %}
-      {% if dash.funnel.submitted or dash.funnel.interview or dash.funnel.offer %}
-        <span class="ribbon-stat ribbon-funnel kin-reveal" style="--i: 3">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="today" %}</span>
-          {% comment %}
-          THREE FIGURES AND TWO MARKS OF PUNCTUATION, drawn as such. Rendered
-          as one text node the chevrons inherited the digits' size, weight and
-          colour, so "6 › 0 › 0" put five glyphs of equal loudness in a cell
-          that holds three facts, and the separator read as a fourth. The
-          spans below change no text: the figure a reader sees is the same
-          string, and `test_the_funnel_counts_still_match_the_stage_the_label_names`
-          now strips this markup back off and asserts on it.
-
-          A zero is dimmed rather than hidden. "6 › 0 › 0" is a true and
-          useful sentence — six out, nothing back yet — but only if the six
-          is what the eye lands on; at equal weight the row reads as three
-          measurements rather than one number and two not-yets. This is the
-          same argument the cell above it already makes for the all-zero case
-          ("a diagram of nothing"), one step further in.
-          {% endcomment %}
-          <span class="ribbon-num ribbon-funnel-num">{% spaceless %}
-            <span class="fn{% if not dash.funnel.submitted %} fn-zero{% endif %}">{{ dash.funnel.submitted }}</span>
-            <span class="fn-sep"> › </span>
-            <span class="fn{% if not dash.funnel.interview %} fn-zero{% endif %}">{{ dash.funnel.interview }}</span>
-            <span class="fn-sep"> › </span>
-            <span class="fn{% if not dash.funnel.offer %} fn-zero{% endif %}">{{ dash.funnel.offer }}</span>
-          {% endspaceless %}</span>
-          {% comment %}
-          The stage names come from directory.views._STAGE_LABELS, not from
-          this template. Hardcoded here they read "Submitted › Interview ›
-          Offer" — the raw `applied_status` spellings — while My Applications,
-          its stage dropdown and the feed's track pill all called the same two
-          rows "Applied" and "Interviewing". One vocabulary, one place.
-          {% endcomment %}
-          <span class="ribbon-lbl">{{ dash.funnel_label }}</span>
-        </span>
-      {% else %}
-        {% comment %}
-        A `<span>`, so the one cell in this row with nothing in it was also
-        the one cell you could not click. Every other empty state on this
-        page says what to do next; this one only said what was absent. Now
-        it is an anchor to the feed, where a role gets saved, which is the
-        step that puts the first number in the funnel.
-        {% endcomment %}
-        <a class="ribbon-stat ribbon-funnel is-empty kin-reveal" style="--i: 3"
-           href="{% url 'opportunities' %}">
-          <span class="ribbon-icon" aria-hidden="true">{% include "_nav_icon.html" with name="today" %}</span>
-          <span class="ribbon-lbl">Nothing submitted yet. Save a role</span>
-        </a>
-      {% endif %}
+      <a class="ribbon-stat{% if dash.closing_10 %} is-urgent{% endif %}" href="{% url 'opportunities' %}"{% if dash.closing_10_reported %} title="{{ dash.closing_10_reported }} of these dates were read from the posting's own text, not a field the board published"{% endif %}>
+        <span class="ribbon-title">{% include "_nav_icon.html" with name="calendar" %}Closing Soon</span>
+        <span class="ribbon-num">{{ dash.closing_10|floatformat:"0g" }}</span>
+        <span class="ribbon-note">Next 10 days{% if dash.closing_10_reported %} · {{ dash.closing_10_reported|floatformat:"0g" }} reported{% endif %}</span>
+      </a>
+      <a class="ribbon-stat{% if dash.picked_unsaved %} is-invite{% endif %}" href="{% if dash.has_picks or dash.picked_unsaved %}{% url 'opportunities' %}{% else %}{% url 'accounts:settings' %}#profile{% endif %}">
+        <span class="ribbon-title">{% include "_nav_icon.html" with name="bookmark" %}Your Picks</span>
+        {% if dash.picked_unsaved or dash.has_picks %}
+          <span class="ribbon-num">{{ dash.picked_unsaved|floatformat:"0g" }}</span>
+          <span class="ribbon-note">{% if dash.picked_unsaved %}Not saved yet{% else %}All picks saved{% endif %}</span>
+        {% else %}
+          <span class="ribbon-empty-value">Set preferences</span>
+          <span class="ribbon-note">Get role suggestions</span>
+        {% endif %}
+      </a>
+      <a class="ribbon-stat ribbon-funnel{% if not dash.funnel.submitted and not dash.funnel.interview and not dash.funnel.offer %} is-empty{% endif %}" href="{% url 'my_applications' %}">
+        <span class="ribbon-title">{% include "_nav_icon.html" with name="check" %}Applications</span>
+        <dl class="ribbon-stages">
+          <div><dt>Applied</dt><dd>{{ dash.funnel.submitted|floatformat:"0g" }}</dd></div>
+          <div><dt>Interviewing</dt><dd>{{ dash.funnel.interview|floatformat:"0g" }}</dd></div>
+          <div><dt>Offers</dt><dd>{{ dash.funnel.offer|floatformat:"0g" }}</dd></div>
+        </dl>
+        {% if not dash.funnel.submitted and not dash.funnel.interview and not dash.funnel.offer %}<span class="ribbon-note">Save a role to get started</span>{% endif %}
+      </a>
     </div>
   </section>
 
@@ -242,7 +97,7 @@
     {% endcomment %}
     <div class="setup-nudge kin-reveal">
       <div class="setup-nudge-text">
-        <b>Finish setting up.</b> Pick your target firms and Networkly fills
+        <b>Finish Setup</b> Pick your target firms and Networkly fills
         this queue and sorts the feed to them.
       </div>
       <a class="btn btn-primary" href="{% url 'accounts:onboarding' %}?step=profile">Set up Networkly</a>
@@ -275,84 +130,7 @@
          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'></div>
   {% endif %}
 
-  {% if situation_events %}
-    {% comment %}
-    The situation snapshot (assistant.situation.build_situation): what moved
-    in data Networkly already scrapes, since RECENT_DAYS ago — a deadline
-    change or a close on a role this student tracks, or a fresh posting at
-    a firm they already have a foothold at. Deterministic cards built
-    straight from typed event fields, NO model involved in the text — see
-    the module's own docstring: a moved deadline is the one thing on this
-    page that must never be allowed to hallucinate urgency. Capped to 3 in
-    the view (crm.today.week), the same number the brief's own prompt gets
-    to see, so the sentence above never leads with a change nobody has a
-    card for.
-    {% endcomment %}
-    {% comment %}
-    Standardized 2026-08-31, one shape for every kind: FIRM leads
-    every sentence (matches the Opportunities feed's own decisiveness
-    ordering — the anchor fact comes first), one verb, the title bolded,
-    an optional trailing clause, nothing else. Before this, the kinds read
-    as different sentences — subject-first here, firm-first there, one with
-    a colon nobody else used — so a reader had to re-parse the shape on
-    every card instead of scanning them the same way.
 
-    A third branch, `role_closed`, printed "<firm> closed <role>." here
-    until 2026-09-02. It is gone because the event kind is gone, not
-    because the markup changed: see `assistant.situation`'s module
-    docstring for the four measurements that removed it. Every kind this
-    strip can now render names something the student can do today, which
-    is the only reason a card earns one of three slots on this page.
-
-    "Talk about it" is gone: with one destination left, an arrow at the
-    edge says the whole card leads somewhere, and the card itself is the
-    link — no second control to disambiguate against, no `?about=role:`
-    composer prefill to maintain.
-    {% endcomment %}
-    {% comment %}
-    The strip needs a name. Two bordered sentences with arrows sat between
-    the brief and the queue with nothing saying what they were or what
-    period they covered, so they read as two stray cards rather than as a
-    section — the only block on the page with no heading.
-
-    "Moved this week" is what the code actually measures, not a nice phrase:
-    `assistant.situation.RECENT_DAYS` is 7, and `build_situation` filters
-    `since = now - timedelta(days=RECENT_DAYS)`. If that constant changes,
-    this label is wrong and should change with it.
-    {% endcomment %}
-    <details class="situation-section">
-    <summary>Moved this week <span class="situation-count">{{ situation_events|length }} update{{ situation_events|length|pluralize }}</span></summary>
-    <div class="situation-strip">
-      {% for e in situation_events %}
-        <a class="situation-card kin-reveal panel panel--flat" style="--i: {{ forloop.counter0 }}"
-           href="{{ e.url }}" target="_blank" rel="nofollow noopener">
-          <span class="situation-card-text">
-            {% if e.kind == "deadline_moved" %}
-              {{ e.firm|smart_title }} moved <b>{{ e.title|smart_title }}</b>'s deadline
-              {% if e.old_date %}from {{ e.old_date|date:"M j" }} {% elif e.old_value %}from {{ e.old_value }} {% endif %}to
-              {% if e.new_date %}{{ e.new_date|date:"M j" }}{% else %}{{ e.new_value|default:"no date" }}{% endif %}.
-            {% elif e.kind == "new_role_at_known_firm" %}
-              {{ e.firm|smart_title }} opened <b>{{ e.title|smart_title }}</b>{% if e.location %} · {{ e.location|smart_location }}{% endif %}.
-            {% endif %}
-          </span>
-          <span class="situation-card-arrow" aria-hidden="true">&rarr;</span>
-        </a>
-      {% endfor %}
-    </div>
-    </details>
-  {% endif %}
-
-  {% comment %}
-  The cockpit: quick-action buttons inherit these hx-* attrs. `transition:true`
-  wraps the swap in the browser's own document.startViewTransition(). Every
-  act-card below carries a stable view-transition-name (see _act_card.html),
-  so a card the response no longer renders just fades where it stood, and
-  every card that DOES survive - including one that moved lanes, e.g. into
-  the park strip - glides from its old rect to its new one, because the
-  browser is diffing by NAME, not by position. Unsupported browsers (old
-  Firefox) get the exact instant swap this already did; htmx checks for the
-  API before using it, so there is nothing to fall back to by hand.
-  {% endcomment %}
   <div id="today-cockpit"
        hx-target="#today-cockpit" hx-swap="innerHTML transition:true"
        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

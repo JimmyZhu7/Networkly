@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% comment %}
 ================================================================================
@@ -53,93 +54,99 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
 ================================================================================
 {% endcomment %}
 
-{% block title %}Terms · Networkly{% endblock %}
+{% block title %}Networkly · Terms{% endblock %}
+
+{% block head %}<link rel="stylesheet" href="{% static 'css/legal.css' %}">{% endblock %}
 
 {% block content %}
-<div class="page page--narrow legal support-legal">
-  <h1 class="support-title">Terms</h1>
-  <p class="lede">The terms for using Networkly.</p>
-
-  <p class="muted">Last updated 19 August 2026. These terms are an agreement between you and [LEGAL ENTITY NAME], [REGISTERED ADDRESS], which operates Networkly. Using Networkly means you accept them.</p>
-
-  <h2>What Networkly is</h2>
-  <p>Networkly is two things. A free, shared feed of recruiting opportunities and deadlines that we gather and verify centrally. And a private CRM for tracking your own outreach, with optional AI features layered on top.</p>
-  <p>The feed is a convenience, not a system of record. We work to keep it accurate and we label how confident and how fresh each date is, but you are responsible for confirming a deadline at the source before you rely on it. A missed application is your loss and we cannot make it good.</p>
-
-  <h2>Who can use it</h2>
-  <p>You need to be at least 16, and able to enter a binding agreement where you live. Networkly is built for university students and people recruiting into finance and adjacent industries. If you are using it on behalf of a school or an employer, you are confirming you have the authority to accept these terms for them.</p>
-
-  <h2>Your account</h2>
-  <p>Sign in with a supported provider, or with an email address and a password. Keep your login to yourself. You are responsible for what happens under your account, including anything someone else does with your credentials. Tell us at [CONTACT EMAIL] if you think your account has been taken.</p>
+<div class="page legal-page">
+  <header class="legal-header">
+    <nav class="legal-tabs" aria-label="Legal pages"><a href="{% url 'accounts:privacy' %}">Privacy</a><a href="{% url 'accounts:terms' %}" aria-current="page">Terms</a></nav>
+    <h1>Terms of Service</h1><p class="legal-lede">Clear terms for using your recruiting workspace.</p>
+    <p class="legal-updated">Last updated <time datetime="2026-09-05">5 September 2026</time></p>
+  </header>
+  <div class="legal-layout">
+    <nav class="legal-index" aria-label="On this page"><span>On This Page</span><a href="#who-can-use-it">Eligibility</a><a href="#what-you-may-not-do">Acceptable Use</a><a href="#plans-and-payment">Plans</a><a href="#limitation-of-liability">Liability</a><a href="#governing-law-and-disputes">Disputes</a><a href="#contact">Contact</a></nav>
+    <article class="legal-document" aria-label="Terms of Service">
+    <p class="legal-agreement">These terms are an agreement between you and [LEGAL ENTITY NAME], [REGISTERED ADDRESS], the operator of Networkly. Using Networkly means you accept them.</p>
+<section id="what-networkly-is" aria-labelledby="what-networkly-is-title"><h2 id="what-networkly-is-title">What Networkly Is</h2>
+<p>Networkly provides a shared recruiting opportunity directory and a private workspace for contacts, outreach, applications, and scheduling, with optional AI and connected services.</p>
+  <p>Listings may change, and reported or estimated dates may differ from a firm’s published deadline. Check the original posting before relying on an opportunity or deadline. Networkly does not guarantee an interview, offer, or other recruiting outcome.</p>
+</section>
+<section id="who-can-use-it" aria-labelledby="who-can-use-it-title"><h2 id="who-can-use-it-title">Who Can Use It</h2>
+<p>You need to be at least 16, and able to enter a binding agreement where you live. Networkly is built for university students and people recruiting into finance and adjacent industries. If you are using it on behalf of a school or an employer, you are confirming you have the authority to accept these terms for them.</p>
+</section>
+<section id="your-account" aria-labelledby="your-account-title"><h2 id="your-account-title">Your Account</h2>
+<p>Use a supported sign-in provider or an email address and password. Keep your credentials secure and do not share your account. Contact [CONTACT EMAIL] if you suspect unauthorized access.</p>
   <p>Give us a real email address and keep it current. It is how we reach you about your account, and it is how you get back in if you lose your password.</p>
-
-  <h2>What you may not do</h2>
-  <p>The following uses are prohibited:</p>
+</section>
+<section id="what-you-may-not-do" aria-labelledby="what-you-may-not-do-title"><h2 id="what-you-may-not-do-title">What You May Not Do</h2>
+<p>The following uses are prohibited:</p>
   <ul>
-    <li>Do not upload personal data about other people that you have no right to hold. Your own outreach and the replies to it are fine. A scraped list of somebody's alumni database is not.</li>
+    <li>Do not upload personal data about other people that you have no right to hold. You are responsible for having an appropriate basis to upload and use another person’s information.</li>
     <li>Do not use Networkly to send, organise, or track harassment, spam, bulk unsolicited mail, or anything unlawful.</li>
-    <li>Do not scrape, crawl, or bulk-extract the opportunity feed, or use automated means to pull data out of Networkly. One student's own export is not bulk extraction. A script walking the board is.</li>
+    <li>Do not scrape, crawl, or bulk-extract the opportunity feed, or use automated means to pull data out of Networkly. This does not restrict exports of your own records using the tools we provide.</li>
     <li>Do not resell, redistribute, or republish the opportunity data as a product of your own.</li>
-    <li>Do not try to reach another user's data, probe for vulnerabilities, or work around rate limits, plan limits, or access controls. If you find a security hole, tell us at [CONTACT EMAIL].</li>
+    <li>Do not try to reach another user's data, conduct unauthorized security testing, or work around rate limits, plan limits, or access controls. If you find a security hole, tell us at [CONTACT EMAIL].</li>
     <li>Do not impersonate anyone, including us, and do not misrepresent who you are to a contact you found through Networkly.</li>
-    <li>Do not reverse engineer the software, or use it to build a competing product.</li>
+    <li>Do not reverse engineer or copy the software except where applicable law permits it.</li>
     <li>Do not upload malware, or content that infringes someone else's rights.</li>
   </ul>
   <p>If you break these rules we may suspend or close your account. For anything that puts other users or the service at risk, we may do it without warning.</p>
-
-  <h2>Mail capture</h2>
-  <p>Networkly logs mail only through a path you switch on. Connecting a Gmail account lets Networkly read that mailbox to log interactions automatically, under a separate consent you can revoke at any time in your Google account.</p>
-  <p>Only connect a mailbox you are entitled to connect: your own outreach and the replies to it. The <a href="{% url 'accounts:privacy' %}">Privacy page</a> sets out exactly what we do with what we read.</p>
-
-  <h2>Who owns what</h2>
-  <p><strong>Your data is yours.</strong> The contacts, notes, touches, tasks, debriefs and conversations you put into Networkly belong to you. We claim no ownership of them. You give us the narrow licence we need to actually run the product: to store your data, process it, back it up, and send the relevant parts to the providers named in the <a href="{% url 'accounts:privacy' %}">Privacy page</a> when you use a feature that needs them. That licence exists to operate Networkly for you and for nothing else, and it ends when your data is deleted.</p>
-  <p><strong>Networkly is ours.</strong> The software, the design, the name, the logo, and the compiled opportunity board, including how it is structured, classified, verified, scored and kept fresh, belong to [LEGAL ENTITY NAME] or our licensors. The underlying job postings belong to the firms that published them. What we claim is the compilation and everything we built around it, not the facts themselves. You get a personal, non-exclusive, non-transferable, revocable licence to use Networkly for your own recruiting. You do not get to copy the board, license it on, or take it with you.</p>
+</section>
+<section id="mail-capture" aria-labelledby="mail-capture-title"><h2 id="mail-capture-title">Mail Capture</h2>
+<p>Gmail and Google Calendar connections require separate consent. Gmail access is read-only and supports recruiting capture. Google Calendar access is read-only and mirrors events into your workspace. You can disconnect either in Settings and revoke access through your Google account.</p>
+  <p>Only connect accounts you are entitled to access and use. The <a href="{% url 'accounts:privacy' %}">Privacy Policy</a> explains what is read, retained, and shared with providers.</p>
+</section>
+<section id="who-owns-what" aria-labelledby="who-owns-what-title"><h2 id="who-owns-what-title">Who Owns What</h2>
+<p><strong>Your data is yours.</strong> The contacts, notes, touches, tasks, debriefs and conversations you put into Networkly belong to you. We claim no ownership of them. You give us the narrow licence we need to provide the service: to store your data, process it, back it up, and send the relevant parts to the providers named in the <a href="{% url 'accounts:privacy' %}">Privacy page</a> when you use a feature that needs them. That licence exists to operate Networkly for you and for nothing else, and it ends when your data is deleted.</p>
+  <p><strong>Networkly is ours.</strong> The software, the design, the name, the logo, and the compiled opportunity board, including how it is structured, classified, verified, scored and kept fresh, belong to [LEGAL ENTITY NAME] or our licensors. The underlying job postings belong to the firms that published them. What we claim is the compilation and everything we built around it, not the facts themselves. You get a personal, non-exclusive, non-transferable, revocable licence to use Networkly for your own recruiting. This licence does not permit redistribution or resale of the shared directory.</p>
   <p><strong>AI output.</strong> What an AI feature writes for you is yours to use. We make no claim to it. Be aware that models can produce similar text for different people, so we cannot promise it is unique to you.</p>
   <p><strong>Feedback.</strong> If you send us an idea for the product, we can use it without owing you anything. Do not send us anything confidential as feedback.</p>
-
-  <h2>AI features</h2>
-  <p>Assistant responses, coffee-chat briefs, and contact summaries are drafted by a language model. Treat them as a first draft written by something that does not know your situation as well as you do. They can be confidently wrong about a date, a firm, a person, or a next step. Check anything that matters before you act on it.</p>
+</section>
+<section id="ai-features" aria-labelledby="ai-features-title"><h2 id="ai-features-title">AI Features</h2>
+<p>Assistant responses, coffee-chat briefs, and relationship summaries are generated by a language model. They can be incomplete or incorrect. Review drafts and verify material facts before relying on them or sending a message.</p>
   <p>The advisor can also change your recruiting data when you ask it to, for example logging an interaction or adding a contact. Those writes are labelled as coming from the advisor so you can always tell them apart from your own. You are still responsible for what your recruiting data says.</p>
   <p>Nothing Networkly produces is career, legal, immigration, visa, or financial advice. Work authorization in particular is a question for your university's international office or a qualified lawyer, not for us.</p>
-
-  <h2>Plans and payment</h2>
-  <p>Networkly is free today, and everything described on the pricing page as free stays free for what is listed there. Paid plans are not live. There is no billing in the product and we take no payment details.</p>
-  <p>If that changes, we will publish the price and the terms before anything is charged, and we will not move a feature you already rely on behind a paywall without telling you first.</p>
-
-  <h2>Availability and changes to the service</h2>
-  <p>We may change, add, or remove features, and we may take the service down for maintenance. We will give notice of a material change where we reasonably can. Data connectors break, boards move, firms redesign their career sites. We do not promise the service will be uninterrupted, and we do not promise any particular feature will exist forever.</p>
+</section>
+<section id="plans-and-payment" aria-labelledby="plans-and-payment-title"><h2 id="plans-and-payment-title">Plans and Payment</h2>
+<p>The Free plan is available now. Paid plans shown as previews or waitlists are not purchases, and joining a waitlist does not authorize a charge. Current plan availability and included features appear on the <a href="{% url 'core:pricing' %}">Pricing page</a>.</p>
+  <p>Before paid access becomes available, we will disclose the price, billing period, renewal, cancellation, and applicable refund terms. You must agree to the applicable purchase terms before any charge.</p>
+</section>
+<section id="availability-and-changes-to-the-service" aria-labelledby="availability-and-changes-to-the-service-title"><h2 id="availability-and-changes-to-the-service-title">Availability and Changes to the Service</h2>
+<p>We may change features or temporarily suspend service for maintenance, security, or operational reasons. We will provide reasonable notice of material changes where practicable. We do not guarantee uninterrupted availability or continued access to a particular feature.</p>
   <p>If we shut Networkly down entirely, we will give you reasonable notice and a window to export your data before it goes.</p>
-
-  <h2>No warranty</h2>
-  <p>Networkly is provided as-is and as-available, without warranty of any kind. To the fullest extent the law allows, we disclaim all warranties, express or implied, including implied warranties of merchantability, fitness for a particular purpose, title, accuracy, and non-infringement.</p>
-  <p>In plain terms: we do not warrant that the opportunity data is accurate, complete, or current. We do not warrant that a deadline shown in Networkly is the real deadline. We do not warrant that mail capture will log every message, that AI output is correct, or that the service will be free of errors or interruptions. Confirm anything that matters at the source.</p>
+</section>
+<section id="no-warranty" aria-labelledby="no-warranty-title"><h2 id="no-warranty-title">No Warranty</h2>
+<p>Networkly is provided as-is and as-available, without warranty of any kind. To the fullest extent the law allows, we disclaim all warranties, express or implied, including implied warranties of merchantability, fitness for a particular purpose, title, accuracy, and non-infringement.</p>
+  <p>We do not guarantee that opportunity data is accurate, complete, or current; that mail capture records every message; or that AI output is correct. Verify important information with its original source.</p>
   <p>Some jurisdictions do not allow the exclusion of certain warranties, so parts of this section may not apply to you.</p>
-
-  <h2>Limitation of liability</h2>
-  <p>To the fullest extent the law allows, [LEGAL ENTITY NAME] is not liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for lost profits, lost opportunities, lost offers, lost data, or reputational harm, arising out of or relating to your use of Networkly. This applies whether the claim is in contract, tort, or anything else, and whether or not we were told the damage was possible.</p>
+</section>
+<section id="limitation-of-liability" aria-labelledby="limitation-of-liability-title"><h2 id="limitation-of-liability-title">Limitation of Liability</h2>
+<p>To the fullest extent the law allows, [LEGAL ENTITY NAME] is not liable for any indirect, incidental, special, consequential, exemplary, or punitive damages, or for lost profits, lost opportunities, lost offers, lost data, or reputational harm, arising out of or relating to your use of Networkly. This applies whether the claim is in contract, tort, or anything else, and whether or not we were told the damage was possible.</p>
   <p>Our total liability for all claims relating to Networkly is capped at the greater of the amount you paid us for Networkly in the twelve months before the claim arose, and US$100.</p>
   <p>Nothing here limits liability that cannot lawfully be limited, including liability for death or personal injury caused by negligence, or for fraud or fraudulent misrepresentation. Some jurisdictions do not allow some of these limits, so parts of this section may not apply to you.</p>
-  <p>This section and the one above it allocate risk between us, and they are part of why Networkly can be offered for free.</p>
-
-  <h2>Indemnity</h2>
-  <p>You agree to indemnify and hold harmless [LEGAL ENTITY NAME] and the people who work on it against claims, damages, losses, and reasonable legal costs arising from your breach of these terms, your misuse of Networkly, data you uploaded that you had no right to hold, or your infringement of somebody else's rights. We will tell you promptly about any such claim and you get to control the defence, provided you do not settle in a way that admits fault on our behalf or imposes an obligation on us without our agreement.</p>
-
-  <h2>Closing your account</h2>
-  <p><strong>You can leave whenever you like.</strong> <a href="{% url 'accounts:export' %}">Export everything</a> first if you want it, then <a href="{% url 'accounts:delete' %}">delete your account and everything in it</a> yourself, immediately. Deletion is a hard delete of your private data, not a flag on a row we keep. There is no waiting period for deletion.</p>
+  <p>These limitations apply only to the extent permitted by applicable law and do not exclude rights that cannot legally be waived.</p>
+</section>
+<section id="indemnity" aria-labelledby="indemnity-title"><h2 id="indemnity-title">Indemnity</h2>
+<p>You agree to indemnify and hold harmless [LEGAL ENTITY NAME] and the people who work on it against claims, damages, losses, and reasonable legal costs arising from your breach of these terms, your misuse of Networkly, data you uploaded that you had no right to hold, or your infringement of somebody else's rights. We will tell you promptly about any such claim and you get to control the defence, provided you do not settle in a way that admits fault on our behalf or imposes an obligation on us without our agreement.</p>
+</section>
+<section id="closing-your-account" aria-labelledby="closing-your-account-title"><h2 id="closing-your-account-title">Closing Your Account</h2>
+<p><strong>You may close your account at any time.</strong> <a href="{% url 'accounts:export' %}">Export your recruiting records</a> first if needed, then <a href="{% url 'accounts:delete' %}">delete your account</a> in Settings. Deletion removes private database records from the active service. The <a href="{% url 'accounts:privacy' %}#retention">Privacy Policy</a> explains retention and separately held copies.</p>
   <p><strong>We can close an account too.</strong> We may suspend or terminate your access if you break these terms, if we are required to by law, or if keeping the account open puts other users or the service at risk. Where we reasonably can, we will tell you first and give you a chance to export. Where the reason is serious abuse or a legal requirement, we may act immediately.</p>
-  <p>If we close your account for a reason other than serious abuse, you get at least 30 days to export before your data is deleted. If we close it for serious abuse, we may delete immediately. Either way, we do not keep and use the data of an account we closed. Backups roll off on their normal cycle.</p>
+  <p>If we close your account for a reason other than serious abuse, we will provide at least 30 days to export your records before deletion. For serious abuse, deletion may be immediate. Backup and provider retention are described in the Privacy Policy.</p>
   <p>Sections that by their nature should survive the end of this agreement do: ownership, no warranty, limitation of liability, indemnity, and governing law.</p>
-
-  <h2>Changes to these terms</h2>
-  <p>We may update these terms as the product grows. The date at the top tells you which version you are reading. If a change materially affects you, we will say so in the app or by email before it takes effect, rather than bury it. If you keep using Networkly after that, you accept the new version. If you do not, delete your account, and you owe us nothing.</p>
-
-  <h2>Governing law and disputes</h2>
-  <p>These terms are governed by [Governing law / jurisdiction -- TODO: confirm with counsel], without regard to conflict-of-laws rules. Any dispute will be brought in [ARBITRATION VENUE / FORUM -- TODO: confirm with counsel], and you and we each submit to that forum.</p>
+</section>
+<section id="changes-to-these-terms" aria-labelledby="changes-to-these-terms-title"><h2 id="changes-to-these-terms-title">Changes to These Terms</h2>
+<p>We may update these terms. The date above identifies the revision. We will notify you in the app or by email before material changes take effect. If you do not agree with an update, you can export your records and close your account before the effective date.</p>
+</section>
+<section id="governing-law-and-disputes" aria-labelledby="governing-law-and-disputes-title"><h2 id="governing-law-and-disputes-title">Governing Law and Disputes</h2>
+<p>These terms are governed by [Governing law / jurisdiction -- TODO: confirm with counsel], without regard to conflict-of-laws rules. Any dispute will be brought in [ARBITRATION VENUE / FORUM -- TODO: confirm with counsel], and you and we each submit to that forum.</p>
   <p>If you are a consumer, nothing here takes away the protection of the mandatory consumer law of the country you live in, or your right to bring a claim in your local courts where that law gives you one.</p>
   <p>Before either of us files anything, write to [CONTACT EMAIL] and describe the problem. We will try to resolve the issue with you.</p>
-
-  <h2>The rest</h2>
-  <ul>
+</section>
+<section id="the-rest" aria-labelledby="the-rest-title"><h2 id="the-rest-title">The Rest</h2>
+<ul>
     <li><strong>Severability.</strong> If a court finds part of these terms unenforceable, that part is trimmed to the minimum that works, or removed, and everything else stays in force.</li>
     <li><strong>No waiver.</strong> If we do not enforce something straight away, we have not given up the right to enforce it later.</li>
     <li><strong>Assignment.</strong> You may not transfer your account or these terms to someone else. We may transfer them to a successor if Networkly is sold or reorganised, and we will tell you if that happens.</li>
@@ -147,10 +154,11 @@ OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
     <li><strong>Entire agreement.</strong> These terms and the <a href="{% url 'accounts:privacy' %}">Privacy page</a> are the whole agreement between you and us about Networkly, and they replace anything said earlier.</li>
     <li><strong>Notices.</strong> We reach you at the email on your account. You reach us at [CONTACT EMAIL].</li>
   </ul>
-
-  <h2>Contact</h2>
-  <p>Anything about these terms, including the parts you think are unfair: [CONTACT EMAIL].</p>
-
-  <p class="muted"><a href="{% url 'accounts:privacy' %}">Privacy</a></p>
+</section>
+<section id="contact" aria-labelledby="contact-title"><h2 id="contact-title">Contact</h2>
+<p>For questions about these terms, contact [CONTACT EMAIL].</p>
+</section>
+    </article>
+  </div>
 </div>
 {% endblock %}

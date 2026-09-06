@@ -189,8 +189,8 @@ with sync_playwright() as p:
             page.set_viewport_size({"width": width, "height": 900})
             page.goto(B + "/opportunities/", wait_until="networkidle")
             filters = page.locator("[data-filters-more]")
-            if not filters.get_attribute("open") and width <= 640:
-                filters.locator("summary").click()
+            if filters.get_attribute("open") is None:
+                page.locator("[data-filters-toggle]").click()
             for theme in ("light", "dark"):
                 page.evaluate(
                     "t => document.documentElement.setAttribute('data-theme',t)", theme

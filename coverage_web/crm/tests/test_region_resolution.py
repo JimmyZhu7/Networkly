@@ -493,7 +493,7 @@ def test_the_guess_caveat_becomes_the_way_to_place_them(client):
     _place(user, _firm(["hk", "us"]), warmth="replied")
     client.force_login(user)
     body = client.get(reverse("crm:contact_list"), {"scope": "us"}).content.decode()
-    assert "Shown on a guess." in body
+    assert "Grouped by an inferred market." in body
     assert "?scope=unplaced" in body
 
 

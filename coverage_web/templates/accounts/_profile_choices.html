@@ -1,0 +1,12 @@
+{# Native disclosure keeps all checkbox values in the form, including closed groups. #}
+<details class="profile-choices"{% if compact or field.errors %} open{% endif %}>
+  <summary>
+    <span class="profile-choice-title">{{ group_label }}</span>
+    <span class="profile-choice-values" data-profile-choice-values>
+      {% if field.value %}{% for choice in field %}{% if choice.data.selected %}<span>{{ choice.choice_label }}</span>{% endif %}{% endfor %}{% else %}<span>Not set</span>{% endif %}
+    </span>
+  </summary>
+  {% if group_hint %}<p class="field-hint">{{ group_hint }}</p>{% endif %}
+  <div class="chipset">{{ field }}</div>
+  {{ field.errors }}
+</details>

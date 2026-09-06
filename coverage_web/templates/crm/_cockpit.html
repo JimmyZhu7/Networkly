@@ -1,157 +1,17 @@
 {% load textstyle %}
 {% comment %}
-The Today cockpit (htmx swap target). Left: today's PLAN — the cadence queue
-capped to what a student with ~6 hours a week can actually do, ordered by
-relationship momentum rather than firm alphabet, split into three semantic
-lanes. Everything the cap held back is one click away under "Up next", with
-the exact count and the policy holding it. Right (`.cockpit-rail`, ordered
-2026-08-31 per the founder's own words: "outreach this week goes on top,
-then deadlines, then unplaced"): a getting-started checklist while setup is
-unfinished, the week's pace, the chats already on the calendar, this cycle's
-deadlines, and a recent-activity feed. Re-rendered whole on every quick
-action so all of it stays in sync.
-
-The unplaced arrivals are no longer the fourth card in that order. On
-2026-09-02 the founder asked for them inside the pace card ("Combine this
-with unsorted contacts, make into one widget"), so the third rung of his own
-2026-08-31 ordering is gone rather than reordered: what he ranked last of
-three now rides with what he ranked first, and Deadlines is the only card
-between them that moved at all — from second of three to second of two.
-
-THE COPY RULE FOR EVERY CARD IN THAT RAIL (2026-09-02, the founder reading
-his own screenshots: "the cards are wordy and the spacing is wrong"). The
-pass of 2026-08-31 made every claim state its provenance in prose and the
-sentences stacked. Keep every FACT, cut the EXPLANATION: a fact the student
-acts on is a line, and a fact about where that fact came from is a `title`,
-a chip, or nothing. One idea per line. No sentence a chip could carry. No
-label that repeats the heading directly above it.
-
-AND ONE READING RULE THE RAIL NOW HOLDS THROUGHOUT, because two cards print
-day counts and they used to disagree: a bare "Nd" is time already spent, and
-a distance into the future says "in". See `crm.today._next_deadlines` and
-`crm.today._recent_activity`, which state the two halves of it.
-
-
-WHAT LEADS THIS COLUMN, AND WHY. Read this before moving a section.
-
-The order below is not the order these features were built in. It was, and
-that is exactly what was wrong with it: the day's actual plan rendered sixth,
-behind a debrief lane, a proposals queue and a paid-feature pitch, so a
-student opening Today to find out what was urgent scrolled past an
-advertisement to reach it.
-
-THE RULE IS THE PAGE'S OWN, ONE LEVEL UP. `crm/today.py` already ranks
-individual actions by whose clock is running: `CLASS_CRITICAL` is defined
-there as "a real clock the world produced", and `_stale_critical` splits a
-live deadline (a clock that "belongs to the world, not to how long the
-student has been ignoring us") from a question that merely went unanswered.
-Sections are ranked by that same question, not by a second opinion about
-what matters:
-
-  1. a clock owned by the world that runs out TODAY and cannot be re-run
-  2. work due against such a clock
-  3. clocks that already fired and the plan stopped budgeting for
-  4. facts with a date on them the student has not been asked to act on yet
-  5. records that DECAY — true now, worth less each day, but nothing closes
-  6. decisions waiting on nobody's clock
-  7. standing backlog — as true tomorrow as today
-  8. anything that is not information about this student's pipeline at all
-
-THE ONE TIE-BREAK THIS ORDER STILL LEANS ON. A DISCLOSURE TRAVELS WITH THE
-THING IT DISCLOSES. "Up next" is not a section of work, it is the footnote
-that explains the "2 of 29 today" in the lane heading above it. It is not
-ranked; it follows the plan. (Until 2026-08-31 a second tie-break lived here
-for "Your board", a lane that mixed a dated fact — rung 4 — with a coverage
-gap — rung 7 — and was ranked by the more time-critical of the two. That
-lane is gone, and so is the coverage-gap lane that briefly survived it under
-its own heading; see the note below the render order for the full history.)
-
-WHAT THIS ORDER DELIBERATELY DOES NOT DO. It does not move a section by how
-old its contents are. The page has exactly one age-driven mechanism —
-`_stale_critical` — and it moves CARDS between sections rather than moving a
-section up and down the page. A page whose shape changes daily is a page a
-student cannot learn, and every span here is bounded anyway (a debrief
-expires, `DEBRIEF_EXPIRES_AFTER_DAYS`; a critical decays out at
-`CRITICAL_STALE_BUSINESS_DAYS`). Severity picks the slot once; it does not
-re-sort the page every morning.
-
-THE ORDER, with the rung each section is claiming:
-
-   1. Chat prep .......... 1  a chat today, at a time. Nothing else on this
-                             page expires at 2pm.
-   2. Today's plan ....... 2  the day's work; `_today_sort_key` already puts
-                             its criticals first WITHIN it, so the section
-                             needs no "is one of these critical" flag to
-                             earn this slot — it is always claiming rung 2.
-   3. Found in your inbox   6 real, waiting on a yes or no, on no clock. The
-                             whole family: undo strip, the four narration
-                             phases, reviewed batch, contact proposals, what
-                             your mail said, application updates.
-   4. Empty states ....... -  the page's headline when there is no plan.
-   5. Start here ......... -  introduced by the headline directly above it;
-                             that adjacency is why it sits here and not by
-                             rung. Gated in Python to a queue with nothing
-                             in it, so it never competes with real work.
-   6. Still open ......... 3  criticals that aged out of the exemption. The
-                             plan has stopped budgeting for them and there
-                             is no morning on which they arrive.
-   7. Up next ............ -  the plan's own disclosure, right below the
-                             lane it explains rather than by numeric rung.
-   8. Log what you learned  5 an unwritten debrief decays; nothing closes.
-   9. Run Autopilot ...... 8  the pitch, and only the pitch. Below the cards
-                             it is an offer about. See its own note.
-  10. Waiting / worth a second look / gone quiet — reassurance, second
-      looks and exits. Unchanged, and correctly last: none of it is work.
-
-WHY 3 (FOUND IN YOUR INBOX) MOVED UP, 2026-08-29. It used to render ninth,
-below the debrief lane and the still-open lane, which on an ordinary day put
-it under enough content that the founder reported it as missing from the
-page entirely. That is the real cost of ranking a section purely by "is a
-clock running on it": a thing with no deadline still has to be FINDABLE, and
-a review queue nobody scrolls to is a review queue that does not exist. It
-now sits directly under the plan, above the empty states, so the two AI-fed
-lanes (what the mailbox proposed, what your applications did) are on screen
-without a scroll.
-
-WHAT USED TO BE "YOUR BOARD", REMOVED 2026-08-31. This lane mixed a
-confirmed dated firm event (`_plays`) with a coverage-gap card
-(`_coverage_cards`) and sat at rung 4 — forced there by the tie-break above,
-because its dated half could carry the same time-critical fact as the plan's
-own critical lane. The founder judged the lane not practically useful (his
-own words: "just take away the board i dont think its practically useful")
-and it was removed whole, heading and markup and dismiss buttons and all.
-
-Nothing about a confirmed firm date was lost: the rail's Deadlines card
-(below, in `.cockpit-rail`) already named the identical facts on its own,
-and it now shows its full natural set again instead of the overflow-only
-slice it was cut down to while the two lanes were arguing about the same
-rows. The coverage-gap half — tiered firms the student knows nobody at — got
-a new home that same pass: it was the only reachable version of "add
-someone at an empty firm" for an account above `SEED_NETWORK_FLOOR`, so
-deleting it with the rest of the board would have been a real regression
-wearing the costume of cleanup. It rendered for a few hours under its own
-plain heading, "Firms with no contacts yet", at its own honest rung — 7,
-standing backlog, not the borrowed rung 4 the mixed lane forced on it.
-
-THAT LANE IS ALSO GONE NOW, deleted later the same day. The founder looked
-at its actual rendered output on his own account — one card, "BlackRock,
-Tier 2 target, Nobody there yet" — and said "this look useless": a direct,
-informed reaction to the feature working as designed, not a hypothetical
-objection to the idea of it. Being the only reachable version of a real gap
-does not make a card worth showing if nobody reading it agrees. There is no
-replacement: an account past `SEED_NETWORK_FLOOR` gets no nudge for an empty
-tiered firm at all, which is an honest silence rather than a feature kept
-alive past its own evidence.
-
-Render position 6 ("Still open") lands out of rung order on purpose, same as
-before the board's removal: it sits below the empty-state headline because
-that headline names it ("N questions are still open below") and is the
-page's opening sentence on a day with no plan. Ordering is a compromise with
-copy exactly once, and this is the once.
+Today cockpit: dated work and the current plan lead. Other inbox decisions,
+paused-connection review and the held queue retain their existing actions.
+Market assignment, firm updates and recent activity follow the plan in the
+main column. The rail holds weekly outreach and dated context. Quick actions replace this cockpit; weekly-firm-updates preserves
+initial-page event context because action responses do not rebuild it.
 {% endcomment %}
 <div class="cockpit">
   <div class="cockpit-main">
-    <h2 class="workspace-section-title">Your next steps</h2>
+    <header class="nextsteps-head">
+      <h2 class="workspace-section-title">Your Next Steps</h2>
+      <p class="nextsteps-status">{% if planned_total %}<strong>{{ planned_total }} outreach task{{ planned_total|pluralize }} in today’s plan.</strong>{% elif blackout %}Outreach is paused {% if blackout == "weekend" %}for the weekend{% else %}for the holidays{% endif %}.{% else %}No outreach tasks due today.{% endif %}{% if blackout %} Confirmed deadlines stay in today’s plan.{% endif %}</p>
+    </header>
 
     {% comment %}
     Chat prep. RUNG 1, and first on the page whenever it exists: a
@@ -168,7 +28,7 @@ copy exactly once, and this is the once.
       <section class="lane lane-prep">
         <h2 class="lane-title">
           <span class="lane-dot"></span>
-          Chat{{ chat_prep|length|pluralize }} today
+          Chat{{ chat_prep|length|pluralize }} Today
           <span class="lane-count" aria-live="polite">{{ chat_prep|length }}</span>
         </h2>
         <div class="act-grid">
@@ -237,7 +97,7 @@ copy exactly once, and this is the once.
     skin, no control. It is a statement about the calendar, nothing to spend
     and nothing to undo. Renders nothing on a working day.
     {% endcomment %}
-    {% if blackout %}
+    {% if blackout and not held_total %}
       <div class="prop-undo ap-strip-quiet" role="status" data-blackout="{{ blackout }}">
         <span class="prop-undo-said">
           {% if blackout == "weekend" %}It's the weekend. {% endif %}Outreach resumes {{ blackout_resumes }}.
@@ -288,7 +148,8 @@ copy exactly once, and this is the once.
     {% endfor %}
 
 {% comment %}
-    Found in your inbox. People the mailbox scan judged worth tracking —
+              Found in Your Inbox
+. People the mailbox scan judged worth tracking —
     proposals, not contacts. Nothing is in the CRM until Add is tapped
     (capture/discovery.py), and Dismiss is remembered forever by the SCAN —
     never again proposed automatically, always restorable by hand (the Undo
@@ -341,7 +202,7 @@ copy exactly once, and this is the once.
       <div class="prop-undo" role="status">
         <span class="prop-undo-said">
           {% if park_undo.who %}Paused {{ park_undo.who|smart_title }}.{% else %}Paused {{ park_undo.count }} contacts.{% endif %}
-          <span class="prop-undo-note">They keep every interaction. A reply un-parks anyone; the whole group is on <a href="{% url 'crm:contact_parked' %}">Paused contacts</a>.</span>
+          <span class="prop-undo-note">They keep every interaction. A reply resumes outreach; the whole group is on <a href="{% url 'crm:contact_parked' %}">Paused contacts</a>.</span>
         </span>
         <button type="button" class="btn prop-undo-btn"
                 hx-post="{% url 'crm:contacts_park_undo' %}"
@@ -426,7 +287,7 @@ copy exactly once, and this is the once.
       <div class="prop-undo ap-strip ap-strip-quiet" role="status">
         <span class="prop-undo-said">
           Autopilot could read {{ autopilot_state.preview.candidates }} card{{ autopilot_state.preview.candidates|pluralize }} for you, but your credits are used up.
-          <span class="prop-undo-note">Nothing was started and nothing was charged.{% if autopilot_state.preview.refill_on %} Credits refill {{ autopilot_state.preview.refill_on|date:"j M" }}.{% endif %} The cards below still work by hand.</span>
+          <span class="prop-undo-note">No review was started and no credits were used.{% if autopilot_state.preview.refill_on %} Credits refill {{ autopilot_state.preview.refill_on|date:"j M" }}.{% endif %} You can still review the cards below yourself.</span>
         </span>
       </div>
     {% comment %}
@@ -453,7 +314,7 @@ copy exactly once, and this is the once.
       <div class="prop-undo ap-strip" role="status">
         <span class="prop-undo-said">
           Autopilot read this scan: {{ autopilot_review.accepts }} ready to add{% if autopilot_review.escalations %}, {{ autopilot_review.escalations }} left for you below{% endif %}.
-          <span class="prop-undo-note">Every decision quotes the line it stands on. <a href="{% url 'crm:autopilot_log' %}">Check its work</a>, or undo any of it later.</span>
+          <span class="prop-undo-note">Every decision cites its supporting evidence. <a href="{% url 'crm:autopilot_log' %}">Check its work</a>, or undo any of it later.</span>
           {% comment %}
           WHAT IT COULD AND COULD NOT READ. A run that judged 53 rows
           having been told "OTHER MAIL … none found" accepted a man who
@@ -476,7 +337,7 @@ copy exactly once, and this is the once.
     {% if proposals %}
       <section class="lane lane-proposals">
         <h2 class="lane-title">
-          Found in your inbox
+          Found in Your Inbox
           {# E2's rule holds here too: a capped lane never renders a bare number. #}
           <span class="lane-count" aria-live="polite">{{ proposals|length }}{% if proposals_total > proposals|length %} of {{ proposals_total }}{% endif %}</span>
           {% if proposals|length > 1 %}
@@ -692,7 +553,7 @@ copy exactly once, and this is the once.
     {% if mail_facts %}
       <section class="lane lane-mailfacts">
         <h2 class="lane-title">
-          Your mail said
+          Your Mail Said
           <span class="lane-count" aria-live="polite">{{ mail_facts|length }}</span>
         </h2>
         <div class="act-grid">
@@ -799,14 +660,14 @@ copy exactly once, and this is the once.
           gate returns no seeds for them, and they keep the line they earned.
           {% endcomment %}
           {% if seeds %}
-            <h2>Nothing due today.</h2>
-            <p>Your network is still thin, so the cadence has little to work with.</p>
+            <h2>Nothing Due Today.</h2>
+            <p>Add contacts to get more outreach suggestions.</p>
           {% else %}
-            <h2>You're all caught up.</h2>
-            <p>Add people or log an interaction to keep the cadence moving.</p>
+            <h2>You're All Caught Up.</h2>
+            <p>Add contacts or log an interaction to update your outreach plan.</p>
           {% endif %}
         {% else %}
-          <h2>No contacts yet.</h2>
+          <h2>No Contacts Yet.</h2>
           <p>Add the people you're networking with and Networkly will tell you who to reach, and when.</p>
         {% endif %}
         {% comment %}
@@ -815,7 +676,7 @@ copy exactly once, and this is the once.
         {% endcomment %}
         {% if not seeds %}<a class="btn" href="{% url 'crm:contact_list' %}">Go to Network</a>{% endif %}
       </div>
-    {% elif not lanes and not bench and not debriefs and not proposals and not app_events and not mail_facts %}
+    {% elif not lanes and not bench and not debriefs and not proposals and not app_events and not mail_facts and not held_total %}
       {% comment %}
       The plan is clear but the queue is not. This is the product working, so
       it is styled as a win — and it names what's left rather than implying
@@ -832,11 +693,11 @@ copy exactly once, and this is the once.
       {% endcomment %}
       <div class="empty empty--done">
         {% include "_nav_icon.html" with name="check" %}
-        <h2>Done for today.</h2>
+        <h2>Done for Today.</h2>
         <p>
           {% if still_open_total %}{{ still_open_total }} {% if still_open_total == 1 %}question is{% else %}questions are{% endif %} still open below. {% endif %}
           {% if held_total %}{{ held_total }} more {% if held_total == 1 %}is{% else %}are{% endif %} {% if blackout %}waiting for {{ blackout_resumes }}{% else %}pacing out over the coming days{% endif %}. {% endif %}
-          {% if park_total %}{{ park_total }} {% if park_total == 1 %}contact has{% else %}contacts have{% endif %} gone quiet; park them below. {% endif %}
+          {% if park_total %}{{ park_total }} {% if park_total == 1 %}contact has{% else %}contacts have{% endif %} gone quiet; pause outreach below. {% endif %}
           That's {{ pace.done }} of {{ pace.goal }} this week.
         </p>
       </div>
@@ -914,8 +775,8 @@ copy exactly once, and this is the once.
     {% if still_open_total %}
       <section class="lane lane-stale">
         <h2 class="lane-title">
-          Still open <span class="lane-count" aria-live="polite">{{ still_open_total }}</span>
-          <span class="lane-note">no longer taking a slot</span>
+          Still Open <span class="lane-count" aria-live="polite">{{ still_open_total }}</span>
+          <span class="lane-note">outside today’s plan</span>
         </h2>
         <div class="act-grid">
           {% for a in still_open %}{% include "crm/_act_card.html" with a=a idx=forloop.counter0 %}{% endfor %}
@@ -933,19 +794,53 @@ copy exactly once, and this is the once.
     headings, and it belongs near what it footnotes rather than at whatever
     rung its contents would score. Collapsed, it costs one line of scroll.
     {% endcomment %}
+    {% comment %}A live opening suggests a paused connection to review before the held queue. Restore/leave retain the existing state and dismissal semantics.{% endcomment %}
+    {% if bench %}
+      <section class="lane lane-bench">
+        <h2 class="lane-title">
+          Review a Paused Connection <span class="lane-count" aria-live="polite">{{ bench|length }}</span>
+        </h2>
+        <div class="act-grid">
+          {% for b in bench %}
+            <article class="act-card act-bench kin-reveal panel panel--edge">
+              <div class="bench-heading">
+                <h3 class="act-name"><a href="{% url 'crm:contact_detail' b.contact.id %}">{{ b.contact.name|smart_person_name|smart_title }}</a></h3>
+                <span class="bench-identity">{{ b.firm_name|smart_title }}{% if b.contact.school_affiliation %} · alum{% endif %}<span class="chip">Outreach paused</span></span>
+              </div>
+              <div class="bench-context">
+                <p class="act-reason">{{ b.reason }}</p>
+                <p class="bench-history">{% if b.strength_clause %}{{ b.strength_clause|capfirst }}{% else %}{{ b.contact.warmth|relationship_label }}{% endif %} · Last interaction {{ b.days_since }} day{{ b.days_since|pluralize }} ago</p>
+              </div>
+              <div class="act-quick">
+                <div class="act-primary">
+                  <button type="button" class="btn btn-primary act-btn"
+                          aria-label="Bring {{ b.contact.name }} back into the queue"
+                          title="Resumes outreach and returns this contact to the queue."
+                          hx-post="{% url 'crm:today_bench_act' b.contact.id 'restore' %}">Resume outreach</button>
+
+                  {% if b.contact.email %}
+                    <a class="btn act-btn" href="{{ b.mailto }}" aria-label="Compose an email to {{ b.contact.name }}">Draft email</a>
+                  {% endif %}
+                  <button type="button" class="btn btn-quiet act-btn bench-keep"
+                          aria-label="Leave {{ b.contact.name }} paused for this opening"
+                          title="Stays paused. This opening won't suggest them again; a new one later can."
+                          hx-post="{% url 'crm:today_bench_act' b.contact.id 'leave' %}">Keep paused</button>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+
     {% if held_total %}
       <details class="upnext panel">
         <summary>
-          <span class="upnext-count">{{ held_total }} more queued</span>
-          {% comment %}
-          On a blackout day the cap is not what holds these, so its number is
-          not quoted: "pacing out at 5 a day" would count 94 held cards as
-          owed at five a morning through Christmas week. Same switch in the
-          "Done for today" line above and the pace card's caption in the rail.
-          {% endcomment %}
-          <span class="upnext-why">{% if blackout %}waiting for {{ blackout_resumes }}{% else %}pacing out at {{ daily_cap }} a day{% endif %}</span>
-          <span class="upnext-toggle">Show all</span>
+          <span class="upnext-heading"><span class="upnext-count">{% if blackout %}Outreach resumes {{ blackout_resumes }}{% else %}Next in Your Queue{% endif %}</span><span class="upnext-why">{{ held_total }} contact{{ held_total|pluralize }} waiting</span></span>
+          <span class="upnext-toggle" aria-hidden="true"></span>
         </summary>
+        <p class="upnext-context"{% if blackout %} data-blackout="{{ blackout }}"{% endif %}>{% if blackout %}The plan resumes {{ blackout_resumes }} with up to {{ daily_cap }} contacts a day.{% else %}Your plan includes up to {{ daily_cap }} contacts a day.{% endif %} Confirmed deadlines can exceed that limit. Review or draft ahead; nothing is sent automatically.</p>
         <div class="act-grid upnext-grid">
           {% for a in held %}{% include "crm/_act_card.html" with a=a idx=forloop.counter0 %}{% endfor %}
         </div>
@@ -998,8 +893,8 @@ copy exactly once, and this is the once.
                 <span class="chip warmth-{{ d.contact.warmth }}">{{ d.contact.warmth|relationship_label }}</span>
               </div>
               <div class="act-context">
-                <div class="act-badges"><span class="prio prio-debrief">Write it down</span></div>
-                
+                <div class="act-badges"><span class="prio prio-debrief">Add chat notes</span></div>
+
               </div>
               <div class="act-quick">
                 <div class="act-primary">
@@ -1065,64 +960,6 @@ copy exactly once, and this is the once.
     set built solely to feed it are both gone with it.
     {% endcomment %}
 
-    {% comment %}
-    The bench (Phase 1 bench design, 2026-08-27, crm.today._opening_bench).
-    Parked contacts are not gone: a live opening at a chatted/advocate-parked
-    contact's firm may draw ONE of them back into view here, never more than
-    one and never on a timer — only "Bring back" or "Leave parked" changes
-    anything, and both are equal-weight buttons so the student's original
-    park decision is respected by default. Cold- and replied-parked contacts
-    never appear here (see the module note on `_opening_bench`).
-    {% endcomment %}
-    {% if bench %}
-      <section class="lane lane-bench">
-        <h2 class="lane-title">
-          Worth a second look <span class="lane-count" aria-live="polite">{{ bench|length }}</span>
-          <span class="lane-note">paused, but something's live at their firm</span>
-        </h2>
-        <div class="act-grid">
-          {% for b in bench %}
-            <article class="act-card kin-reveal panel panel--edge">
-              <div class="act-ident">
-                <div class="act-idtext">
-                  <span class="opp-firm{% if b.contact.school_affiliation %} is-school{% endif %}">{{ b.firm_name|smart_title }}{% if b.contact.school_affiliation %} · alum{% endif %}</span>
-                  <h3 class="act-name"><a href="{% url 'crm:contact_detail' b.contact.id %}">{{ b.contact.name|smart_person_name|smart_title }}</a></h3>
-                </div>
-                <span class="chip warmth-{{ b.contact.warmth }}">{{ b.contact.warmth|relationship_label }}</span>
-              </div>
-              <div class="act-context">
-                <div class="act-badges"><span class="prio">Paused</span></div>
-                <p class="act-reason">
-                  {{ b.reason }}{% if b.strength_clause %} You have met — {{ b.strength_clause }}.{% endif %}
-                </p>
-                <p class="act-last">Paused, quiet {{ b.days_since }} day{{ b.days_since|pluralize }}.</p>
-              </div>
-              <div class="act-quick">
-                {% comment %}
-                Equal weight, deliberately — neither `btn-primary` nor
-                `act-ghost`. "Leave parked" is not a dismissal link; it is
-                the student's original decision, respected by default.
-                {% endcomment %}
-                <div class="act-primary">
-                  <button type="button" class="btn act-btn"
-                          aria-label="Bring {{ b.contact.name }} back into the queue"
-                          title="Un-parks this one contact. Nothing else does — no timer ever will."
-                          hx-post="{% url 'crm:today_bench_act' b.contact.id 'restore' %}">Resume outreach</button>
-                  <button type="button" class="btn act-btn"
-                          aria-label="Leave {{ b.contact.name }} paused for this opening"
-                          title="Stays paused. This exact opening won't suggest them again; a new one later can."
-                          hx-post="{% url 'crm:today_bench_act' b.contact.id 'leave' %}">Leave paused</button>
-                  {% if b.contact.email %}
-                    <a class="btn act-btn" href="{{ b.mailto }}"
-                       aria-label="Compose an email to {{ b.contact.name }}">Draft email</a>
-                  {% endif %}
-                </div>
-              </div>
-            </article>
-          {% endfor %}
-        </div>
-      </section>
-    {% endif %}
 
     {% comment %}
     Gone-quiet strip. These are exits, not work, so they never occupy a plan
@@ -1133,7 +970,7 @@ copy exactly once, and this is the once.
     {% if park_total %}
       <section class="lane lane-park">
         <h2 class="lane-title">
-          Gone quiet <span class="lane-count" aria-live="polite">{{ park_total }}</span>
+          Gone Quiet <span class="lane-count" aria-live="polite">{{ park_total }}</span>
           {% if park_bulk %}
             {% comment %}
             The count is in the dialog, not only in the flash afterwards.
@@ -1145,7 +982,7 @@ copy exactly once, and this is the once.
             <button type="button" class="btn act-ghost park-all"
                     aria-label="Pause all {{ park_total }} contacts who have gone quiet"
                     title="Pause every contact in this strip"
-                    hx-confirm="Park all {{ park_total }}? A reply un-parks anyone, and you can undo this straight after."
+                    hx-confirm="Pause outreach for all {{ park_total }} contacts? A reply resumes outreach. You can undo this immediately."
                     hx-post="{% url 'crm:today_park_all' %}">Pause all {{ park_total }}</button>
           {% endif %}
         </h2>
@@ -1155,6 +992,7 @@ copy exactly once, and this is the once.
       </section>
     {% endif %}
 
+    {% include "crm/_today_context.html" %}
   </div>
 
   <aside class="cockpit-rail">
@@ -1179,7 +1017,7 @@ copy exactly once, and this is the once.
     {% endcomment %}
     {% if getting_started %}
       <div class="rail-card getting-started-card panel">
-        <h3 class="rail-title">Getting started</h3>
+        <h3 class="rail-title">Getting Started</h3>
         <ul class="getting-started-list">
           {% for item in getting_started %}
             <li class="getting-started-row{% if item.done %} is-done{% endif %}">
@@ -1195,202 +1033,16 @@ copy exactly once, and this is the once.
       </div>
     {% endif %}
 
-    {% comment %}
-    Pace. THE RING IS GONE (2026-09-02, the founder on his own screenshot:
-    "too complicated, refine with opus").
-
-    It had been shrunk twice already — 120px with the figure inside it and a
-    caption under, then 56px laid sideways — and shrinking was never the
-    problem. The problem is that this card stated the same week four times:
-    the ring's arc length, the `39/14` figure, the "Weekly goal hit."
-    sentence, and the last bar of the sparkline. On the founder's own
-    screenshot the week was 39 against a goal of 14, so `pace.pct` clamped to
-    100, the arc closed into a complete circle, and the ring rendered as a
-    plain green outline — the one state in which it is literally
-    indistinguishable from its own empty track. A meter that looks identical
-    at 100% and at 0% is not a meter.
-
-    Nothing measured was lost, because the ring measured nothing of its own:
-    it was `pace.done / pace.goal` drawn imprecisely and capped, and both of
-    those numbers are printed beside it to the unit.
-
-    THE SPARKLINE WENT THE SAME DAY, a few hours behind the ring, and for a
-    plainer reason than the ring did: the founder looked at what was left and
-    said "remove the bar below, just leave 76 /14 OUTREACH THIS WEEK /
-    Weekly goal hit." The pass that deleted the ring kept eight bars on the
-    argument that they were the better picture of the same fraction — this
-    week plus the eight before it, goal-hitting weeks filled, this week
-    marked. That argument was about which of two pictures to keep. It never
-    asked whether the card wanted a picture, and the answer is that it does
-    not: a rail card is read in the two seconds between finishing one queue
-    row and starting the next, and in those two seconds the eight-week shape
-    is decoration beside a figure that already says the week to the unit.
-    `pace_history` and `_pace_history` are deleted with it rather than left
-    computing eight weeks of `TruncWeek` counts for nobody, and so are
-    `.pace-spark`, `.pace-spark-bar` and `@keyframes mrail-grow`.
-
-    ONE WIDGET, TWO HALVES (same instruction, second sentence: "Combine this
-    with unsorted contacts, make into one widget"). What used to be the
-    "Contacts to place" rail card is now an inset panel inside this one; the
-    block below carries the whole argument for how the two are told apart.
-
-    What remains at the top of the card is two things that each say something
-    the other does not: the figure (exactly where you are) and the note (what
-    is still owed, or the blackout, or that the goal is hit).
-    {% endcomment %}
-    <div class="rail-card pace-card panel">
-      {% comment %}
-      The number counts only touches YOU logged — replies and
-      state-correction audit rows are not your work and never move it.
-
-      `outreach this week` wrapped onto a second line beside the numeral, and
-      the ring is why. Measured on the founder's own week (39/14, the widest
-      the figure gets) the figure and its label need 204px; the padded card
-      offers 268px on the 320px rail and 299px once the rail stacks. The ring
-      and its gap were taking 72px of that, which is the whole of the
-      shortfall. With the ring gone the pair fits everywhere with room to
-      spare, so the label stays on the figure's line rather than being
-      demoted to its own — one fewer block in a card the founder already
-      read as having too many.
-      {% endcomment %}
-      <p class="pace-figure">
-        <span class="pace-done">{{ pace.done }}</span><span class="pace-goal">/{{ pace.goal }}</span>
-        <label class="pace-lbl" for="weekly-outreach">outreach this week</label>
-      </p>
-      <progress class="pace-progress" id="weekly-outreach" value="{{ pace.done }}" max="{{ pace.goal }}" aria-valuetext="{{ pace.done }} of {{ pace.goal }} outreach this week">{{ pace.done }} of {{ pace.goal }}</progress>
-      <p class="pace-note">
-        {% comment %}
-        "touches" dropped (2026-08-31, the founder's own wording): the
-        bare count reads plainer, and it also retires the pluralize
-        gotcha the old sentence needed a test for -- `pluralize` with
-        no argument yields "touchs", not "touches", which is why the
-        old copy had to spell out `pluralize:"es"` explicitly. Nothing
-        here needs that any more.
-
-        On a blackout day (crm.today.outreach_blackout) the caption names
-        the day outreach resumes instead of a number: "14 more to go" on
-        Dec 24 is the card owing the student fourteen sends in the one
-        week the page is telling them not to send. The figure above stays
-        exactly what it is; only the ask changes.
-        {% endcomment %}
-        {% if pace.hit %}Weekly goal hit.{% elif blackout %}Resumes {{ blackout_resumes }}.{% else %}<b>{{ pace.remaining }}</b> more to go.{% endif %}
-      </p>
-      {% comment %}
-      THE WEEK'S UNPLACED ARRIVALS, THE SECOND HALF OF THIS CARD. See
-      crm.today._unplaced_arrival_count's own module note for why the pool
-      exists at all; the short version is that this product never infers a
-      region it cannot entail, so a contact captured from Gmail at a firm
-      running both a US and a Hong Kong desk arrives blank and stays blank
-      until a person says otherwise. Correct, and the designed steady state.
-      What was missing is that nobody found out until it had reached 71 on
-      the founder's own account (2026-08-31, every one of them from Gmail
-      capture, 66 of them in two batches four days apart).
-
-      THE VERB IS THE FOUNDER'S OWN AND IT IS FIXED. "Place them" is the
-      same verb the Contacts caption on the Network page already uses for
-      this exact action, pointing at this exact tool.
-
-      THE HEADING WAS HIS TOO, AND CHANGED ANYWAY (2026-09-02, "clear,
-      concise, straightforward"). "Where do they sit?" replaced a heading
-      that named a state ("Unplaced") nobody could resolve unaided --
-      unplaced WHAT, and placed WHERE -- and it fixed that by asking. Three
-      things say the question has stopped earning the slot:
-
-        It is a question this card never answers. Under it sit a count and a
-        button, so the reader is asked something and then handed a number.
-
-        "sit" is a trading floor's word for a DESK, and the field this block
-        is short of is a MARKET. Networkly stores no desk, and the tool the
-        button opens asks for a country. A student who reads the heading
-        literally goes looking for a field that does not exist.
-
-        It is the only interrogative heading in a rail of noun phrases
-        (Schedule, Deadlines, Recent Activity, Getting started), and a
-        heading that changes grammatical mood mid-rail costs a beat.
-
-      "Contacts to place" answers the WHAT that the 2026-08-31 rejection of
-      "Unplaced" was about, and it borrows the button's own verb so the
-      heading and the action are one word apart. The WHERE is answered by
-      the line directly under it, which says "no market set" -- and that
-      line is why this is not a relitigation of the 2026-08-31 call. Back
-      then the heading stood above a NOTE, and the heading was the only
-      thing on the block naming what was missing. The count line that
-      replaced the note carries the missing fact on its own face now, so the
-      heading does not have to.
-
-      AN INSET PANEL, NOT A SECOND STACK OF BLOCKS. The two halves of this
-      card are both "how your week is going" -- which is why the founder
-      asked for them together -- but they are not the same KIND of fact. The
-      figure above is a self-set goal you are measured against and there is
-      nothing to press: it has no action at all. This is a queue of work
-      waiting on you, and it has exactly one. Setting the queue on `--paper`
-      inside the card says that with a surface rather than with a rule: a
-      hairline between two stacked blocks says "and also", a contained
-      panel says "and inside this, something for you to do". `panel
-      panel--inset panel--flat` is the shared primitive doing all of it; the
-      only thing declared locally is where it sits.
-
-      ONE PRIMARY, AND IT IS THIS ONE. `btn btn-primary` on "Place them" is
-      the single accent fill in the merged card, which is what the pace half
-      having no action is worth. It was a `.rail-more` text link in the
-      corner of a heading two passes ago -- the right treatment for "see all"
-      on the Schedule and Deadlines cards, which send you to a fuller version
-      of what they are already showing. This is not a "see all": it is the
-      only way to do the thing the card is asking for.
-
-      THE COUNT IS THE WEEK'S, AND SAYS SO. `_unplaced_arrival_count` counts
-      the arrivals inside `UNPLACED_ARRIVAL_WINDOW_DAYS`, not the standing
-      pool, so on a board with a long backlog this reads smaller than the tab
-      it opens. That is not a disagreement: this number is a week's arrivals
-      and its face says "this week", while the tab counts every region-less
-      contact under its own heading.
-
-      "WITH", NOT A COMMA (2026-09-02). The line carries two facts -- the
-      window they arrived in, and the field they arrived without -- and it
-      used to hang them off a comma: "89 new this week, no market set." That
-      is a splice, and a splice leaves the reader to work out which of "89
-      arrived and separately some things have no market" or "89 arrived and
-      all 89 have no market" was meant. "with" states the second fact as a
-      property of the first and the ambiguity goes. Nothing is dropped and
-      the line still renders on one line at both widths, checked at 999.
-
-      ONE DESTINATION, AND IT IS THE ONE THAT ALREADY WORKS. The Unplaced tab
-      asks the question in its answerable shape (grouped by firm, select-all
-      per group, three region verbs). Nothing here rebuilds any of that: a
-      second place to set a region is exactly the duplicate-widget bug this
-      session removed three times over.
-
-      EXPIRES ON ITS OWN, and the card around it does not. The pace figure is
-      always present; this block is gated on the same count it prints, so an
-      ordinary week renders the figure, the note, and nothing else -- no
-      orphan heading, no empty action, no divider with nothing under it. The
-      Contacts page keeps its own passive caveat line unchanged as the
-      always-available fallback; that line answers a different question
-      ("how many rows in THIS region tab are here on a guess") and never
-      expires.
-
-      "market", not "region", stays deliberate even though `crm/views.py`
-      settled that PEOPLE sit in countries: the thing this is short of is the
-      key a firm's deadlines are matched on, which is the postings
-      vocabulary. The tool the button opens is where the student answers in
-      country terms. Nothing here names a market, which is the safest version
-      of the 2026-08-31 fix -- the note it replaced hardcoded "Hong Kong or
-      US", the founder's own two regions, so any student recruiting anywhere
-      else read a card naming markets they do not target.
-
-      What is NOT here is why it matters. "Networkly matches a firm's
-      deadlines to a person by market" is a fact about how the product works,
-      not one the student acts on, so it is the caption's `title`. Same rule
-      the rest of this rail follows: keep the fact, cut the explanation.
-      {% endcomment %}
-      {% if unplaced_arrival_count %}
-        <div class="unplaced-card panel panel--inset panel--flat">
-          <h3 class="rail-title">Contacts to place</h3>
-          <p class="unplaced-count" title="Networkly matches a firm's deadlines to a person by market. These arrived from capture with no market on file, and nothing infers one."><span class="unplaced-n">{{ unplaced_arrival_count }}</span> new this week with no market set.</p>
-          <a class="btn btn-primary unplaced-act" href="{% url 'crm:contact_list' %}?scope=unplaced">Place them</a>
-        </div>
-      {% endif %}
-    </div>
+    {% comment %}Weekly activity and the market-assignment task have separate surfaces and labels. Counts remain exact even when activity exceeds the weekly goal.{% endcomment %}
+    <section class="rail-card pace-card panel" aria-labelledby="weekly-outreach-title">
+      <h3 class="rail-title" id="weekly-outreach-title">Weekly Outreach</h3>
+      <dl class="pace-figure">
+        <div><dt>Completed</dt><dd class="pace-done">{{ pace.done }}</dd></div>
+        <div><dt>Weekly goal</dt><dd class="pace-goal">{{ pace.goal }}</dd></div>
+      </dl>
+      <progress class="pace-progress" id="weekly-outreach" value="{{ pace.done }}" max="{{ pace.goal }}" aria-label="Weekly outreach goal" aria-valuetext="{{ pace.done }} completed; weekly goal {{ pace.goal }}">{{ pace.done }} completed; weekly goal {{ pace.goal }}</progress>
+      <p class="pace-note">{% if pace.done > pace.goal %}Above your weekly goal.{% elif pace.hit %}Weekly goal reached.{% elif blackout %}Outreach is paused today.{% else %}<b>{{ pace.remaining }}</b> more to reach your goal.{% endif %}</p>
+    </section>
 
     {% comment %}
     Schedule. Real datetimes now that CalendarEvent exists, so this finally
@@ -1431,51 +1083,18 @@ copy exactly once, and this is the once.
         or not anything is on the track, since "when is it worth writing" is a
         question about an empty day too.
 
-        ONE ROW PER MARKET, NOT A SENTENCE PER MARKET (2026-09-02, the
-        founder's own reading: "the cards are wordy"). Each market used to
-        render as a full clause — "HK desk good 9p to 10:30p, avoid 12:30a to
-        1:30a around the close" — and two of those, wrapping to four lines,
-        were most of this card before a single scheduled thing appeared.
-
-        "around the close" is gone from the copy and lives in the row's
-        `title` instead. It explains WHY that half hour is bad; it does not
-        add a time to avoid. Once "avoid" carries a window of its own, the
-        clause was the sentence explaining the fact rather than the fact.
-
-        Both windows survive intact — a good window with no avoid window is a
-        different, smaller claim, and this card does not trade a fact for a
-        shorter line. What changed is their shape: the good window is the
-        actionable half so it reads on the left with the market, and the
-        avoid window sits right as a marker, which is the same
-        content-left / meta-right row every other card in this rail uses.
-
-        "SEND", NOT "GOOD" (2026-09-02, "clear, concise, straightforward").
-        "HK desk good 9PM to 10:30PM" leads its clause with an adjective and
-        no verb, so the first three words parse as a judgement about the desk
-        until the time arrives to correct them. Worse, nothing on the row
-        said what the window was FOR: this is `_send_windows`, the answer to
-        "when is it worth writing", and a reader had to infer that from a
-        card titled Schedule. "send" is the verb the function is named for,
-        it is the same four characters "good" was, and it makes the pair two
-        imperatives in one register — send then, avoid then — instead of an
-        adjective answered by a command.
-
-        THE CLOCK IS THE READER'S, AND NOW THE TITLE SAYS SO. `_local_clock`
-        converts every one of these into the student's own timezone, which is
-        the entire point of the feature and was stated nowhere on the card. A
-        student reading "HK desk send 9PM" with no such note has every reason
-        to read 9PM as Hong Kong's 9PM and write at exactly the wrong hour.
-        It goes in the `title` rather than on the face because it is the same
-        class of fact as "around the close" — provenance, not a thing to act
-        on — and because the row has no room for it. Same words the Deadlines
-        card already uses for the same idea: "your own clock".
+        All times are already converted to the student's timezone. Each
+        market keeps a heading and separate Send/Avoid rows so neither
+        window is truncated at narrow rail widths.
         {% endcomment %}
         {% if daybar.show_hints %}
+          <p class="daybar-timezone">Send windows · your timezone</p>
           <ul class="daybar-hint">
             {% for h in daybar.hints %}
               <li class="dbh" title="On your own clock. The good window is lunchtime on the {{ h.market }} desk, and the half hour either side of that market's close is the one to avoid.">
-                <span class="dbh-good"><b>{{ h.market }} desk</b> send {{ h.good }}</span>
-                <span class="dbh-avoid">avoid {{ h.avoid }}</span>
+                <b class="dbh-market">{{ h.market }} desk</b>
+                <span class="dbh-good"><span class="dbh-label">Send</span><span>{{ h.good }}</span></span>
+                <span class="dbh-avoid"><span class="dbh-label">Avoid</span><span>{{ h.avoid }}</span></span>
               </li>
             {% endfor %}
           </ul>
@@ -1514,10 +1133,11 @@ copy exactly once, and this is the once.
         </h3>
         <ul class="activity">
           {% for d in deadlines %}
-            <li class="activity-row">
+            <li class="activity-row deadline-row">
               <span class="activity-dot{% if d.urgent %} is-urgent{% endif %}"></span>
               <span class="activity-text">
-                <a href="{% url 'directory:firm_detail' d.firm.slug %}">{{ d.firm.name|smart_title }}</a>
+                <span class="deadline-identity"><a href="{% url 'directory:firm_detail' d.firm.slug %}">{{ d.firm.name|smart_title }}</a>
+                <span class="dl-market">{{ d.market }}</span></span>
                 {% comment %}
                 The market, between the firm and the event. A FirmDate is
                 scoped to one — `FirmDate.region` is part of its key — and
@@ -1537,7 +1157,6 @@ copy exactly once, and this is the once.
                 chip; the firm keeps its link weight and the event stays the
                 quiet trailing label it was.
                 {% endcomment %}
-                <span class="dl-market">{{ d.market }}</span>
                 <span class="activity-kind">{{ d.label }}</span>
                 {% comment %}
                 THE HOUR, where the firm stated one. "23:59 HKT, 08:59 your
@@ -1613,27 +1232,11 @@ copy exactly once, and this is the once.
                   <span class="activity-run" title="Campus postings at this firm that Networkly watched open and that are still open. Not a forecast of when they close.">{% if d.open_run.longest_days %}{{ d.open_run.count }} roles open, oldest {{ d.open_run.longest_days }}d{% else %}{{ d.open_run.count }} roles open, all opened today{% endif %}</span>
                 {% endif %}
               </span>
-              <span class="activity-when{% if d.urgent %} is-urgent{% endif %}">{{ d.when }}</span>
+              <span class="activity-when deadline-countdown{% if d.urgent %} is-urgent{% endif %}">{{ d.when }}</span>
             </li>
           {% endfor %}
         </ul>
       </div>
     {% endif %}
-    <div class="rail-card activity-card panel">
-      <h3 class="rail-title">Recent Activity</h3>
-      {% if activity %}
-        <ul class="activity">
-          {% for e in activity %}
-            <li class="activity-row">
-              <span class="activity-dot{% if e.inbound %} in{% endif %}"></span>
-              <span class="activity-text"><a href="{% url 'crm:contact_detail' e.contact_id %}">{{ e.name|smart_person_name|smart_title }}</a> <span class="activity-kind">{{ e.kind_label }}</span></span>
-              <span class="activity-when">{{ e.ago }}</span>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="rail-empty">No interactions logged yet.</p>
-      {% endif %}
-    </div>
   </aside>
 </div>

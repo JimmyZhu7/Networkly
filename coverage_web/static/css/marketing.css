@@ -1,0 +1,212 @@
+/* The public marketing surface: product connections, editorial scale, cobalt.
+   Intentionally independent of the application's supporting-page layouts. */
+.networkly-marketing { --mk-blue: #2857c7; --mk-ease: cubic-bezier(.16,1,.3,1); color: var(--ink); font-family: var(--font-ui); overflow: clip; }
+.networkly-marketing *, .networkly-marketing *::before, .networkly-marketing *::after { box-sizing: border-box; }
+.networkly-marketing ::selection { background: var(--accent); color: var(--on-accent); }
+.networkly-marketing h1, .networkly-marketing h2, .networkly-marketing h3, .networkly-marketing h4, .networkly-marketing p, .networkly-marketing figure { margin: 0; }
+.networkly-marketing h1, .networkly-marketing h2, .networkly-marketing h3, .networkly-marketing h4 { font-family: var(--font-ui); text-wrap: balance; }
+.networkly-marketing a { text-underline-offset: 5px; }
+.networkly-marketing a:focus-visible, .networkly-marketing button:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+.networkly-marketing svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.networkly-marketing .mk-wrap { width: min(100% - 96px, 1280px); margin-inline: auto; }
+.networkly-marketing .mk-hero { display: grid; grid-template-columns: 1fr 1.05fr; align-items: center; gap: 30px; padding-block: 84px 74px; min-height: 700px; }
+.networkly-marketing .mk-hero-copy { position: relative; z-index: 2; }
+.networkly-marketing h1 { font-size: clamp(58px, 5.85vw, 84px); line-height: 1.015; font-weight: 650; letter-spacing: -.04em; }
+.networkly-marketing h1 span { color: var(--accent); }
+.networkly-marketing .mk-hero-copy > p { font-size: 18px; line-height: 1.65; max-width: 39ch; margin-top: 26px; color: var(--ink-2); }
+.networkly-marketing .mk-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 18px 26px; margin-top: 30px; }
+.networkly-marketing .mk-button { display: inline-flex; align-items: center; justify-content: center; gap: 22px; min-height: 52px; padding: 13px 21px; border-radius: 9px; background: var(--surface); color: var(--ink); font: 600 15px/1.4 var(--font-ui); text-decoration: none; transition: background .2s, box-shadow .2s; }
+.networkly-marketing .mk-button-primary { background: var(--accent); color: var(--on-accent); }
+.networkly-marketing .mk-button-primary:hover { background: var(--accent-ink); box-shadow: 0 5px 16px color-mix(in srgb, var(--accent) 18%, transparent); }
+.networkly-marketing .mk-text-link { display: inline-flex; align-items: center; gap: 10px; color: var(--accent-ink); font: 550 14px/1.5 var(--font-ui); min-height: 44px; text-decoration: none; }
+.networkly-marketing .mk-text-link:hover { text-decoration: underline; }
+.networkly-marketing .mk-text-link svg { width: 18px; height: 18px; transition: transform .25s var(--mk-ease); }
+.networkly-marketing .mk-text-link:hover svg { transform: translateX(3px); }
+.networkly-marketing .mk-hero-copy .mk-hero-note { font-size: 12px; line-height: 1.6; margin-top: 20px; color: var(--ink-2); }
+.networkly-marketing .mk-hero-visual { position: relative; padding: 44px 0 40px 15px; min-width: 0; }
+.networkly-marketing .mk-connection { position: absolute; inset: -22px -38px -14px -34px; width: calc(100% + 72px); height: calc(100% + 36px); z-index: 0; color: var(--accent); stroke-width: 1.5; overflow: visible; }
+.networkly-marketing .mk-connection-base { stroke: var(--accent-line); stroke-width: 1.5; }
+.networkly-marketing .mk-connection-line { stroke-dasharray: 1700; stroke-dashoffset: 0; animation: mk-connect 1.8s var(--mk-ease) both; }
+.networkly-marketing .mk-connection circle { fill: var(--accent); stroke: var(--paper); stroke-width: 5; }
+.networkly-marketing .mk-product { position: relative; z-index: 1; background: var(--surface); border-radius: 16px; box-shadow: 0 28px 65px -24px rgb(16 33 65 / 24%); overflow: hidden; transform: rotate(-1.2deg); transition: transform .65s var(--mk-ease); }
+.networkly-marketing .mk-product:focus-within, .networkly-marketing .mk-product:hover { transform: rotate(0); }
+.networkly-marketing .mk-product-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 23px 26px 18px; }
+.networkly-marketing .mk-product-brand { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 650; }
+.networkly-marketing .mk-product-brand svg { color: var(--accent); }
+.networkly-marketing .mk-example { font-size: 11px; color: var(--ink-2); }
+.networkly-marketing .mk-demo-tabs { display: none; padding: 0 26px; gap: 22px; border-bottom: 1px solid var(--line); }
+.networkly-marketing .mk-demo-ready .mk-demo-tabs { display: flex; }
+.networkly-marketing .mk-demo-tab { position: relative; min-height: 44px; padding: 8px 0 12px; border: 0; border-radius: 0; background: transparent; color: var(--ink-2); font: 500 13px/1.5 var(--font-ui); cursor: pointer; }
+.networkly-marketing .mk-demo-tab::after { content: ''; height: 2px; position: absolute; bottom: -1px; inset-inline: 0; background: transparent; }
+.networkly-marketing .mk-demo-tab[aria-pressed="true"] { color: var(--accent-ink); }
+.networkly-marketing .mk-demo-tab[aria-pressed="true"]::after { background: var(--accent); }
+.networkly-marketing .mk-demo-tab:hover { color: var(--ink); }
+.networkly-marketing .mk-demo-body { padding: 25px 26px 20px; }
+.networkly-marketing .mk-demo-panel + .mk-demo-panel { margin-top: 35px; }
+.networkly-marketing .mk-demo-ready .mk-demo-panel + .mk-demo-panel { margin-top: 0; }
+.networkly-marketing .mk-demo-panel[hidden] { display: none; }
+.networkly-marketing .mk-demo-panel.mk-switched { animation: mk-switch .4s var(--mk-ease); }
+.networkly-marketing .mk-demo-heading { padding-bottom: 12px; }
+.networkly-marketing .mk-demo-heading h2 { font-size: 23px; line-height: 1.2; font-weight: 600; letter-spacing: -.025em; }
+.networkly-marketing .mk-date { display: block; color: var(--ink-2); font-size: 12px; margin-top: 6px; }
+.networkly-marketing .mk-demo-record { display: grid; grid-template-columns: 35px minmax(0,1fr) auto; gap: 11px; align-items: center; min-height: 74px; border-bottom: 1px solid var(--line); }
+.networkly-marketing .mk-avatar { display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-size: 11px; font-weight: 650; }
+.networkly-marketing .mk-avatar-alt { background: var(--ok-soft); color: var(--ok); }
+.networkly-marketing .mk-avatar-plain { background: var(--paper); color: var(--ink-2); }
+.networkly-marketing .mk-demo-record strong, .networkly-marketing .mk-application-record strong { font-size: 13px; font-weight: 600; }
+.networkly-marketing .mk-demo-record p, .networkly-marketing .mk-application-record p { font-size: 11px; line-height: 1.5; color: var(--ink-2); margin-top: 3px; }
+.networkly-marketing .mk-demo-action { color: var(--accent-ink); font-size: 11px; white-space: nowrap; }
+.networkly-marketing .mk-context { padding-top: 17px; }
+.networkly-marketing .mk-context .v-flag, .networkly-marketing .mk-context > strong { background: none; border: 0; padding: 0; color: var(--ink); font: 600 12px/1.5 var(--font-ui); }
+.networkly-marketing .mk-context p { font-size: 12px; color: var(--ink-2); line-height: 1.6; margin-top: 5px; max-width: 48ch; }
+.networkly-marketing .mk-product figcaption { background: var(--paper); padding: 14px 26px; font-size: 10px; line-height: 1.6; color: var(--ink-2); }
+.networkly-marketing .mk-stage { font-size: 10px; line-height: 1.45; padding: 4px 7px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink-2); max-width: 105px; text-align: center; }
+.networkly-marketing .mk-application-record { display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 74px; border-bottom: 1px solid var(--line); }
+.networkly-marketing .mk-connection-label { position: relative; display: flex; gap: 9px; align-items: center; justify-content: center; margin-top: 28px; font-size: 11px; color: var(--accent-ink); }
+.networkly-marketing .mk-connection-label span { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.networkly-marketing .mk-evidence { display: grid; grid-template-columns: .85fr 1.3fr; align-items: center; gap: 65px; padding-block: 28px; border-block: 1px solid var(--line); }
+.networkly-marketing .mk-evidence-intro > a { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); text-decoration: none; font-size: 14px; }
+.networkly-marketing .mk-evidence-intro > a:hover { color: var(--accent-ink); }
+.networkly-marketing .mk-evidence .dash-num { opacity: 1; font: 650 14px/1.5 var(--font-ui); font-variant-numeric: tabular-nums; }
+.networkly-marketing .mk-evidence-intro > p { margin-top: 6px; font-size: 11px; line-height: 1.6; color: var(--ink-2); }
+.networkly-marketing .mk-firms { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 12px 27px; }
+.networkly-marketing .mk-firms span { color: var(--ink-2); font-size: 13px; font-weight: 600; }
+.networkly-marketing .mk-workflow { padding-block: 116px 100px; }
+.networkly-marketing .mk-section-intro { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: end; }
+.networkly-marketing .mk-section-intro h2, .networkly-marketing .mk-trust h2 { font-size: clamp(36px, 3.5vw, 49px); font-weight: 600; line-height: 1.08; letter-spacing: -.035em; }
+.networkly-marketing .mk-section-intro > p { max-width: 43ch; font-size: 16px; line-height: 1.75; color: var(--ink-2); }
+.networkly-marketing .mk-flow { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 50px; margin-top: 55px; }
+.networkly-marketing .mk-flow-step { position: relative; padding-top: 28px; border-top: 1px solid var(--accent-line); }
+.networkly-marketing .mk-flow-step::before { content: ''; position: absolute; top: -4px; left: 0; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.networkly-marketing .mk-flow-symbol { color: var(--accent); margin-bottom: 20px; }
+.networkly-marketing .mk-flow-symbol svg { width: 26px; height: 26px; }
+.networkly-marketing h3 { font-size: 20px; line-height: 1.3; font-weight: 600; letter-spacing: -.02em; }
+.networkly-marketing .mk-flow-step > p { margin-top: 12px; font-size: 14px; line-height: 1.75; color: var(--ink-2); max-width: 40ch; }
+.networkly-marketing .mk-flow-step .mk-text-link { margin-top: 14px; }
+.networkly-marketing .feature-points { padding: 0; margin: 12px 0 0; list-style: none; color: var(--ink-2); font: 400 13px/1.65 var(--font-ui); }
+.networkly-marketing .mk-network-band { background: var(--accent-soft); padding-block: 86px; }
+.networkly-marketing .mk-network-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 88px; align-items: center; }
+.networkly-marketing .mk-network-story h2 { font-size: clamp(35px,3.5vw,49px); font-weight: 600; line-height: 1.11; letter-spacing: -.035em; }
+.networkly-marketing .mk-network-story h2 span { color: var(--accent-ink); }
+.networkly-marketing .mk-network-story > p { margin-top: 25px; font-size: 15px; line-height: 1.75; max-width: 39ch; color: var(--ink-2); }
+.networkly-marketing .mk-network-story .mk-text-link { margin-top: 19px; }
+.networkly-marketing .mk-journal { background: var(--surface); padding: 30px; border-radius: 12px; box-shadow: 0 16px 42px -28px rgb(16 33 65 / 30%); }
+.networkly-marketing .mk-journal-person { display: grid; grid-template-columns: 42px 1fr auto; gap: 13px; align-items: center; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
+.networkly-marketing .mk-journal-person .mk-avatar { width: 42px; height: 42px; font-size: 13px; }
+.networkly-marketing .mk-journal h3 { font-size: 17px; }
+.networkly-marketing .mk-journal-person p { font-size: 11px; color: var(--ink-2); margin-top: 4px; }
+.networkly-marketing .mk-journal-entry { position: relative; padding: 25px 0 0 20px; margin-left: 4px; border-left: 1px solid var(--accent-line); }
+.networkly-marketing .mk-journal-entry::before { content: ''; position: absolute; left: -4px; top: 31px; width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
+.networkly-marketing .mk-journal-entry > span { color: var(--accent-ink); font-size: 11px; font-weight: 550; }
+.networkly-marketing .mk-journal-entry h4 { font-size: 15px; font-weight: 600; margin-top: 8px; }
+.networkly-marketing .mk-journal-entry p { font-size: 13px; line-height: 1.75; margin-top: 7px; color: var(--ink-2); }
+.networkly-marketing .mk-journal figcaption { margin-top: 22px; font-size: 10px; color: var(--ink-2); }
+.networkly-marketing .mk-details { padding-block: 112px 90px; }
+.networkly-marketing .mk-detail-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 50px; margin-top: 52px; }
+.networkly-marketing .mk-detail-grid article { border-top: 1px solid var(--line); padding-top: 26px; }
+.networkly-marketing .mk-detail-icon { margin-bottom: 18px; color: var(--accent); }
+.networkly-marketing .mk-detail-grid p { margin-top: 12px; color: var(--ink-2); font-size: 14px; line-height: 1.75; }
+.networkly-marketing .mk-detail-grid .mk-text-link { margin-top: 12px; }
+.networkly-marketing .mk-trust { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; border-top: 1px solid var(--line); padding-block: 60px 95px; }
+.networkly-marketing .mk-trust h2 { font-size: 35px; line-height: 1.15; }
+.networkly-marketing .mk-trust-copy p { color: var(--ink-2); font-size: 14px; line-height: 1.75; max-width: 55ch; }
+.networkly-marketing .mk-trust-copy p + p { margin-top: 16px; }
+.networkly-marketing .mk-trust .mk-text-link { margin-top: 15px; }
+.networkly-marketing .mk-close { background: #2857c7; color: #fff; padding-block: 70px; }
+.networkly-marketing .mk-close > .mk-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; }
+.networkly-marketing .mk-close h2 { color: #fff; font-size: clamp(52px,5.5vw,78px); line-height: 1.02; letter-spacing: -.04em; font-weight: 600; }
+.networkly-marketing .mk-close-copy > p { color: #e8efff; font-size: 17px; line-height: 1.7; }
+.networkly-marketing .mk-close .mk-button { background: #fff; color: #214ba9; }
+.networkly-marketing .mk-close .mk-button:hover { background: #e8efff; }
+.networkly-marketing .mk-close .mk-text-link { color: #fff; }
+.networkly-marketing .mk-close :focus-visible { outline-color: #fff; }
+.networkly-marketing .mk-revealed { animation: mk-reveal .8s var(--mk-ease) both; }
+@keyframes mk-connect { from { stroke-dashoffset: 1700; } to { stroke-dashoffset: 0; } }
+@keyframes mk-reveal { from { transform: translateY(22px); clip-path: inset(0 0 7% 0); } to { transform: none; clip-path: inset(0); } }
+@keyframes mk-switch { from { opacity: .55; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@media (max-width: 1100px) {
+  .networkly-marketing .mk-wrap { width: calc(100% - 64px); }
+  .networkly-marketing .mk-hero { gap: 24px; padding-block: 55px; min-height: 630px; }
+  .networkly-marketing h1 { font-size: 62px; }
+  .networkly-marketing .mk-hero-copy > p { font-size: 16px; }
+  .networkly-marketing .mk-product-top, .networkly-marketing .mk-demo-body { padding-inline: 19px; }
+  .networkly-marketing .mk-demo-tabs { padding-inline: 19px; gap: 17px; }
+  .networkly-marketing .mk-demo-record { grid-template-columns: 28px minmax(0,1fr) auto; gap: 8px; }
+  .networkly-marketing .mk-demo-record .mk-avatar { width: 28px; height: 28px; font-size: 10px; }
+  .networkly-marketing .mk-demo-record p { font-size: 10px; }
+  .networkly-marketing .mk-network-layout { gap: 45px; }
+  .networkly-marketing .mk-flow, .networkly-marketing .mk-detail-grid { gap: 30px; }
+}
+@media (max-width: 820px) {
+  .networkly-marketing .mk-wrap { width: calc(100% - 48px); }
+  .networkly-marketing .mk-hero { grid-template-columns: 1fr; padding-block: 46px 30px; gap: 12px; }
+  .networkly-marketing h1 { font-size: clamp(54px,9.5vw,76px); }
+  .networkly-marketing .mk-hero-copy > p { max-width: 42ch; }
+  .networkly-marketing .mk-hero-visual { max-width: 620px; width: 100%; padding: 45px 14px 25px; margin-inline: auto; }
+  .networkly-marketing .mk-connection { inset: -5px -10px; width: calc(100% + 20px); height: calc(100% + 10px); }
+  .networkly-marketing .mk-product { transform: rotate(-.8deg); }
+  .networkly-marketing .mk-evidence { grid-template-columns: 1fr; gap: 20px; padding-block: 24px; }
+  .networkly-marketing .mk-firms { gap: 12px 22px; }
+  .networkly-marketing .mk-section-intro { grid-template-columns: 1fr; gap: 24px; }
+  .networkly-marketing .mk-section-intro h2 { font-size: 42px; }
+  .networkly-marketing .mk-section-intro > p { max-width: 48ch; }
+  .networkly-marketing .mk-workflow, .networkly-marketing .mk-details { padding-block: 66px; }
+  .networkly-marketing .mk-flow, .networkly-marketing .mk-detail-grid { grid-template-columns: 1fr; gap: 28px; margin-top: 35px; }
+  .networkly-marketing .mk-flow-step > p { max-width: 58ch; }
+  .networkly-marketing .mk-flow-symbol { margin-bottom: 15px; }
+  .networkly-marketing .mk-network-band { padding-block: 58px; }
+  .networkly-marketing .mk-network-layout { grid-template-columns: 1fr; gap: 35px; }
+  .networkly-marketing .mk-network-story h2 { font-size: 44px; }
+  .networkly-marketing .mk-network-story > p { max-width: 48ch; }
+  .networkly-marketing .mk-trust { grid-template-columns: 1fr; gap: 25px; padding-block: 45px 60px; }
+  .networkly-marketing .mk-trust h2 { font-size: 34px; }
+  .networkly-marketing .mk-close { padding-block: 54px; }
+  .networkly-marketing .mk-close > .mk-wrap { grid-template-columns: 1fr; gap: 27px; }
+  .networkly-marketing .mk-close h2 { font-size: 62px; }
+}
+@media (max-width: 420px) {
+  .networkly-marketing .mk-wrap { width: calc(100% - 40px); }
+  .networkly-marketing .mk-hero { padding-top: 36px; }
+  .networkly-marketing h1 { font-size: 52px; }
+  .networkly-marketing .mk-actions { gap: 10px 20px; margin-top: 24px; }
+  .networkly-marketing .mk-button { gap: 16px; padding-inline: 16px; font-size: 14px; }
+  .networkly-marketing .mk-hero-copy > p { font-size: 16px; margin-top: 23px; }
+  .networkly-marketing .mk-hero-copy .mk-hero-note { font-size: 11px; margin-top: 14px; }
+  .networkly-marketing .mk-hero-visual { padding-inline: 0; padding-top: 38px; }
+  .networkly-marketing .mk-product { transform: none; }
+  .networkly-marketing .mk-product-top { padding: 18px 16px 12px; flex-wrap: wrap; gap: 6px; }
+  .networkly-marketing .mk-product-brand { font-size: 12px; }
+  .networkly-marketing .mk-example { font-size: 10px; }
+  .networkly-marketing .mk-demo-tabs { padding-inline: 16px; gap: 21px; }
+  .networkly-marketing .mk-demo-tab { font-size: 12px; }
+  .networkly-marketing .mk-demo-body { padding: 20px 16px; }
+  .networkly-marketing .mk-demo-heading h2 { font-size: 21px; }
+  .networkly-marketing .mk-demo-record { grid-template-columns: 27px minmax(0,1fr); padding-block: 12px; min-height: 83px; column-gap: 9px; row-gap: 4px; }
+  .networkly-marketing .mk-demo-record .mk-demo-action, .networkly-marketing .mk-demo-record .mk-stage { grid-column: 2; justify-self: start; }
+  .networkly-marketing .mk-demo-record strong { font-size: 13px; }
+  .networkly-marketing .mk-demo-record p { font-size: 11px; }
+  .networkly-marketing .mk-product figcaption { padding-inline: 16px; }
+  .networkly-marketing .mk-connection-label { font-size: 10px; margin-top: 22px; }
+  .networkly-marketing .mk-firms span { font-size: 12px; }
+  .networkly-marketing .mk-section-intro h2 { font-size: 38px; }
+  .networkly-marketing .mk-section-intro > p { font-size: 15px; }
+  .networkly-marketing .mk-network-story h2 { font-size: 35px; }
+  .networkly-marketing .mk-journal { padding: 23px 20px; }
+  .networkly-marketing .mk-journal-person { grid-template-columns: 36px 1fr; gap: 10px; }
+  .networkly-marketing .mk-journal-person .mk-avatar { width: 36px; height: 36px; }
+  .networkly-marketing .mk-journal-person > .mk-stage { grid-column: 2; justify-self: start; }
+  .networkly-marketing .mk-trust h2 { font-size: 30px; }
+  .networkly-marketing .mk-close h2 { font-size: 56px; }
+  .networkly-marketing .mk-close-copy > p { font-size: 15px; }
+}
+@media (max-width: 350px) {
+  .networkly-marketing h1 { font-size: 45px; }
+  .networkly-marketing .mk-demo-tabs { gap: 15px; }
+  .networkly-marketing .mk-section-intro h2 { font-size: 35px; }
+  .networkly-marketing .mk-network-story h2 { font-size: 31px; }
+  .networkly-marketing .mk-trust h2 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .networkly-marketing *, .networkly-marketing *::before, .networkly-marketing *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .networkly-marketing .mk-product, .networkly-marketing .mk-text-link:hover svg { transform: none; }
+}

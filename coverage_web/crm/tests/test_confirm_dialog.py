@@ -48,8 +48,8 @@ CONTACT_PARKED = TEMPLATES / "crm" / "contact_parked.html"
 COPY = {
     "accept": "Accept {{ proposals|length }} contacts? They're added as-is, "
               "without the role or region on each card.",
-    "park_all": "Park all {{ park_total }}? A reply un-parks anyone, and you "
-                "can undo this straight after.",
+    "park_all": "Pause outreach for all {{ park_total }} contacts? A reply resumes outreach. "
+                "You can undo this immediately.",
     "archive": "Archive \" + n + \" contact\" + (n === 1 ? \"\" : \"s\") +",
     "bulk_park": "Stop following up with \" + n + \" contact\"",
     "unpark": "Bring \" + n + \" contact\" + (n === 1 ? \"\" : \"s\") + "
