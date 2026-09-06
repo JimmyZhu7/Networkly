@@ -76,6 +76,16 @@ urlpatterns = [
     path("calendar/feed/reset/", calendar_views.calendar_token_reset, name="calendar_token_reset"),
     path("calendar/add/", calendar_views.calendar_add, name="calendar_add"),
     path("calendar/<int:pk>/delete/", calendar_views.calendar_delete, name="calendar_delete"),
+    # Move a typed event without minting a new row. Same pk, same row,
+    # so the subscribed feed keeps the UID and only raises SEQUENCE — the
+    # reason this is not "delete then add".
+    path("calendar/<int:pk>/reschedule/", calendar_views.calendar_reschedule,
+         name="calendar_reschedule"),
+    # Call it off without removing it: the row stays so the feed can say
+    # STATUS:CANCELLED rather than letting the meeting silently vanish
+    # from a calendar somebody already subscribed to.
+    path("calendar/<int:pk>/cancel/", calendar_views.calendar_cancel,
+         name="calendar_cancel"),
     path("contacts/", views.contact_list, name="contact_list"),
     # Hand-add / edit a contact — the coffee-chat entry path.
     path("contacts/new/", views.contact_new, name="contact_new"),
