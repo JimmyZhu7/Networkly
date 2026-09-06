@@ -18,8 +18,32 @@ PLACEHOLDERS TO FILL IN BEFORE THIS IS A REAL POLICY
                              "international transfers" section
 
 OPEN QUESTIONS FOR COUNSEL / THE FOUNDER
-  - Effective date below says 1 September 2026. Update it on every publish.
-    The 2026-09-01 revision made the Gmail section true to the code: the
+  - Effective date below says 6 September 2026. Update it on every publish.
+    The 2026-09-06 security review made four more sentences true to the code,
+    each traced to a call site rather than to a policy template:
+      * AI-assisted classification is NOT Scan Now only. `capture/gmail.py`
+        calls `appmail.consider_finding` and `mailfacts.consider_finding`
+        with their default `allow_ai=True`, so ordinary background sync
+        already sends a subject and Gmail snippet to Anthropic whenever the
+        deterministic rules cannot classify a message. The old wording said
+        this happened only when the student pressed Scan Now.
+      * Two processors were missing from "Who We Share Data With". Avatars
+        leave Render entirely when MEDIA_S3_* is set (settings/production.py
+        via core/storage.py::media_storage_config), and the shared cache
+        (settings/base.py's REDIS_URL branch) holds allauth and axes counters
+        keyed by the email address typed at sign-in.
+      * The assistant sends recent Gmail SUBJECT LINES, not just CRM fields
+        (`assistant/tools.py`'s "recent_subjects"). Contact email addresses
+        stay out of that path, which the page already said correctly.
+      * `capture/gmail_live.py` builds "(from:<address> OR to:<address>)"
+        Gmail queries, so a contact's address travels TO Google as a search
+        term. That is a disclosure the Google reviewer will look for.
+    Sessions: `accounts/views.py::delete_account` flushes only the requesting
+    session, so other devices' rows outlive the account. Said plainly rather
+    than left inside the blanket "removes associated private database
+    records" claim. The code fix is tracked in
+    docs/audits/security-review-2026-09-06.md, not here.
+  - The 2026-09-01 revision made the Gmail section true to the code: the
     sync fetches messages with Gmail's `format="full"` and decodes bodies
     and `.ics` attachments in memory, which the previous wording ("headers,
     an .ics attachment, a short snippet") did not say, and MailFact.quote
@@ -92,7 +116,7 @@ DO NOT REWORD: the "Google API Limited Use" section
   </ul>
   <p>For a connected mailbox, we store an encrypted refresh token, the mailbox address, and sync markers. Networkly reads the whole message, including its body and calendar attachments, and processes that text in memory to identify recruiting activity. We retain structured results such as the sender, reply status, and meeting details. Interactions may include a subject line or preview snippet of up to 300 characters. We do not retain complete messages through this sync.</p>
   <p><strong>Limited evidence retention.</strong> A mail fact, such as a stated departure or delivery failure, may retain one verbatim sentence of up to 500 characters. This quote supports the fact and is shown for your review. A delivery-failure quote can come from the mail server’s report. These retained excerpts are an exception to the rule against storing complete message bodies.</p>
-  <p><strong>AI-assisted scans.</strong> When you press Scan Now, messages that cannot be classified deterministically may be checked by Anthropic. The request includes the subject line and Gmail preview snippet, not the full body or attachments. This is limited to one representative message from each of at most 100 unresolved threads per scan, and only runs when the AI service is enabled.</p>
+  <p><strong>AI-assisted classification.</strong> When our own rules cannot classify a message, Networkly may send its subject line and Gmail preview snippet to Anthropic. That happens on two paths. During ordinary sync, a message that reads like an application update or an automatic reply but matches no known pattern is checked this way. When you press Scan Now, unresolved threads are checked the same way, limited to one representative message from each of at most 100 threads per scan. Neither path sends the full body or attachments, and neither runs unless the AI service is enabled on this deployment.</p>
   <p>Disconnect Gmail in Settings to remove the stored connection token and stop future syncs. Networkly also attempts to revoke the Google grant. You can revoke it directly in your Google account. Disconnecting does not remove recruiting records already created; those remain until you delete them or your account.</p>
 </section>
 <section id="optional-calendar-access" aria-labelledby="optional-calendar-access-title"><h2 id="optional-calendar-access-title">Optional Calendar Access</h2>
@@ -120,15 +144,17 @@ DO NOT REWORD: the "Google API Limited Use" section
 <p>We share data with these providers for the purposes described below.</p>
   <ul>
     <li><strong>Render</strong> hosts the app and the Postgres database. It processes stored account and recruiting information to operate the service.</li>
+    <li><strong>An object storage provider,</strong> when one is configured on the deployment, holds your profile picture. The file is stored privately and is served only through Networkly, after we check that the person asking for it is the account that owns it.</li>
+    <li><strong>A shared cache provider,</strong> when one is configured, holds sign-in protection and rate-limit counters. Those counters are keyed by the email address typed at sign-in and by IP address, and they expire on their own.</li>
     <li><strong>Anthropic</strong> processes requests for enabled AI features:
       <ul>
-        <li><strong>The assistant, a coffee-chat brief, or a relationship summary:</strong> relevant profile and recruiting context, which can include contact names, firms, roles, notes, interactions, and schedule details. Context supplied automatically for these features excludes contact email addresses. Text you enter or files you attach can still contain personal information and are sent with your request.</li>
+        <li><strong>The assistant, a coffee-chat brief, or a relationship summary:</strong> relevant profile and recruiting context, which can include contact names, firms, roles, notes, interactions, recent mail subject lines, and schedule details. Context supplied automatically for these features excludes contact email addresses. Text you enter or files you attach can still contain personal information and are sent with your request.</li>
         <li><strong>Scan Now:</strong> the subject line and preview snippet for unresolved Gmail threads, as described in Optional Mail Access.</li>
         <li><strong>Autopilot:</strong> up to 200 pending contact cards per run, including each person’s name and email address, matched firm, subject-line or snippet evidence, and relevant stored mail facts. The model reviews whether a proposed card is supported by the evidence. Adding contacts still requires your action.</li>
       </ul>
       These calls run only when the relevant feature is triggered and the AI service is configured.
     </li>
-    <li><strong>Google</strong> receives a sign-in request if you sign in with Google, and provides mail or calendar data if you connect those services. The sign-in path asks for identity only and can never read mail. Gmail Live is a separate, second consent with its own credentials, and turning it down does not affect your ability to log in.</li>
+    <li><strong>Google</strong> receives a sign-in request if you sign in with Google, and provides mail or calendar data if you connect those services. While a Gmail connection is active, Networkly also searches your mailbox for a contact's address, which sends that address to Google as a search term. The sign-in path asks for identity only and can never read mail. Gmail Live is a separate, second consent with its own credentials, and turning it down does not affect your ability to log in.</li>
     <li><strong>Your other sign-in provider,</strong> if the deployment offers Apple, Microsoft or LinkedIn and you choose one. Same identity-only scopes, same rule: no mailbox access.</li>
     <li><strong>An email provider,</strong> when one is configured, to deliver transactional mail such as password resets and deadline digests. It sees the address the mail is going to and what is in that mail.</li>
     <li><strong>A push service,</strong> if you turn on deadline alerts. Your browser's own push endpoint delivers the notification.</li>
@@ -144,7 +170,7 @@ DO NOT REWORD: the "Google API Limited Use" section
   <p>Gmail sync retains the structured records and limited evidence excerpts described above, rather than complete messages.</p>
   <p>Assistant credit records remain after you delete a conversation so we can settle or refund interrupted requests. These records contain request identifiers, the model, credit cost, status, timestamps, and any recovery reason. They are included in your account export and deleted with your account.</p>
   <p>We retain a beta invitation record for the lifetime of the beta to enforce its 100-person limit and prevent deleted seats from being reused. When you delete your account, we clear the email address and account link from that record but retain a SHA-256 fingerprint of your normalized email address and the invitation and redemption dates. The fingerprint is pseudonymous personal data, not anonymous data.</p>
-  <p>Account deletion removes your account and associated private database records from the active service, except for the beta invitation record described above. This does not erase data you exported, messages in your mailbox, or copies already held by connected providers. Hosting backups follow [BACKUP RETENTION PERIOD]; provider retention is governed by the applicable service arrangements.</p>
+  <p>Account deletion removes your account and associated private database records from the active service, except for the beta invitation record described above. Sign-in sessions on your other devices are not removed at that moment. They stop working immediately, because the account they point to no longer exists, and they carry no readable personal information. Deletion does not erase data you exported, messages in your mailbox, or copies already held by connected providers. Hosting backups follow [BACKUP RETENTION PERIOD]; provider retention is governed by the applicable service arrangements.</p>
 </section>
 <section id="security" aria-labelledby="security-title"><h2 id="security-title">Security</h2>
 <p>Production settings require HTTPS and secure cookies. Passwords are stored as one-way hashes. Gmail and Google Calendar refresh tokens are encrypted with a key held separately from the database. Account scoping and access controls help protect private records.</p>
