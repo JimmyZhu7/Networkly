@@ -1826,6 +1826,14 @@ element by the next turn.
         log = document.createElement("div");
         log.className = "as-log";
         log.id = "as-log";
+        // The same three attributes _thread.html puts on the server-rendered
+        // log. It is a scrolling region either way, and a scrolling region
+        // that cannot take focus cannot be scrolled from a keyboard — so a
+        // conversation that started without a page reload must not be less
+        // reachable than one that did.
+        log.setAttribute("tabindex", "0");
+        log.setAttribute("role", "region");
+        log.setAttribute("aria-label", "Conversation");
         var empty = thread.querySelector(".as-empty");
         if (empty) thread.replaceChild(log, empty);
         else thread.insertBefore(log, composerForm);
