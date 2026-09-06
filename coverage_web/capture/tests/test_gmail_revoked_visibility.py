@@ -39,6 +39,17 @@ User = get_user_model()
 SETTINGS = "accounts:settings"
 
 
+@pytest.fixture(autouse=True)
+def _gmail_live_configured(settings):
+    """The Settings view drops the whole Gmail card when the live client is
+    not configured, so every card assertion below depends on it being set.
+    It used to come from whichever .env the developer had, which made these
+    tests pass locally and fail on any clean runner. Set it here."""
+    settings.GMAIL_LIVE_CLIENT_ID = "test-client-id.apps.googleusercontent.com"
+    settings.GMAIL_LIVE_CLIENT_SECRET = "test-client-secret"
+    settings.GMAIL_LIVE_TOKEN_KEY = gmail_live.Fernet.generate_key().decode()
+
+
 @pytest.fixture
 def student(db):
     return User.objects.create_user(email="revoked-student@example.com",
