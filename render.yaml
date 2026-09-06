@@ -7,6 +7,29 @@
 # migration blocks the release instead of half-applying on every boot.
 
 databases:
+  # PLAN NAME VERIFIED, TIER UNCHANGED. `basic-256mb` is still an accepted
+  # value: Render's own Blueprint JSON Schema
+  # (https://render.com/schema/render.yaml.json, `postgresPlan`) lists it
+  # alongside the newer CPU-and-RAM slugs (`0.1c-256mb`, `0.5c-1g`, ...), so
+  # the two naming families coexist and nothing here needs renaming. Checked
+  # because prose documentation pages now show only the new family, which
+  # reads like a deprecation and is not one.
+  #
+  # `postgresMajorVersion` IS DELIBERATELY ABSENT, and must stay absent until
+  # somebody reads the real number off the dashboard. The key is IMMUTABLE
+  # after the database is created; omitted, Render uses its current default
+  # for a NEW database and leaves an existing one alone. `coverage-db` was
+  # created months ago, so its actual major version is not knowable from this
+  # repository — and a guessed pin that disagrees with the live database is
+  # the one edit here that could turn an apply into a data event. Read
+  # "PostgreSQL version" on the coverage-db page in the Render dashboard, and
+  # only then decide whether pinning it is worth doing at all.
+  #
+  # That number is also what the backup cron below depends on: `pg_dump` must
+  # be at least the server's major version, and the image now installs the
+  # 18 client (see Dockerfile). A server on 17 or below is fine — a newer
+  # client dumps an older server. A server on 19, whenever that exists, is
+  # not, and the Dockerfile would need to move with it.
   - name: coverage-db
     databaseName: coverage
     user: coverage
@@ -22,8 +45,17 @@ services:
     healthCheckPath: /healthz
     preDeployCommand: "uv run --package coverage-web python coverage_web/manage.py migrate --noinput"
     envVars:
+      # QUOTED, and that is not style. Render's Blueprint schema
+      # (https://render.com/schema/render.yaml.json, `envVarFromKeyValue`)
+      # types an env var's `value` as string-or-number and nothing else, so
+      # a bare `true` — which YAML parses as a BOOLEAN, not the text "true" —
+      # is an invalid Blueprint. This is the one key that decides whether the
+      # invited beta's admission gate is on at all (accounts/access.py's
+      # `beta_enabled`), which makes it the worst possible place to find out
+      # how a provider coerces a type it did not ask for. `env.bool` reads
+      # "true" exactly as it would read `true`, so quoting costs nothing.
       - key: BETA_ENABLED
-        value: true
+        value: "true"
       - key: BETA_MAX_USERS
         value: 100
       - key: DJANGO_SETTINGS_MODULE
@@ -346,7 +378,7 @@ services:
           name: coverage-web
           envVarKey: VAPID_CLAIM_EMAIL
 
-  # ---- Weekly retention digest, once a week -----------------------------
+  # ---- Weekly retention digest, a seventh of the roster a day -----------
   # send_weekly_digest is safe to run with zero paid setup: unset EMAIL_URL
   # (production.py's env.email_url default) prints the digest to this cron's
   # own logs instead of actually sending, so nothing bounces and nothing
@@ -354,14 +386,32 @@ services:
   # docstring. Same fixed-UTC-hour reasoning as push alerts above: each
   # recipient's own "this week" is computed from their stored timezone, so
   # the wall-clock run time only shifts when in their day it lands, not
-  # which week. Monday so "what closes this week" reads as a week ahead,
-  # not a week already half gone.
+  # which week.
+  #
+  # DAILY, NOT MONDAY, AND THAT IS A CAPACITY FIX, NOT A PRODUCT CHANGE.
+  # This ran `0 13 * * 1`, which mailed every eligible account inside one
+  # minute. The invited beta is capped at 100 students and the free mail tier
+  # this deploy is sized for allows 100 messages a DAY — so one digest run
+  # could spend the entire day's allowance on itself and leave nothing for
+  # the mail somebody is waiting on: the confirmation, the reset, the
+  # invitation. Those would have failed at the provider, after the app had
+  # already told the student to check their inbox.
+  #
+  # `--spread` takes the seventh of the roster whose `pk % 7` matches the
+  # run's UTC weekday, so each student still gets exactly one digest every
+  # seven days on their own fixed weekday, and no single day carries more
+  # than about a seventh of the bill. `DIGEST_DAILY_SEND_CAP` (default 60,
+  # settings/base.py) is the hard ceiling on top of that, and it applies
+  # whether or not the flag is passed. Nothing about the email's content or
+  # cadence changes: "closing this week" is a rolling window from the
+  # recipient's own today, not a calendar week, so a Thursday student's
+  # digest reads exactly as a Monday student's does.
   - type: cron
     name: coverage-weekly-digest
     runtime: docker
     dockerfilePath: ./Dockerfile
-    schedule: "0 13 * * 1" # Monday 13:00 UTC = 9am US Eastern / 9pm Hong Kong
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py send_weekly_digest"
+    schedule: "0 13 * * *" # 13:00 UTC daily = 9am US Eastern / 9pm Hong Kong
+    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py send_weekly_digest --spread"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_WEEKLY_DIGEST
@@ -473,6 +523,108 @@ services:
           type: web
           name: coverage-web
           envVarKey: GMAIL_LIVE_TOKEN_KEY
+
+  # ---- Off-host database snapshot, once a day ---------------------------
+  #
+  # DEFINE NOW, RESUME ONLY AFTER PAYMENT. This service exists in the
+  # Blueprint so the backup is part of the deploy's definition rather than a
+  # thing somebody means to set up later; it is NOT part of the launch.
+  # After the first apply, SUSPEND coverage-db-backup in the Render dashboard
+  # along with the rest, and leave it suspended until object storage for it
+  # has been bought. Render's Blueprint schema has no `suspended:` key — a
+  # cron cannot be declared dormant in this file (checked against
+  # https://render.com/schema/render.yaml.json, `cronService`) — so there are
+  # two locks instead, and the second one is in the code:
+  #
+  #   1. The service is suspended in the dashboard.
+  #   2. `--require-s3` with a blank BACKUP_S3_BUCKET makes the command a
+  #      complete no-op: no pg_dump, no connection to the database, no file.
+  #      It prints why and exits 0. So even a service resumed by accident
+  #      does nothing until a bucket is named, and a red cron every night
+  #      does not train the one person watching to ignore red crons.
+  #
+  # 04:15 UTC, ahead of the 05:00/05:30 block and well clear of the scrape's
+  # 00/06/12/18 marks: a snapshot should be the last quiet thing before the
+  # day's plan flips, not concurrent with them.
+  #
+  # WHY THIS CAN RUN HERE AT ALL. It could not before: the image had no
+  # Postgres client, so `backup_db` (which shells out to pg_dump) could only
+  # run from a laptop. The Dockerfile now installs the PGDG
+  # postgresql-client-18 — see its comment, and see the coverage-db block
+  # above for why 18 specifically.
+  #
+  # A SEPARATE BUCKET FROM THE AVATARS, sharing only the endpoint and the
+  # credentials. One object here is every row in the app; it does not belong
+  # in the same listing as media a request path can reach. `--keep 14` holds
+  # the same fourteen-snapshot ring in the bucket that the local command
+  # holds on disk. NOT wired to /ops/health/cron/ (ops.tracking) on purpose,
+  # because a tracked job that is deliberately never run reads as a dead job
+  # forever; add it there in the same change that resumes the service.
+  - type: cron
+    name: coverage-db-backup
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    schedule: "15 4 * * *" # 04:15 UTC, before the 05:00 daily block
+    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py backup_db --require-s3 --dest /tmp/coverage-backup --keep 14"
+    envVars:
+      # The off switch. Blank (the default) = this cron does nothing at all.
+      # Name a bucket ONLY when its storage is paid for and the service is
+      # meant to be live.
+      - key: BACKUP_S3_BUCKET
+        sync: false
+      - key: BACKUP_S3_PREFIX
+        sync: false # optional; defaults to "db/"
+      - key: DJANGO_SETTINGS_MODULE
+        value: coverage_web.settings.production
+      - key: SENTRY_DSN
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: SENTRY_DSN
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coverage-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: DJANGO_SECRET_KEY
+      - key: DJANGO_ALLOWED_HOSTS
+        value: localhost
+      # The endpoint and credentials, not the bucket: core.storage resolves
+      # these into settings.STORAGES["default"], which is where backup_db
+      # reads them from. All four or none — a partial set fails at boot.
+      - key: MEDIA_S3_BUCKET_NAME
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: MEDIA_S3_BUCKET_NAME
+      - key: MEDIA_S3_ENDPOINT_URL
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: MEDIA_S3_ENDPOINT_URL
+      - key: MEDIA_S3_REGION_NAME
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: MEDIA_S3_REGION_NAME
+      - key: MEDIA_S3_ACCESS_KEY_ID
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: MEDIA_S3_ACCESS_KEY_ID
+      - key: MEDIA_S3_SECRET_ACCESS_KEY
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: MEDIA_S3_SECRET_ACCESS_KEY
+      - key: BETA_ENABLED
+        fromService:
+          type: web
+          name: coverage-web
+          envVarKey: BETA_ENABLED
 
   # ---- Pro trial expiry, once a day --------------------------------------
   # accounts.trials starts a PRO_TRIAL_DAYS-long trial the moment a Free

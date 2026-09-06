@@ -229,6 +229,86 @@ def test_calendar_sync_is_scheduled_and_shares_the_explicit_feature_gate(bluepri
         assert f"envVarKey: {key}" in block
 
 
+# ---------------------------------------------------------------------------
+# The Blueprint's own shape
+# ---------------------------------------------------------------------------
+def test_no_env_var_value_is_a_bare_yaml_boolean(blueprint):
+    """`value: true` is a BOOLEAN to a YAML parser, and Render's Blueprint
+    schema (envVarFromKeyValue) types `value` as string-or-number and nothing
+    else — so the file was invalid, at `BETA_ENABLED` of all keys: the one
+    that decides whether the invited beta's admission gate is on at all. The
+    quoted form reads identically to `env.bool`. Checked as a line pattern
+    because this suite parses the blueprint by hand and has no YAML
+    dependency; see this module's docstring."""
+    offenders = [
+        line.strip() for line in blueprint.splitlines()
+        if re.match(r"\s*value:\s*(true|false|yes|no|on|off|True|False|~|null)\s*(#.*)?$", line)
+    ]
+    assert not offenders, f"quote these values: {offenders}"
+
+
+# ---------------------------------------------------------------------------
+# The daily mail budget
+# ---------------------------------------------------------------------------
+def test_the_digest_cron_spreads_the_roster_across_the_week(blueprint):
+    """`0 13 * * 1` mailed every eligible account inside one minute. At the
+    beta's cap of 100 students that is the whole of a 100-a-day free mail
+    allowance spent on the digest, leaving nothing for the confirmation or
+    reset somebody is waiting on — sends that fail at the provider, after the
+    app has told the student to check their inbox."""
+    schedule = _schedule(blueprint, "coverage-weekly-digest")
+    assert schedule.split()[-1] == "*", (
+        f"the digest is back on a single weekday ({schedule})"
+    )
+    assert "send_weekly_digest --spread" in _blocks(blueprint)["coverage-weekly-digest"], (
+        "a daily cron without --spread mails the whole roster every day"
+    )
+
+
+# ---------------------------------------------------------------------------
+# The backup cron — defined now, resumed only after payment
+# ---------------------------------------------------------------------------
+def test_the_backup_cron_cannot_run_without_a_bucket(blueprint):
+    """Two locks, because Render's Blueprint schema has no `suspended:` key
+    and a cron therefore cannot be declared dormant in this file. The service
+    is suspended in the dashboard, AND `--require-s3` with a blank
+    BACKUP_S3_BUCKET makes the command a complete no-op. The second lock is
+    the one this file can hold."""
+    block = _blocks(blueprint)["coverage-db-backup"]
+    assert "backup_db --require-s3" in block
+    assert re.search(r"key: BACKUP_S3_BUCKET\s+sync: false", block), (
+        "the bucket is the off switch; a value here would arm the cron"
+    )
+
+
+def test_the_backup_cron_runs_before_the_daily_plan_flips(blueprint):
+    backup = _schedule(blueprint, "coverage-db-backup")
+    expire = _schedule(blueprint, "coverage-pro-trial-expire")
+    minute, hour = backup.split()[0], backup.split()[1]
+    assert int(hour) < int(expire.split()[1]), (
+        f"the snapshot ({backup}) must land before the 05:00 block"
+    )
+    assert (int(hour), int(minute)) not in {(0, 0), (6, 0), (12, 0), (18, 0)}, (
+        "clear of the scrape's marks"
+    )
+
+
+def test_the_backup_cron_borrows_storage_credentials_but_not_the_avatar_bucket(blueprint):
+    """One object here is every row in the app. It does not belong in the
+    same listing as media a request path can reach, so the bucket NAME is its
+    own key while the endpoint and credentials are shared."""
+    block = _blocks(blueprint)["coverage-db-backup"]
+    for key in ("MEDIA_S3_ENDPOINT_URL", "MEDIA_S3_REGION_NAME",
+                "MEDIA_S3_ACCESS_KEY_ID", "MEDIA_S3_SECRET_ACCESS_KEY"):
+        assert re.search(
+            rf"key: {key}\s+fromService:\s+type: web\s+name: coverage-web\s+envVarKey: {key}",
+            block,
+        ), f"the backup cron needs web's {key} to reach the object store"
+    assert not re.search(r"key: BACKUP_S3_BUCKET\s+fromService", block), (
+        "the backup bucket must not be inherited from the avatar bucket"
+    )
+
+
 @pytest.mark.parametrize("key", ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"])
 def test_stripe_keys_are_declared_even_though_they_are_blank(blueprint, key):
     """Declared while blank on purpose: a key typed into the dashboard but

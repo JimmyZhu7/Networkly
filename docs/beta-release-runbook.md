@@ -11,7 +11,16 @@ Keep services suspended until the founder authorizes deployment and its cost.
 Record the reviewed Git revision, previous deployed revision, operator and UTC
 time. Do not deploy the current uncommitted workspace as an unidentified release.
 Run CI for that revision, including migration drift detection and the full pytest
-suite. CI success does not establish provider acceptance.
+suite. `.github/workflows/ci.yml` runs on `main`, on `codex/**` branches and on
+`workflow_dispatch`, so the release branch is gated without being merged first;
+use Actions → CI → Run workflow to run it against a named revision on demand.
+That workflow has two jobs and both must be green. `test` is the suite. `docker`
+builds the deploy image on a hosted runner and then asserts `pg_dump` and
+`pg_restore` exist inside it at major version 18 or above — the release machine
+has no Docker, so this is the only place the image is validated before Render
+builds it. `.github/workflows/pip-audit.yml` runs the CVE scan on the same
+triggers plus a weekly schedule. CI success does not establish provider
+acceptance.
 
 Reconcile `render.yaml` against existing services before applying it. Preserve
 the existing database, Upstash cache and private media bucket. Review any new
@@ -19,6 +28,36 @@ Calendar sync and assistant reconciliation services and their cost. Match beta,
 OAuth, encryption and shared-cache settings across the relevant processes.
 Keep background jobs suspended until web migrations finish. Do not rotate token
 encryption keys during this release. Preserve the ordered key ring securely.
+
+Two Blueprint facts require reading the dashboard rather than this repository.
+Record both before applying.
+
+- `coverage-db` has no `postgresMajorVersion` in `render.yaml`, deliberately.
+  The key is immutable after creation and the database predates this file, so
+  its real version is not knowable here. Read "PostgreSQL version" on the
+  `coverage-db` page. Do not add a pin to match it without a separate decision;
+  an incorrect pin is the one edit in this file that could turn an apply into a
+  data event. The number also bounds the backup client: the image ships
+  `pg_dump` 18, which dumps any server at 18 or below and refuses one above.
+- Plan names. `plan: basic-256mb` (database) and `plan: starter` (services) are
+  current and were verified against Render's own Blueprint JSON Schema at
+  `https://render.com/schema/render.yaml.json` on 2026-09-06, where both appear
+  in the `postgresPlan` and `serverPlan`/`cronPlan` enumerations alongside the
+  newer CPU-and-RAM slugs. Confirm the dashboard reports the same tier for the
+  live services; do not change a tier as part of this release.
+
+`coverage-db-backup` is new in this Blueprint and is **not part of this
+release**. Suspend it immediately after the apply, along with everything else,
+and leave `BACKUP_S3_BUCKET` blank. With that variable blank the command is a
+complete no-op even if the service is resumed by accident. See `docs/deploy.md`
+section 9 for what arming it requires.
+
+`coverage-weekly-digest` is now a **daily** cron running
+`send_weekly_digest --spread`, not a Monday one. Each student still receives one
+digest a week on a fixed weekday; the change exists because 100 recipients in a
+single tick consumes an entire 100-a-day free mail allowance and starves the
+confirmation and reset mail that students are waiting on. Its expected interval
+in `/ops/health/cron/` is one day, not seven.
 
 In the production environment, after deployment and migrations:
 
@@ -29,6 +68,14 @@ uv run --package coverage-web python coverage_web/manage.py deploy_preflight --l
 ```
 
 All three must exit zero; investigate warnings rather than suppressing them.
+One warning is already suppressed, by a decision recorded in
+`settings/production.py` and in `docs/deploy.md` section 5b: `security.W021`,
+which Django raises whenever HSTS preload is off. Preload is off permanently and
+on purpose, so that warning would otherwise have made this gate impossible to
+pass and the gate itself worthless. The suppression is scoped to that one check
+id; anything else this command reports is a finding, not a known state. Verified
+against placeholder values on 2026-09-06: `System check identified no issues (1
+silenced)`.
 The preflight checks configuration and database state without provider calls.
 Complete the fresh-account acceptance in the readiness document, with authorized
 test recipients and AI budget, before inviting the first 5–10 testers.
@@ -80,20 +127,31 @@ ones saved in `.env`, so local jobs cannot report production success.
 ## Backup and recovery
 
 Before migrations, take a production snapshot to private durable storage outside
-the web container. The application image does not install `pg_dump`; run the
-backup command from a trusted operator host with PostgreSQL client tools whose
-major version is at least the server's. Load connection settings securely; do not
-paste database URLs into logs or command arguments. Confirm that the selected
-settings target the intended production database before proceeding.
+the web container. The application image now installs the PostgreSQL 18 client
+(`pg_dump`, `pg_restore`) from the PGDG repository, and CI asserts they are
+present in the built image, so this no longer requires a separate operator host
+with client tools — but it still requires that the client's major version be at
+least the server's, which is why the dashboard reading above matters. Load
+connection settings securely; do not paste database URLs into logs or command
+arguments. Confirm that the selected settings target the intended production
+database before proceeding.
 
 ```bash
 uv run --package coverage-web python coverage_web/manage.py backup_db --dest "${COVERAGE_BACKUP_DIR:?Set a private durable backup directory}" --keep 14
 ```
 
-Set `COVERAGE_BACKUP_DIR` to a private durable directory before running. Fourteen
-is a snapshot count, not a time-based retention guarantee. Assign a backup owner,
-schedule, retention policy, and failure alert; the Blueprint does not schedule
-this command. Back up private avatars and the encryption key ring separately.
+Set `COVERAGE_BACKUP_DIR` to a private durable directory before running. A
+container filesystem is not one: on Render it is discarded with the container,
+so a snapshot taken there and left there is not a backup. Fourteen is a snapshot
+count, not a time-based retention guarantee.
+
+The Blueprint now *defines* a scheduled backup (`coverage-db-backup`, 04:15 UTC,
+`backup_db --require-s3`) but does not activate one. It stays suspended and its
+`BACKUP_S3_BUCKET` stays blank for this release; with the bucket blank it takes
+no snapshot at all rather than taking one it would throw away. Assign a backup
+owner, schedule, retention policy and failure alert as a separate, funded
+decision, and add the job to `ops.tracking.EXPECTED_INTERVALS` in the same change
+that resumes it. Back up private avatars and the encryption key ring separately.
 A database dump alone cannot restore missing avatars or decrypt lost keys.
 
 Restore only into a newly created, empty drill database on an approved recovery

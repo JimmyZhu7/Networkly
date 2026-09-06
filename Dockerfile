@@ -13,6 +13,48 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+# 0) Postgres client tools, so `manage.py backup_db` can run INSIDE this
+#    image instead of only on a laptop that happens to have Homebrew's
+#    Postgres. That command shells out to `pg_dump`, and this image had no
+#    Postgres client at all — which made the one scheduled backup the deploy
+#    could plausibly own impossible to schedule, and left the runbook telling
+#    an operator to dump production by hand from a trusted host.
+#
+#    MAJOR VERSION 18, FROM PGDG, NOT DEBIAN'S DEFAULT. `pg_dump` refuses a
+#    server newer than itself ("server version 18.x; pg_dump version 17.x")
+#    — it is not a warning, it is a non-zero exit and no dump. Debian slim's
+#    own `postgresql-client` tracks the distribution's release, which is
+#    behind 18, so the distribution package would install cleanly and then
+#    fail against the real database. apt.postgresql.org publishes a
+#    versioned package per major, which is the only way to pin the client to
+#    the server.
+#
+#    The repository codename is read from the base image's own
+#    /etc/os-release rather than hardcoded, so a future `python:3.13-slim`
+#    rebased onto the next Debian keeps working instead of pointing at a
+#    suite that no longer matches the userland.
+#
+#    Kept as ONE layer with its own `apt-get purge` and list cleanup: curl
+#    exists only to fetch the signing key and must not survive into the
+#    running image. Costs roughly 30MB installed (libpq5 +
+#    postgresql-client-common + the client binaries) against an image whose
+#    Playwright tier alone is ten times that.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends ca-certificates curl; \
+    install -d -m 0755 /usr/share/postgresql-common/pgdg; \
+    curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+        https://www.postgresql.org/media/keys/ACCC4CF8.asc; \
+    codename="$(. /etc/os-release && echo "$VERSION_CODENAME")"; \
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${codename}-pgdg main" \
+        > /etc/apt/sources.list.d/pgdg.list; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends postgresql-client-18; \
+    apt-get purge -y --auto-remove curl; \
+    rm -rf /var/lib/apt/lists/*; \
+    pg_dump --version; \
+    pg_restore --version
+
 # 1) Dependency layer — copy only what uv needs to resolve, so app-code edits
 #    don't bust the cached install.
 COPY pyproject.toml uv.lock ./
