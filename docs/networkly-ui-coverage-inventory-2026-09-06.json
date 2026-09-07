@@ -1,0 +1,905 @@
+[
+  {
+    "template": "404.html",
+    "page": true,
+    "headings": [
+      "That Page Doesn't Exist."
+    ],
+    "states": [
+      "page support-error",
+      "support-error-content"
+    ]
+  },
+  {
+    "template": "500.html",
+    "page": false,
+    "headings": [
+      "Something Went Wrong."
+    ],
+    "states": []
+  },
+  {
+    "template": "_icon.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "_logo.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "_nav_icon.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "_pagehead.html",
+    "page": false,
+    "headings": [
+      "{{ title }}"
+    ],
+    "states": []
+  },
+  {
+    "template": "_wordmark.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "account/_account_page.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "account/_auth_providers.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "account/_auth_styles.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "account/email.html",
+    "page": true,
+    "headings": [
+      "Email Addresses",
+      "Add an Address"
+    ],
+    "states": [
+      "acct-empty",
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/email_change.html",
+    "page": true,
+    "headings": [
+      "Email Address"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/login.html",
+    "page": true,
+    "headings": [
+      "Welcome Back",
+      "<span class=\"auth-heading-mark\">{% include \"_nav_icon.html\" with name=\"network\" %}</span>Sign In"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/logout.html",
+    "page": true,
+    "headings": [
+      "Sign Out"
+    ],
+    "states": []
+  },
+  {
+    "template": "account/password_change.html",
+    "page": true,
+    "headings": [
+      "Change Password"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/password_reset.html",
+    "page": true,
+    "headings": [
+      "Reset Your Password"
+    ],
+    "states": []
+  },
+  {
+    "template": "account/password_reset_done.html",
+    "page": true,
+    "headings": [
+      "Check Your Email"
+    ],
+    "states": []
+  },
+  {
+    "template": "account/password_reset_from_key.html",
+    "page": true,
+    "headings": [
+      "Set a New Password"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/password_reset_from_key_done.html",
+    "page": true,
+    "headings": [
+      "Password Changed"
+    ],
+    "states": []
+  },
+  {
+    "template": "account/password_set.html",
+    "page": true,
+    "headings": [
+      "Set a Password"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/signup.html",
+    "page": true,
+    "headings": [
+      "Start Your Recruiting Workspace",
+      "<span class=\"auth-heading-mark\">{% include \"_nav_icon.html\" with name=\"plus\" %}</span>Create Your Account"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "account/signup_closed.html",
+    "page": true,
+    "headings": [
+      "Your Invitation.<br>Your Next Step.",
+      "Join the Free Beta"
+    ],
+    "states": []
+  },
+  {
+    "template": "accounts/_firm_list.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "ob-firms-empty",
+      "ob-firms-empty is-ob-hidden"
+    ]
+  },
+  {
+    "template": "accounts/_onboarding_preview.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "ob-pv-empty"
+    ]
+  },
+  {
+    "template": "accounts/_profile_choices.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "accounts/_profile_form.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "se-dialog panel",
+      "se-dialog-actions"
+    ]
+  },
+  {
+    "template": "accounts/_welcome_head.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "accounts/_work_auth_matrix.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "accounts/delete.html",
+    "page": true,
+    "headings": [
+      "Delete Your Account"
+    ],
+    "states": [
+      "msg error"
+    ]
+  },
+  {
+    "template": "accounts/export.html",
+    "page": true,
+    "headings": [
+      "Export Your Data"
+    ],
+    "states": []
+  },
+  {
+    "template": "accounts/import.html",
+    "page": true,
+    "headings": [
+      "Import Contacts",
+      "Import Summary",
+      "Match 1 Firm to the Directory",
+      "Match {{ result.unmatched_firms|length }} Firms to the Directory"
+    ],
+    "states": []
+  },
+  {
+    "template": "accounts/onboarding.html",
+    "page": true,
+    "headings": [
+      "Tell Us About Your Search",
+      "Where Can You Work?",
+      "Choose Your Target Firms",
+      "Bring Your Contacts In"
+    ],
+    "states": []
+  },
+  {
+    "template": "accounts/settings.html",
+    "page": true,
+    "headings": [
+      " and, where the list needs\n     one, a single explanatory sentence, then rows in the page's one row\n     anatomy. Deliberately quieter than .set-head h2 \u2014 one card, one voice at\n     the top of it \u2014 and separated by air plus a hairline rather than by a\n     second border-and-shadow frame, which is what made three cards read as\n     three unrelated features. */\n  /* Same offset .set-card carries. These groups are REAL scroll targets, not\n     just labels: crm.views redirects to #campaigns, #dismissed-proposals and\n     #duplicates after every classify, restore, merge and undo, so a group\n     landing under the sticky header would put the row you just acted on out\n     of sight at the exact moment you look for confirmation. */\n  .set-group { scroll-margin-top: 92px; }\n  .set-group + .set-group { margin-top: var(--s5); padding-top: var(--s5);\n    border-top: 1px solid var(--line); }\n  .set-group-h { margin: 0; font-size: var(--fs-m); font-weight: var(--w-bold);\n    color: var(--ink); }\n  /* A sentence that belongs to a whole group, not to any one row. These used\n     to be rendered AS rows \u2014 a .set-row holding a lone .set-row-desc with no\n     label and no control \u2014 so the first thing in each of those three cards\n     was a labelled row that labelled nothing and a hairline under prose. */\n  .set-note { margin: var(--s2) 0 0; color: var(--ink-3);\n    font-size: var(--fs-s); line-height: 1.6; max-width: 68ch; }\n  /* The first row of a group is not :first-child (the heading and the note\n     precede it), so it keeps the hairline from the base .set-row rule and the\n     note reads as prose above a list rather than as the list's first item. */\n\n  /* ---- Decisions rows: identity, state and evidence at three weights ----\n     Every row in this card used to print its whole story \u2014 who it's about,\n     what Networkly decided, and the forensic detail that decision rests on \u2014\n     as one paragraph of .set-row-desc, all the same small grey, so the\n     evidence sentence (\"Same mailbox name at two registered domains\u2026\") read\n     at the same weight as the fact it was evidence FOR. Three tiers now:\n     .set-row-label stays the identity (unchanged, page-wide); a state PILL\n     rides beside it for the one-glance fact (\"Your recruiting\", a campaign\n     kept or absorbed); and .dec-evidence holds the reasoning one tap away,\n     the same <details> a reader never has to open to trust the row, exactly\n     like every other progressive disclosure on this page. */\n  /* The pill states this card's two classify-able facts. Same accent/neutral\n     pairing .pill.plan-pro/.plan-free already established for Credits, reused\n     rather than invented so a third color pair isn't added to the theme for\n     what is the same kind of yes/no. */\n  .pill.dec-yes { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent-line); }\n  .pill.dec-no  { background: var(--surface); color: var(--ink-2); border-color: var(--line-strong); }\n  /* A quiet trailing fact riding on the SAME line as the identity it belongs\n     to \u2014 an email address that disambiguates a name, or the other half of a\n     merge pair. Regular weight and .ink-3 against the label's bold .ink, so\n     the eye still lands on the identity first and reads this second. */\n  .dec-sub { font-weight: var(--w-reg); color: var(--ink-3); font-size: var(--fs-s); }\n  /* The evidence a merge suggestion or a completed merge rests on. It is a\n     trust feature \u2014 it is WHY Networkly thinks two cards are one person \u2014\n     so it must stay reachable, but it is forensic detail, not the fact the\n     row exists to state, so it does not compete at the row's own size and\n     weight. <details> costs nothing closed and needs no script, the same\n     contract every other disclosure on this page already relies on (see\n     e.g. crm/_contact_live.html's coffee-chat brief). Real text in the\n     summary, not CSS-generated content, for the same reason the segmented\n     knob's \"default\" marker above is real text: it has to survive a screen\n     reader and a stylesheet that failed to load. */\n  /* A touch of left padding + a hairline rule, so this reads as subordinate\n     to the row above it (evidence FOR the row's fact) rather than as a\n     fourth line of the same paragraph \u2014 the one spot in an opened\n     disclosure with no visual demarcation from its parent at all. */\n  .dec-evidence { margin-top: var(--s3); padding-left: var(--s3);\n    border-left: 2px solid var(--line); }\n  .dec-evidence summary { cursor: pointer; color: var(--ink-3);\n    font-size: var(--fs-xs); font-weight: var(--w-med); list-style: none;\n    text-decoration: underline; text-decoration-style: dotted;\n    text-underline-offset: 3px; }\n  .dec-evidence summary::-webkit-details-marker { display: none; }\n  .dec-evidence summary:hover { color: var(--accent-ink); }\n  .dec-evidence summary:focus-visible { outline: 2px solid var(--accent);\n    outline-offset: 2px; border-radius: var(--r-ctl); }\n  .dec-evidence p { margin: var(--s1) 0 0; color: var(--ink-3);\n    font-size: var(--fs-xs); line-height: 1.5; max-width: 60ch; }\n  /* The click-through for already-decided items (\"Past sends\", \"Past\n     merges\"). 2026-08-29: a settled campaign or a completed merge is a\n     question already answered, and printing it inline at the same size as\n     one still waiting on a tap was the exact \"blatant\" clutter the founder\n     asked to remove. <details> again \u2014 costs nothing closed, needs no\n     script \u2014 but this one carries a whole sublist rather than one sentence,\n     so its summary reads as a compact section header, not a footnote. The\n     \u25b8 is decoration, not data (unlike .dec-evidence's \"Why\" text above):\n     the disclosure's own name, not CSS content, is what a screen reader or\n     a broken stylesheet has to fall back on, and \"Past sends (2)\" already\n     carries that on its own. */\n  .dec-settled { margin-top: var(--s3); }\n  .dec-settled summary { cursor: pointer; color: var(--ink-2);\n    font-size: var(--fs-s); font-weight: var(--w-med); list-style: none;\n    padding: var(--s2) 0; }\n  .dec-settled summary::-webkit-details-marker { display: none; }\n  .dec-settled summary::before { content: \"\u25b8\"; display: inline-block;\n    margin-right: var(--s2); transition: transform var(--t-fast); }\n  .dec-settled[open] summary::before { transform: rotate(90deg); }\n  .dec-settled summary:hover { color: var(--accent-ink); }\n  .dec-settled summary:focus-visible { outline: 2px solid var(--accent);\n    outline-offset: 2px; border-radius: var(--r-ctl); }\n  @media (prefers-reduced-motion: reduce) {\n    .dec-settled summary::before { transition: none; }\n  }\n\n  /* The two forms in Pace & Cadence share a card and must not run together.\n     The pace form ends with its own inline Save; this hairline under it is\n     what starts the cadence mechanism as a new thought, and it is the same\n     hairline every .set-row boundary on the page already uses. */\n  .set-form-lead { padding-bottom: var(--s5); margin-bottom: var(--s5);\n    border-bottom: 1px solid var(--line); }\n  .set-form-lead .pace-set { margin-bottom: 0; }\n  .pace-inline .btn { min-height: 40px; }\n\n  /* Visually hidden, still read aloud \u2014 the copy-button's live region. */\n  .set-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;\n    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }\n\n  @media (max-width: 820px) {\n    .settings-wrap { grid-template-columns: 1fr; gap: var(--s4); }\n    .settings-nav { position: static; flex-direction: row; flex-wrap: wrap;\n      gap: var(--s1); padding-bottom: var(--s2); max-height: none;\n      overflow: visible; padding-left: 0; }\n    /* No vertical spine to ride when the nav is a horizontal row. */\n    .settings-nav::before { display: none; }\n    .settings-nav a::before { display: none; }\n    .settings-nav a:hover { transform: none; }\n    .settings-nav-title { display: none; }\n    {% comment %}\n    THE GROUP HEADERS STAY (2026-09-01). They used to be hidden here with the\n    title, which turned the rail into eleven undifferentiated chips wrapped\n    over three rows \u2014 and \"Danger Zone\" landed on row three beside \"Profile\",\n    two items whose whole difference is that one of them deletes your\n    account. The desktop rail separates them with a labelled group for\n    exactly that reason; a phone does not need that distinction less.\n\n    `flex-basis: 100%` is what makes it work in a wrapping flex row: the\n    header claims a whole line, so the chips after it start a new row under\n    their own label instead of trailing off the end of the previous group's.\n    Four short mono lines against eleven chips whose grouping was otherwise\n    guesswork.\n\n    The rule the desktop version has (`::after`, a hairline to the right\n    edge) goes: it was drawing a 200px line across a 375px screen to fill\n    space beside a two-word label, which reads as a divider rather than as\n    part of the label. The accent colour and the mono case carry it here.\n    {% endcomment %}\n    .settings-nav-group { flex-basis: 100%; margin: var(--s3) 0 2px;\n      padding-left: 2px; font-size: var(--fs-micro); }\n    .settings-nav-group:first-of-type { margin-top: 0; }\n    .settings-nav-group::after { display: none; }\n  }\n  @media (max-width: 560px) {\n    .set-form .grid-2 { grid-template-columns: 1fr; }\n    /* The two-up itself needs no rule here \u2014 auto-fit dropped it to one\n       column long before 560px. Only its gap is worth tightening. */\n    .set-grid-2 { gap: var(--s4); }\n    /* Same reason .set-row stacks: a 12rem control reserved beside the label\n       leaves a phone about 130px of label, and \"Pre-Deadline Re-Ping\" does\n       not fit in 130px. Label, then input, then the prose \u2014 the desktop\n       areas collapse to one column in that same order. */\n    .set-field, .set-field.is-seg { grid-template-columns: minmax(0, 1fr);\n      grid-template-areas: \"label\" \"control\" \"desc\" \"err\";\n      /* One column means nothing is spanning two rows, so the slack row the\n         segmented field reserves on desktop has no job here. */\n      grid-template-rows: none; }\n    .set-field > .set-row-control { justify-self: start; }\n    /* Stacked, the segment gets the full width like every other control. */\n    .set-field.is-seg > .set-row-control { justify-self: stretch; }\n    /* A phone gives the track about 200px, and three labels reading name AND\n       number do not fit in 200px \u2014 they overlapped each other outright. The\n       number is the part to drop: the sentence carries every one of them in\n       full for anyone using a screen reader (see .cad-sentence's own\n       comment -- it is visually hidden now, not on the page for a sighted\n       phone user to fall back on either way), while the names are what make\n       the dots mean anything. */\n    .cad-rail { margin-left: 26px; margin-right: 26px; }\n    .cad-lab u { display: none; }\n    /* Stack label above control: at 375px a select or number input beside a\n       long label gets crushed to unusable width. */\n    .set-row { flex-direction: column; align-items: stretch; gap: var(--s3); }\n    .set-row-control { justify-content: flex-start; flex-wrap: wrap; }\n    /* A stacked row's BUTTON stretches to the row's full width \u2014 centred by\n       construction, and a bigger tap target where taps are the input. Left\n       hanging at flex-start it floated in dead space (reported against the\n       Danger Zone's Delete Account, and true of every stacked row's button).\n       Buttons only: a select or toggle at full width reads as a text field. */\n    .set-row-control .btn { flex: 1 1 auto; text-align: center; justify-content: center; }\n    /* ...AND THE RULE ABOVE COULD NOT SEE HALF OF THEM. `flex` only means\n       anything to a flex item, i.e. to a direct child of a flex box. A row\n       whose action POSTs wraps its button in a <form>, so the button's flex\n       container is that form and not `.set-row-control` \u2014 the declaration\n       computed on every button (`flex: 1 1 auto` on all eleven this deploy\n       renders, measured) and did nothing on the wrapped ones, because the\n       form itself was the unstretched item.\n\n       Measured at 375px in a 301px control track: Manage, Change, Sign Out\n       and Delete Account filled it at 301px, while Reset (Calendar Link)\n       sat at 77px and the Decisions Yes/No pair at 64px and 59px \u2014 the same\n       \"floated in dead space\" defect the comment above says was reported\n       against Delete Account and fixed, still live in the three rows the\n       selector could not reach. Whether an action needs a POST is invisible\n       to the reader, so it must not be what decides how the button looks.\n\n       The form becomes the stretching item and a flex box itself, which\n       hands the stretch straight through to the button already asking for\n       it. Two forms in one row (Decisions' Yes/No) split the track evenly,\n       exactly as the two plain buttons of Import/Export already do. */\n    .set-row-control > form { flex: 1 1 auto; display: flex; }\n    .set-row-value { align-self: flex-start; }\n  }\n  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }\n\n  /* ---- The pace ring: setting and readout as the same shape -------------\n     The SVG is a control (drag or click the ring), but the number input\n     remains the accessible one \u2014 the ring writes to it and it writes to the\n     ring, so either hand works. --p is the fill fraction. */\n  .pace-set { display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap;\n    margin-bottom: var(--s3); }\n  .pace-main { flex: 1 1 240px; min-width: 0; display: flex;\n    flex-direction: column; gap: var(--s2); }\n  .pace-inline { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap;\n    margin-top: var(--s1); }\n  .pace-inline .pace-read { margin: 0; }\n  .pace-ring-widget { position: relative; width: 132px; height: 132px;\n    cursor: pointer; touch-action: none; flex: none; }\n  .pace-ring-widget svg { width: 100%; height: 100%; transform: rotate(-90deg); }\n  .pace-ring-widget .pr-track { fill: none; stroke: var(--line); stroke-width: 9; }\n  .pace-ring-widget .pr-fill { fill: none; stroke: var(--accent); stroke-width: 9;\n    stroke-linecap: round; stroke-dasharray: 339.3;\n    stroke-dashoffset: calc(339.3 * (1 - var(--p, 0)));\n    transition: stroke-dashoffset 320ms cubic-bezier(0.22, 1, 0.36, 1); }\n  .pace-ring-widget .pr-val { position: absolute; inset: 0; display: grid;\n    place-content: center; text-align: center; }\n  /* `--fs-figure`, the same size `.set-row-value` takes two cards up. Both\n     are a number inside a panel, which is the whole distinction the figure\n     token draws: a display size is for a TITLE. It read 30px against that\n     card's 24px before the scale landed, which was two answers to one\n     question sitting a scroll apart. */\n  .pace-ring-widget .pr-val b { font-family: var(--font-mono); font-size: var(--fs-figure);\n    font-weight: var(--w-med); color: var(--accent-ink); line-height: 1; }\n  .pace-ring-widget .pr-val span { font-size: var(--fs-nano); text-transform: uppercase;\n    letter-spacing: 0.06em; color: var(--ink-3); }\n  .pace-read { font-size: var(--fs-s); color: var(--ink-2); max-width: 26rem; }\n  .pace-read b { color: var(--accent-ink); }\n  @media (prefers-reduced-motion: reduce) { .pace-ring-widget .pr-fill { transition: none; } }\n\n  /* The theme picker: three segments, the chosen one filled. Buttons rather\n     than radios because the state lives in localStorage, not in the form\n     that posts to the server \u2014 role=\"radiogroup\" carries the semantics the\n     markup no longer implies. */\n  .theme-pick { display: inline-flex; border: 1px solid var(--line);\n    border-radius: 999px; overflow: hidden; background: var(--surface); }\n  .theme-opt { border: 0; background: none; cursor: pointer;\n    padding: 8px 16px; min-height: 40px; font-size: var(--fs-s);\n    font-weight: var(--w-med); color: var(--ink-2);\n    transition: background var(--t-fast), color var(--t-fast); }\n  .theme-opt + .theme-opt { border-left: 1px solid var(--line); }\n  .theme-opt:hover { background: var(--accent-soft); color: var(--accent-ink); }\n  .theme-opt.is-on { background: var(--accent); color: var(--on-accent); }\n\n  /* ---- Target Firms: the tier board, editable from Settings -----------\n     Same drag-to-retier mechanism the Network page's board already uses\n     (same endpoint, same event shape) \u2014 a firm dragged here and a firm\n     dragged there write through one code path, so the two boards can\n     never disagree about a person's tier. What Settings adds is what the\n     Network board can't do: START and STOP tracking a firm at all. */\n  /* One firm's whole row, at one-per-row, is the shape the Network board\n     avoided on purpose (see .tier-grid's own note: \"bounded (~2 rows) so\n     a tier with many firms doesn't stretch the whole panel\") \u2014 a first\n     pass here missed that and put 69 firms in 69 full-width rows across\n     three side-by-side columns, taller than the rest of Settings\n     combined. Same fix as Network's: firms are TAGS, not cards, so they\n     wrap several to a row, and each tier is a fixed peek height with its\n     own scrollbar rather than growing the page. Stacked sections instead\n     of 3 side-by-side columns for the same reason \u2014 a 190px-wide column\n     of chips wraps at most one or two per row and buys nothing. */\n  .tf-board { display: flex; flex-direction: column; gap: var(--s3);\n    margin: var(--s3) 0 var(--s5); }\n  .tf-col { border-left-color: var(--line-strong);\n    padding: var(--s3) var(--s4);\n    transition: border-color var(--t-fast), background-color var(--t-fast); }\n  /* Escalating emphasis, not a severity colour (the Relationship gaps strip's\n     tier borders mean \"how urgent\" \u2014 reusing that red/amber/grey here\n     would say something is WRONG with Tier 1, when it's simply the most\n     important section). Accent scales down tier by tier instead. */\n  .tf-col[data-tier=\"1\"] { border-left-color: var(--accent); }\n  .tf-col[data-tier=\"2\"] { border-left-color: var(--accent-line); }\n  .tf-col[data-tier=\"3\"] { border-left-color: var(--line-strong); }\n  .tf-col.drop-hot { background: var(--accent-soft); border-color: var(--accent-line); }\n  .tf-col-title { display: flex; align-items: center; gap: var(--s2);\n    margin: 0 0 var(--s2); font-family: var(--font-mono); font-size: var(--fs-xs);\n    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }\n  /* A counted pill, not a bare numeral trailing the title: \"TIER 1 15\" read\n     as one number (\"tier one fifteen\") at this size and letter-spacing. */\n  .tf-col-count { font-variant-numeric: tabular-nums; color: var(--ink-2);\n    background: var(--surface); border: 1px solid var(--line);\n    border-radius: 999px; padding: 0 6px; letter-spacing: 0; }\n  /* ~3 rows before it scrolls internally, same \"bounded peek, not an\n     unbounded list\" contract as .tier-grid and .tf-results below. */\n  .tf-chips { display: flex; flex-wrap: wrap; align-content: flex-start;\n    gap: var(--s2); max-height: 152px; overflow-y: auto; padding-right: 4px;\n    scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }\n  .tf-chips::-webkit-scrollbar { width: 8px; }\n  .tf-chips::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }\n  .tf-chip { flex: none; display: flex; align-items: center;\n    gap: 6px; max-width: 250px; padding: 6px 6px 6px 13px; border: 1px solid var(--line);\n    border-radius: 999px; background: var(--paper); cursor: grab;\n    font-size: var(--fs-s); font-weight: var(--w-med); color: var(--ink);\n    box-shadow: var(--shadow-1); animation: chip-check 260ms cubic-bezier(0.22, 1, 0.36, 1) both;\n    transition: border-color var(--t-fast), box-shadow var(--t-med), opacity var(--t-med), transform var(--t-med); }\n  .tf-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .tf-chip:hover { border-color: var(--accent-line); box-shadow: var(--shadow-2); }\n  .tf-chip.dragging { opacity: 0.5; cursor: grabbing; }\n  .tf-chip.is-leaving { opacity: 0; transform: scale(0.85); }\n  /* Tier controls use the shared select enhancement. Remove stays visible. */\n  .tf-chip-x { flex: none; display: inline-flex; align-items: center; justify-content: center;\n    width: 18px; height: 18px; border: 0; border-radius: 50%; background: transparent;\n    color: var(--ink-3); cursor: pointer;\n    opacity: 0.4;\n    transition: background-color var(--t-fast), color var(--t-fast), opacity var(--t-fast); }\n  .tf-chip-x svg { width: 10px; height: 10px; pointer-events: none; }\n  .tf-chip:hover .tf-chip-x, .tf-chip:focus-within .tf-chip-x { opacity: 1; }\n  .tf-chip-x:hover { background: var(--danger-soft); color: var(--danger); }\n  .tf-chip-x:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: 1px; }\n  @media (hover: none) {\n    .tf-chip-x { opacity: 1; }\n  }\n  .tf-empty { margin: 0; color: var(--ink-3); font-size: var(--fs-xs); font-style: italic; }\n\n  .tf-add label { display: block; margin: 0 0 var(--s2); }\n  .tf-add input[type=\"text\"] { max-width: 26rem; }\n  .tf-results { display: flex; flex-direction: column; gap: 2px; margin-top: var(--s3);\n    max-height: 260px; overflow-y: auto; border: 1px solid var(--line);\n    border-radius: var(--r-panel); padding: var(--s1); }\n  .tf-result { display: flex; align-items: center; justify-content: space-between;\n    gap: var(--s3); padding: 6px 10px; border-radius: var(--r-ctl);\n    font-size: var(--fs-s); color: var(--ink-2); }\n  .tf-result:hover { background: var(--accent-soft); }\n  .tf-result.is-hidden { display: none; }\n  /* The regroup heading above (`matching_untracked_firms` /\n     `other_untracked_firms`) \u2014 same convention as onboarding's\n     `.ob-firms-heading`. */\n  .tf-group-heading { margin: var(--s2) 0 2px; padding: 0 10px;\n    font-size: var(--fs-xs); font-weight: var(--w-med); color: var(--ink-3);\n    text-transform: uppercase; letter-spacing: 0.05em; }\n  .tf-group-heading:first-child { margin-top: 0; }\n  .tf-add-btns { flex: none; display: flex; gap: 6px; }\n  {% comment %}\n  `--r-ctl`. \"Tier 1 / Tier 2 / Tier 3\" beside a search result is a row of\n  three buttons that each add a firm \u2014 pressable, so squared, per the\n  control-shape rule in networkly.css \u00a76. It read as a chip and it is not one:\n  a chip reports a state, and these do something. They were also the odd\n  shape out on a page that already carried nine button treatments.\n\n  Not a segmented choice either, which is the rule's one exception: the three\n  are alternative destinations for one firm, not a persistent selection with\n  a current member, and nothing here stays chosen after the click.\n  {% endcomment %}\n  .tf-add-btn { border: 1px solid var(--line); background: var(--surface);\n    color: var(--ink-2); border-radius: var(--r-ctl); padding: 3px 11px;\n    font-family: var(--font-mono); font-size: 11px; font-weight: var(--w-med);\n    cursor: pointer; transition: border-color var(--t-fast), background-color var(--t-fast),\n      color var(--t-fast), transform var(--t-fast); }\n  .tf-add-btn:hover { border-color: var(--accent); background: var(--accent-soft);\n    color: var(--accent-ink); transform: translateY(-1px); }\n  .tf-add-btn:active { transform: translateY(0) scale(0.96); }\n  .tf-empty-search { margin: var(--s2) 0 0; color: var(--ink-3); font-size: var(--fs-s); font-style: italic; }\n  @media (prefers-reduced-motion: reduce) {\n    .tf-chip { animation: none; }\n    .tf-add-btn:hover { transform: none; }\n  }\n</style>\n{% endblock %}\n\n{% block content %}\n{% comment %}\nhx-boost, not per-form hx-post/hx-target: every action on this page except\nProfile (which already has its own hx-post/hx-target and is untouched by\nthis) was a plain <form method=\"post\">, so saving Cadence or restoring a\ndismissed contact did a full browser navigation -- a white-flash reload\nthat reset scroll position and, combined with base.html ALSO rendering\n`messages` globally (see below), showed the flash message twice: once from\nthis page's own render, once from base.html's. Boosting intercepts every\nplain <form>/<a> under this element and turns it into the same request,\nsame response, same redirect-following behaviour, just fetched over AJAX\nand swapped into <body> instead of a hard navigation -- no view on either\napp had to change. An element with its OWN hx-* attributes (Profile's\nform) is untouched by an ancestor's hx-boost; htmx only boosts elements\nthat don't already declare explicit htmx behaviour.\n{% endcomment %}\n<div class=\"page support-account support-settings\" hx-boost=\"true\">\n  {% include \"_pagehead.html\" with title=\"Settings\" sub=\"Manage your profile, target firms, and account.\" %}\n  {% comment %}\n  Messages render ONCE, here, not a second time on this page -- see\n  base.html's own {% templatetag openblock %} if messages {% templatetag closeblock %}\n  block for why duplicating that loop here showed every flash message\n  twice.\n  {% endcomment %}\n\n  <div class=\"settings-wrap\">\n    {% comment %}\n    Rail groups follow the pattern every comparable product converged on\n    (LinkedIn, Notion, Linear): \"who you are\" and \"how the product behaves\"\n    are separated from \"how you get in and what we hold on you\".\n\n    THE RAIL AND THE PAGE ARE THE SAME LIST, IN THE SAME ORDER. They were not:\n    the rail read Profile, Work Authorization, Appearance, Target Firms while\n    the page ran Profile, Appearance, Target Firms, Work Authorization, so the\n    marker that rides the spine travelled BACKWARDS as you scrolled past\n    Appearance. A rail whose order is a fiction is worse than no rail. Every\n    entry below is now in page order, and the conditional entries sit exactly\n    where their conditional sections do.\n\n    The headers are presentational \u2014 the rail's real structure for a screen\n    reader is the nav landmark below plus each section's own <h2>. They are\n    display:none at \u2264820px, where the rail collapses to wrapped chips.\n    {% endcomment %}\n    <details class=\"settings-index\" open>\n    <summary>Settings Sections</summary>\n    <nav class=\"settings-nav\" aria-label=\"Settings sections\">\n      <p class=\"settings-nav-group\">You</p>\n      <a href=\"#profile\" class=\"is-active\" aria-current=\"true\">Profile</a>\n      <a href=\"#work-auth\">Work Authorization</a>\n      <a href=\"#preferences\">Preferences</a>\n      <p class=\"settings-nav-group\">Your Firms</p>\n      <a href=\"#firms\">Target Firms</a>\n      <p class=\"settings-nav-group\">Outreach</p>\n      <a href=\"#cadence\">Outreach Schedule</a>\n      {% if campaigns or dismissed_proposals or merge_suggestions or recent_merges %}\n        <a href=\"#decisions\">Decisions</a>\n      {% endif %}\n      <p class=\"settings-nav-group\">Plan &amp; Credits</p>\n      <a href=\"#credits\">Credits</a>\n      {% if gmail_live.available %}<a href=\"#gmail-live\">Gmail Live</a>{% endif %}\n      {% if google_calendar.available %}<a href=\"#google-calendar\">Google Calendar</a>{% endif %}\n      <p class=\"settings-nav-group\">Account</p>\n      <a href=\"#security\">Sign-In &amp; Security</a>\n      <a href=\"#data\">Your Data</a>\n      <a href=\"#danger\">Delete Account</a>\n    </nav>\n    </details>\n\n    <div class=\"settings-main\">\n      {# ---- Profile ---- #}\n      <section class=\"set-card kin-reveal panel\" id=\"profile\" style=\"--i:0\"\n               aria-labelledby=\"profile-h\">\n        <div class=\"set-head\">\n          <h2 id=\"profile-h\">Profile",
+      "Work Authorization",
+      "Preferences",
+      "Target Firms",
+      "Tier {{ col.tier }}\n                  <span class=\"tf-col-count\" data-tf-count>{{ col.firms|length }}</span>",
+      "Outreach Schedule"
+    ],
+    "states": [
+      "tf-empty",
+      "tf-empty-search"
+    ]
+  },
+  {
+    "template": "accounts/signout_all.html",
+    "page": true,
+    "headings": [
+      "Sign Out Other Devices"
+    ],
+    "states": []
+  },
+  {
+    "template": "accounts/unsubscribe.html",
+    "page": true,
+    "headings": [
+      "Unsubscribed.",
+      "Stop the Weekly Digest?"
+    ],
+    "states": []
+  },
+  {
+    "template": "analytics/dashboard.html",
+    "page": true,
+    "headings": [
+      "Open Campus Roles",
+      "Network",
+      "Product Events \u00b7 {{ window_days }}d",
+      "Pipeline",
+      "What Gets Used",
+      "Pilot \u00b7 per User"
+    ],
+    "states": []
+  },
+  {
+    "template": "assistant/_draft_card.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "assistant/_draft_chip.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "assistant/_history.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "as-history-empty"
+    ]
+  },
+  {
+    "template": "assistant/_history_row.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "assistant/_memories.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "as-memory-empty"
+    ]
+  },
+  {
+    "template": "assistant/_message.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "assistant/_thread.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "as-empty",
+      "as-empty-lead",
+      "as-empty-mark"
+    ]
+  },
+  {
+    "template": "assistant/chat.html",
+    "page": true,
+    "headings": [
+      "Assistant",
+      "What Networkly Remembers"
+    ],
+    "states": [
+      "as-confirm as-memory-dialog panel panel--flat",
+      "as-memory-dialog-title"
+    ]
+  },
+  {
+    "template": "base.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "core/_waitlist_form.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "core/home.html",
+    "page": true,
+    "headings": [
+      "Your Next<br>Career Move.<br><span>Connected.</span>",
+      "A Clear Next Step",
+      "People, With Context",
+      "Keep Your Search Moving",
+      "A Role Is Only<br>the Start.",
+      "Find Your Opening"
+    ],
+    "states": []
+  },
+  {
+    "template": "core/pricing.html",
+    "page": true,
+    "headings": [
+      "Choose Your<br><span>Recruiting Plan</span>",
+      "Free",
+      "Your Recruiting Workspace",
+      "Pro",
+      "Everything in Free, Plus",
+      "Credits for<br>Your AI Tools"
+    ],
+    "states": []
+  },
+  {
+    "template": "core/pricing_beta.html",
+    "page": true,
+    "headings": [
+      "Your Whole Search.<br><span>One Free Beta.</span>",
+      "Individual Beta",
+      "Everything for Your Search",
+      "Clear Limits",
+      "Your Data.<br>Your Decisions."
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/_act_card.html",
+    "page": false,
+    "headings": [
+      "<a href=\"{% url 'crm:contact_detail' a.contact.id %}\">{{ a.contact.name|smart_person_name|smart_title }}</a>"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/_application_lane.html",
+    "page": false,
+    "headings": [
+      "\n      From Your Applications\n      <span class=\"lane-count\" aria-live=\"polite\">{{ app_events|length }}</span>\n    ",
+      "{{ e.row.opportunity.title|smart_title }}"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/_calendar_day.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "cal-empty"
+    ]
+  },
+  {
+    "template": "crm/_calendar_event.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "crm/_calendar_week.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "crm/_cockpit.html",
+    "page": false,
+    "headings": [
+      "Your Next Steps",
+      "\n          <span class=\"lane-dot\"></span>\n          Chat{{ chat_prep|length|pluralize }} Today\n          <span class=\"lane-count\" aria-live=\"polite\">{{ chat_prep|length }}</span>\n        ",
+      "<a href=\"{% url 'crm:contact_detail' p.contact.id %}\">{{ p.contact.name|smart_person_name|smart_title }}</a>",
+      "\n          {% if lane.key == \"critical\" %}<span class=\"lane-dot\"></span>{% endif %}\n          {{ lane.label }}\n          <span class=\"lane-count\" aria-live=\"polite\">{% if lane.capped %}{{ lane.count }} of {{ lane.total }} today{% else %}{{ lane.count }}{% endif %}</span>\n          <button type=\"button\" class=\"btn lane-copy\" data-lane-copy\n                  aria-label=\"Copy the {{ lane.total }} name{{ lane.total|pluralize }} in {{ lane.label }}\">\n            <span class=\"lane-copy-label\">Copy names</span>\n          </button>\n        ",
+      "\n          Found in Your Inbox\n          {# E2's rule holds here too: a capped lane never renders a bare number. #}\n          <span class=\"lane-count\" aria-live=\"polite\">{{ proposals|length }}{% if proposals_total > proposals|length %} of {{ proposals_total }}{% endif %}</span>\n          {% if proposals|length > 1 %}\n            <span class=\"lane-bulk\">\n              {% comment %}\n              ONE CLICK STILL, but the count is on screen before the write.\n              39 contacts were created in one tap on 2026-09-01 \u2014 38 with no\n              role, 23 with no region \u2014 and the number first appeared\n              afterwards, in the lane that had emptied. This is the one\n              confirm the accept side gets: Add-all creates rows, and the\n              per-card chips below are skipped wholesale by it, which is\n              exactly what the dialog says.\n              {% endcomment %}\n              <button type=\"button\" class=\"btn act-ghost\"\n                      hx-confirm=\"Accept {{ proposals|length }} contacts? They're added as-is, without the role or region on each card.\"\n                      hx-post=\"{% url 'crm:proposals_bulk' 'accept' %}\"\n                      title=\"Add everyone listed here\">Add all {{ proposals|length }}</button>\n              <button type=\"button\" class=\"btn act-ghost\"\n                      hx-post=\"{% url 'crm:proposals_bulk' 'dismiss' %}\"\n                      title=\"Dismiss everyone listed here\">Dismiss all</button>\n            </span>\n          {% endif %}\n        ",
+      "{{ p.name|smart_person_name|smart_title }}"
+    ],
+    "states": [
+      "empty",
+      "empty empty--done",
+      "empty empty--quiet"
+    ]
+  },
+  {
+    "template": "crm/_contact_ai_brief.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "htmx-indicator cd-ai-loading"
+    ]
+  },
+  {
+    "template": "crm/_contact_ai_summary.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "htmx-indicator cd-ai-loading"
+    ]
+  },
+  {
+    "template": "crm/_contact_live.html",
+    "page": false,
+    "headings": [
+      "Relationship",
+      "History <span class=\"cd-count\">{{ touch_rows|length }}</span>",
+      "Chats <span class=\"cd-count\">{{ debriefs|length }}</span>",
+      "Relationship Fit\n        <span class=\"band band-{{ contact_score.band }}\">\n          <span class=\"num\">{{ contact_score.composite }}</span> {{ contact_score.band }}\n        </span>\n      ",
+      "Firm Fit\n          <span class=\"band band-{{ firm_score.band }}\">\n            <span class=\"num\">{{ firm_score.composite }}</span> {{ firm_score.band }}\n          </span>\n        "
+    ],
+    "states": [
+      "moved-flag error"
+    ]
+  },
+  {
+    "template": "crm/_contact_search.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "csearch-empty"
+    ]
+  },
+  {
+    "template": "crm/_daily_brief.html",
+    "page": false,
+    "headings": [
+      "Daily Summary"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/_firm_mark.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "crm/_seed_lane.html",
+    "page": false,
+    "headings": [
+      "\n    Start Here\n    <span class=\"lane-count\">{{ seeds|length }}</span>\n  ",
+      "{{ s.title }}"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/_styles.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "crm/_today_context.html",
+    "page": false,
+    "headings": [
+      "{% include \"_nav_icon.html\" with name=\"talk\" %}Recent Activity"
+    ],
+    "states": [
+      "rail-empty"
+    ]
+  },
+  {
+    "template": "crm/autopilot_log.html",
+    "page": true,
+    "headings": [
+      "Autopilot"
+    ],
+    "states": [
+      "empty"
+    ]
+  },
+  {
+    "template": "crm/calendar.html",
+    "page": true,
+    "headings": [
+      "{{ period_label }}"
+    ],
+    "states": [
+      "cal-empty",
+      "errorlist"
+    ]
+  },
+  {
+    "template": "crm/contact_archived.html",
+    "page": true,
+    "headings": [
+      "Archived at {{ firm.name|smart_title }}",
+      "Archived Contacts"
+    ],
+    "states": [
+      "empty"
+    ]
+  },
+  {
+    "template": "crm/contact_campaign_hidden.html",
+    "page": true,
+    "headings": [
+      "Hidden Campaigns"
+    ],
+    "states": [
+      "empty"
+    ]
+  },
+  {
+    "template": "crm/contact_detail.html",
+    "page": true,
+    "headings": [
+      " directly below, so\n  the crumb doesn't repeat it \u2014 it just points back.{% endcomment %}\n  <nav class=\"subnav standalone\">\n    <a href=\"{% url 'crm:contact_list' %}\">\u2190 Network</a>\n  </nav>\n\n  <header class=\"pagehead\">\n    <div class=\"pagehead-text\">\n\n      <h1 class=\"pagehead-title\">{{ contact.name|smart_person_name|smart_title }}"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/contact_form.html",
+    "page": true,
+    "headings": [
+      "{% if mode == \"edit\" %}Edit Contact{% else %}Add Contact{% endif %}"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/contact_list.html",
+    "page": true,
+    "headings": [
+      "Unplaced <span class=\"scrub-count\">{{ contact_total }}</span>",
+      "Contacts",
+      "Firm Network"
+    ],
+    "states": [
+      "net-none tier-empty"
+    ]
+  },
+  {
+    "template": "crm/contact_parked.html",
+    "page": true,
+    "headings": [
+      "Paused Contacts"
+    ],
+    "states": [
+      "empty"
+    ]
+  },
+  {
+    "template": "crm/contact_unrelated.html",
+    "page": true,
+    "headings": [
+      "Unrelated Contacts"
+    ],
+    "states": [
+      "empty"
+    ]
+  },
+  {
+    "template": "crm/debrief.html",
+    "page": true,
+    "headings": [
+      "Chat Notes"
+    ],
+    "states": []
+  },
+  {
+    "template": "crm/week.html",
+    "page": true,
+    "headings": [
+      "Today"
+    ],
+    "states": [
+      "ribbon-empty-value",
+      "ribbon-stat ribbon-funnel{% if not dash.funnel.submitted and not dash.funnel.interview and not dash.funnel.offer %} is-empty{% endif %}"
+    ]
+  },
+  {
+    "template": "directory/_apps_body.html",
+    "page": false,
+    "headings": [
+      "Tracked Roles",
+      "{{ lens.label }}\n          <span class=\"apps-lens-frac\" data-apps-lens-count>{{ lens.items|length }} role{{ lens.items|length|pluralize }}</span>\n        ",
+      "No Roles in This Stage",
+      "No Roles Saved Yet."
+    ],
+    "states": [
+      "apps-filter-empty",
+      "apps-fseg{% if not stage.count %} is-empty{% endif %}",
+      "apps-lens-empty",
+      "empty",
+      "lens-network lens-network-empty"
+    ]
+  },
+  {
+    "template": "directory/_card.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_columns.html",
+    "page": false,
+    "headings": [
+      "<a class=\"firmcol-name\" href=\"{% url 'directory:firm_detail' cl.firm_slug %}\">{{ cl.firm_name|smart_title }}</a>"
+    ],
+    "states": [
+      "cols-loading"
+    ]
+  },
+  {
+    "template": "directory/_cycle_band.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_drawer.html",
+    "page": false,
+    "headings": [
+      "Couldn\u2019t Load This Role"
+    ],
+    "states": [
+      "drawer directory-drawer",
+      "drawer-error",
+      "drawer-loading",
+      "drawer-x"
+    ]
+  },
+  {
+    "template": "directory/_facet_options.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_filter_counts.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_pickcol.html",
+    "page": false,
+    "headings": [
+      "<span class=\"firmcol-name\" id=\"pickcol-h\">Picked for You</span>"
+    ],
+    "states": [
+      "firmcol firmcol--picked{% if not pick_cluster.roles %} is-empty{% endif %}"
+    ]
+  },
+  {
+    "template": "directory/_recommend_bar.html",
+    "page": false,
+    "headings": [
+      "Roles for You",
+      "Picked for You"
+    ],
+    "states": []
+  },
+  {
+    "template": "directory/_results.html",
+    "page": false,
+    "headings": [
+      "No Open Roles Match These Filters.",
+      "No Open Roles Right Now."
+    ],
+    "states": [
+      "empty{% if pick_cluster %} empty--incol{% endif %}"
+    ]
+  },
+  {
+    "template": "directory/_role_drawer.html",
+    "page": false,
+    "headings": [
+      "{{ o.title|smart_title }}"
+    ],
+    "states": [
+      "drawer-apply",
+      "drawer-apply is-closed",
+      "drawer-body",
+      "drawer-body drawer-empty",
+      "drawer-caution",
+      "drawer-caution is-closed",
+      "drawer-deadline{% if not deadline.posted %} is-undated{% endif %}{% if reported %} is-reported{% endif %}",
+      "drawer-fact",
+      "drawer-facts",
+      "drawer-firm",
+      "drawer-fold",
+      "drawer-head"
+    ]
+  },
+  {
+    "template": "directory/_role_fact.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_role_people.html",
+    "page": false,
+    "headings": [],
+    "states": [
+      "rp{% if compact %} rp-compact{% endif %}{% if not net.people %} rp-empty{% endif %}"
+    ]
+  },
+  {
+    "template": "directory/_rolecard.html",
+    "page": false,
+    "headings": [
+      "<a href=\"{{ r.url }}\" target=\"_blank\" rel=\"nofollow noopener\"\n            {% if r.unconfirmed %}class=\"is-unconfirmed\" {% endif %}title=\"{{ r.title|smart_title }}{% if r.unconfirmed %} ({{ r.unconfirmed.why }}){% endif %}\"\n            >{{ r.title|smart_title }}{% if r.unconfirmed %}<span class=\"vh\"> ({{ r.unconfirmed.label }})</span>{% endif %}</a>"
+    ],
+    "states": []
+  },
+  {
+    "template": "directory/_rolecard_dismissed.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_section_icon.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_styles.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_timeline.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/_track_control.html",
+    "page": false,
+    "headings": [],
+    "states": []
+  },
+  {
+    "template": "directory/firm_detail.html",
+    "page": true,
+    "headings": [
+      "{{ firm.name|smart_title }}",
+      "{% include \"directory/_section_icon.html\" with name=\"contacts\" %}Your Contacts Here\n        <span class=\"scrub-count\">{{ my_total }}</span>\n        {% if my_advocates %}<span class=\"fd-adv\">{{ my_advocates }} advocate{{ my_advocates|pluralize }}</span>{% endif %}\n      ",
+      "{% include \"directory/_section_icon.html\" with name=\"dates\" %}Recruiting Dates",
+      "{% include \"directory/_section_icon.html\" with name=\"activity\" %}Observed Activity",
+      "{% include \"directory/_section_icon.html\" with name=\"roles\" %}Open Roles <span class=\"scrub-count\">{{ total }}</span>",
+      "No Experienced Roles Open Here."
+    ],
+    "states": [
+      "empty"
+    ]
+  },
+  {
+    "template": "directory/my_applications.html",
+    "page": true,
+    "headings": [
+      "<span class=\"directory-title-icon\">{% include \"directory/_section_icon.html\" with name=\"applications\" %}</span>My Applications",
+      "Hidden Roles <span class=\"scrub-count\">{{ hidden|length }}</span>"
+    ],
+    "states": []
+  },
+  {
+    "template": "directory/opportunities.html",
+    "page": true,
+    "headings": [
+      "<span class=\"directory-title-icon\">{% include \"directory/_section_icon.html\" with name=\"roles\" %}</span>Opportunities"
+    ],
+    "states": []
+  },
+  {
+    "template": "legal/privacy.html",
+    "page": true,
+    "headings": [
+      "Privacy Policy",
+      "The Short Version",
+      "Who Runs Networkly",
+      "What We Collect",
+      "Optional Mail Access",
+      "Optional Calendar Access"
+    ],
+    "states": []
+  },
+  {
+    "template": "legal/terms.html",
+    "page": true,
+    "headings": [
+      "Terms of Service",
+      "What Networkly Is",
+      "Who Can Use It",
+      "Your Account",
+      "What You May Not Do",
+      "Mail Capture"
+    ],
+    "states": []
+  },
+  {
+    "template": "socialaccount/connections.html",
+    "page": true,
+    "headings": [
+      "Connected Accounts",
+      "Connect Another Account"
+    ],
+    "states": [
+      "acct-empty",
+      "msg error"
+    ]
+  }
+]

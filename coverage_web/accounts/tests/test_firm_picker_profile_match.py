@@ -153,3 +153,15 @@ def test_settings_target_firms_search_uses_the_same_grouping(client, us_ib_stude
     assert body.index("JPMorgan") < body.index("SIG")
     assert 'src="/static/img/firm-logos/sig.png"' in body
     assert 'src="/static/img/firm-logos/bain.png"' in body
+
+
+def test_inactive_untracked_firms_are_not_offered(client, us_ib_student):
+    from accounts.views import _firm_picker_context
+    inactive = Firm.objects.create(name="Unverified Empty Firm", slug="unverified-empty", status="inactive")
+    target_only = Firm.objects.create(name="Target Only Firm", slug="target-only-example", status="target-only")
+    assert inactive not in _firm_picker_context(us_ib_student)["firms"]
+    assert target_only in _firm_picker_context(us_ib_student)["firms"]
+    client.force_login(us_ib_student)
+    body = client.get(reverse("accounts:settings")).content.decode()
+    assert "Unverified Empty Firm" not in body
+    assert "Target Only Firm" in body

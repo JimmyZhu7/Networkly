@@ -46,12 +46,12 @@ in document order.
     {% if r.abandoned %}
       <span class="track-abandoned" title="{{ r.abandoned.why }}">{{ r.abandoned.label }}</span>
     {% else %}
-    <button type="button" class="track-btn"
+    <button type="button" class="track-btn" data-pending-label="Saving…" hx-disabled-elt="this"
             hx-post="{% url 'track_opportunity' r.id %}" hx-vals='{"status": "saved"}'
             hx-target="closest .track" hx-swap="outerHTML"
             title="Save this role">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 11.5l-3.5 2 .9-3.9L2.5 6.9l4-.35L8 3l1.5 3.55 4 .35-2.9 2.7.9 3.9z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-      Save
+      <span data-action-label>Save</span>
     </button>
     {% endif %}
     {% comment %}Save's opposite. Without it the only verbs were "act on
@@ -83,12 +83,12 @@ in document order.
             hx-target="closest .rolerow" hx-swap="outerHTML swap:120ms"
             title="Won't suggest this role again">Not for me</button>
   {% elif r.track_status == "saved" %}
-    <button type="button" class="track-btn is-saved"
+    <button type="button" class="track-btn is-saved" data-pending-label="Updating…" hx-disabled-elt="this"
             hx-post="{% url 'track_opportunity' r.id %}" hx-vals='{"status": "clear"}'
             hx-target="closest .track" hx-swap="outerHTML"
             title="Remove from saved">
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 11.5l-3.5 2 .9-3.9L2.5 6.9l4-.35L8 3l1.5 3.55 4 .35-2.9 2.7.9 3.9z" fill="currentColor"/></svg>
-      Saved
+      <span data-action-label>Saved</span>
     </button>
   {% else %}
     <a class="track-chip track-{{ r.track_status }}" href="{% url 'my_applications' %}"

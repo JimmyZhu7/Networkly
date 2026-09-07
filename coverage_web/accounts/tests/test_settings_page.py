@@ -63,14 +63,9 @@ def body(client, logged_in, settings):
 # ---------------------------------------------------------------------------
 # Structure
 # ---------------------------------------------------------------------------
-def test_the_rail_lists_every_section_and_every_section_exists(body):
-    """A rail entry with no section scrolls nowhere; a section with no rail
-    entry is unreachable on a long page. Both directions are asserted."""
-    railed = set(re.findall(r'class="settings-nav[^"]*"[^>]*>(.*?)</nav>', body, re.S))
-    nav = next(iter(railed))
-    anchors = set(re.findall(r'href="#([a-z-]+)"', nav))
+def test_summary_sections_remain_addressable_without_a_sidebar(body):
+    assert '<nav class="settings-nav"' not in body
     sections = set(re.findall(r'<section class="set-card[^"]*" id="([a-z-]+)"', body))
-    assert anchors == sections
     assert sections == {
         # Preferences sits under "You" for the reason Appearance did before
         # it absorbed the digest row: how you read and how you're written to
@@ -96,19 +91,6 @@ def test_the_rail_lists_every_section_and_every_section_exists(body):
         # second card frame went.
         "security", "data", "danger",
     }
-
-
-def test_the_rail_and_the_page_run_in_the_same_order(body):
-    """The rail's `.is-active` marker rides a spine and is moved by an
-    IntersectionObserver as you scroll. When the rail's order and the page's
-    order disagreed — the rail read Profile, Work authorization, Appearance,
-    Target Firms while the page ran Profile, Appearance, Target Firms, Work
-    Authorization — the marker travelled BACKWARDS past two sections. A rail
-    whose order is a fiction is worse than no rail."""
-    nav = re.search(r'class="settings-nav[^"]*"[^>]*>(.*?)</nav>', body, re.S).group(1)
-    anchors = re.findall(r'href="#([a-z-]+)"', nav)
-    sections = re.findall(r'<section class="set-card[^"]*" id="([a-z-]+)"', body)
-    assert anchors == sections
 
 
 def test_the_legal_routes_survive_the_fold(body):
@@ -140,7 +122,7 @@ def test_the_decisions_groups_keep_their_own_anchors(client, logged_in):
     )
     body = client.get(reverse(SETTINGS)).content.decode()
     assert 'id="decisions"' in body
-    assert 'href="#decisions"' in body
+    assert 'href="#decisions"' not in body
     assert 'id="dismissed-proposals"' in body
     assert "Buried Banker" in body
     # The way back is on the row, not just the name of the person.
@@ -166,14 +148,6 @@ def test_the_cadence_preview_keeps_sequence_and_independent_clocks(body):
     assert "Since the follow-up, or note if sent once." in body
     for sentence in ("cad-cold-sentence", "cad-warm-sentence", "cad-deadline-sentence"):
         assert f'id="{sentence}"' in body
-
-
-def test_the_rail_is_grouped(body):
-    """Ten flat links was at the limit of scannable. The groups mirror what
-    LinkedIn, Notion and Linear all converged on: who you are / how the
-    product behaves / how you get in and what we hold."""
-    for group in ("You", "Outreach", "Account"):
-        assert f'class="settings-nav-group">{group}<' in body
 
 
 def test_the_danger_zone_is_last_and_holds_exactly_one_action(body):
@@ -367,11 +341,6 @@ def test_each_section_is_labelled_by_its_own_heading(body):
     for section_id in ("profile", "cadence", "security", "data", "danger"):
         assert f'aria-labelledby="{section_id}-h"' in body
         assert f'id="{section_id}-h"' in body
-
-
-def test_the_rail_is_a_named_landmark_with_a_current_item(body):
-    assert 'aria-label="Settings sections"' in body
-    assert 'aria-current="true"' in body
 
 
 def test_flashes_carry_a_live_region_role(client, logged_in):

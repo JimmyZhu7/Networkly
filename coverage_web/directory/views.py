@@ -2072,11 +2072,14 @@ def _apply_filters(qs, sel, *, skip=()):
     if "firm" not in skip and sel["firm"]:
         qs = qs.filter(firm__slug__in=sel["firm"])
     if "q" not in skip and sel["q"]:
-        qs = qs.filter(
-            Q(title__icontains=sel["q"])
-            | Q(firm__name__icontains=sel["q"])
-            | Q(location__icontains=sel["q"])
-        )
+        # Each word may match a different field, in any order.
+        # Bound the term count so a pasted paragraph cannot build huge SQL.
+        for term in dict.fromkeys(sel["q"].split()[:20]):
+            qs = qs.filter(
+                Q(title__icontains=term)
+                | Q(firm__name__icontains=term)
+                | Q(location__icontains=term)
+            )
     if "year" not in skip:
         qs = _apply_year_filter(qs, sel["year"])
     if "role" not in skip:
@@ -5341,6 +5344,8 @@ def _lens_item(uo, *, today, people_by_firm=None):
     return {
         "id": o.id,
         "firm_name": o.firm.name,
+        "logo_url": o.firm.logo_url,
+        "monogram": _monogram(o.firm.name),
         "title": o.title,
         "url": o.url,
         "location": o.location,

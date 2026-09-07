@@ -126,6 +126,12 @@
     var detail = event.detail, source = detail.elt;
     // GET polling and search are not mutations and should not pulse whole panels.
     if (!source || !detail.requestConfig || detail.requestConfig.verb.toLowerCase() !== "post") return;
+    var actionLabel = source.querySelector("[data-action-label]");
+    if (source.dataset.pendingLabel && actionLabel) {
+      detail.xhr.networklyAction = { source: source, label: actionLabel, text: actionLabel.textContent };
+      actionLabel.textContent = source.dataset.pendingLabel;
+      source.setAttribute("aria-busy", "true");
+    }
     var widget = source.closest(widgetSelector);
     if (widget) {
       var count = pending.get(widget) || 0;
@@ -137,6 +143,11 @@
   });
   document.addEventListener("htmx:afterRequest", function (event) {
     var detail = event.detail, widget = detail.xhr && detail.xhr.networklyWidget;
+    var action = detail.xhr && detail.xhr.networklyAction;
+    if (action) {
+      action.label.textContent = action.text;
+      action.source.removeAttribute("aria-busy");
+    }
     if (!widget) return;
     var count = Math.max(0, (pending.get(widget) || 1) - 1);
     pending.set(widget, count);
@@ -160,5 +171,25 @@
     var feedback = target.querySelector(".moved-flag:not(.error),.msg.success,.prop-undo");
     if (feedback) reveal(feedback);
   });
+  function alignFeedRows() {
+    document.querySelectorAll(".today-context-grid").forEach(function (grid) {
+      grid.style.removeProperty("--feed-row-height");
+      var rows = Array.from(grid.querySelectorAll(".situation-card, .activity-row"));
+      if (!rows.length) return;
+      var height = Math.max.apply(null, rows.map(function (row) {
+        return Math.ceil(row.getBoundingClientRect().height);
+      }));
+      grid.style.setProperty("--feed-row-height", height + "px");
+    });
+  }
+  var feedFrame;
+  function scheduleFeedAlignment() {
+    cancelAnimationFrame(feedFrame);
+    feedFrame = requestAnimationFrame(alignFeedRows);
+  }
+  window.addEventListener("resize", scheduleFeedAlignment);
+  document.addEventListener("htmx:afterSwap", scheduleFeedAlignment);
+  if (document.fonts) document.fonts.ready.then(scheduleFeedAlignment);
+  scheduleFeedAlignment();
   setup();
 })();

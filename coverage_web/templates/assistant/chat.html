@@ -853,15 +853,7 @@ materials.
               </svg>
               New folder
             </button>
-            <button type="button" class="as-menu-item" id="as-memory-btn" role="menuitem">
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M6 2.5a2.5 2.5 0 0 0-2.5 2.5c0 .3.03.58.1.85A2.5 2.5 0 0 0 2.5 8.2c0 .93.5 1.74 1.25 2.18a2.3 2.3 0 0 0-.05.47A2.5 2.5 0 0 0 6.2 13.3 2 2 0 0 0 8 14.5V4.5A2 2 0 0 0 6 2.5z"
-                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                <path d="M10 2.5a2.5 2.5 0 0 1 2.5 2.5c0 .3-.03.58-.1.85a2.5 2.5 0 0 1 1.1 2.35c0 .93-.5 1.74-1.25 2.18.03.15.05.31.05.47A2.5 2.5 0 0 1 9.8 13.3 2 2 0 0 1 8 14.5V4.5a2 2 0 0 1 2-2z"
-                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-              </svg>
-              What Networkly remembers
-            </button>
+
           </div>
         </div>
       </div>
@@ -887,6 +879,15 @@ materials.
                {% endcomment %}
                hx-trigger="submit-on-enter changed">
       </form>
+            <button type="button" class="as-context-btn" id="as-memory-btn" aria-haspopup="dialog">
+              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M6 2.5a2.5 2.5 0 0 0-2.5 2.5c0 .3.03.58.1.85A2.5 2.5 0 0 0 2.5 8.2c0 .93.5 1.74 1.25 2.18a2.3 2.3 0 0 0-.05.47A2.5 2.5 0 0 0 6.2 13.3 2 2 0 0 0 8 14.5V4.5A2 2 0 0 0 6 2.5z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M10 2.5a2.5 2.5 0 0 1 2.5 2.5c0 .3-.03.58-.1.85a2.5 2.5 0 0 1 1.1 2.35c0 .93-.5 1.74-1.25 2.18.03.15.05.31.05.47A2.5 2.5 0 0 1 9.8 13.3 2 2 0 0 1 8 14.5V4.5a2 2 0 0 1 2-2z"
+                      stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+              Saved context
+            </button>
       {% include "assistant/_history.html" %}
     </aside>
 
@@ -1105,20 +1106,33 @@ element by the next turn.
       input.focus();
     });
 
-    // 5. The sidebar itself: docked and always visible above 860px (pure
-    // CSS, no JS involved), a slide-in drawer with a backdrop below it. The
-    // toggle button only exists in the DOM's tab order in that narrow mode
-    // (display:none above it in CSS), so this code is dormant on desktop.
+    // 5. Match the CSS drawer breakpoint exactly. A translated-away drawer
+    // must also leave the tab order and accessibility tree. Desktop restores
+    // the normal docked sidebar, including after a viewport resize.
     var toggle = document.getElementById("as-sidebar-toggle");
     var closeBtn = document.getElementById("as-sidebar-close");
     var backdrop = document.getElementById("as-sidebar-backdrop");
+    var sidebar = document.getElementById("as-sidebar");
+    var sidebarMobile = window.matchMedia("(max-width: 860px)");
+    function syncSidebar() {
+      var closed = sidebarMobile.matches && app.dataset.sidebar !== "open";
+      if (closed && sidebar && sidebar.contains(document.activeElement) && toggle) toggle.focus();
+      if (sidebar) {
+        sidebar.inert = closed;
+        if (closed) sidebar.setAttribute("aria-hidden", "true");
+        else sidebar.removeAttribute("aria-hidden");
+      }
+      if (toggle) toggle.setAttribute("aria-expanded", String(sidebarMobile.matches && !closed));
+    }
     function openSidebar() {
       app.dataset.sidebar = "open";
-      if (toggle) toggle.setAttribute("aria-expanded", "true");
+      syncSidebar();
+      if (sidebarMobile.matches && closeBtn) closeBtn.focus();
     }
     function closeSidebar() {
       delete app.dataset.sidebar;
-      if (toggle) toggle.setAttribute("aria-expanded", "false");
+      if (sidebarMobile.matches && toggle) toggle.focus();
+      syncSidebar();
     }
     if (toggle) toggle.addEventListener("click", function () {
       app.dataset.sidebar === "open" ? closeSidebar() : openSidebar();
@@ -1126,8 +1140,13 @@ element by the next turn.
     if (closeBtn) closeBtn.addEventListener("click", closeSidebar);
     if (backdrop) backdrop.addEventListener("click", closeSidebar);
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && app.dataset.sidebar === "open") { closeSidebar(); toggle.focus(); }
+      if (e.key === "Escape" && app.dataset.sidebar === "open") closeSidebar();
     });
+    sidebarMobile.addEventListener("change", function () {
+      delete app.dataset.sidebar;
+      syncSidebar();
+    });
+    syncSidebar();
 
     // 6. Rename, in place — a small trigger swaps its container into an
     // "editing" state that reveals an otherwise-hidden text input; the
@@ -1248,7 +1267,7 @@ element by the next turn.
       });
     }
 
-    // 6b2. The memory dialog: also a menu item behind the sidebar's "⋯" now.
+    // 6b2. Saved context opens directly from the history sidebar.
     // Plain open/close, no confirm() involved — a <dialog> the same way as
     // everything else on this page, its list already server-rendered (see
     // chat() in views.py), refreshed in place by each forget button's own
@@ -2101,6 +2120,7 @@ element by the next turn.
 
         var assistantTurn = null;
         var accumulated = "";
+        var terminalReceived = false;
 
         function applyEvent(event) {
           if (event.type === "delta") {
@@ -2127,6 +2147,7 @@ element by the next turn.
               typingText.textContent = "Reading " + event.label + "…";
             }
           } else if (event.type === "notice") {
+            terminalReceived = true;
             if (event.kind === "busy") {
               // The server did not accept this message or charge credits.
               // Keep its text and files ready for an explicit retry.
@@ -2146,7 +2167,9 @@ element by the next turn.
             // Networkly talking about itself is not an answer.
             if (pending && event.kind !== "busy") attachUserActions(pending.turn, event.user_message_id, pending.text);
             scrollLogToEnd();
-          } else if (event.type === "done" && assistantTurn) {
+          } else if (event.type === "done") {
+            terminalReceived = true;
+            if (!assistantTurn) return;
             // The reply is whole — nothing left to pulse for.
             if (assistantTurn.avatar) assistantTurn.avatar.classList.remove("is-thinking");
             // The final redraw, and the only one that can finish a draft
@@ -2176,11 +2199,12 @@ element by the next turn.
           applyEvent(parsed);
         }
         function showFailureTurn() {
-          // Partial text already on screen beats replacing it with a
-          // generic apology — the student can see exactly where it cut off.
-          if (assistantTurn) return;
+          // Keep partial text, but never present an interrupted reply as complete.
           var failTurn = buildTurn("assistant", true);
-          failTurn.body.innerHTML = chatFormat("The assistant could not respond. Try again in a moment.");
+          failTurn.body.textContent = assistantTurn
+            ? "The connection ended before this reply finished. Reload the chat to check its saved status before trying again."
+            : "The assistant could not respond. Reload the chat to check its saved status before trying again.";
+          failTurn.el.setAttribute("role", "alert");
           log.appendChild(failTurn.el);
         }
 
@@ -2192,7 +2216,12 @@ element by the next turn.
             var buffer = "";
             function pump() {
               return reader.read().then(function (result) {
-                if (result.done) return;
+                if (result.done) {
+                  buffer += decoder.decode();
+                  if (buffer.trim()) handleFrame(buffer);
+                  if (!terminalReceived) throw new Error("stream ended before completion");
+                  return;
+                }
                 buffer += decoder.decode(result.value, { stream: true });
                 var frames = buffer.split("\n\n");
                 buffer = frames.pop(); // the last piece may be an incomplete frame

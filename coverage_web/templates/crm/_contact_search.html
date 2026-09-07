@@ -27,6 +27,7 @@ Archived has no groups and the script quietly treats the whole list as one.
   </label>
 </div>
 <p class="csearch-empty" data-csearch-empty hidden>No contacts match "<span data-csearch-empty-q></span>".</p>
+<p class="vh" data-csearch-status role="status" aria-live="polite" aria-atomic="true"></p>
 {% script %}
   (function () {
     // The toolbar renders ABOVE the items it searches (better UX than
@@ -48,6 +49,8 @@ Archived has no groups and the script quietly treats the whole list as one.
     var sortSel = root.querySelector("[data-csearch-sort]");
     var globalEmpty = root.querySelector("[data-csearch-empty]");
     var globalEmptyQ = root.querySelector("[data-csearch-empty-q]");
+    var searchStatus = root.querySelector("[data-csearch-status]");
+    var announceTimer;
     var items = Array.prototype.slice.call(root.querySelectorAll("[data-searchable]"));
     if (!input || !sortSel || !items.length) return;
     var openBeforeSearch = null; // null = not currently searching
@@ -97,6 +100,14 @@ Archived has no groups and the script quietly treats the whole list as one.
       if (!q) openBeforeSearch = null;
       if (globalEmpty) globalEmpty.hidden = !(q && totalVisible === 0);
       if (globalEmptyQ) globalEmptyQ.textContent = input.value.trim();
+      // Keep the live region mounted and announce only after typing pauses.
+      // Revealing a hidden empty-state paragraph alone is not reliably announced.
+      clearTimeout(announceTimer);
+      if (searchStatus) announceTimer = setTimeout(function () {
+        searchStatus.textContent = q
+          ? totalVisible + (totalVisible === 1 ? " contact matches" : " contacts match") + " your search."
+          : "All " + totalVisible + " contacts shown.";
+      }, 350);
     }
 
     function applySort() {

@@ -101,6 +101,8 @@ survives even if it was in the batch.
               {% endcomment %}
               <li class="apps-lens-row u-{{ r.urgency.key }}{% if r.posting_closed %} is-shut{% endif %}" style="--i: {{ forloop.counter0 }}" data-app-stage="{{ r.stage }}">
                 <div class="lens-record-head">
+                <span class="lens-identity">
+                  <span class="rr-company-mark{% if r.logo_url %} has-logo{% endif %}" aria-hidden="true">{% if r.logo_url %}<img src="{{ r.logo_url }}" alt="" width="38" height="38" loading="lazy" decoding="async" data-firm-logo><span class="rr-monogram" hidden>{{ r.monogram }}</span>{% else %}<span class="rr-monogram">{{ r.monogram }}</span>{% endif %}</span>
                 <span class="lens-role">
                   <a href="{{ r.url }}" target="_blank" rel="nofollow noopener">{{ r.title|smart_title }}</a>
                   {% comment %}
@@ -133,6 +135,7 @@ survives even if it was in the batch.
                   days". Same builder and same partial the cards used, so
                   there was never a second version of it to drift.
                   {% endcomment %}
+                </span>
                 </span>
                 <span class="lens-when{% if not r.deadline.posted and not r.posting_closed %}{% if r.rolling_stated %} lens-rolling{% else %} lens-unstated{% endif %}{% endif %}{% if r.posting_closed %} lens-shut{% endif %}">
                   {% if r.posting_closed %}

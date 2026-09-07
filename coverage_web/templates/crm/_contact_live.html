@@ -53,6 +53,81 @@ values.
       {% if facts.recruiting_style %}<span class="cd-fact">{{ facts.recruiting_style }}</span>{% endif %}
     </p>
 
+
+
+    {# ---- Where this stands, and moving it ---- #}
+    {# --i renumbered after the relationship summary folded into the card #}
+    {# above: the stagger counts CARDS, so a gap here would have delayed #}
+    {# the whole left column by one step for a card that no longer exists. #}
+    <div class="cd-card cd-relationship kin-reveal panel" style="--i:1">
+      <div class="cd-state">
+        <h2 class="cd-h">Relationship</h2>
+        {% comment %}state_line is the WHOLE sentence — the view already
+        folds warmth in and dedupes pairs like replied/replied. Prepending
+        warmth here is how "Replied · They replied" shipped.{% endcomment %}
+        <span class="cd-state-line">{{ state_line }}</span>
+        {% comment %}
+        What "parked" means for THIS contact, by warmth (crm.views._park_note)
+        — park was doing two jobs (stop the clock / invisible everywhere),
+        and this is the one place that says which regime applies without
+        changing what any of them actually do.
+        {% endcomment %}
+        {% if park_note %}<p class="cd-park-note">{{ park_note }}</p>{% endif %}
+        {% comment %}
+        The date, off the park's own audit row (crm.views.park_ts). Absent
+        for a contact parked before the audit trail existed, and absent is
+        what it says: no date is drawn rather than a guessed one.
+        {% endcomment %}
+        {% if parked_at %}<p class="cd-park-note">Paused {{ parked_at|date:"M j, Y" }}</p>{% endif %}
+      </div>
+      <ol class="relationship-stages" aria-label="Relationship stage">
+        {% for w in warmth_order %}<li{% if w == contact.warmth %} aria-current="step"{% endif %}>{{ w|relationship_label }}</li>{% endfor %}
+      </ol>
+
+      {% if moved %}
+        {% if moved.error %}
+          <p class="moved-flag error">{{ moved.error }}</p>
+        {% elif moved.changed %}
+          <p class="moved-flag">
+            Logged {{ moved.kind_label }}.
+            Relationship {{ moved.from_warmth|relationship_label }} <span class="arrow">→</span> {{ contact.warmth|relationship_label }}{% if moved.from_state != contact.thread_state %},
+            {{ moved.from_state_label|lower }} <span class="arrow">→</span> {{ moved.to_state_label|lower }}{% endif %}.
+          </p>
+        {% else %}
+          <p class="moved-flag nochange">Logged {{ moved.kind_label }}. Relationship unchanged.</p>
+        {% endif %}
+      {% endif %}
+
+      <form class="logform" method="post" action="{% url 'crm:log_touch' contact.id %}"
+            hx-post="{% url 'crm:log_touch' contact.id %}"
+            hx-target="#contact-live"
+            hx-swap="outerHTML">
+        {% csrf_token %}
+        <label class="widget-field"><span>Interaction</span><select name="kind" aria-label="Interaction">
+          {% comment %}
+          "manual_override" rides in `touch_kinds` (crm.utils.TOUCH_KIND_LABELS)
+          so History and the activity feed get a plain label for it, but it is
+          not a real interaction to LOG — log_touch rejects it outright (not in
+          TOUCH_TRANSITIONS) since it is the audit trail's own kind for a state
+          correction, not a student action. Skipped here so the dropdown never
+          offers a choice that always errors.
+
+          "bulk_received" is skipped for the opposite reason: log_touch DOES
+          accept it, so without this it would be a working, choosable option.
+          It is a verdict the capture pipeline reaches from a message's own
+          headers (capture.inbound) — "this was a blast, not a reply" — never
+          something a student did and should be able to claim.
+          {% endcomment %}
+          {% for value, label in touch_kinds %}{% if value != "manual_override" and value != "bulk_received" %}<option value="{{ value }}"{% if value == preselect_kind %} selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}
+        </select></label>
+        <label class="widget-field"><span>Channel</span><select name="channel" aria-label="Channel">
+          {% for value, label in channels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select></label>
+        <label class="widget-field widget-field-wide"><span>Note <span class="widget-optional">optional</span></span><input type="text" name="note" placeholder="Note (optional)"></label>
+        <button class="btn btn-primary" type="submit">Log interaction</button>
+      </form>
+    </div>
+
     {# ---- Reach them ---- #}
     <div class="cd-card cd-correspondence kin-reveal panel" style="--i:0">
       {% if contact.email %}
@@ -162,79 +237,6 @@ values.
       </details>
     </div>
 
-    {# ---- Where this stands, and moving it ---- #}
-    {# --i renumbered after the relationship summary folded into the card #}
-    {# above: the stagger counts CARDS, so a gap here would have delayed #}
-    {# the whole left column by one step for a card that no longer exists. #}
-    <div class="cd-card cd-relationship kin-reveal panel" style="--i:1">
-      <div class="cd-state">
-        <h2 class="cd-h">Relationship</h2>
-        {% comment %}state_line is the WHOLE sentence — the view already
-        folds warmth in and dedupes pairs like replied/replied. Prepending
-        warmth here is how "Replied · They replied" shipped.{% endcomment %}
-        <span class="cd-state-line">{{ state_line }}</span>
-        {% comment %}
-        What "parked" means for THIS contact, by warmth (crm.views._park_note)
-        — park was doing two jobs (stop the clock / invisible everywhere),
-        and this is the one place that says which regime applies without
-        changing what any of them actually do.
-        {% endcomment %}
-        {% if park_note %}<p class="cd-park-note">{{ park_note }}</p>{% endif %}
-        {% comment %}
-        The date, off the park's own audit row (crm.views.park_ts). Absent
-        for a contact parked before the audit trail existed, and absent is
-        what it says: no date is drawn rather than a guessed one.
-        {% endcomment %}
-        {% if parked_at %}<p class="cd-park-note">Paused {{ parked_at|date:"M j, Y" }}</p>{% endif %}
-      </div>
-      <ol class="relationship-stages" aria-label="Relationship stage">
-        {% for w in warmth_order %}<li{% if w == contact.warmth %} aria-current="step"{% endif %}>{{ w|relationship_label }}</li>{% endfor %}
-      </ol>
-
-      {% if moved %}
-        {% if moved.error %}
-          <p class="moved-flag error">{{ moved.error }}</p>
-        {% elif moved.changed %}
-          <p class="moved-flag">
-            Logged {{ moved.kind_label }}.
-            Relationship {{ moved.from_warmth|relationship_label }} <span class="arrow">→</span> {{ contact.warmth|relationship_label }}{% if moved.from_state != contact.thread_state %},
-            {{ moved.from_state_label|lower }} <span class="arrow">→</span> {{ moved.to_state_label|lower }}{% endif %}.
-          </p>
-        {% else %}
-          <p class="moved-flag nochange">Logged {{ moved.kind_label }}. Relationship unchanged.</p>
-        {% endif %}
-      {% endif %}
-
-      <form class="logform" method="post" action="{% url 'crm:log_touch' contact.id %}"
-            hx-post="{% url 'crm:log_touch' contact.id %}"
-            hx-target="#contact-live"
-            hx-swap="outerHTML">
-        {% csrf_token %}
-        <label class="widget-field"><span>Interaction</span><select name="kind" aria-label="Interaction">
-          {% comment %}
-          "manual_override" rides in `touch_kinds` (crm.utils.TOUCH_KIND_LABELS)
-          so History and the activity feed get a plain label for it, but it is
-          not a real interaction to LOG — log_touch rejects it outright (not in
-          TOUCH_TRANSITIONS) since it is the audit trail's own kind for a state
-          correction, not a student action. Skipped here so the dropdown never
-          offers a choice that always errors.
-
-          "bulk_received" is skipped for the opposite reason: log_touch DOES
-          accept it, so without this it would be a working, choosable option.
-          It is a verdict the capture pipeline reaches from a message's own
-          headers (capture.inbound) — "this was a blast, not a reply" — never
-          something a student did and should be able to claim.
-          {% endcomment %}
-          {% for value, label in touch_kinds %}{% if value != "manual_override" and value != "bulk_received" %}<option value="{{ value }}"{% if value == preselect_kind %} selected{% endif %}>{{ label }}</option>{% endif %}{% endfor %}
-        </select></label>
-        <label class="widget-field"><span>Channel</span><select name="channel" aria-label="Channel">
-          {% for value, label in channels %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-        </select></label>
-        <label class="widget-field widget-field-wide"><span>Note <span class="widget-optional">optional</span></span><input type="text" name="note" placeholder="Note (optional)"></label>
-        <button class="btn btn-primary" type="submit">Log interaction</button>
-      </form>
-    </div>
-
     {# ---- History, newest first ---- #}
     <div class="cd-card cd-history kin-reveal panel" style="--i:2">
       <h2 class="cd-h">History <span class="cd-count">{{ touch_rows|length }}</span></h2>
@@ -318,6 +320,8 @@ values.
         </span>
       </h2>
       {% if contact_score.reasoning %}<p class="reasoning">{{ contact_score.reasoning }}</p>{% endif %}
+      <details class="cd-score-details"{% if not contact_score.axes.leverage.role_given %} open{% endif %}>
+        <summary>Score Breakdown{% if not contact_score.axes.leverage.role_given %}<span class="cd-score-prompt">Add their role</span>{% endif %}</summary>
       <div class="axes">
         <div class="axis" style="--i:0">
           <span class="name">Depth</span>
@@ -392,6 +396,7 @@ values.
           {% endif %}
         </div>
       </div>
+      </details>
     </div>
 
     {% if firm_score %}

@@ -13,7 +13,8 @@
     <a href="{% url 'crm:contact_list' %}">← Network</a>
   </nav>
 
-  <header class="pagehead">
+  <header class="pagehead cd-identity">
+    <span class="cd-identity-avatar" aria-hidden="true">{{ contact.name|smart_person_name|first|upper }}</span>
     <div class="pagehead-text">
 
       <h1 class="pagehead-title">{{ contact.name|smart_person_name|smart_title }}</h1>

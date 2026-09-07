@@ -1,0 +1,1376 @@
+{
+  "accenture": {
+    "name": "Accenture",
+    "homepage": "https://accenture.com/",
+    "source_url": "https://www.accenture.com/favicon.ico",
+    "resolved_url": "https://www.accenture.com/favicon.ico",
+    "sha256": "36baf62e4a04cba4bec6f02b56836c0129496e2cf3643deb50cb24e806dc6cb8",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "akuna": {
+    "name": "Akuna Capital",
+    "homepage": "https://akunacapital.com/",
+    "source_url": "https://akunacapital.com/wp-content/themes/akuna/apple-touch-icon.png",
+    "resolved_url": "https://akunacapital.com/wp-content/themes/akuna/apple-touch-icon.png",
+    "sha256": "ecef115836fd110eb91ba3e0895df5718248321a8d39893119df926b9bf6f787",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "alibaba": {
+    "name": "Alibaba",
+    "homepage": "https://alibabagroup.com/",
+    "source_url": "https://static.alibabagroup.com/static/favicon.ico",
+    "resolved_url": "https://static.alibabagroup.com/static/favicon.ico",
+    "sha256": "5ca84062ce83ee55e8cf47c15493feb13fb24d7e887c201a5c57157ca55d6384",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "allen-company": {
+    "name": "Allen & Company",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/9/93/Allen_%26_Company_logo.png",
+    "homepage": "https://en.wikipedia.org/wiki/Allen_%26_Company",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "c214b06c57413b6838758822dda6fa5a243182c70544fc75d2fa019bfb92decf",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "alliancebernstein": {
+    "name": "AllianceBernstein",
+    "homepage": "https://alliancebernstein.com/",
+    "source_url": "https://alliancebernstein.com/etc.clientlibs/abde-commons/clientlibs/clientlib-commons/resources/images/apple-touch-icon.png",
+    "resolved_url": "https://www.alliancebernstein.com/etc.clientlibs/abde-commons/clientlibs/clientlib-commons/resources/images/apple-touch-icon.png",
+    "sha256": "b8e8d13b6a9735a3148ceaafef31cb87e574674b3e44e4c389e444ddfa074d5a",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "amazon": {
+    "name": "Amazon",
+    "homepage": "https://amazon.com/",
+    "source_url": "https://amazon.com/favicon.ico",
+    "resolved_url": "https://www.amazon.com/favicon.ico",
+    "sha256": "13cb17c87c9aaa94321d6a35b6ee38352bee91d46b499960fbc62e5e73f1fced",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "apollo": {
+    "name": "Apollo",
+    "homepage": "https://apollo.com/",
+    "source_url": "https://www.apollo.com/etc.clientlibs/apolloaem/clientlibs/clientlib-site/resources/icons/apollo.ico",
+    "resolved_url": "https://www.apollo.com/etc.clientlibs/apolloaem/clientlibs/clientlib-site/resources/icons/apollo.ico",
+    "sha256": "a31ef2a04e7d4da5aa8da8e6c6a61f95d5296265df5c6617c8d4adb05cfe648a",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "apple": {
+    "name": "Apple",
+    "homepage": "https://apple.com/",
+    "source_url": "https://www.apple.com/favicon.ico",
+    "resolved_url": "https://www.apple.com/favicon.ico",
+    "sha256": "baaf475206dd5d2b4bb29023514e12166dc70c52ac66767a39c3092cb7b4f914",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "aqr": {
+    "name": "AQR",
+    "homepage": "https://aqr.com/",
+    "source_url": "https://aqr.com/assets/img/favicon.ico",
+    "resolved_url": "https://www.aqr.com/assets/img/favicon.ico",
+    "sha256": "1d221d70b870a4e1e93cee65afca5e074f04dd10af66a43f345750f96dcae84a",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "ares": {
+    "name": "Ares",
+    "source_url": "https://upload.wikimedia.org/wikipedia/en/8/86/Ares_Management_logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Ares_Management",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "f86c624c75fa1236a642fff328fc2888cb99578f74cbc21c0ebadc03e92ce0c6",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "bain": {
+    "name": "Bain & Company",
+    "homepage": "https://bain.com/",
+    "source_url": "https://bain.com/Static/images/icons/apple-touch-icon-152x152.png",
+    "resolved_url": "https://www.bain.com/Static/images/icons/apple-touch-icon-152x152.png",
+    "sha256": "4f382ea5d90893cbd3b6e12f9244111eca868ce57a7d41178169100446f61ef5",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "baincapital": {
+    "name": "Bain Capital",
+    "homepage": "https://baincapital.com/",
+    "source_url": "https://baincapital.com/themes/custom/baincapital/images/ico/apple-touch-icon.png",
+    "resolved_url": "https://www.baincapital.com:443/themes/custom/baincapital/images/ico/apple-touch-icon.png",
+    "sha256": "eba876d1c65e2f69837b5b237c87f2df2026bcb37e2e5b1b42d70e42e5fefd50",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "baird": {
+    "name": "Baird",
+    "homepage": "https://rwbaird.com/",
+    "source_url": "https://rwbaird.com/favicon.png",
+    "resolved_url": "https://www.rwbaird.com/favicon.png",
+    "sha256": "e8107927e142475e542cc97b5afee20150a8c263bdc4fc55bdd725db585fdc53",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "bank-of-america": {
+    "name": "Bank of America",
+    "homepage": "https://bankofamerica.com/",
+    "source_url": "https://bankofamerica.com/homepage/spa-assets/images/assets-images-global-favicon-android-chrome-192x192-CSXafb7d716.png",
+    "resolved_url": "https://www.bankofamerica.com/homepage/spa-assets/images/assets-images-global-favicon-android-chrome-192x192-CSXafb7d716.png",
+    "sha256": "33b205215ae5a014931fe54b5246249f2c41e414736d044db4215b2f13ec6d90",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "barclays": {
+    "name": "Barclays",
+    "homepage": "https://barclays.com/",
+    "source_url": "https://barclays.com/content/dam/icons/favicons/barclays/apple-touch-icon-180x180.png",
+    "resolved_url": "https://www.home.barclays/content/dam/icons/favicons/barclays/apple-touch-icon-180x180.png",
+    "sha256": "03acbb42dbd053095cf9d1d652ee3cfba6c7a3cd2f962fa6d3da0683809e6633",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "bcg": {
+    "name": "BCG",
+    "homepage": "https://bcg.com/",
+    "source_url": "https://www.bcg.com/favicon.ico",
+    "resolved_url": "https://www.bcg.com/favicon.ico",
+    "sha256": "adae46f2534efc6b037eb72033cd6d672faa9273ab2a97706f8975d0e8dece8e",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "belvedere": {
+    "name": "Belvedere Trading",
+    "homepage": "https://belvederetrading.com/",
+    "source_url": "https://images.squarespace-cdn.com/content/v1/64f8a57ab361aa60e6288fab/a36d8ca4-95b8-4649-8f06-2088928b14ca/favicon.ico?format=100w",
+    "resolved_url": "https://images.squarespace-cdn.com/content/v1/64f8a57ab361aa60e6288fab/a36d8ca4-95b8-4649-8f06-2088928b14ca/favicon.ico?format=100w",
+    "sha256": "b5e1762f6795ec66f769441d84b40a452664dd30c88a0337918abd39fc9e97e3",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "blackrock": {
+    "homepage": "https://www.blackrock.com/",
+    "source_url": "https://www.blackrock.com/blk-one01-c-assets/cache-1767633005000/images/media-bin/web/global/wordmark/blackrock-logo-nav.svg",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "c925757f952ffada3b1c056621785fbb3328cb0bfdbab53e6876e0333e92edde",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "blackstone": {
+    "name": "Blackstone",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/The_Blackstone_Group_logo_%282%29.svg/250px-The_Blackstone_Group_logo_%282%29.svg.png",
+    "homepage": "https://en.wikipedia.org/wiki/Blackstone_Inc.",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "2f4375e00e415d42ad75fdb6569bfac04f28c3dd5d0f8e24ae9b72e94ba7cb46",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "blueowl": {
+    "name": "Blue Owl",
+    "homepage": "https://blueowl.com/",
+    "source_url": "https://blueowl.com/themes/custom/blueowl/favicon.ico",
+    "resolved_url": "https://blueowl.com/themes/custom/blueowl/favicon.ico",
+    "sha256": "6746490491ec1ecddd1aec373768528ec0952f3e47e1c395dd4b78670e138196",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "bmo": {
+    "name": "BMO",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/BMO_Logo.svg/250px-BMO_Logo.svg.png",
+    "homepage": "https://en.wikipedia.org/wiki/Bank_of_Montreal",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "f12d1edafe8e54481656547bfc8b4a25a03d492d6250cbc9849943cf28d670f3",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "bnpparibas": {
+    "name": "BNP Paribas",
+    "homepage": "https://apac.bnpparibas/",
+    "source_url": "https://apac.bnpparibas/app/uploads/sites/11/cache/2022/04/cropped-cropped-cropped-apple-touch-icon/4208126291.png",
+    "resolved_url": "https://apac.bnpparibas/app/uploads/sites/11/cache/2022/04/cropped-cropped-cropped-apple-touch-icon/4208126291.png",
+    "sha256": "0759bed9abcedf708cdb29f26f159713370884eb12cbbcc59b4757aa9ceaa49b",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "boci": {
+    "name": "BOCI",
+    "source_url": "https://upload.wikimedia.org/wikipedia/en/b/b3/BOC_International_Holdings_%28logo%29.png",
+    "homepage": "https://en.wikipedia.org/wiki/BOC_International",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "776d5c83cd059f91d27bb54e91ad231db06ade8e8d64d944043ee42f8a4d77d5",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "bofa": {
+    "name": "Bank of America",
+    "homepage": "https://bankofamerica.com/",
+    "source_url": "https://bankofamerica.com/homepage/spa-assets/images/assets-images-global-favicon-android-chrome-192x192-CSXafb7d716.png",
+    "resolved_url": "https://www.bankofamerica.com/homepage/spa-assets/images/assets-images-global-favicon-android-chrome-192x192-CSXafb7d716.png",
+    "sha256": "33b205215ae5a014931fe54b5246249f2c41e414736d044db4215b2f13ec6d90",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "brattle": {
+    "name": "The Brattle Group",
+    "source_url": "https://mma.prnewswire.com/media/320171/The_Brattle_Group_Logo_v2.jpg?p=facebook",
+    "homepage": "https://www.prnewswire.com/news-releases/brattle-report-finds-auditor-enforcement-fell-sharply-in-2025-amid-leadership-turnover-and-shift-in-regulatory-priorities-302698640.html",
+    "source_kind": "company press release",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "35942887f4880372f33ad5b4535222e9874a2094149c8831b298d6ba15ee9eeb",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "bridgewater": {
+    "name": "Bridgewater",
+    "homepage": "https://bridgewater.com/",
+    "source_url": "https://bridgewater.com/apple-touch-icon.png",
+    "resolved_url": "https://www.bridgewater.com/apple-touch-icon.png",
+    "sha256": "c6606cd2b59ca4d7bcefea84185036c090d3c37a464e19524c614bbfb10429a2",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "brookfield": {
+    "name": "Brookfield",
+    "homepage": "https://brookfield.com/",
+    "source_url": "https://brookfield.com/themes/custom/brookfield/images/favicon/apple-touch-icon.png?v=PYeg8783YP20190613",
+    "resolved_url": "https://www.brookfield.com/themes/custom/brookfield/images/favicon/apple-touch-icon.png?v=PYeg8783YP20190613",
+    "sha256": "aec1e184bb8e31291f345b907d73bcf0fed42c2b164f0ee5438ee926a0e3242d",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "bytedance": {
+    "name": "ByteDance",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/07/ByteDance_logo_English.svg",
+    "homepage": "https://en.wikipedia.org/wiki/ByteDance",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "10eaeabbcbd436c60aaab99f73db79f36b7386637d03eea49a239d95a8b1bb26",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "capitalgroup": {
+    "name": "Capital Group",
+    "homepage": "https://capitalgroup.com/",
+    "source_url": "https://static.capitalgroup.com/etc.clientlibs/capital-group/clientlibs/clientlib-site/resources/images/apple-touch-icon.png",
+    "resolved_url": "https://static.capitalgroup.com/etc.clientlibs/capital-group/clientlibs/clientlib-site/resources/images/apple-touch-icon.png",
+    "sha256": "f6590c60d8811bf90dbd77d80e6e00cae380b3a438d0620fc6f2317eb02c5041",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "carlyle": {
+    "source_url": "https://cdn.kscope.io/d91eb664ed105501d17fbe1af3a2826e-carlyle-logoxblue.jpg",
+    "homepage": "https://carlylecreditincomefund.gcs-web.com/node/9211/html",
+    "source_kind": "company published artwork",
+    "name": "Carlyle",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "24f0187e01341d220b58484f5f0176e704e6c4710a8e0433ecf3e24b4463ccfa",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "centerview": {
+    "name": "Centerview",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Centerview_Partners_logo.png",
+    "homepage": "https://en.wikipedia.org/wiki/Centerview_Partners",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "4c5f90b45ac72cfc1b75e8f1e4ebc9a58e01a19658034e0920cc1f511a79ef3f",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "cibc": {
+    "name": "CIBC",
+    "homepage": "https://cibc.com/",
+    "source_url": "https://cibc.com/content/dam/favicon/cibc-favicon/favicon.ico",
+    "resolved_url": "https://www.cibc.com/content/dam/favicon/cibc-favicon/favicon.ico",
+    "sha256": "f7d6b1b59287ed3ab67cb2f4e33deeded7e1c4642a7e38f6c0b8a95683544e1b",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "cicc": {
+    "name": "CICC",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Logo_of_CICC_2.png",
+    "homepage": "https://en.wikipedia.org/wiki/China_International_Capital_Corporation",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "2ccc28ba9545ec457d2ceb288e3da696dfa5e1cdd920e29e9e0c403b70bc1077",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "citadel": {
+    "name": "Citadel",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Citadel_LLC_Logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Citadel_LLC",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "93f5d69d8d7502cf3016639863338b5b344bf7b4101f774a15bc10e17c1118d6",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "citadel-securities": {
+    "name": "Citadel Securities",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Citadel_Securities_logo_%282026%29.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Citadel_Securities",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "47d14a9cc6148fafd6e19fc8a79081acaf626ad3c6ef3d5c58201da079806942",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "citi": {
+    "name": "Citi",
+    "homepage": "https://citi.com/",
+    "source_url": "https://citi.com/cbol-hp-static-assets/assets/favicon.ico",
+    "resolved_url": "https://www.citi.com/cbol-hp-static-assets/assets/favicon.ico",
+    "sha256": "0dde07be471554aa478a0210944fb740727d37b9ffcd192160b9b852e581eb1a",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "clsa": {
+    "name": "CLSA",
+    "source_url": "https://www.clsa.com/wp-content/themes/CLSA/assets/img/clsa-logo.png",
+    "homepage": "https://www.clsa.com/",
+    "label": "logo",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "d5843ff692020a16171a98c782a4bcae6647cf978669667d81df501fea61df06",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "cmbi": {
+    "name": "CMB International",
+    "homepage": "https://cmbi.com.hk/",
+    "source_url": "https://www.cmbi.com.hk/favicon.ico",
+    "resolved_url": "https://www.cmbi.com.hk/favicon.ico",
+    "sha256": "93f4875ee81fac7ec68215bc7f662544059552ace97e88bc7c80c4124f34b9c2",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "creditagricole": {
+    "name": "Cr\u00e9dit Agricole CIB",
+    "homepage": "https://ca-cib.com/",
+    "source_url": "https://www.ca-cib.com/favicon.ico",
+    "resolved_url": "https://www.ca-cib.com/favicon.ico",
+    "sha256": "48a2c1dac25cb1c57fa7dfb573b1db011b651e25dc4dcb646ce84c3eb65a6d8e",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "db": {
+    "name": "Deutsche Bank",
+    "homepage": "https://db.com/",
+    "source_url": "https://prod2.master.dwebcms.db.com/application/themes/default/favicon/apple-touch-icon.png",
+    "resolved_url": "https://prod2.master.dwebcms.db.com/application/themes/default/favicon/apple-touch-icon.png",
+    "sha256": "a1695f29ffbc7be3a6b803dfb588a6638499fad5dce92eb142cfee5199adfe2e",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "dbs": {
+    "name": "DBS",
+    "homepage": "https://dbs.com/",
+    "source_url": "https://dbs.com/group/_next/public/favicon.ico",
+    "resolved_url": "https://www.dbs.com/group/_next/public/favicon.ico",
+    "sha256": "b371f21c002fb25ba97507da0291c57e9b67108490180da64b64a29ac564407c",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "deloitte": {
+    "name": "Deloitte",
+    "homepage": "https://deloitte.com/",
+    "source_url": "https://deloitte.com/content/dam/assets-shared/icons/us/favicon.ico",
+    "resolved_url": "https://www.deloitte.com/content/dam/assets-shared/icons/us/favicon.ico",
+    "sha256": "51ec7bd23efeaeeba1388526911b51f2f5120bb9890b359a24d4c088a4196526",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "drw": {
+    "name": "DRW",
+    "homepage": "https://drw.com/",
+    "source_url": "https://drw.com/img/favicon/apple-touch-icon.png?v=3",
+    "resolved_url": "https://www.drw.com/img/favicon/apple-touch-icon.png?v=3",
+    "sha256": "3a768babf11a0c31e4edec8928bfeb09dba3eec84580c98c1f528a95ba07cd05",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "eqt": {
+    "name": "EQT",
+    "homepage": "https://eqtgroup.com/",
+    "source_url": "https://eqtgroup.com/favicon.ico?favicon.2b5qy-nf862hs.ico",
+    "resolved_url": "https://eqtgroup.com/favicon.ico?favicon.2b5qy-nf862hs.ico",
+    "sha256": "81ff02806f4539ac7ca4e314bad5cc459c80f100b8635e226e64f79945d500ad",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "evercore": {
+    "name": "Evercore",
+    "homepage": "https://evercore.com/",
+    "source_url": "https://www.evercore.com/wp-content/uploads/2026/08/cropped-Site-Icon-for-browser-tabs-192x192.png",
+    "resolved_url": "https://www.evercore.com/wp-content/uploads/2026/08/cropped-Site-Icon-for-browser-tabs-192x192.png",
+    "sha256": "fc2e40986ea2beec4cd5f19b3f17f42519d6266a76368b5b90769283f092657c",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "exoduspoint": {
+    "name": "ExodusPoint",
+    "homepage": "https://exoduspoint.com/",
+    "source_url": "https://www.exoduspoint.com/i/favicon.png",
+    "resolved_url": "https://www.exoduspoint.com/i/favicon.png",
+    "sha256": "29080c517090da42e03dddcb300116c8afc9f2b9cc47838ea0ac51b023d16c54",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "ey": {
+    "name": "EY",
+    "homepage": "https://ey.com/",
+    "source_url": "https://ey.com/content/dam/ey-unified-site/icon/ey-favicon.jpg",
+    "resolved_url": "https://www.ey.com/content/dam/ey-unified-site/icon/ey-favicon.jpg",
+    "sha256": "48b5de0f575aa148f03d749711a6de8aa4e41c1fdbc71db520656939216e76bb",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "fidelityintl": {
+    "name": "Fidelity International",
+    "homepage": "https://fidelityinternational.com/",
+    "source_url": "https://fidelityinternational.com/favicon.ico",
+    "resolved_url": "https://fidelityinternational.com/favicon.ico",
+    "sha256": "3beaf7a634852b0253b5955196c5eb325ea578be378675ce93be99e13245d859",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "fifththird": {
+    "name": "Fifth Third",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/bf/Fifth_Third_Bank_2023_logo-primary-shieldleft-fullcolor.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Fifth_Third_Bank",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "4f9f77d660b6104f3a64b9c5c81e3960668ec2d95ef58759cffbc19ce9ae2d17",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "fiverings": {
+    "name": "Five Rings",
+    "source_url": "https://fiverings.com/wp-content/uploads/fbrfg/apple-touch-icon.png",
+    "homepage": "https://fiverings.com/",
+    "label": "declared icon",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "c8f9b7bb55beb2f0a64da3c81f034259c15181620b24f428ce3f65fe4ecc6b23",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "flowtraders": {
+    "homepage": "https://www.flowtraders.com/",
+    "source_url": "https://www.flowtraders.com/media/4q4ht1x1/logo.png",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "efde2f749d96bd6f657c1af94ec7366273a26e7205d9cf900ed5aa59f0359517",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "franklintempleton": {
+    "name": "Franklin Templeton",
+    "source_url": "https://upload.wikimedia.org/wikipedia/en/4/44/Franklin_Templeton_logo.png",
+    "homepage": "https://en.wikipedia.org/wiki/Franklin_Templeton_Investments",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "8f129905a144fdf045618c79e59cbd9bde1dd895cbcd17fcc482f085c9309261",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "generalatlantic": {
+    "name": "General Atlantic",
+    "homepage": "https://generalatlantic.com/",
+    "source_url": "https://www.generalatlantic.com/wp-content/uploads/2024/07/favicon.png",
+    "resolved_url": "https://www.generalatlantic.com/wp-content/uploads/2024/07/favicon.png",
+    "sha256": "ca84fc738b6ac9d9ea083f4d4ce5b9ef4f8860a0ff400f66115a8c2b492b730e",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "gic": {
+    "name": "GIC",
+    "homepage": "https://gic.com.sg/",
+    "source_url": "https://www.gic.com.sg/content/themes/gic_2021/assets/favicons/safari-pinned-tab.svg",
+    "resolved_url": "https://www.gic.com.sg/content/themes/gic_2021/assets/favicons/safari-pinned-tab.svg",
+    "sha256": "01d1025a716831c22d9a604853986926fb0dfdae6a6a5db8041c2898d0c877a2",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "golub": {
+    "name": "Golub Capital",
+    "homepage": "https://golubcapital.com/",
+    "source_url": "https://golubcapital.com/wp-content/uploads/2023/08/cropped-GC_Favicon-512x512-1-192x192.png",
+    "resolved_url": "https://golubcapital.com/wp-content/uploads/2023/08/cropped-GC_Favicon-512x512-1-192x192.png",
+    "sha256": "9216cfca957ed25893aac73a2a7e71d47b8f61f243b76755f7792ef1b322d3b5",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "google": {
+    "name": "Google",
+    "homepage": "https://google.com/",
+    "source_url": "https://www.google.com/favicon.ico",
+    "resolved_url": "https://www.google.com/favicon.ico",
+    "sha256": "4f342a19ae2c8e158586a21261b397d668dea3d68d25a376d0e7aadc387e6cf9",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "gs": {
+    "name": "Goldman Sachs",
+    "homepage": "https://www.goldmansachs.com/",
+    "source_url": "https://cdn.gs.com/images/goldman-sachs/v2/gs-favicon-180.png",
+    "resolved_url": "https://cdn.gs.com/images/goldman-sachs/v2/gs-favicon-180.png",
+    "sha256": "cdc7d169b2a8b88b137caf06783ae61edb0f218e0749d8f95578fbbd7398c28e",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "gsacapital": {
+    "name": "GSA Capital",
+    "homepage": "https://gsacapital.com/",
+    "source_url": "https://gsacapital.com/apple-icon.png?3fe0eda89b54b5e8",
+    "resolved_url": "https://gsacapital.com/apple-icon.png?3fe0eda89b54b5e8",
+    "sha256": "3556018a92cd6b9ace9f7c10c4d7659acd1fda53611aea48238a21f52991bf80",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "gtja": {
+    "name": "Guotai Junan Intl",
+    "homepage": "https://gtjai.com/",
+    "source_url": "https://www.gtjai.com/upload/2018-06-15/favicon.png",
+    "resolved_url": "https://www.gtjai.com/upload/2018-06-15/favicon.png",
+    "sha256": "5d8aa63f8c9b55c9cfaab8c1e72ddb082d1f275c51344072ee895d94d5bcd43d",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "guggenheim": {
+    "name": "Guggenheim",
+    "homepage": "https://guggenheiminvestments.com/",
+    "source_url": "https://www.guggenheiminvestments.com/wp-content/uploads/2026/03/cropped-GO_favicon-192x192.png",
+    "resolved_url": "https://www.guggenheiminvestments.com/wp-content/uploads/2026/03/cropped-GO_favicon-192x192.png",
+    "sha256": "0220ace29755f633585d7e8d960843993b0546ed352bb873603ad6ee0eb53169",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "haitong": {
+    "name": "Haitong International",
+    "source_url": "https://ca.htisec.com/html/static/images/haitong_logo_white.png",
+    "homepage": "https://ca.htisec.com/index.php/about.html",
+    "background": "#102a43",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "7e37fa70a7bb26e0721088643b7117222a668d7b104b3f51cb413eff29489bd0",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "hl": {
+    "name": "Houlihan Lokey",
+    "source_url": "https://upload.wikimedia.org/wikipedia/en/b/ba/Houlihan_Lokey_logo_%28new%29.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Houlihan_Lokey",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "ade648ec76ab1e803c9e36848a72d605304898f765ce01823c9d422cb62fcb67",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "hps": {
+    "name": "HPS Investment Partners",
+    "homepage": "https://hpspartners.com/",
+    "source_url": "https://hpspartners.com/apple-touch-icon.png",
+    "resolved_url": "https://www.hpspartners.com/apple-touch-icon.png",
+    "sha256": "2eed9b037eef4119666f2e0c542da46ab443511baeb3591d8b0e4ba757065dd0",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "hrt": {
+    "name": "Hudson River Trading",
+    "homepage": "https://hudsonrivertrading.com/",
+    "source_url": "https://www.hudsonrivertrading.com/wp-content/uploads/2023/11/cropped-HRT-Avatar-Profile-Photo-Favicon-192x192.png",
+    "resolved_url": "https://www.hudsonrivertrading.com/wp-content/uploads/2023/11/cropped-HRT-Avatar-Profile-Photo-Favicon-192x192.png",
+    "sha256": "8eedec2d0b397373942cbad16b6a4ff242170bee41d7de04bfc3c80887c4dd7a",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "hsbc": {
+    "name": "HSBC",
+    "homepage": "https://hsbc.com/",
+    "source_url": "https://hsbc.com/apple-touch-icon.png",
+    "resolved_url": "https://www.hsbc.com/apple-touch-icon.png",
+    "sha256": "c3ac92e5924a29455cfe3dea1bbc8a8a62df7b7a0ab1e446d87d9f1c1b704ff7",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "huatai": {
+    "name": "Huatai",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/38/Huatai_Securities.png",
+    "homepage": "https://en.wikipedia.org/wiki/Huatai_Securities",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "31e73d65a5dec4098f210ec15a9fcf3498f35cbb10ee81db0487fe2e0714f459",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "huntington": {
+    "name": "Huntington",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Huntington_Bancshares_Inc._logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Huntington_Bancshares",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "2f63563ec015419e26c767bd36bc408bb45bd5cd1fefe1aa803a3d651086fa94",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "imc": {
+    "name": "IMC Trading",
+    "homepage": "https://imc.com/",
+    "source_url": "https://www.imc.com/favicon.ico",
+    "resolved_url": "https://www.imc.com/favicon.ico",
+    "sha256": "647727ac99326ae608a602ec917af60b0f6db04190a26fe46af52eef838e7356",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "invesco": {
+    "name": "Invesco",
+    "homepage": "https://invesco.com/",
+    "source_url": "https://invesco.com/etc.clientlibs/invesco/clientlibs/main/resources/images/apple-touch-icon.png",
+    "resolved_url": "https://www.invesco.com/etc.clientlibs/invesco/clientlibs/main/resources/images/apple-touch-icon.png",
+    "sha256": "ce8bbe8b95e340a51785dd94a95c8ef38655c910e24ab8112baa6d58a24e817a",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "janestreet": {
+    "name": "Jane Street",
+    "homepage": "https://janestreet.com/",
+    "source_url": "https://janestreet.com/assets/logo-icon-9e6fdb3acda4d55b6bd69fdbd70de6ee35c1e766594753226b6b144866872951.png",
+    "resolved_url": "https://www.janestreet.com:443/assets/logo-icon-9e6fdb3acda4d55b6bd69fdbd70de6ee35c1e766594753226b6b144866872951.png",
+    "sha256": "6a85d757f74d767611a7780b67997a83dc6a928e2baf8d07f8ad3cd6e1817062",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "janushenderson": {
+    "name": "Janus Henderson",
+    "homepage": "https://janushenderson.com/",
+    "source_url": "https://cdn.janushenderson.com/gwp/uploads/sites/4/favicon.png",
+    "resolved_url": "https://cdn.janushenderson.com/gwp/uploads/sites/4/favicon.png",
+    "sha256": "7b9c966d7dfc5b2b32c2e688843d5cfcd0d14b66596448e174a0f552b98cd9d3",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "jefferies": {
+    "name": "Jefferies",
+    "homepage": "https://jefferies.com/",
+    "source_url": "https://www.jefferies.com/wp-content/themes/jefferies-com/dist/favicon/apple-touch-icon.png",
+    "resolved_url": "https://www.jefferies.com/wp-content/themes/jefferies-com/dist/favicon/apple-touch-icon.png",
+    "sha256": "1a61b38fa814f83994cb2184bd87c46aa0ce2b8bd4fb5b86151836f6b22c4513",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "jpm": {
+    "name": "J.P. Morgan",
+    "homepage": "https://jpmorgan.com/",
+    "source_url": "https://jpmorgan.com/etc.clientlibs/cws/clientlibs/clientlib-base/resources/jpm/images/jpm-favicon-152.png",
+    "resolved_url": "https://www.jpmorgan.com/etc.clientlibs/cws/clientlibs/clientlib-base/resources/jpm/images/jpm-favicon-152.png",
+    "sha256": "7aa7fa14166d4d8f6527883b50bf7c04e54c291ff8246888530db79031f1eced",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "jump": {
+    "name": "Jump Trading",
+    "homepage": "https://jumptrading.com/",
+    "source_url": "https://www.jumptrading.com/cdn/68af4da447dcf4db12fcb35f/68af4da447dcf4db12fcb42c_jump-webclip.jpg",
+    "resolved_url": "https://www.jumptrading.com/cdn/68af4da447dcf4db12fcb35f/68af4da447dcf4db12fcb42c_jump-webclip.jpg",
+    "sha256": "928b1f357be3df682684adbdf3ceb3e51e6722177212a353e013b36a0bf8642f",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "keybank": {
+    "name": "KeyBank",
+    "source_url": "https://upload.wikimedia.org/wikipedia/en/7/78/KeyBank_logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/KeyBank",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "cb8b4f84ede1c688225d7823ff900113feb5a4708b2d5a48914c434bb810ad64",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "kkr": {
+    "name": "KKR",
+    "homepage": "https://kkr.com/",
+    "source_url": "https://kkr.com/etc.clientlibs/kkr/clientlibs/clientlib-site/resources/apple-touch-icon.png",
+    "resolved_url": "https://www.kkr.com/etc.clientlibs/kkr/clientlibs/clientlib-site/resources/apple-touch-icon.png",
+    "sha256": "5c2659ee89dab799c9e43770e9060a3369b72a88e98ba764ed6580c66ab557a5",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "lazard": {
+    "name": "Lazard",
+    "homepage": "https://lazard.com/",
+    "source_url": "https://lazard.com/dist/images/fav/apple-touch-icon.png",
+    "resolved_url": "https://lazard.com/dist/images/fav/apple-touch-icon.png",
+    "sha256": "f1f23be368a5a7aa36fa4388deecfaf8bf9c6537ec4a10cdf2a6cfdbdddd2b64",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "lazard-dbg": {
+    "name": "Lazard Dbg",
+    "homepage": "https://lazard.com/",
+    "source_url": "https://lazard.com/dist/images/fav/apple-touch-icon.png",
+    "resolved_url": "https://lazard.com/dist/images/fav/apple-touch-icon.png",
+    "sha256": "f1f23be368a5a7aa36fa4388deecfaf8bf9c6537ec4a10cdf2a6cfdbdddd2b64",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "liontree": {
+    "name": "LionTree",
+    "homepage": "https://liontree.com/",
+    "source_url": "https://liontree.com/wp-content/uploads/2022/12/fav-icon-black.png",
+    "resolved_url": "https://liontree.com/wp-content/uploads/2022/12/fav-icon-black.png",
+    "sha256": "89498b94b6cee1ac0ad1a2121ef181b704e1663d659606a98c76b10a9d270c28",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "macquarie": {
+    "name": "Macquarie",
+    "homepage": "https://macquarie.com/",
+    "source_url": "https://macquarie.com/assets/macq/favicon.ico",
+    "resolved_url": "https://www.macquarie.com/assets/macq/favicon.ico",
+    "sha256": "c24f197da5ff88d47ecbf1e09a7fbdd850271fbe32b030d18aa3c492da6b8018",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "mangroup": {
+    "name": "Man Group",
+    "homepage": "https://man.com/",
+    "source_url": "https://www.man.com/themes/custom/digital/favicon.ico",
+    "resolved_url": "https://www.man.com/themes/custom/digital/favicon.ico",
+    "sha256": "1041c7aa2817373870eef9d9148b27ca782771614948efa232935ebf9142c205",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "marshallwace": {
+    "name": "Marshall Wace",
+    "homepage": "https://mwam.com/",
+    "source_url": "https://www.mwam.com/favicon.ico",
+    "resolved_url": "https://www.mwam.com/favicon.ico",
+    "sha256": "ce3c37b1351d25b1d42c81c5961e3cd39365f373b1d5d00367adff9b012ebfaf",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "mckinsey": {
+    "name": "McKinsey & Company",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/16/McKinsey_Script_Mark_2019.svg",
+    "homepage": "https://en.wikipedia.org/wiki/McKinsey_&_Company",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "0b9dab8275f1d6edcee314d9f20c193cec324f420981ced64c3f4dcb6b2b7bc1",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "meta": {
+    "name": "Meta",
+    "homepage": "https://meta.com/",
+    "source_url": "https://www.meta.com/favicon.ico",
+    "resolved_url": "https://static.xx.fbcdn.net/rsrc.php/y5/r/m4nf26cLQxS.ico",
+    "sha256": "3f54448638a23200ede6e780f2184fc43d7f70d7ba024259066a55a49dc33678",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "microsoft": {
+    "name": "Microsoft",
+    "homepage": "https://microsoft.com/",
+    "source_url": "https://microsoft.com/favicon.ico?v2",
+    "resolved_url": "https://www.microsoft.com/favicon.ico?v2",
+    "sha256": "7f7789d558482178d61ab3efaa0676ab39bcb5388c632de5e0a2fbad26d2a2be",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "millennium": {
+    "name": "Millennium",
+    "homepage": "https://mlp.com/",
+    "source_url": "https://www.mlp.com/favicon.ico",
+    "resolved_url": "https://www.mlp.com/favicon.ico",
+    "sha256": "66eb54a686d3346cd982be2f6b6b5c3421a222c1924058a6ebb668bd5c9c9e28",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "mizuho": {
+    "name": "Mizuho",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Mizuho_logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Mizuho_Financial_Group",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "9336767ce55757a311440d8429d11ef282f73aa9fbd60ff1879383fef0af2d95",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "mlt": {
+    "name": "MLT",
+    "source_url": "https://mlt.org/wp-content/themes/mlt2025/images/logo.png",
+    "homepage": "https://mlt.org/",
+    "label": "logo",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "1e279c8e6b3d080a056772999f4bc6da703e153febbdf07b2e6a322c3bb9a16d",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "moelis": {
+    "name": "Moelis",
+    "homepage": "https://moelis.com/",
+    "source_url": "https://www.moelis.com/wp-content/uploads/2026/04/cropped-moelis-favicon-192x192.png",
+    "resolved_url": "https://www.moelis.com/wp-content/uploads/2026/04/cropped-moelis-favicon-192x192.png",
+    "sha256": "e8a34f307b2d13b6ae0bac3005648c7162e829fc2cb09a9c712f2eda95d4b062",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "ms": {
+    "name": "Morgan Stanley",
+    "homepage": "https://www.morganstanley.com/",
+    "source_url": "https://www.morganstanley.com/etc.clientlibs/msdotcomr4/clientlibs/components/site/resources/img/favicon-196x196.png",
+    "resolved_url": "https://www.morganstanley.com/etc.clientlibs/msdotcomr4/clientlibs/components/site/resources/img/favicon-196x196.png",
+    "sha256": "828552350c62eead797b8d5b4f7c1f9aab52aaa4a4201f930fe3a8a254a59cc6",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "mtb": {
+    "name": "M&T Bank",
+    "homepage": "https://mtb.com/",
+    "source_url": "https://mtb.com/content/dam/mtb-web/mtb-icon-library/favicon.ico",
+    "resolved_url": "https://www.mtb.com/content/dam/mtb-web/mtb-icon-library/favicon.ico",
+    "sha256": "fc6396d9aa12cbb95a4b93f0968102eec5c960a8a06caefd6ca137f6f4987a0f",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "mufg": {
+    "name": "MUFG",
+    "homepage": "https://mufgamericas.com/",
+    "source_url": "https://mufgamericas.com/themes/custom/mufg/favicon.ico",
+    "resolved_url": "https://mufgamericas.com/themes/custom/mufg/favicon.ico",
+    "sha256": "47b55d28d13899e63b01eecea06e8bee813637e2c9e5afe350835ca974e24ed9",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "neubergerberman": {
+    "name": "Neuberger Berman",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/39/Neuberger_refreshed_logo_2026.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Neuberger_Berman",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "0affcc15c10cc94ec48751dd5c23cfdb9d6d4bb0aef2158b4bf22bbc08e12e1a",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "nomura": {
+    "name": "Nomura",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/0/04/Nomura_Holdings_logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Nomura_Holdings",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "9472f67e8b1360e1dd9ec9bcc76efe7e2e17db8517ceeb1a875016d20a7bdda4",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "nvidia": {
+    "name": "Nvidia",
+    "source_url": "https://www.nvidia.com/en-us/",
+    "homepage": "https://www.nvidia.com/en-us/",
+    "label": "inline brand svg",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "ea4773cfc6d44a1b1976b6397d24eefc11a58e55fef5c9714216504c5f0f00a8",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "oaktree": {
+    "name": "Oaktree",
+    "homepage": "https://oaktreecapital.com/",
+    "source_url": "https://oaktreecapital.com/Assets/OaktreeCap/Images/favicon_1024x1024_1.png",
+    "resolved_url": "https://www.oaktreecapital.com/Assets/OaktreeCap/Images/favicon_1024x1024_1.png",
+    "sha256": "c3e2b0f1be6136c3a353f91f4d01e270a82e4875e4611757a08a3c243f9b200d",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "oliverwyman": {
+    "homepage": "https://www.oliverwyman.com/",
+    "source_url": "https://www.oliverwyman.com/content/dam/oliver-wyman/v3/logos/header-logo-oliver-wyman-black.svg",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "e3ec13e09b770fdfa932038192925cc1396d1006c8edd8eb7af263ecd660cdbb",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "optiver": {
+    "name": "Optiver",
+    "homepage": "https://optiver.com/",
+    "source_url": "https://optiver.com/favicon/favicon.png",
+    "resolved_url": "https://www.optiver.com/favicon/favicon.png",
+    "sha256": "395bad1d69413173faaab7171debb9722879a19b170ff04d9dc0695e22d5a1ac",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "permira": {
+    "name": "Permira",
+    "homepage": "https://permira.com/",
+    "source_url": "https://media.permira.com/media/bqjph5wp/permira_favicon-01.png?format=webp",
+    "resolved_url": "https://media.permira.com/media/bqjph5wp/permira_favicon-01.png?format=webp",
+    "sha256": "44a6dcfe7950de35d5257b4c66f3d9b5b68d31453fb983b63194a34915047b41",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "pimco": {
+    "name": "PIMCO",
+    "homepage": "https://pimco.com/",
+    "source_url": "https://pimco.com/ren-assets/img/favicons/favicon.png?rev=6D8EE073013211E83D4BC232A418460F",
+    "resolved_url": "https://www.pimco.com/ren-assets/img/favicons/favicon.png?rev=6D8EE073013211E83D4BC232A418460F",
+    "sha256": "6c1514037fe4fa7f86bf8b11ec4427c5a653cbf67a63fa593d2089f7b9e27c01",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "pipersandler": {
+    "name": "Piper Sandler",
+    "homepage": "https://pipersandler.com/",
+    "source_url": "https://pipersandler.com/themes/custom/pipersandler/favicon.ico",
+    "resolved_url": "https://www.pipersandler.com/themes/custom/pipersandler/favicon.ico",
+    "sha256": "41bc7e3288cc0407bfee686f2b3d2a4a93a71898100ceaf45862fe59a70f6dfd",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "pjt": {
+    "name": "PJT Partners",
+    "homepage": "https://pjtpartners.com/",
+    "source_url": "https://pjtpartners.com/assets/images/apple-touch-icon.png",
+    "resolved_url": "https://www.pjtpartners.com/assets/images/apple-touch-icon.png",
+    "sha256": "3bcfe63292d126c15953f387c370a103e843be02c9abcf495c1d36f89258045c",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "pnc": {
+    "name": "PNC",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/1b/PNClogo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/PNC_Financial_Services",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "f5ae698bbf38e790ee388e0195fcd0ae072f42ec42a668a31473007764ef2c61",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "point72": {
+    "name": "Point72",
+    "source_url": "https://point72.com/wp-content/uploads/2026/03/favicon-light-mode.png",
+    "homepage": "https://point72.com/",
+    "label": "declared icon",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "864852db4609c821e3936cdf38853154e30116b6a884d7adbce32ad5819c5eb5",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "pwc": {
+    "name": "PwC",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/c3/PwC_Company_Logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/PwC",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "6064ec4e80d5020396b7a8d6f4ca4d96a37582f97bac31dd37973cd2e992a41f",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "pwp": {
+    "name": "Perella Weinberg",
+    "homepage": "https://pwpartners.com/",
+    "source_url": "https://pwpartners.com/wp-content/uploads/2020/11/favicon.png",
+    "resolved_url": "https://pwpartners.com/wp-content/uploads/2020/11/favicon.png",
+    "sha256": "d24e40dd907d32ad0b2a19d561566919ed6bf7235782afbe9c5fbe0ba7aa7e6b",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "qatalyst": {
+    "name": "Qatalyst Partners",
+    "homepage": "https://qatalyst.com/",
+    "source_url": "https://qatalyst.com/wp-content/uploads/2023/11/favicon.png",
+    "resolved_url": "https://qatalyst.com/wp-content/uploads/2023/11/favicon.png",
+    "sha256": "81befbb13052c241b73efa6a6e90c509ede85e9b63c17a7368c1c1d0a6910d99",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "qube": {
+    "name": "Qube Research & Technologies",
+    "homepage": "https://qube-rt.com/",
+    "source_url": "https://www.qube-rt.com/img/apple-touch-icon-152x152.png",
+    "resolved_url": "https://www.qube-rt.com/img/apple-touch-icon-152x152.png",
+    "sha256": "2c0f39c3e6e3672ea75c38dffd5a000342adc3a7d8614a93e17fb62904267043",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "raymondjames": {
+    "name": "Raymond James",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Raymond_James_wordmark.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Raymond_James_Financial",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "639ec8962a64a7baf277966f28e3ea1ab8c949481215f074c9da900786e90b19",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "rbc": {
+    "name": "RBC Capital Markets",
+    "homepage": "https://jobs.rbc.com/",
+    "source_url": "https://cdn.phenompeople.com/CareerConnectResources/prod/RBCAA0088/en_ca/desktop/assets/images/h/apple-touch-icon.png",
+    "resolved_url": "https://cdn.phenompeople.com/CareerConnectResources/prod/RBCAA0088/en_ca/desktop/assets/images/h/apple-touch-icon.png",
+    "sha256": "e758b9d6f3c84de9672190ad31f86783508119ddc16f79e1331897070d9ffd80",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "rothschild": {
+    "name": "Rothschild & Co",
+    "homepage": "https://rothschildandco.com/",
+    "source_url": "https://rothschildandco.com/static/favicons/favicon-512.png?v=2.1.0.30540",
+    "resolved_url": "https://www.rothschildandco.com/static/favicons/favicon-512.png?v=2.1.0.30540",
+    "sha256": "b2410b600c913747aedfe114d12350bb70777d86c6e5cbfbed4d39698e5c7df1",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "santander": {
+    "name": "Santander",
+    "homepage": "https://santander.com/",
+    "source_url": "https://santander.com/content/dam/santander-com/resources/favicon/favicon-192x192.png",
+    "resolved_url": "https://www.santander.com/content/dam/santander-com/resources/favicon/favicon-192x192.png",
+    "sha256": "5a82a027758186220d2699fcb88b651f6bed064a4189d8330240bfdfddb5f09b",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "schonfeld": {
+    "name": "Schonfeld",
+    "homepage": "https://schonfeld.com/",
+    "source_url": "https://www.schonfeld.com/wp-content/uploads/cropped-favicon-192x192.png",
+    "resolved_url": "https://www.schonfeld.com/wp-content/uploads/cropped-favicon-192x192.png",
+    "sha256": "9909f3734bf1dc28ba07516c99fd0af6025d58a774cc5c1e1b29ea3c626584ee",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "schroders": {
+    "name": "Schroders",
+    "homepage": "https://schroders.com/",
+    "source_url": "https://www.schroders.com/icons/512.png",
+    "resolved_url": "https://www.schroders.com/icons/512.png",
+    "sha256": "d2088f01d269e1ce09f369167ee62e154c285c37625b77d1132d0a9e391f1d41",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "seo-career": {
+    "source_url": "https://career.seo-usa.org/wp-content/uploads/2022/04/SEO-career-red-black-website-logo.png",
+    "homepage": "https://career.seo-usa.org/",
+    "source_kind": "company published artwork",
+    "name": "SEO Career",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "89eb4ffc4566d6a64bb024c0891164ac89599bc9bbc91432bfa9234f545f6eb0",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "sig": {
+    "name": "SIG",
+    "homepage": "https://sig.com/",
+    "source_url": "https://www.sig.com/favicon.ico",
+    "resolved_url": "https://sig.com/favicon.ico",
+    "sha256": "3c00ebacf5fc3af80ab066c2b8d1c694fc69598663709489a7b0d58faed78953",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "sixthstreet": {
+    "name": "Sixth Street",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/c/ca/Sixth-Street_logo.svg",
+    "homepage": "https://en.wikipedia.org/wiki/Sixth_Street_Partners",
+    "source_kind": "published logo reference",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "d957f6f658f44756c417f59507e0b932f3a67be58ec122d17eccd707e879d017",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "socgen": {
+    "name": "Soci\u00e9t\u00e9 G\u00e9n\u00e9rale",
+    "source_url": "https://www.societegenerale.com/sites/default/files/image/logo/soc103c-1-0.svg",
+    "homepage": "https://www.societegenerale.com/fr",
+    "label": "C'est vous l'avenir, Soci\u00e9t\u00e9 G\u00e9n\u00e9rale",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "2df1051f28cd0b37b118409f9617977e6be44ea0267e8d72fffb732f692fca7e",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "solomonpartners": {
+    "name": "Solomon Partners",
+    "homepage": "https://solomonpartners.com/",
+    "source_url": "https://solomonpartners.com/wp-content/uploads/2026/01/solomon-favicon-300x300.png",
+    "resolved_url": "https://solomonpartners.com/wp-content/uploads/2026/01/solomon-favicon-300x300.png",
+    "sha256": "d58da6905dc1c24f2c617a6ad7863e170c4d080896e94a3a1fd5b9172807f2bd",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "squarepoint": {
+    "name": "Squarepoint",
+    "homepage": "https://squarepoint-capital.com/",
+    "source_url": "https://squarepoint-capital.com/icon.ico?069257188e023032",
+    "resolved_url": "https://squarepoint-capital.com/icon.ico?069257188e023032",
+    "sha256": "e93228c1190710a4f1348e1dad71c19b4c0151d2c27e0c23528a66c039fba32d",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "stanchart": {
+    "name": "Standard Chartered",
+    "homepage": "https://sc.com/",
+    "source_url": "https://www.standardchartered.com/favicon.ico",
+    "resolved_url": "https://www.sc.com/favicon.ico",
+    "sha256": "d8eb389cbe421b529f13504c0880a81338da2207aa0263f3992d1c2cac568d6e",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "statestreet": {
+    "name": "State Street",
+    "source_url": "https://www.statestreet.com/web/Homepage/images/state-street-logo-final.svg",
+    "homepage": "https://www.statestreet.com/us/en",
+    "label": "State Street Global Advisors",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "61dc39a238198b8a845e1c25fd1c68a26d15ecfdadb4a83d6fc433d60fb0d648",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "stifel": {
+    "name": "Stifel",
+    "homepage": "https://stifel.com/",
+    "source_url": "https://stifel.com/Favicon-Stifel-180px.png",
+    "resolved_url": "https://www.stifel.com/favicon-stifel-180px.png",
+    "sha256": "7b551fb283ce7e48a62b151b227ae5ea6b8fb111129af1a53c55c7a5ade24866",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "td": {
+    "name": "TD Securities",
+    "homepage": "https://tdsecurities.com/",
+    "source_url": "https://tdsecurities.com/assets/img/favicon/apple-touch-icon.png",
+    "resolved_url": "https://www.tdsecurities.com/assets/img/favicon/apple-touch-icon.png",
+    "sha256": "f167885ff846478d090ba1d915aba2135037aebdb78ae255edbb384f1adf99c5",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "tencent": {
+    "name": "Tencent",
+    "source_url": "https://www.tencent.com/wp-content/uploads/2024/05/cropped-04_Tencent_Graphics2-180x180.png",
+    "homepage": "https://www.tencent.com/",
+    "label": "declared icon",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "b235323fdebfde2853e904e62a25fa0728b716c519472ad7942e94c42881c85f",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "towerresearch": {
+    "name": "Tower Research",
+    "homepage": "https://tower-research.com/",
+    "source_url": "https://tower-research.com/wp-content/uploads/2024/05/favicon-300x300.png",
+    "resolved_url": "https://tower-research.com/wp-content/uploads/2024/05/favicon-300x300.png",
+    "sha256": "afffd3355bd565ccf74e6f7482840ab82d4ae4db4ab25fd9d27895f201291e33",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "tpg": {
+    "name": "TPG",
+    "homepage": "https://tpg.com/",
+    "source_url": "https://tpg.com/favicon.ico",
+    "resolved_url": "https://www.tpg.com/favicon.ico",
+    "sha256": "8173ef820175863b09dd14e836f42b5ec0f33fcecbeac68500a624ef0fe832de",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "troweprice": {
+    "name": "T. Rowe Price",
+    "homepage": "https://troweprice.com/",
+    "source_url": "https://troweprice.com/content/dam/public/enterprise/apple-touch-icon.png",
+    "resolved_url": "https://www.troweprice.com/content/dam/public/enterprise/apple-touch-icon.png",
+    "sha256": "382fd920700c7f78bd9747b20e37fd6546407184f3a1ec6418ecd3efd2f80944",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "truist": {
+    "name": "Truist",
+    "homepage": "https://truist.com/",
+    "source_url": "https://www.truist.com/favicon.ico",
+    "resolved_url": "https://www.truist.com/favicon.ico",
+    "sha256": "ac86516724edade501e9e765b730844f5afabb65139a8eb4d633e5ff963edb51",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "ubs": {
+    "name": "UBS",
+    "homepage": "https://ubs.com/",
+    "source_url": "https://www.ubs.com/etc.clientlibs/ubs/fit/design/resources/img/favicons/icon-192x192.20260313.png",
+    "resolved_url": "https://www.ubs.com/etc.clientlibs/ubs/fit/design/resources/img/favicons/icon-192x192.20260313.png",
+    "sha256": "608b7043e13ac30102ebfc71f1366c6b9cc0dcc5a8913dad1e7493ce00b80d56",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "usbank": {
+    "name": "U.S. Bank",
+    "source_url": "https://www.usbank.com/etc.clientlibs/ecm-global/clientlibs/clientlib-resources/resources/images/svg/logo-personal.svg",
+    "homepage": "https://www.usbank.com/index.html",
+    "label": "U.S. Bank",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "e79e40d8fa8dc065c11376f69f310dcc1f725ecd494de7b9d077430d2d7da3a9",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "vanguard": {
+    "name": "Vanguard",
+    "homepage": "https://vanguard.com/",
+    "source_url": "https://www.vanguard.com/favicon.ico",
+    "resolved_url": "https://www.vanguard.com/favicon.ico",
+    "sha256": "dcc9511260b85a5444623a56482565b6b31fefde52f67c5dda2ad2ce69e01495",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "verition": {
+    "name": "Verition",
+    "source_url": "https://www.verition.com/i/verition-logo-full.svg",
+    "homepage": "https://www.verition.com/",
+    "background": "white",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "sha256": "a4623a7a1482f79b8938c828ddc7cf8d345629def5952cd12ef5b21eb2cf6cde",
+    "transform": "Original artwork; empty padding trimmed; proportionally fitted; vectors rasterized without substituting fonts."
+  },
+  "virtu": {
+    "name": "Virtu Financial",
+    "homepage": "https://virtu.com/",
+    "source_url": "https://virtu-www.s3.amazonaws.com/uploads/2019/02/01192911/cropped-Virtu_Favicon-192x192.png",
+    "resolved_url": "https://virtu-www.s3.amazonaws.com/uploads/2019/02/01192911/cropped-Virtu_Favicon-192x192.png",
+    "sha256": "e5b1d233d14637a9e4b3a244e51f0851e259786d4e61b3612c03d91462228bfe",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "wellington": {
+    "name": "Wellington",
+    "homepage": "https://wellington.com/",
+    "source_url": "https://wellington.com/etc.clientlibs/onewellington/clientlibs/clientlib-site/resources/images/favicon.png",
+    "resolved_url": "https://www.wellington.com/etc.clientlibs/onewellington/clientlibs/clientlib-site/resources/images/favicon.png",
+    "sha256": "da72b54b3379c4f6b06448251fb758a8f5b62f8d34a472d39668d2ea7fddbd95",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "wf": {
+    "name": "Wells Fargo",
+    "homepage": "https://wellsfargojobs.com/",
+    "source_url": "https://wellsfargojobs.com/images/apple-touch-icon.png",
+    "resolved_url": "https://www.wellsfargojobs.com/images/apple-touch-icon.png",
+    "sha256": "60322f84d57ac9923962e68b6c09d0a81ce3bc6985c0fbba87c453f84e10afac",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "williamblair": {
+    "name": "William Blair",
+    "homepage": "https://williamblair.com/",
+    "source_url": "https://williamblair.com/assets/favicon/favicon-192x192.png",
+    "resolved_url": "https://www.williamblair.com/assets/favicon/favicon-192x192.png",
+    "sha256": "f7dc3c3afa1c4f63a092e8119c6f3b9157ac6e2b500280a9aed757f2b4aea3cf",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  },
+  "xtx": {
+    "name": "XTX Markets",
+    "homepage": "https://xtxmarkets.com/",
+    "source_url": "https://xtxmarkets.com/apple-touch-icon.png",
+    "resolved_url": "https://www.xtxmarkets.com/apple-touch-icon.png",
+    "sha256": "1c379e148beb50524628837cd32853c925875519af229e86ba742ebdbaba3212",
+    "reviewed": true,
+    "review_date": "2026-09-06",
+    "transform": "Rasterized if vector; transparent padding trimmed; proportional fit. No artwork redrawn."
+  }
+}

@@ -94,25 +94,28 @@ def test_stored_logos_are_a_uniform_square():
     assert out.mode == "RGBA", "transparency survives, or nothing melts in"
 
 
-def test_the_generated_library_covers_the_current_networkly_directory():
-    """The generated set is shipped with the app, not left in ephemeral media.
+def test_every_shipped_logo_has_reviewed_provenance_and_matching_bytes():
+    import hashlib
+    import json
+    from directory.firm_logos import verified_library
 
-    There were 128 active firms when the library was rebuilt. Keeping the
-    count explicit makes adding another firm a deliberate two-part change:
-    add the directory record and add the mark users will actually see.
-    """
     logo_dir = Path(settings.BASE_DIR) / "static" / "img" / "firm-logos"
+    manifest = json.loads((logo_dir / "sources.json").read_text())
     paths = sorted(logo_dir.glob("*.png"))
-
-    assert len(paths) == 128
+    assert paths
+    assert {p.stem for p in paths} == set(manifest)
     for path in paths:
+        record = manifest[path.stem]
+        assert record["reviewed"] is True
+        assert record["source_url"].startswith("https://")
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == record["sha256"]
         with Image.open(path) as image:
-            assert image.size == (128, 128), path.name
-            assert image.mode == "RGBA", path.name
-            assert image.getchannel("A").getbbox() is not None, path.name
+            assert image.size == (128, 128)
+            assert image.getchannel("A").getbbox() is not None
+    assert set(verified_library(str(settings.BASE_DIR))) == set(manifest)
 
 
-def test_a_generated_mark_wins_over_ephemeral_uploaded_media():
+def test_a_reviewed_mark_wins_over_unverified_uploaded_media():
     firm = Firm(slug="gs", name="Goldman Sachs", logo="firm-logos/old-gs.png")
     assert firm.logo_url == "/static/img/firm-logos/gs.png"
 
@@ -122,12 +125,12 @@ def test_a_future_firm_without_either_kind_of_mark_still_uses_the_monogram():
     assert firm.logo_url == ""
 
 
-def test_the_crm_firm_mark_uses_the_same_generated_library():
+def test_the_crm_firm_mark_uses_the_same_reviewed_library():
     html = render_to_string(
         "crm/_firm_mark.html",
-        {"mark_firm": Firm(slug="sig", name="SIG")},
+        {"mark_firm": Firm(slug="bain", name="Bain & Company")},
     )
-    assert 'src="/static/img/firm-logos/sig.png"' in html
+    assert 'src="/static/img/firm-logos/bain.png"' in html
     assert "data-firm-logo" in html
 
 

@@ -701,48 +701,6 @@ that don't already declare explicit htmx behaviour.
   {% endcomment %}
 
   <div class="settings-wrap">
-    {% comment %}
-    Rail groups follow the pattern every comparable product converged on
-    (LinkedIn, Notion, Linear): "who you are" and "how the product behaves"
-    are separated from "how you get in and what we hold on you".
-
-    THE RAIL AND THE PAGE ARE THE SAME LIST, IN THE SAME ORDER. They were not:
-    the rail read Profile, Work Authorization, Appearance, Target Firms while
-    the page ran Profile, Appearance, Target Firms, Work Authorization, so the
-    marker that rides the spine travelled BACKWARDS as you scrolled past
-    Appearance. A rail whose order is a fiction is worse than no rail. Every
-    entry below is now in page order, and the conditional entries sit exactly
-    where their conditional sections do.
-
-    The headers are presentational — the rail's real structure for a screen
-    reader is the nav landmark below plus each section's own <h2>. They are
-    display:none at ≤820px, where the rail collapses to wrapped chips.
-    {% endcomment %}
-    <details class="settings-index" open>
-    <summary>Settings Sections</summary>
-    <nav class="settings-nav" aria-label="Settings sections">
-      <p class="settings-nav-group">You</p>
-      <a href="#profile" class="is-active" aria-current="true">Profile</a>
-      <a href="#work-auth">Work Authorization</a>
-      <a href="#preferences">Preferences</a>
-      <p class="settings-nav-group">Your Firms</p>
-      <a href="#firms">Target Firms</a>
-      <p class="settings-nav-group">Outreach</p>
-      <a href="#cadence">Outreach Schedule</a>
-      {% if campaigns or dismissed_proposals or merge_suggestions or recent_merges %}
-        <a href="#decisions">Decisions</a>
-      {% endif %}
-      <p class="settings-nav-group">Plan &amp; Credits</p>
-      <a href="#credits">Credits</a>
-      {% if gmail_live.available %}<a href="#gmail-live">Gmail Live</a>{% endif %}
-      {% if google_calendar.available %}<a href="#google-calendar">Google Calendar</a>{% endif %}
-      <p class="settings-nav-group">Account</p>
-      <a href="#security">Sign-In &amp; Security</a>
-      <a href="#data">Your Data</a>
-      <a href="#danger">Delete Account</a>
-    </nav>
-    </details>
-
     <div class="settings-main">
       {# ---- Profile ---- #}
       <section class="set-card kin-reveal panel" id="profile" style="--i:0"
@@ -2393,6 +2351,122 @@ that don't already declare explicit htmx behaviour.
 </div>
 
 {% script %}
+  // Progressive disclosure keeps all forms usable without JavaScript.
+  (function () {
+    var descriptions = {
+      "profile": "Photo, school, graduation year, and recruiting preferences",
+      "work-auth": "Eligibility and sponsorship by region",
+      "preferences": "Theme, email digest, and device notifications",
+      "firms": "Your target firms, organized by priority",
+      "cadence": "Weekly goal, follow-ups, and relationship check-ins",
+      "decisions": "Review past sends, dismissed items, and contact merges",
+      "credits": "Your plan, balance, and usage",
+      "gmail-live": "Read-only mail access and sync status",
+      "google-calendar": "Calendar connection and sync status",
+      "security": "Email, password, and signed-in devices",
+      "data": "Imports, exports, and privacy information",
+      "danger": "Permanently delete your account and its data"
+    };
+    var cards = Array.from(document.querySelectorAll(".settings-main > .set-card"));
+    function expand(card) {
+      if (!card) return;
+      var button = card.querySelector(".set-disclosure-toggle");
+      var body = card.querySelector(":scope > .set-body");
+      if (!button || !body) return;
+      button.setAttribute("aria-expanded", "true");
+      body.hidden = false;
+      card.classList.add("is-expanded");
+      button.textContent = "Close";
+      button.setAttribute("aria-label", "Close " + button.dataset.sectionLabel);
+    }
+    function reveal(target) {
+      if (!target) return;
+      expand(target.closest(".set-card"));
+      for (var parent = target.parentElement; parent; parent = parent.parentElement) {
+        if (parent.tagName === "DETAILS") parent.open = true;
+      }
+    }
+    cards.forEach(function (card) {
+      var head = card.querySelector(":scope > .set-head");
+      var body = card.querySelector(":scope > .set-body");
+      var heading = head && head.querySelector("h2");
+      if (!head || !body || !heading) return;
+      var summary = document.createElement("p");
+      summary.className = "set-overview-summary";
+      summary.textContent = descriptions[card.id] || "Manage these settings";
+      head.appendChild(summary);
+      body.id = body.id || card.id + "-editor";
+      var toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "btn set-disclosure-toggle";
+      toggle.textContent = "Manage";
+      toggle.dataset.sectionLabel = heading.textContent.trim();
+      toggle.setAttribute("aria-label", "Manage " + heading.textContent.trim());
+      toggle.setAttribute("aria-expanded", "false");
+      toggle.setAttribute("aria-controls", body.id);
+      head.appendChild(toggle);
+      body.hidden = true;
+      card.classList.add("set-overview-card");
+      toggle.addEventListener("click", function () {
+        if (body.hidden) expand(card);
+        else {
+          body.hidden = true;
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.textContent = "Manage";
+          toggle.setAttribute("aria-label", "Manage " + toggle.dataset.sectionLabel);
+          card.classList.remove("is-expanded");
+        }
+      });
+      if (body.querySelector('.errorlist, .msg.error, [aria-invalid="true"]')) expand(card);
+    });
+    function refreshProfileSummary() {
+      var summary = document.querySelector("#profile .set-overview-summary");
+      if (!summary) return;
+      var values = ["name", "school", "class_year"].map(function (name) {
+        var field = document.querySelector('#profile [name="' + name + '"]');
+        return field && field.value.trim();
+      }).filter(Boolean);
+      summary.textContent = values.length ? values.join(" · ") : descriptions.profile;
+    }
+    refreshProfileSummary();
+    var firmBoard = document.getElementById("tf-board");
+    function refreshFirmSummary() {
+      var summary = document.querySelector("#firms .set-overview-summary");
+      if (!summary || !firmBoard) return;
+      var lanes = Array.from(firmBoard.querySelectorAll("[data-tf-chips]"));
+      summary.textContent = lanes.map(function (lane, index) {
+        return "Tier " + (index + 1) + ": " + lane.querySelectorAll("[data-tf-remove]").length;
+      }).join(" · ");
+    }
+    refreshFirmSummary();
+    if (firmBoard) new MutationObserver(refreshFirmSummary).observe(firmBoard, {childList: true, subtree: true});
+    function revealHash() {
+      var id;
+      try { id = decodeURIComponent(location.hash.slice(1)); } catch (_) { return; }
+      var target = document.getElementById(id);
+      if (target) {
+        reveal(target);
+        requestAnimationFrame(function () { target.scrollIntoView({block: "start"}); });
+      }
+    }
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest('a[href^="#"]');
+      if (link) {
+        var id;
+        try { id = decodeURIComponent(link.hash.slice(1)); } catch (_) { return; }
+        reveal(document.getElementById(id));
+      }
+    });
+    // Native validation must reveal the field before focusing it.
+    document.addEventListener("invalid", function (event) { reveal(event.target); }, true);
+    document.addEventListener("htmx:afterSwap", function (event) {
+      var target = event.detail.target;
+      if (target && target.id === "profile-fields" && !target.querySelector(".errorlist")) refreshProfileSummary();
+      if (target && target.querySelector('.errorlist, .msg.error, [aria-invalid="true"]')) reveal(target);
+    });
+    window.addEventListener("hashchange", revealHash);
+    revealHash();
+  })();
   // The theme picker. Writes localStorage and flips the attribute the head
   // script reads on the next load; "system" REMOVES the attribute so the
   // media query takes over again rather than freezing today's system value.
@@ -2624,41 +2698,6 @@ that don't already declare explicit htmx behaviour.
       describeGoal();
     }
 
-    // Scroll-spy: light up the rail item whose section is in view.
-    var links = Array.prototype.slice.call(document.querySelectorAll(".settings-nav a"));
-    var sections = Array.prototype.slice.call(document.querySelectorAll(".set-card"));
-    function setActive(id) {
-      links.forEach(function (a) {
-        var on = a.getAttribute("href").slice(1) === id;
-        a.classList.toggle("is-active", on);
-        // aria-current is the programmatic half of .is-active — without it the
-        // highlight is decoration a screen reader never hears.
-        if (on) { a.setAttribute("aria-current", "true"); }
-        else { a.removeAttribute("aria-current"); }
-      });
-    }
-    if ("IntersectionObserver" in window && sections.length) {
-      var obs = new IntersectionObserver(function (entries) {
-        // At the bottom of the page the last (often short) section can never
-        // reach the observer's middle band, so the bottom fallback below owns
-        // that case. Ignore observer updates while pinned to the bottom.
-        if (atBottom()) return;
-        entries.forEach(function (e) {
-          if (e.isIntersecting) setActive(e.target.id);
-        });
-      }, { rootMargin: "-35% 0px -55% 0px" });
-      sections.forEach(function (c) { obs.observe(c); });
-
-      // Bottom-of-page fallback: the last section can't cross the middle band,
-      // so force it active once the viewport is pinned to the page bottom.
-      function atBottom() {
-        return window.innerHeight + window.scrollY >=
-          document.documentElement.scrollHeight - 2;
-      }
-      window.addEventListener("scroll", function () {
-        if (atBottom()) setActive(sections[sections.length - 1].id);
-      }, { passive: true });
-    }
   })();
 {% endscript %}
 {% endblock %}

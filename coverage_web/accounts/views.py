@@ -439,7 +439,7 @@ def _split_by_declared_profile(firms, user):
 
 
 def _firm_picker_context(user) -> dict:
-    firms = list(Firm.objects.all().order_by("name"))
+    firms = list(Firm.objects.exclude(status="inactive").order_by("name"))
     matching_firms, other_firms = _split_by_declared_profile(firms, user)
     selected = set(UserFirm.objects.for_user(user).values_list("firm_id", flat=True))
     return {
@@ -485,7 +485,7 @@ def _target_firms_context(user) -> dict:
     all_tracked_ids = set(
         UserFirm.objects.for_user(user).values_list("firm_id", flat=True)
     )
-    untracked = list(Firm.objects.exclude(id__in=all_tracked_ids).order_by("name"))
+    untracked = list(Firm.objects.exclude(status="inactive").exclude(id__in=all_tracked_ids).order_by("name"))
     # Same regroup as the onboarding Firms step (`_split_by_declared_profile`)
     # applied to the same "add a firm" search — Settings must not form a
     # second opinion about what's relevant to this student just because it
@@ -537,7 +537,7 @@ def import_contacts(request):
             # Only rendered when `result.unmatched_firms` is non-empty, but
             # cheap enough (the whole directory, ~127 rows) to just always
             # pass rather than special-case the query.
-            "all_firms": Firm.objects.all().order_by("name"),
+            "all_firms": Firm.objects.exclude(status="inactive").order_by("name"),
         },
     )
 

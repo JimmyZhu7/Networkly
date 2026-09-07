@@ -13,8 +13,8 @@
     <div id="weekly-firm-updates" hx-preserve>
   {% if situation_events %}
 
-    <details class="situation-section rail-card panel" open>
-    <summary class="context-header"><span class="situation-heading">{% include "_nav_icon.html" with name="opportunities" %}<span>Firm Updates</span><span class="situation-count">{{ situation_events|length }}</span></span><span class="situation-period">Past 7 days</span></summary>
+    <section class="situation-section rail-card panel" aria-labelledby="firm-updates-title">
+    <div class="context-header"><h3 class="situation-heading" id="firm-updates-title">{% include "_nav_icon.html" with name="opportunities" %}<span>Firm Updates</span><span class="situation-count">{{ situation_events|length }}</span></h3><span class="situation-period">Past 7 days</span></div>
     <div class="situation-strip" tabindex="0" role="region" aria-label="Firm updates list">
       {% for e in situation_events %}
         <a class="situation-card"
@@ -37,7 +37,7 @@
         </a>
       {% endfor %}
     </div>
-    </details>
+    </section>
   {% endif %}
     </div>
     <div class="rail-card activity-card panel">

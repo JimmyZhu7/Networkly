@@ -31,7 +31,8 @@
         hx-target="#cov-results"
         hx-swap="innerHTML"
         hx-push-url="true"
-        hx-trigger="change, keyup changed delay:350ms, submit"
+        hx-trigger="change, input[event.target.name === 'q'] delay:350ms, submit"
+        hx-sync="this:replace"
         method="get"
         action="{% url 'opportunities' %}">
 

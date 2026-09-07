@@ -67,7 +67,7 @@ button on two pages out of three and left the third a pill.
       if (read) {
         opener = read;
         body.setAttribute('aria-busy', 'true');
-        body.innerHTML = '<p class="drawer-loading" role="status">Opening…</p>';
+        body.innerHTML = '<div class="drawer-loading" role="status"><span class="vh">Opening role…</span><div class="drawer-skeleton" aria-hidden="true"><i></i><i></i><i></i><div><i></i><i></i><i></i></div><i></i><i></i><i></i><i></i></div></div>';
         if (!dlg.open) dlg.showModal();
       } else if (e.target.closest("[data-drawer-retry]")) {
         if (opener && opener.isConnected) opener.click();

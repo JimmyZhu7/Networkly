@@ -24,6 +24,7 @@
   --r-ctl: 9px;
   --r-panel: 16px;
   --shadow-1: 0 2px 8px rgb(22 40 72 / 5%);
+  --surface-edge: inset 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
   --shadow-widget: 0 2px 6px rgb(22 40 72 / 5%), 0 0 0 1px rgb(22 40 72 / 5%);
   --shadow-2: 0 12px 32px rgb(22 40 72 / 14%);
 }
@@ -85,6 +86,7 @@ main > .page, .page > section, .page > .panel--page,
 }
 .btn { font-size: 14px; font-weight: 550; min-height: 40px; padding: 9px 16px; box-shadow: none; }
 .btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-1); }
+.btn-secondary, .btn-outline { box-shadow: var(--surface-edge); }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-ink); color: var(--on-accent); box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 22%, transparent); }
 input:hover, select:hover, textarea:hover, .csel-btn:hover, .cmulti-btn:hover { box-shadow: none; }
@@ -549,9 +551,9 @@ a.ribbon-stat:hover .ribbon-icon { color: var(--accent); }
 .site-header .brand-lockup { width: 164px; }
 .site-header .site-nav { display: flex; align-items: center; flex-direction: row; gap: 4px; padding: 0; margin: 0; border: 0; background: transparent; border-radius: 0; box-shadow: none; overflow: visible; mask-image: none; }
 .site-header .site-nav a { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 9px; background: transparent; color: var(--ink-2); font: 500 14px/1.4 var(--font-ui); text-transform: none; letter-spacing: 0; text-decoration: none; }
-.site-header .site-nav a .nav-icon { display: none; }
+.site-header .site-nav a .nav-icon { display: block; width: 17px; height: 17px; color: currentColor; }
 .site-header .site-nav a:hover { color: var(--ink); background: var(--surface-subtle); }
-.site-header .site-nav a.active { color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; }
+.site-header .site-nav a.active { color: var(--accent-ink); background: var(--accent-soft); font-weight: 600; box-shadow: inset 0 0 0 1px var(--accent-line); }
 .workspace-nav { width: 100%; }
 .workspace-nav .site-header-inner { display: flex; flex-direction: row; align-items: center; flex-wrap: nowrap; }
 .workspace-nav .wordmark { margin-right: 12px; }
@@ -572,6 +574,8 @@ body:has(.workspace-nav) > main, body:has(.workspace-nav) > .site-footer { margi
   .site-header-inner { padding-inline: 28px; gap: 18px; }
   .workspace-nav .wordmark { margin-right: 0; }
   .site-header .site-nav { gap: 2px; }
+  .site-header .site-nav a { gap: 6px; padding-inline: 8px; }
+  .site-header .site-nav a .nav-icon { display: none; }
   .site-header .brand-lockup { width: 144px; }
   .workspace-nav .site-auth { gap: 12px; }
 }

@@ -1051,7 +1051,7 @@ initial-page event context because action responses do not rebuild it.
     dropping those rows to keep the card tidy would hide people.
     {% endcomment %}
     {% if schedule %}
-      <div class="rail-card panel">
+      <div class="rail-card schedule-card panel">
         <h3 class="rail-title">Schedule
           <a class="rail-more" href="{% url 'crm:calendar' %}">Calendar</a>
         </h3>
@@ -1088,17 +1088,18 @@ initial-page event context because action responses do not rebuild it.
         window is truncated at narrow rail widths.
         {% endcomment %}
         {% if daybar.show_hints %}
-          <p class="daybar-timezone">Send windows · your timezone</p>
+          <p class="daybar-timezone">Suggested Outreach Times · Your Timezone</p>
           <ul class="daybar-hint">
             {% for h in daybar.hints %}
               <li class="dbh" title="On your own clock. The good window is lunchtime on the {{ h.market }} desk, and the half hour either side of that market's close is the one to avoid.">
                 <b class="dbh-market">{{ h.market }} desk</b>
-                <span class="dbh-good"><span class="dbh-label">Send</span><span>{{ h.good }}</span></span>
+                <span class="dbh-good"><span class="dbh-label">Suggested</span><span>{{ h.good }}</span></span>
                 <span class="dbh-avoid"><span class="dbh-label">Avoid</span><span>{{ h.avoid }}</span></span>
               </li>
             {% endfor %}
           </ul>
         {% endif %}
+        <h4 class="schedule-subheading">Conversations</h4>
         <ul class="activity">
           {% for r in schedule %}
             <li class="activity-row{% if r.is_today %} is-now{% endif %}">
