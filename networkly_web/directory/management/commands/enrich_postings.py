@@ -69,8 +69,8 @@ logger = logging.getLogger(__name__)
 # follows the same shape: a bare product token first (that is the part a
 # robots.txt `User-agent:` line matches on), then a contact URL, then what
 # the fetcher is actually for.
-UA = {"User-Agent": "coverage-enrich/0.1 "
-                    "(+https://coverage.app; job posting detail fetcher)"}
+UA = {"User-Agent": "networkly-enrich/0.1 "
+                    "(+https://github.com/JimmyZhu7/Networkly; job posting detail fetcher)"}
 TIMEOUT = 15
 PER_HOST_DELAY = 0.8          # seconds between hits to the same host
 MAX_TEXT = 20_000             # chars of page text kept in raw["detail_text"]

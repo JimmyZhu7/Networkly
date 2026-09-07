@@ -223,11 +223,26 @@ def suggestion_for(user, primary_id: int, duplicate_id: int) -> MergeCandidate |
     return None
 
 
+def _locked_pair(user, primary_id: int, duplicate_id: int) -> tuple[Contact, Contact]:
+    """Current tenant-owned rows, locked in a consistent order for writers."""
+    rows = {
+        row.pk: row
+        for row in Contact.objects.for_user(user).select_for_update()
+        .filter(pk__in=[primary_id, duplicate_id]).order_by("pk")
+    }
+    if primary_id == duplicate_id or len(rows) != 2:
+        raise Contact.DoesNotExist("Both distinct contacts must belong to the user.")
+    return rows[primary_id], rows[duplicate_id]
+
+
 def merge(user, primary: Contact, duplicate: Contact, evidence: str = "") -> ContactMerge:
     """Fold `duplicate` into `primary`, exactly as the ledger describes, and
     return the ledger row. Caller guarantees both rows belong to `user` and
     the pair was suggested (see `suggestion_for`)."""
     with transaction.atomic():
+        # Suggestions can outlive another request's edit. Fill blanks from
+        # current rows, and serialize with the contact's interaction writers.
+        primary, duplicate = _locked_pair(user, primary.pk, duplicate.pk)
         moved = list(
             Touch.objects.for_user(user)
             .filter(contact=duplicate)
@@ -303,12 +318,15 @@ def undo(record: ContactMerge) -> bool:
     matches what the merge wrote — a value the user changed by hand since is
     never overwritten (the `capture.mailfacts.undo` contract). Idempotent:
     only `merged` rows undo. Returns whether anything was reversed."""
-    if record.status != ContactMerge.STATUS_MERGED:
-        return False
-    user_id = record.user_id
-    primary = record.primary
-    duplicate = record.duplicate
     with transaction.atomic():
+        # Recheck the ledger under lock: two requests may both have loaded a
+        # merged record, and its cached contact objects may predate hand edits.
+        current = ContactMerge.objects.for_user(record.user_id).select_for_update().get(pk=record.pk)
+        if current.status != ContactMerge.STATUS_MERGED:
+            return False
+        user_id = current.user_id
+        primary, duplicate = _locked_pair(user_id, current.primary_id, current.duplicate_id)
+        record = current
         moved = [int(pk) for pk in (record.moved_touch_ids or [])]
         if moved:
             # Only touches that still sit on the primary move back: one the

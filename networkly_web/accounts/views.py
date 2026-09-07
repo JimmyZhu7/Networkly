@@ -19,6 +19,7 @@ from allauth.socialaccount.models import SocialAccount
 from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -1163,11 +1164,8 @@ def push_subscribe(request):
        account pressing the toggle off, which frees the endpoint through
        `push_unsubscribe`.
 
-    `update_or_create` keyed on `endpoint` (its own unique constraint): the
-    Push API mints a fresh endpoint on every fresh `subscribe()`, so this is
-    a plain create in the overwhelming case and an update only when the same
-    registration posts again — a re-subscribe after a key rotation, or the
-    same device asking twice.
+    The endpoint's unique constraint and row lock settle simultaneous claims
+    before ownership is checked. Updating keys never changes the owner.
     """
     try:
         payload = json.loads(request.body or b"{}")
@@ -1176,32 +1174,37 @@ def push_subscribe(request):
     if not isinstance(payload, dict):
         return HttpResponseBadRequest("invalid JSON")
 
-    endpoint = (payload.get("endpoint") or "").strip()
+    endpoint = payload.get("endpoint")
     keys = payload.get("keys") or {}
-    p256dh = (keys.get("p256dh") or "").strip() if isinstance(keys, dict) else ""
-    auth = (keys.get("auth") or "").strip() if isinstance(keys, dict) else ""
+    p256dh = keys.get("p256dh") if isinstance(keys, dict) else None
+    auth = keys.get("auth") if isinstance(keys, dict) else None
+    if not all(isinstance(value, str) for value in (endpoint, p256dh, auth)):
+        return HttpResponseBadRequest("endpoint and subscription keys must be strings")
+    endpoint, p256dh, auth = endpoint.strip(), p256dh.strip(), auth.strip()
     if not endpoint or not p256dh or not auth:
         return HttpResponseBadRequest("endpoint and keys.p256dh/keys.auth are required")
+    if any(len(value) > 255 or "\x00" in value for value in (p256dh, auth)):
+        return HttpResponseBadRequest("invalid subscription keys")
     if not push.is_allowed_endpoint(endpoint):
         return HttpResponseBadRequest("endpoint is not a known push service")
 
-    owner_id = (
-        PushSubscription.all_objects.filter(endpoint=endpoint)
-        .values_list("user_id", flat=True)
-        .first()
-    )
-    if owner_id is not None and owner_id != request.user.id:
-        return HttpResponse("endpoint belongs to another account", status=409)
-
-    PushSubscription.all_objects.update_or_create(
-        endpoint=endpoint,
-        defaults={
-            "user": request.user,
-            "p256dh": p256dh,
-            "auth": auth,
-            "user_agent": request.META.get("HTTP_USER_AGENT", "")[:255],
-        },
-    )
+    values = {
+        "p256dh": p256dh,
+        "auth": auth,
+        "user_agent": request.META.get("HTTP_USER_AGENT", "")[:255],
+    }
+    with transaction.atomic():
+        subscription, created = (
+            PushSubscription.all_objects.select_for_update().get_or_create(
+                endpoint=endpoint, defaults={"user": request.user, **values},
+            )
+        )
+        if subscription.user_id != request.user.id:
+            return HttpResponse("endpoint belongs to another account", status=409)
+        if not created:
+            for field, value in values.items():
+                setattr(subscription, field, value)
+            subscription.save(update_fields=list(values))
     record_event("push_subscribed", user=request.user)
     return HttpResponse(status=201)
 
@@ -1224,7 +1227,10 @@ def push_unsubscribe(request):
     if not isinstance(payload, dict):
         return HttpResponseBadRequest("invalid JSON")
 
-    endpoint = (payload.get("endpoint") or "").strip()
+    endpoint = payload.get("endpoint")
+    if not isinstance(endpoint, str) or "\x00" in endpoint:
+        return HttpResponseBadRequest("endpoint must be a string")
+    endpoint = endpoint.strip()
     if not endpoint:
         return HttpResponseBadRequest("endpoint is required")
 

@@ -45,7 +45,7 @@ def health_cron(request):
     all_ok = True
     for name, interval in EXPECTED_INTERVALS.items():
         last_success = (
-            JobRun.objects.filter(name=name, status=JobRun.STATUS_SUCCESS)
+            JobRun.objects.filter(name=name, status=JobRun.STATUS_SUCCESS, finished_at__isnull=False)
             .order_by("-finished_at")
             .first()
         )

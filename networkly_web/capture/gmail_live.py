@@ -501,7 +501,7 @@ def connect_gmail(user, code: str, redirect_uri: str) -> GmailConnection:
     """
     flow = _flow(redirect_uri)
     try:
-        flow.fetch_token(code=code)
+        flow.fetch_token(code=code, timeout=google_oauth.REQUEST_TIMEOUT_SECONDS)
     except Exception as exc:  # noqa: BLE001 - surfaced as GmailLiveError below
         raise GmailLiveError(f"Google rejected the consent code: {exc}") from exc
 
@@ -539,11 +539,21 @@ def connect_gmail(user, code: str, redirect_uri: str) -> GmailConnection:
     # a REVOKED grant (backfill_status left at whatever it was, possibly
     # "failed" mid-run) should still get one. Only "done" is sticky.
     existing = GmailConnection.all_objects.filter(user=user).first()
-    backfill_status = "done" if existing and existing.backfill_status == "done" else "pending"
+    same_mailbox = bool(existing and existing.gmail_address.casefold() == profile["emailAddress"].casefold())
+    backfill_status = "done" if same_mailbox and existing.backfill_status == "done" else "pending"
+    reset_state = {"watch_expiration": None}
+    if existing and not same_mailbox:
+        reset_state.update(
+            last_notification_at=None,
+            backfill_started_at=None, backfill_completed_at=None, backfill_stats={},
+            rescan_status="none", rescan_requested_at=None, rescan_started_at=None,
+            rescan_completed_at=None, rescan_stats={},
+        )
 
     connection, _ = GmailConnection.all_objects.update_or_create(
         user=user,
         defaults={
+            **reset_state,
             "gmail_address": profile["emailAddress"],
             "refresh_token_encrypted": encrypt_token(creds.refresh_token),
             "history_id": str(profile["historyId"]),
@@ -644,6 +654,17 @@ def _gmail_client(connection: GmailConnection):
     return build("gmail", "v1", credentials=_credentials(connection))
 
 
+def _matching_grant(connection: GmailConnection):
+    """Rows still owned by the exact grant a provider request used."""
+    return GmailConnection.all_objects.filter(
+        pk=connection.pk, user_id=connection.user_id, status="active",
+        user__is_active=True, user__deleted_at__isnull=True,
+        gmail_address=connection.gmail_address,
+        refresh_token_encrypted=connection.refresh_token_encrypted,
+        connected_at=connection.connected_at,
+    )
+
+
 def register_watch(connection: GmailConnection) -> None:
     """(Re-)register the 7-day `users.watch()` notification. Marks the
     connection `revoked` (rather than raising) when Google reports the grant
@@ -659,6 +680,9 @@ def register_watch(connection: GmailConnection) -> None:
     around this call, so the message just needs to be clear when it lands in
     that log line."""
     _require_active_user(connection)
+    owned = _matching_grant(connection)
+    if not owned.exists():
+        return
     if not is_push_configured():
         raise GmailLiveError(
             "GMAIL_LIVE_PUBSUB_TOPIC is not set — real-time push needs a "
@@ -674,13 +698,13 @@ def register_watch(connection: GmailConnection) -> None:
     except RefreshError as exc:
         if getattr(exc, "retryable", False):
             raise
-        connection.status = "revoked"
-        connection.save(update_fields=["status"])
+        if owned.update(status="revoked"):
+            connection.status = "revoked"
         return
     except HttpError as exc:
         if exc.resp.status == 401:
-            connection.status = "revoked"
-            connection.save(update_fields=["status"])
+            if owned.update(status="revoked"):
+                connection.status = "revoked"
             return
         raise
 
@@ -688,15 +712,19 @@ def register_watch(connection: GmailConnection) -> None:
     # an existing cursor here skips every change since the last sync. Seed
     # only an actually empty database cursor, so a stale renewal instance
     # also cannot overwrite a concurrent poll's progress.
-    GmailConnection.objects.for_user(connection.user).filter(
-        pk=connection.pk, history_id=""
-    ).update(history_id=str(response["historyId"]))
-    connection.watch_expiration = datetime.fromtimestamp(
+    expiration = datetime.fromtimestamp(
         int(response["expiration"]) / 1000, tz=dt_timezone.utc
     )
-    connection.status = "active"
-    connection.save(update_fields=["watch_expiration", "status"])
-    connection.refresh_from_db(fields=["history_id"])
+    with transaction.atomic():
+        current = owned.select_for_update().first()
+        if current is None:
+            return
+        if not current.history_id:
+            current.history_id = str(response["historyId"])
+        current.watch_expiration = expiration
+        current.save(update_fields=["history_id", "watch_expiration"])
+    connection.history_id = current.history_id
+    connection.watch_expiration = current.watch_expiration
 
 
 def renew_watches() -> tuple[int, int]:
@@ -844,6 +872,16 @@ def sync_connection(connection: GmailConnection):
     per pass; the Pub/Sub path gets the same facts through the log line
     below."""
     _require_active_user(connection)
+    # A command can have waited for its mailbox lock after loading the row.
+    # Stale candidates defer to the next tick rather than replaying an old
+    # provider response against a newly observed checkpoint.
+    owned = _matching_grant(connection).filter(history_id=connection.history_id)
+    if not owned.exists():
+        try:
+            connection.refresh_from_db()
+        except GmailConnection.DoesNotExist:
+            pass
+        return None
     gmail = _gmail_client(connection)
     start_id = connection.history_id or None
 
@@ -859,11 +897,10 @@ def sync_connection(connection: GmailConnection):
             profile = gmail.users().getProfile(userId="me").execute()
             with transaction.atomic():
                 _require_active_user(connection)
-                current = GmailConnection.objects.for_user(connection.user).select_for_update().get(pk=connection.pk)
+                current = owned.select_for_update().first()
                 # A stale caller must not rewind another sync or overwrite
                 # a disconnect that happened while Google was responding.
-                if current.status != "active" or current.history_id != connection.history_id:
-                    connection.refresh_from_db()
+                if current is None:
                     return None
                 current.history_id = str(profile["historyId"])
                 fields = ["history_id"]
@@ -900,15 +937,24 @@ def sync_connection(connection: GmailConnection):
         )
 
     _require_active_user(connection)
+    if not owned.exists():
+        return None
     result = None
     if findings:
         result = apply_findings(connection.user, findings)
         for line in result.details:
             logger.info("Gmail Live %s: %s", connection.gmail_address, line)
 
-    connection.history_id = latest_history_id or connection.history_id
-    connection.last_notification_at = timezone.now()
-    connection.save(update_fields=["history_id", "last_notification_at"])
+    # apply_findings uses the domain adapter's own committed connection;
+    # enclosing it in Django atomic would neither roll back those touches
+    # nor safely share its Contact locks. Check ownership before applying,
+    # and compare-and-set the checkpoint after it succeeds. Failed applies
+    # retain the checkpoint and retry through the existing per-finding dedup.
+    completed_at = timezone.now()
+    if owned.update(history_id=latest_history_id or connection.history_id,
+                    last_notification_at=completed_at):
+        connection.history_id = latest_history_id or connection.history_id
+        connection.last_notification_at = completed_at
     return result
 
 
@@ -1001,6 +1047,8 @@ def _list_new_messages(gmail, start_history_id) -> tuple[list[str], str | None]:
     message_ids: list[str] = []
     latest = start_history_id
     page_token = None
+    seen_page_tokens = set()
+    seen_message_ids = set()
     while True:
         response = gmail.users().history().list(
             userId="me",
@@ -1008,16 +1056,33 @@ def _list_new_messages(gmail, start_history_id) -> tuple[list[str], str | None]:
             historyTypes=["messageAdded"],
             pageToken=page_token,
         ).execute()
+        if not isinstance(response, dict) or not isinstance(response.get("history", []), list):
+            raise GmailLiveError("Google returned an incomplete history list; retry the sync.")
+        cursor = response.get("historyId")
+        if not isinstance(cursor, str) or not cursor.strip():
+            raise GmailLiveError("Google did not finish the history list; retry the sync.")
         for record in response.get("history", []):
+            if not isinstance(record, dict) or not isinstance(record.get("messagesAdded", []), list):
+                raise GmailLiveError("Google returned unreadable message history; retry the sync.")
             for added in record.get("messagesAdded", []):
+                if not isinstance(added, dict) or not isinstance(added.get("message"), dict):
+                    raise GmailLiveError("Google returned unreadable message history; retry the sync.")
                 message = added.get("message") or {}
                 if _excluded_by_labels(message.get("labelIds")):
                     continue
-                message_ids.append(message["id"])
-        latest = response.get("historyId", latest)
+                message_id = message.get("id")
+                if not isinstance(message_id, str) or not message_id.strip():
+                    raise GmailLiveError("Google returned a message without its ID; retry the sync.")
+                if message_id not in seen_message_ids:
+                    message_ids.append(message_id)
+                    seen_message_ids.add(message_id)
+        latest = cursor
         page_token = response.get("nextPageToken")
         if not page_token:
             break
+        if not isinstance(page_token, str) or page_token in seen_page_tokens:
+            raise GmailLiveError("Google repeated a history page; retry the sync.")
+        seen_page_tokens.add(page_token)
     return message_ids, latest
 
 

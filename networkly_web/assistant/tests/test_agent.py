@@ -643,6 +643,33 @@ def test_replay_is_windowed(user, conversation):
     assert len(client.requests[0]["messages"]) <= agent.REPLAY_TURNS
 
 
+def test_replay_loads_only_recent_non_notice_rows(user, conversation, monkeypatch):
+    for i in range(agent.REPLAY_TURNS + 20):
+        ChatMessage.objects.for_user(user).create(
+            user=user, conversation=conversation, role=ChatMessage.ROLE_USER,
+            content=[{"type": "text", "text": f"turn {i}"}],
+        )
+    for _ in range(5):
+        ChatMessage.objects.for_user(user).create(
+            user=user, conversation=conversation, role=ChatMessage.ROLE_ASSISTANT,
+            content=[{"type": "text", "text": "notice"}], notice="failed",
+        )
+    loaded = []
+    original = ChatMessage.from_db
+
+    def counted(*args, **kwargs):
+        row = original(*args, **kwargs)
+        loaded.append(row)
+        return row
+
+    monkeypatch.setattr(ChatMessage, "from_db", counted)
+    rows = agent._replayable(conversation, user)
+    assert len(loaded) == agent.REPLAY_TURNS
+    assert rows[0].text == "turn 20"
+    assert rows[-1].text == f"turn {agent.REPLAY_TURNS + 19}"
+    assert not any(row.notice for row in rows)
+
+
 # ---------------------------------------------------------------------------
 # Instrumentation
 # ---------------------------------------------------------------------------

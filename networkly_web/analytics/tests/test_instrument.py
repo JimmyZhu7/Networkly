@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import pytest
+from django.utils import timezone
 
 from analytics.events import record_event
+from analytics.models import ProductEvent
+from analytics.views import _pilot_drilldown, _pilot_rows
 
 pytestmark = pytest.mark.django_db
 
@@ -32,9 +35,34 @@ def test_it_reports_what_the_product_recorded(client, django_user_model):
     record_event("opportunity_tracked", user=staff, status="saved")
 
     client.force_login(staff)
-    body = client.get("/instrument/").content.decode()
+    response = client.get("/instrument/")
+    body = response.content.decode()
     assert "touch_logged" in body and "opportunity_tracked" in body
     assert "Product Events" in body
+    assert dict(response.context["top_events"])["touch_logged"] == 3
+    assert dict(response.context["top_events"])["opportunity_tracked"] == 1
+
+
+@pytest.mark.parametrize("user_id", ["²", "9" * 5000, str(2**63), "-1", "1.0"])
+def test_malformed_drilldown_ids_do_not_query_or_raise(user_id, django_assert_num_queries):
+    with django_assert_num_queries(0):
+        assert _pilot_drilldown(user_id, timezone.now()) is None
+
+
+def test_pilot_step_deduplication_preserves_furthest_known_step(django_user_model):
+    from accounts.views import ONBOARDING_STEPS
+
+    user = django_user_model.objects.create_user(email="steps@example.com", password="x")
+    ProductEvent.all_objects.bulk_create([
+        ProductEvent(user=user, event="onboarding_step_viewed", props={"step": step})
+        for step in [ONBOARDING_STEPS[0], ONBOARDING_STEPS[-1], ONBOARDING_STEPS[0]] * 20
+    ] + [
+        ProductEvent(user=user, event="onboarding_step_viewed", props={"step": "unknown"}),
+        ProductEvent(user=user, event="onboarding_step_viewed", props=["malformed"]),
+    ])
+    row = next(row for row in _pilot_rows(timezone.now()) if row["user"].pk == user.pk)
+    assert row["step"] == ONBOARDING_STEPS[-1]
+    assert row["step_number"] == len(ONBOARDING_STEPS)
 
 
 def test_a_pipeline_stage_that_never_ran_says_so(client, django_user_model):

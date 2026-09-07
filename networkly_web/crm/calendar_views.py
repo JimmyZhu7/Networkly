@@ -38,6 +38,7 @@ from urllib.parse import urlencode
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -779,7 +780,7 @@ def _own_manual_event(user, pk: int) -> CalendarEvent:
     only way to keep another student's pk from being a probe.
     """
     return get_object_or_404(
-        CalendarEvent.objects.for_user(user).filter(
+        CalendarEvent.objects.for_user(user).select_for_update().filter(
             source=CalendarEvent.SOURCE_MANUAL, external_id=""),
         pk=pk,
     )
@@ -787,6 +788,7 @@ def _own_manual_event(user, pk: int) -> CalendarEvent:
 
 @login_required
 @require_POST
+@transaction.atomic
 def calendar_reschedule(request: HttpRequest, pk: int) -> HttpResponse:
     """Move one of the student's own events, IN PLACE.
 
@@ -810,6 +812,10 @@ def calendar_reschedule(request: HttpRequest, pk: int) -> HttpResponse:
     anchor = _resolve_anchor(request.POST.get("y") or today.year,
                              request.POST.get("m") or today.month,
                              request.POST.get("d"), today)
+    # A stale popover cannot move an event that has since been cancelled.
+    # The row lock also preserves its sequence against overlapping edits.
+    if ev.cancelled_at is not None:
+        return redirect(f"/app/calendar/{_qs(view, anchor)}")
     form = RescheduleForm(request.POST)
     if not form.is_valid():
         # The typed values are one field each and are still on the screen the
@@ -833,6 +839,7 @@ def calendar_reschedule(request: HttpRequest, pk: int) -> HttpResponse:
 
 @login_required
 @require_POST
+@transaction.atomic
 def calendar_cancel(request: HttpRequest, pk: int) -> HttpResponse:
     """Call one of the student's own events off, KEEPING THE ROW.
 

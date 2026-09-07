@@ -94,6 +94,24 @@ def test_first_provider_failure_refunds_once_and_restores_burst(student, convers
     assert CreditLedger.objects.for_user(student).filter(kind=CreditLedger.KIND_REFUND).count() == 1
 
 
+@pytest.mark.parametrize("streaming", [False, True])
+def test_client_setup_failure_returns_notice_and_refunds(student, conversation, streaming):
+    before = credits.balance(student)
+    with patch.object(agent, "is_configured", return_value=True), \
+         patch.object(agent, "get_client", side_effect=ValueError("invalid proxy configuration")):
+        if streaming:
+            events = list(agent.stream_turn(student, conversation, "hello"))
+            assert events[-1]["type"] == "notice"
+            assert events[-1]["kind"] == "failed"
+        else:
+            result = agent.run_turn(student, conversation, "hello")
+            assert not result.ok
+            assert result.reason == "failed"
+    assert credits.balance(student) == before
+    assert credits.daily_spent(student) == 0
+    assert CreditLedger.objects.for_user(student).filter(kind=CreditLedger.KIND_REFUND).count() == 1
+
+
 def test_browser_disconnect_refunds_inflight_stream(student, conversation):
     before = credits.balance(student)
     client = FakeStreamingClient([

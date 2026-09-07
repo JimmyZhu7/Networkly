@@ -9,6 +9,7 @@ cd "$(dirname "$0")/.." || exit 1
 export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 LOG="$HOME/Library/Logs/coverage-refresh.log"
+mkdir -p "$(dirname "$LOG")" || exit 1
 {
   echo "── $(date '+%Y-%m-%d %H:%M:%S') refresh starting ──"
 
@@ -36,21 +37,27 @@ LOG="$HOME/Library/Logs/coverage-refresh.log"
   # compressed custom format restores with pg_restore.
   ICLOUD="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   if [ -d "$ICLOUD" ]; then BACKUPS="$ICLOUD/Coverage Backups"; else BACKUPS="$HOME/Backups/coverage"; fi
-  mkdir -p "$BACKUPS"
-  STAMP="$(date '+%Y-%m-%d')"
-  if pg_dump --format=custom --file="$BACKUPS/coverage-$STAMP.pgdump" \
-       "postgres://coverage:coverage@localhost:5432/coverage" 2>&1; then
-    echo "backup written: $BACKUPS/coverage-$STAMP.pgdump ($(du -h "$BACKUPS/coverage-$STAMP.pgdump" | cut -f1))"
-    # Rotate: keep the newest 30 dumps.
-    ls -t "$BACKUPS"/coverage-*.pgdump 2>/dev/null | tail -n +31 | while read -r old; do
-      rm -f "$old" && echo "rotated out: $(basename "$old")"
-    done
-  else
+  backup_status=0
+  # Use the app's configured database and atomic snapshot writer. Re-running
+  # today must not truncate the last good backup. This local job keeps its
+  # iCloud/local destination and never opts into a remote upload implicitly.
+  uv run --package networkly-web python networkly_web/manage.py backup_db \
+    --dest "$BACKUPS" --keep 30 --s3-bucket "" || backup_status=$?
+  if [ "$backup_status" -ne 0 ]; then
     # A failed backup must be loud in the log but must not block the refresh:
     # stale listings are recoverable, a skipped scrape is just a day's lag.
     echo "BACKUP FAILED — the refresh continues, but fix this before trusting the data to one disk."
   fi
 
-  uv run --package networkly-web python networkly_web/manage.py refresh
-  echo "── $(date '+%Y-%m-%d %H:%M:%S') refresh finished ──"
+  refresh_status=0
+  uv run --package networkly-web python networkly_web/manage.py refresh || refresh_status=$?
+  if [ "$refresh_status" -ne 0 ]; then
+    echo "REFRESH FAILED (exit $refresh_status)."
+    exit "$refresh_status"
+  fi
+  if [ "$backup_status" -ne 0 ]; then
+    echo "Refresh completed, but the backup failed (exit $backup_status)."
+    exit "$backup_status"
+  fi
+  echo "── $(date '+%Y-%m-%d %H:%M:%S') backup and refresh finished ──"
 } >>"$LOG" 2>&1

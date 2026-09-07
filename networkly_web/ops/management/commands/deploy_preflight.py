@@ -38,6 +38,7 @@ VERDICTS
 from __future__ import annotations
 
 import os
+import re
 from ipaddress import ip_address
 from urllib.parse import urlsplit
 
@@ -242,7 +243,12 @@ class Command(BaseCommand):
         if not getattr(settings, "SECURE_SSL_REDIRECT", False):
             return Check(PASS, keys, "SSL redirect off; /healthz cannot 301.")
         exempt = [str(p) for p in getattr(settings, "SECURE_REDIRECT_EXEMPT", []) or []]
-        if any("healthz" in pattern for pattern in exempt):
+        try:
+            compiled = [re.compile(pattern) for pattern in exempt]
+            matches = any(pattern.search("healthz") for pattern in compiled)
+        except re.error:
+            return Check(FAIL, keys, "contains an invalid redirect-exemption pattern.")
+        if matches:
             return Check(PASS, keys, "/healthz is exempt from the SSL redirect.")
         return Check(
             FAIL, keys,

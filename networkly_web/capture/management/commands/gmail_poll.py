@@ -651,8 +651,9 @@ class Command(BaseCommand):
         # `gmail_watch_renew`, because on a Pub/Sub-free deployment this
         # command is the thing talking to Gmail most often, so it is the
         # thing that notices first.
+        if not gmail_live._matching_grant(connection).update(status="revoked"):
+            return "skipped"
         connection.status = "revoked"
-        connection.save(update_fields=["status"])
         self.stdout.write(
             f"{address}: grant revoked — marked for reconnect, skipped"
         )

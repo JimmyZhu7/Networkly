@@ -3,13 +3,13 @@ from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib.staticfiles import finders
-from django.core.cache import cache
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
 from billing import credits as billing_credits
 from core.clientip import client_ip
+from core.ratelimits import window_exceeded
 from directory.classify import REGION_LABELS, TARGET_BUCKETS, TRACKED_REGIONS
 from directory.models import Firm, Opportunity
 
@@ -167,16 +167,9 @@ def _search_throttled(request) -> bool:
     # to read: that hop is client-supplied and varying it handed the caller a
     # fresh window per request (audit-security.md finding 10).
     key = f"search-rate:{client_ip(request)}"
-    burst = cache.get_or_set(key, 0, _SEARCH_WINDOW_SECONDS)
-    if burst >= _SEARCH_WINDOW_LIMIT:
-        return True
-    try:
-        cache.incr(key)
-    except ValueError:
-        # The key expired between read and increment: the window reset, so
-        # this request starts the next one rather than being counted at all.
-        cache.set(key, 1, _SEARCH_WINDOW_SECONDS)
-    return False
+    return window_exceeded(
+        key, limit=_SEARCH_WINDOW_LIMIT, seconds=_SEARCH_WINDOW_SECONDS,
+    )
 
 
 @require_GET

@@ -47,6 +47,7 @@ from google_auth_oauthlib.flow import Flow
 # first.
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 AUTH_URI = "https://accounts.google.com/o/oauth2/auth"
+REQUEST_TIMEOUT_SECONDS = 15
 
 
 def flow(*, client_id: str, client_secret: str, scopes: list[str], redirect_uri: str) -> Flow:
@@ -118,5 +119,14 @@ def credentials(
         client_secret=client_secret,
         scopes=scopes,
     )
-    creds.refresh(GoogleAuthRequest())
+    request = GoogleAuthRequest()
+
+    def bounded_request(*args, **kwargs):
+        kwargs["timeout"] = REQUEST_TIMEOUT_SECONDS
+        return request(*args, **kwargs)
+
+    try:
+        creds.refresh(bounded_request)
+    finally:
+        request.session.close()
     return creds

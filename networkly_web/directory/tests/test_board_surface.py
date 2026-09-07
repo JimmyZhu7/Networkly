@@ -365,11 +365,9 @@ def test_no_looping_animation_survives_on_the_board():
     """The general form of the rule above, so the next ring cannot be added
     without a state to bind it to.
 
-    `.cols-loading::after` is the one exception and is named rather than
-    pattern-matched, so adding a second means editing this list and writing
-    down why. It earns the loop: it is the lazy-load sentinel's own spinner,
-    on screen only while more columns are actually in flight, which is
-    precisely the "bound to a live state" test the rule states.
+    The lazy-load sentinel and role drawer placeholder are exceptions:
+    each exists only while its request is pending. Static role/status
+    decorations still cannot loop. The drawer respects reduced motion.
     """
     css = _css()
     looping = {
@@ -377,7 +375,7 @@ def test_no_looping_animation_survives_on_the_board():
         for prelude, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css)
         if re.search(r"\banimation(?:-name)?:[^;}]*\binfinite\b", body)
     }
-    assert looping <= {".cols-loading::after"}, looping
+    assert looping <= {".cols-loading::after", ".directory-drawer .drawer-skeleton"}, looping
 
 
 def test_the_strip_figures_do_not_animate_through_false_values():

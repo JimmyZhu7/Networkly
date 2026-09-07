@@ -65,8 +65,8 @@ def test_both_follow_the_connectors_user_agent_convention(ua):
     contact URL, then what the fetcher is for. The leading token matters
     beyond tidiness — it is the part a robots.txt `User-agent:` line
     matches on."""
-    assert ua.startswith("coverage-")
-    assert "+https://coverage.app" in ua
+    assert ua.startswith("networkly-")
+    assert "+https://github.com/JimmyZhu7/Networkly" in ua
     assert ua.split("/")[0].strip()
 
 

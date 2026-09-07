@@ -85,6 +85,7 @@ from . import plans
 from . import tools as tools_mod
 from .client import get_client, is_configured
 from .confirmation import approved_settings
+from .lifecycle import InactiveAccountError, require_active_user
 from .metering import charge_stream, charge_turn
 from .models import AdvisorMemory, ChatMessage
 
@@ -415,12 +416,13 @@ def _replayable(conversation, user) -> list[ChatMessage]:
       `tool_result`. So leading rows are dropped until the window opens on a
       genuine user message.
     """
-    rows = [
-        m
-        for m in ChatMessage.objects.for_user(user).filter(conversation=conversation)
-        if not m.notice
-    ]
-    rows = rows[-REPLAY_TURNS:]
+    # Apply the window in PostgreSQL: content can contain megabytes of
+    # attachment data, so loading a whole long-lived conversation before
+    # slicing makes every subsequent message pay for its entire history.
+    rows = list(ChatMessage.objects.for_user(user).filter(
+        conversation=conversation, notice="",
+    ).order_by("-created", "-id")[:REPLAY_TURNS])
+    rows.reverse()
     while rows and (rows[0].role != ChatMessage.ROLE_USER or rows[0].is_tool_result):
         rows.pop(0)
     return rows
@@ -764,7 +766,12 @@ def _ai_title(client, user_text: str, assistant_text: str) -> str | None:
 def _retitle_if_first_message(user, conversation, is_first: bool, client, user_text: str, reply: ChatMessage | None):
     if not is_first or reply is None:
         return
-    ai_title = _ai_title(client, user_text, reply.text)
+    try:
+        require_active_user(user)
+        ai_title = _ai_title(client, user_text, reply.text)
+        require_active_user(user)
+    except InactiveAccountError:
+        return
     if ai_title:
         conversation.title = ai_title
         conversation.save(update_fields=["title", "updated"])
@@ -842,7 +849,6 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
         )
         return TurnResult(ok=False, reason="capped", reply=reply)
 
-    client = client or get_client()
     used = _tool_calls_used(conversation, user)
     executed: list[str] = []
     last_assistant: ChatMessage | None = None
@@ -852,15 +858,21 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
     for round_no in range(MAX_ROUNDS):
         try:
             charge.ensure_owned()
+            client = client or get_client()
+            messages = _api_messages(conversation, user)
+            charge.ensure_owned()
             response = client.messages.create(
                 model=limits.model,
                 max_tokens=MAX_TOKENS,
                 system=_system_blocks(),
                 tools=tools_mod.TOOL_SCHEMAS,
-                messages=_api_messages(conversation, user),
+                messages=messages,
             )
             charge.ensure_owned()
+        except InactiveAccountError:
+            raise
         except Exception:  # noqa: BLE001 — see module docstring: never a 500
+            require_active_user(user)
             if charged:
                 charge.refund(
                     reason="turn_failed_after_charge", model=limits.model
@@ -1070,7 +1082,6 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
         yield {"type": "notice", "kind": "capped", "text": notice_text}
         return
 
-    client = client or get_client()
     used = _tool_calls_used(conversation, user)
     executed: list[str] = []
     # Same tracking as run_turn, and for the same reason — see that
@@ -1083,12 +1094,15 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
         message_id = ""
         try:
             charge.ensure_owned()
+            client = client or get_client()
+            messages = _api_messages(conversation, user)
+            charge.ensure_owned()
             with client.messages.stream(
                 model=limits.model,
                 max_tokens=MAX_TOKENS,
                 system=_system_blocks(),
                 tools=tools_mod.TOOL_SCHEMAS,
-                messages=_api_messages(conversation, user),
+                messages=messages,
             ) as stream:
                 for delta in stream.text_stream:
                     if delta:
@@ -1102,7 +1116,10 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
             blocks = [_as_dict(b) for b in final.content]
             stop_reason = final.stop_reason
             message_id = final.id or ""
+        except InactiveAccountError:
+            raise
         except Exception:  # noqa: BLE001 — see module docstring: never a 500
+            require_active_user(user)
             if charged:
                 charge.refund(
                     reason="turn_failed_after_charge", model=limits.model

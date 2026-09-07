@@ -109,6 +109,7 @@ from directory.views import (
 )
 
 from .models import AdvisorMemory
+from .lifecycle import require_active_user
 from .situation import build_situation
 
 # Every untrusted string is cut to this before it reaches the model. Notes and
@@ -2571,6 +2572,9 @@ def execute(
     model can read and respond to. A tool that can 500 the request would make
     one malformed argument cost the student their whole message.
     """
+    # A lifecycle stop must reach the turn wrapper, rather than be sent
+    # back to the model as a tool error that invites another provider call.
+    require_active_user(user)
     args = tool_input if isinstance(tool_input, dict) else {}
     try:
         stamped = _MESSAGE_ID_HANDLERS.get(name)

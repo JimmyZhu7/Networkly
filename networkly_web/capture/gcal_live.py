@@ -180,7 +180,7 @@ def connect_calendar(user, code: str, redirect_uri: str) -> GoogleCalendarConnec
     """
     flow = _flow(redirect_uri)
     try:
-        flow.fetch_token(code=code)
+        flow.fetch_token(code=code, timeout=google_oauth.REQUEST_TIMEOUT_SECONDS)
     except Exception as exc:  # noqa: BLE001 - surfaced as GcalError below
         raise GcalError(f"Google rejected the consent code: {exc}") from exc
 

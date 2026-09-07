@@ -4,6 +4,8 @@ import runpy
 from importlib.util import find_spec
 
 import environ
+from unittest.mock import Mock
+
 import pytest
 
 from ops.tracking import EXPECTED_INTERVALS, _ping_healthcheck
@@ -26,7 +28,7 @@ def test_all_tracked_jobs_load_and_ping_only_their_configured_url(
     assert loaded["HEALTHCHECK_URLS"] == expected
     settings.HEALTHCHECK_URLS = loaded["HEALTHCHECK_URLS"]
     calls = []
-    monkeypatch.setattr("ops.tracking.requests.get", lambda url, timeout: calls.append((url, timeout)))
+    monkeypatch.setattr("ops.tracking.requests.get", lambda url, timeout: (calls.append((url, timeout)), Mock())[1])
     for name in EXPECTED_INTERVALS:
         _ping_healthcheck(name)
     assert calls == ([(url, 5) for url in expected.values()] if configured else [])
@@ -48,7 +50,7 @@ def test_local_jobs_cannot_ping_production_and_leave_production_mapping_intact(
     )
     settings.HEALTHCHECK_URLS = local["HEALTHCHECK_URLS"]
     calls = []
-    monkeypatch.setattr("ops.tracking.requests.get", lambda url, timeout: calls.append(url))
+    monkeypatch.setattr("ops.tracking.requests.get", lambda url, timeout: (calls.append(url), Mock())[1])
     for name in EXPECTED_INTERVALS:
         _ping_healthcheck(name)
     assert calls == []

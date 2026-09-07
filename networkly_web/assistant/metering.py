@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from billing import credits
 from .locks import BUSY_TEXT, ConversationLock
+from .lifecycle import INACTIVE_TEXT, InactiveAccountError, require_active_user
 from .models import ChatConversation, ChatMessage, ChatTurnReservation
 
 
@@ -21,7 +22,11 @@ def finish_reservation(user, reservation_id, *, status, reason="", reply=None):
     order. A repeated callback or recovery sees a terminal row and does nothing.
     """
     with transaction.atomic():
-        get_user_model().objects.select_for_update().get(pk=user.pk)
+        # Hard deletion cascades the ledger and reservations. Cleanup of a
+        # now-absent account must not recreate data or turn a stopped stream
+        # into an exception while trying to refund a deleted reservation.
+        if get_user_model().objects.select_for_update().filter(pk=user.pk).first() is None:
+            return False
         row = ChatTurnReservation.objects.for_user(user).select_for_update().get(pk=reservation_id)
         if row.status != ChatTurnReservation.PENDING:
             return False
@@ -52,6 +57,7 @@ class TurnCharge(AbstractContextManager):
 
     def ensure_owned(self):
         self.ownership.ensure_owned()
+        require_active_user(self.user)
 
     def reserve(self, limits):
         self.ensure_owned()
@@ -97,6 +103,15 @@ def charge_turn(function):
     @wraps(function)
     def wrapped(user, conversation, *args, **kwargs):
         from .agent import TurnResult, _notice
+        def inactive():
+            return TurnResult(ok=False, reason="inactive_user", reply=_notice(
+                user, conversation, ChatMessage.NOTICE_FAILED, INACTIVE_TEXT,
+            ))
+
+        try:
+            require_active_user(user)
+        except InactiveAccountError:
+            return inactive()
         _check_conversation(user, conversation)
         with ConversationLock(conversation.pk) as ownership:
             if not ownership.acquired:
@@ -106,16 +121,25 @@ def charge_turn(function):
             if prepare is not None:
                 prepare()
             with TurnCharge(user, conversation, ownership) as charge:
-                result = function(user, conversation, *args, **kwargs, charge=charge)
-                if result.ok:
-                    charge.keep(reply=result.reply)
-                return result
+                try:
+                    result = function(user, conversation, *args, **kwargs, charge=charge)
+                    if result.ok:
+                        charge.keep(reply=result.reply)
+                    return result
+                except InactiveAccountError:
+                    charge.refund(reason="account_inactive")
+                    return inactive()
     return wrapped
 
 
 def charge_stream(function):
     @wraps(function)
     def wrapped(user, conversation, *args, **kwargs):
+        try:
+            require_active_user(user)
+        except InactiveAccountError:
+            yield {"type": "notice", "kind": "failed", "text": INACTIVE_TEXT}
+            return
         _check_conversation(user, conversation)
         with ConversationLock(conversation.pk) as ownership:
             if not ownership.acquired:
@@ -133,6 +157,9 @@ def charge_stream(function):
                             reply = ChatMessage.objects.for_user(user).get(pk=event["message_id"], conversation=conversation)
                             charge.keep(reply=reply)
                         yield event
+                except InactiveAccountError:
+                    charge.refund(reason="account_inactive")
+                    yield {"type": "notice", "kind": "failed", "text": INACTIVE_TEXT}
                 finally:
                     stream.close()
     return wrapped

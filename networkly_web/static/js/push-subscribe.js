@@ -27,11 +27,17 @@
     if (!root) return;
 
     function post(url, body) {
+      var controller = new AbortController();
+      var timeout = setTimeout(function () { controller.abort(); }, 15000);
       return fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRFToken": root.dataset.csrf },
         body: JSON.stringify(body || {}),
-      });
+        signal: controller.signal,
+      }).then(function (response) {
+        if (!response.ok || response.redirected) throw new Error("save failed");
+        return response;
+      }).finally(function () { clearTimeout(timeout); });
     }
 
     var toggle = root.querySelector("[data-push-toggle]");
@@ -78,7 +84,6 @@
           return post(root.dataset.subscribeUrl, sub.toJSON());
         })
         .then(function (r) {
-          if (!r.ok) throw new Error("save failed");
           toggle.checked = true;
           setStatus("On. You'll get an alert when a tracked role is closing soon.");
         })
@@ -102,8 +107,12 @@
         .then(function (sub) {
           if (!sub) return null;
           var endpoint = sub.endpoint;
-          return sub.unsubscribe().then(function () {
-            return post(root.dataset.unsubscribeUrl, { endpoint: endpoint });
+          // Keep the browser endpoint available for retry until the server
+          // confirms removal. Otherwise a failed POST loses the identifier.
+          return post(root.dataset.unsubscribeUrl, { endpoint: endpoint }).then(function () {
+            return sub.unsubscribe();
+          }).then(function (removed) {
+            if (!removed) throw new Error("browser unsubscribe failed");
           });
         })
         .then(function () {
@@ -111,6 +120,7 @@
           setStatus("Off.");
         })
         .catch(function () {
+          toggle.checked = true;
           setStatus("Couldn't turn this off. Try again in a moment.");
         })
         .finally(function () {
@@ -121,12 +131,18 @@
     toggle.addEventListener("change", function () {
       if (toggle.checked) {
         if (window.Notification && Notification.permission === "default") {
+          toggle.disabled = true;
           Notification.requestPermission().then(function (perm) {
             if (perm === "granted") subscribe();
             else {
               toggle.checked = false;
+              toggle.disabled = false;
               setStatus(perm === "denied" ? "Blocked. Enable notifications for this site in your browser settings." : "Not turned on.");
             }
+          }).catch(function () {
+            toggle.checked = false;
+            toggle.disabled = false;
+            setStatus("Couldn't request permission. Try again in a moment.");
           });
         } else {
           subscribe();

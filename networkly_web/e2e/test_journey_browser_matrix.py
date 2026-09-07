@@ -181,8 +181,10 @@ def test_settings_renders_every_card_at_both_widths(session, live_server, world)
     assert "Journey Partners" in body
     _check(session, "06-settings")
 
-    # The profile save is the control this page exists for.
-    save = session.page.locator("form button[type='submit']:visible").first
+    # Editors now open from their summary cards. Exercise that real path
+    # before checking the profile's save control at each viewport.
+    session.page.get_by_role("button", name="Manage Profile", exact=True).click()
+    save = session.page.locator("#profile form button[type='submit']:visible").first
     save.scroll_into_view_if_needed()
     assert save.is_enabled()
 

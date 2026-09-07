@@ -68,7 +68,7 @@ def test_every_request_is_made_with_that_context(monkeypatch):
     seen = {}
 
     class _Resp:
-        def read(self):
+        def read(self, size=-1):
             return b"{}"
 
         def __enter__(self):

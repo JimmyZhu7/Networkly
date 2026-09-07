@@ -205,6 +205,52 @@ class TestMergeAndUndo:
         # …and the undo never overwrites their word.
         assert primary.region == "us"
 
+    def test_undo_respects_an_edit_from_a_separate_request(self, user, ebba_pair):
+        primary, duplicate = ebba_pair
+        duplicate.region = "hk"
+        duplicate.save(update_fields=["region"])
+        record = merge_service.merge(user, primary, duplicate)
+        # Populate the relation cache, as a request may do before undoing.
+        assert record.primary.region == "hk"
+        Contact.objects.for_user(user).filter(pk=primary.pk).update(region="us")
+
+        assert merge_service.undo(record) is True
+        primary.refresh_from_db()
+        assert primary.region == "us"
+
+    def test_merge_preserves_a_blank_filled_by_a_separate_request(self, user, ebba_pair):
+        primary, duplicate = ebba_pair
+        duplicate.region = "hk"
+        duplicate.save(update_fields=["region"])
+        assert primary.region == ""
+        Contact.objects.for_user(user).filter(pk=primary.pk).update(region="us")
+
+        record = merge_service.merge(user, primary, duplicate)
+        primary.refresh_from_db()
+        assert primary.region == "us"
+        assert "region" not in record.field_changes
+
+    def test_separately_loaded_undo_cannot_reverse_the_same_merge_twice(self, user, ebba_pair):
+        primary, duplicate = ebba_pair
+        record = merge_service.merge(user, primary, duplicate)
+        stale = ContactMerge.objects.for_user(user).get(pk=record.pk)
+        assert merge_service.undo(record) is True
+        assert merge_service.undo(stale) is False
+
+    def test_merge_boundary_rejects_a_contact_owned_by_another_user(self, user, ebba_pair):
+        primary, duplicate = ebba_pair
+        other = User.objects.create_user(email="other-merge@example.com", password="x")
+        outsider = Contact.all_objects.create(user=other, name="Other student contact")
+        before = touch_ids(user, duplicate)
+
+        with pytest.raises(Contact.DoesNotExist):
+            merge_service.merge(user, outsider, duplicate)
+
+        assert touch_ids(user, duplicate) == before
+        duplicate.refresh_from_db()
+        assert duplicate.archived is False
+        assert not ContactMerge.objects.for_user(user).exists()
+
     def test_undo_keeps_a_deliberately_archived_duplicate_archived(self, user, ebba_pair):
         primary, duplicate = ebba_pair
         duplicate.archived = True

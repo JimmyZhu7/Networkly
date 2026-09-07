@@ -174,7 +174,16 @@ def fetch(board: BoardConfig, *, banked_rows: int = 0) -> FetchResult:
     connector = CONNECTORS.get(board.provider)
     if connector is None:
         raise ValueError(f"no connector registered for provider {board.provider!r}")
-    return zero_rows_guard(connector.fetch(board), banked_rows)
+    try:
+        return zero_rows_guard(connector.fetch(board), banked_rows)
+    except Exception as exc:
+        # Parsing happens outside the network try in several connectors.
+        # One malformed provider response must not discard every other
+        # board's completed result from fetch_many's concurrent walk.
+        return FetchResult(
+            board=board, ok=False, opportunities=[], raw_count=0,
+            error=f"{type(exc).__name__}: {str(exc)[:500]}",
+        )
 
 
 # Error text that marks a fetch worth retrying: the failure is about the

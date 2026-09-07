@@ -14,7 +14,7 @@ one row.
 
 from __future__ import annotations
 
-from collections import Counter
+import re
 from datetime import timedelta
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -112,14 +112,13 @@ def _pilot_rows(now):
         .values_list("user_id", flat=True)
     )
 
-    # Furthest step, computed in Python off the props rather than in SQL: the
-    # step is a JSON key, and the ordering that matters is ONBOARDING_STEPS'
-    # own, which no database ordering knows.
+    # Deduplicate known steps in SQL before applying their product ordering.
+    # This returns at most one row per user/step, regardless of how many
+    # times a student revisits onboarding over their account's lifetime.
     furthest: dict[int, int] = {}
-    for uid, props in ProductEvent.all_objects.filter(
-        user_id__in=ids, event__in=_STEP_EVENTS
-    ).values_list("user_id", "props"):
-        step = (props or {}).get("step")
+    for uid, step in ProductEvent.all_objects.filter(
+        user_id__in=ids, event__in=_STEP_EVENTS, props__step__in=ONBOARDING_STEPS,
+    ).order_by().values_list("user_id", "props__step").distinct():
         if step in ONBOARDING_STEPS:
             idx = ONBOARDING_STEPS.index(step)
             if idx > furthest.get(uid, -1):
@@ -157,7 +156,9 @@ def _pilot_drilldown(user_id: str, now):
     can share a timestamp to the microsecond; without the id tiebreak the two
     halves of a failed POST could print in either order.
     """
-    if not (user_id or "").isdigit():
+    if not re.fullmatch(r"[0-9]{1,19}", user_id or ""):
+        return None
+    if int(user_id) > 2**63 - 1:
         return None
     subject = get_user_model().objects.filter(pk=int(user_id)).first()
     if subject is None:
@@ -217,7 +218,9 @@ def dashboard(request):
         "window_days": _WINDOW_DAYS,
         "activity": activity,
         "event_total": events.count(),
-        "top_events": Counter(events.values_list("event", flat=True)).most_common(8),
+        "top_events": list(events.order_by().values("event")
+                           .annotate(n=Count("id")).order_by("-n", "event")
+                           .values_list("event", "n")[:8]),
         "stages": stages,
         "board": {
             "open_campus": campus.count(),

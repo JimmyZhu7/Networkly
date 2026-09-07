@@ -71,18 +71,21 @@ PUSH_SERVICE_HOST_SUFFIXES = (".notify.windows.com",)
 def is_allowed_endpoint(endpoint: str) -> bool:
     """True when `endpoint` names a real browser push service over HTTPS.
 
-    Scheme is checked too, and only `https` passes: an `http://` endpoint
-    would send a VAPID assertion in clear text, and no push service offers
-    one. `urlsplit().hostname` is used rather than `netloc` because it drops
-    any `user:pass@` prefix and any `:port`, which are exactly the two ways
-    a crafted URL tries to make a hostname check read the wrong substring.
+    Only ordinary HTTPS relay URLs are accepted. Reject credentials, custom
+    ports, and control characters before a scheduled sender reaches them.
     """
-    if not endpoint:
+    if not isinstance(endpoint, str) or not endpoint:
         return False
-    parts = urlsplit(endpoint)
-    if parts.scheme != "https":
+    if any(char.isspace() or ord(char) < 32 for char in endpoint):
         return False
-    host = (parts.hostname or "").lower()
+    try:
+        parts = urlsplit(endpoint)
+        if (parts.scheme != "https" or parts.username is not None
+                or parts.password is not None or parts.port not in (None, 443)):
+            return False
+        host = (parts.hostname or "").lower()
+    except ValueError:
+        return False
     if host in PUSH_SERVICE_HOSTS:
         return True
     return any(host.endswith(suffix) for suffix in PUSH_SERVICE_HOST_SUFFIXES)

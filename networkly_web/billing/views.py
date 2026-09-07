@@ -11,7 +11,6 @@ import stripe
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -22,6 +21,7 @@ from django.views.decorators.http import require_POST
 
 from analytics.events import record_event
 from core.clientip import client_ip
+from core.ratelimits import window_exceeded
 
 from . import stripe_gateway
 from .models import ProWaitlist
@@ -112,14 +112,9 @@ def _waitlist_throttled(request) -> bool:
     # reads only the hops our own proxies appended, so a forged
     # X-Forwarded-For no longer buys a fresh window.
     key = f"waitlist-rate:{client_ip(request)}"
-    burst = cache.get_or_set(key, 0, _WAITLIST_WINDOW_SECONDS)
-    if burst >= _WAITLIST_WINDOW_LIMIT:
-        return True
-    try:
-        cache.incr(key)
-    except ValueError:
-        cache.set(key, 1, _WAITLIST_WINDOW_SECONDS)
-    return False
+    return window_exceeded(
+        key, limit=_WAITLIST_WINDOW_LIMIT, seconds=_WAITLIST_WINDOW_SECONDS,
+    )
 
 
 # The intents this endpoint will record, and the words it says back for each.

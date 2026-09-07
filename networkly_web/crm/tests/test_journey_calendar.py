@@ -281,6 +281,23 @@ def test_cancelling_twice_changes_nothing_the_second_time(signed_in, student, da
     assert event.ics_sequence == 1, "no revision a subscriber has to re-read"
 
 
+def test_stale_reschedule_preserves_a_cancelled_meeting(signed_in, student, day):
+    _add(signed_in, day)
+    event = CalendarEvent.objects.for_user(student).get()
+    signed_in.post(reverse("crm:calendar_cancel", args=[event.pk]))
+    event.refresh_from_db()
+    before = (event.starts_at, event.ends_at, event.ics_sequence, event.cancelled_at)
+
+    response = signed_in.post(
+        reverse("crm:calendar_reschedule", args=[event.pk]),
+        {"day": (day + dt.timedelta(days=2)).isoformat(), "at": "15:00"},
+    )
+
+    assert response.status_code == 302
+    event.refresh_from_db()
+    assert (event.starts_at, event.ends_at, event.ics_sequence, event.cancelled_at) == before
+
+
 def test_removing_a_cancelled_event_is_still_available_and_still_deletes(signed_in, student, day):
     """Cancel is the default; Remove is the escape hatch for a row that
     should never have existed. Both stay, and they do different things."""

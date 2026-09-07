@@ -499,12 +499,13 @@ def business_days_since(then: date, now: date) -> int:
     including `now`. Ported verbatim from the original cadence.py."""
     if then >= now:
         return 0
-    n, cur = 0, then
-    while cur < now:
-        cur += timedelta(days=1)
-        if cur.weekday() < 5:
-            n += 1
-    return n
+    weeks, remainder = divmod((now - then).days, 7)
+    # Whole weeks always contain five weekdays. Count at most six trailing
+    # days, so an old imported relationship costs no more than a new one.
+    return weeks * 5 + sum(
+        (then.weekday() + offset) % 7 < 5
+        for offset in range(1, remainder + 1)
+    )
 
 
 def _as_dt(value: Any) -> datetime | None:

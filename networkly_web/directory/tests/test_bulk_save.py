@@ -286,6 +286,10 @@ def test_a_concurrent_duplicate_save_does_not_500_the_confirm(client, monkeypatc
     assert resp.status_code != 500
     # No duplicate row, and no unhandled IntegrityError bubbling out as one.
     assert UO.objects.for_user(user).filter(opportunity=opp).count() == 1
+    assert "bulk_save_batch" not in client.session
+    # This request created nothing; the other tab's row is not undoable.
+    assert client.post(reverse("track_eligible_undo")).status_code == 400
+    assert UO.objects.for_user(user).filter(opportunity=opp).exists()
 
 
 @pytest.mark.django_db
@@ -381,6 +385,38 @@ def test_undo_with_nothing_to_undo_is_a_bad_request(client):
     client.force_login(user)
     resp = client.post(reverse("track_eligible_undo"), {})
     assert resp.status_code == 400
+
+
+@pytest.mark.django_db
+def test_bulk_undo_preserves_a_role_removed_and_saved_again(client):
+    user = _student()
+    opp = _eligible_opp(1)
+    client.force_login(user)
+    _confirm_bulk_save(client)
+    original = UserOpportunity.objects.for_user(user).get(opportunity=opp).pk
+
+    client.post(reverse("track_opportunity", args=[opp.pk]), {"status": "clear"})
+    client.post(reverse("track_opportunity", args=[opp.pk]), {"status": "saved"})
+    replacement = UserOpportunity.objects.for_user(user).get(opportunity=opp)
+    assert replacement.pk != original
+
+    assert client.post(reverse("track_eligible_undo")).status_code == 302
+    assert UserOpportunity.objects.for_user(user).filter(pk=replacement.pk).exists()
+
+
+@pytest.mark.django_db
+def test_legacy_bulk_undo_without_row_identity_expires_safely(client):
+    user = _student()
+    opp = _eligible_opp(1)
+    client.force_login(user)
+    row = UserOpportunity.all_objects.create(user=user, opportunity=opp)
+    session = client.session
+    session["bulk_save_batch"] = {"ids": [opp.pk], "count": 1}
+    session.save()
+
+    assert client.post(reverse("track_eligible_undo")).status_code == 400
+    assert UserOpportunity.objects.for_user(user).filter(pk=row.pk).exists()
+    assert "bulk_save_batch" not in client.session
 
 
 @pytest.mark.django_db

@@ -7,6 +7,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import timezone
 
 from analytics.models import UserOpportunity
 from directory.models import Firm, Opportunity
@@ -58,6 +59,49 @@ def test_clear_removes_the_row(client):
     client.post(reverse("track_opportunity", args=[o.id]), {"status": "saved"})
     client.post(reverse("track_opportunity", args=[o.id]), {"status": "clear"})
     assert UserOpportunity.objects.for_user(user).filter(opportunity=o).count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", ["saved", "submitted", "interview", "offer"])
+def test_stale_undismiss_preserves_a_role_saved_since_dismissal(client, status):
+    user = _user()
+    opp = _opp()
+    client.force_login(user)
+    url = reverse("track_opportunity", args=[opp.pk])
+    client.post(url, {"status": "dismiss"})
+    assert client.post(url, {"status": status}).status_code == 302
+    row = UserOpportunity.objects.for_user(user).get(opportunity=opp)
+
+    assert client.post(url, {"status": "undismiss"}).status_code == 302
+    row.refresh_from_db()
+    assert row.applied_status == ("" if status == "saved" else status)
+    assert row.dismissed is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", ["saved", "offer"])
+def test_overlapping_tracking_preserves_the_first_application_timestamp(client, monkeypatch, status):
+    user = _user()
+    opp = _opp()
+    client.force_login(user)
+    UserOpportunity.all_objects.create(user=user, opportunity=opp)
+    applied_at = timezone.now()
+    original = UserOpportunity.all_objects.get_or_create
+
+    def concurrent_submission(**kwargs):
+        row, created = original(**kwargs)
+        assert row.applied_at is None
+        # Another request submits after this request reads the saved row.
+        UserOpportunity.objects.for_user(user).filter(pk=row.pk).update(
+            applied_status="submitted", applied_at=applied_at)
+        return row, created
+
+    monkeypatch.setattr(UserOpportunity.all_objects, "get_or_create", concurrent_submission)
+    response = client.post(reverse("track_opportunity", args=[opp.pk]), {"status": status})
+    assert response.status_code == 302
+    row = UserOpportunity.objects.for_user(user).get(opportunity=opp)
+    assert row.applied_at == applied_at
+    assert row.applied_status == ("" if status == "saved" else status)
 
 
 @pytest.mark.django_db

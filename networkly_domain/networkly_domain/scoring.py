@@ -332,7 +332,27 @@ def _required_as_of(value: Any) -> datetime:
 
 
 def _days_between(later: datetime, earlier: datetime) -> float:
-    return (later - earlier).total_seconds() / 86400.0
+    # Subtracting two datetimes sharing a ZoneInfo object uses wall-clock
+    # time. Scoring measures elapsed time, including across DST changes.
+    return (later.astimezone(timezone.utc) - earlier.astimezone(timezone.utc)).total_seconds() / 86400.0
+
+
+def _touch_order(t: Mapping[str, Any]) -> tuple:
+    """Chronology with append-only event ids breaking equal timestamps.
+
+    Older callers may omit ids; use a stable content tie-break then, with
+    explicit overrides after inferred engagement at the same instant.
+    """
+    row_id = t.get("id")
+    if isinstance(row_id, bool) or not isinstance(row_id, int):
+        row_id = 0
+    return (
+        (_as_dt(t.get("ts")) or datetime.min.replace(tzinfo=timezone.utc)).astimezone(timezone.utc),
+        row_id,
+        t.get("kind") == _MANUAL_OVERRIDE_KIND,
+        t.get("kind") or "",
+        t.get("note") or "",
+    )
 
 
 def _human_ago(days: float) -> str:
@@ -398,7 +418,7 @@ def _depth_level(touches: list[Mapping[str, Any]]) -> int:
     earlier promotion. Chat/reply touches AFTER an override still raise the
     level normally — an override sets where the log stands at that moment,
     not a ceiling or floor for everything after it."""
-    ordered = sorted(touches, key=lambda t: (_as_dt(t.get("ts")) or datetime.min.replace(tzinfo=timezone.utc)))
+    ordered = sorted(touches, key=_touch_order)
     level = 0
     for t in ordered:
         kind = t.get("kind")
@@ -504,7 +524,7 @@ def _score_responsiveness(
     ratio = min(1.0, len(replies) / len(sends))
 
     # Median latency: for each reply, the gap to the last outbound before it.
-    ordered = sorted(touches, key=lambda t: (_as_dt(t.get("ts")) or datetime.min.replace(tzinfo=timezone.utc)))
+    ordered = sorted(touches, key=_touch_order)
     latencies: list[float] = []
     last_out: datetime | None = None
     for t in ordered:
@@ -567,10 +587,10 @@ def _score_recency(
     meaningful = [
         _as_dt(t.get("ts")) for t in touches if t.get("kind") in _MEANINGFUL_KINDS
     ]
-    meaningful = [dt for dt in meaningful if dt is not None and dt <= as_of]
+    meaningful = [dt for dt in meaningful if dt is not None and _days_between(as_of, dt) >= 0]
     if not meaningful:
         return 0.0, {"days_since_meaningful": None}
-    last = max(meaningful)
+    last = max(meaningful, key=lambda dt: dt.astimezone(timezone.utc))
     days = max(0.0, _days_between(as_of, last))
     # `or 1` for the same reason as the momentum windows and the timeline
     # runway: this is a params key a caller may override wholesale, and a
@@ -716,7 +736,7 @@ def score_contact(
         contact: contact dict. Keys used: `id` (echoed), `role` (leverage),
             `school_affiliation` (leverage). The stored `warmth`/`thread_state`
             columns are DELIBERATELY NOT read — Depth comes from the log.
-        touches: this contact's touch dicts. Keys used: `kind`, `ts`, `note`
+        touches: this contact's touch dicts. Keys used: `id`, `kind`, `ts`, `note`
             (the last only for the advocate-marking audit touch).
         as_of: as-of instant driving Recency decay (and the inputs hash).
         params: optional override bundle (must carry `version`).
@@ -732,7 +752,7 @@ def score_contact(
     # Every axis describes evidence available at as_of. Retain the existing
     # lenient treatment of undated history, but do not count future chats,
     # replies, referrals, sends, or overrides as completed interactions.
-    tlist = [t for t in touches if (ts := _as_dt(t.get("ts"))) is None or ts <= as_of]
+    tlist = [t for t in touches if (ts := _as_dt(t.get("ts"))) is None or _days_between(as_of, ts) >= 0]
 
     depth_level = _depth_level(tlist)
     chat_count = sum(1 for t in tlist if t.get("kind") in _CHAT_KINDS)
@@ -767,17 +787,15 @@ def score_contact(
             "role": contact.get("role"),
             "school_affiliation": bool(contact.get("school_affiliation")),
         },
-        "touches": sorted(
-            (
+        "touches": [
                 {
+                    "id": t.get("id"),
                     "kind": t.get("kind"),
-                    "ts": (_as_dt(t.get("ts")).isoformat() if _as_dt(t.get("ts")) else None),
+                    "ts": (_as_dt(t.get("ts")).astimezone(timezone.utc).isoformat() if _as_dt(t.get("ts")) else None),
                     "note": t.get("note") if t.get("kind") == _MANUAL_OVERRIDE_KIND else None,
                 }
-                for t in tlist
-            ),
-            key=lambda d: (d["ts"] or "", d["kind"] or ""),
-        ),
+                for t in sorted(tlist, key=_touch_order)
+        ],
     }
 
     return {

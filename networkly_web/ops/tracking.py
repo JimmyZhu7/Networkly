@@ -27,6 +27,7 @@ from datetime import timedelta
 
 import requests
 from django.conf import settings
+from django.db import DatabaseError
 from django.utils import timezone
 
 from .models import JobRun
@@ -93,7 +94,7 @@ def _ping_healthcheck(name: str) -> None:
     if not url:
         return
     try:
-        requests.get(url, timeout=5)
+        requests.get(url, timeout=5).raise_for_status()
     except requests.RequestException as exc:
         # warning, not exception: the traceback carries the request URL, and
         # the ping UUID in that URL is the credential (settings/base.py). A
@@ -188,7 +189,13 @@ def track_job_run(name: str):
     except BaseException:
         run.status = JobRun.STATUS_FAILED
         run.finished_at = timezone.now()
-        run.save(update_fields=["status", "finished_at"])
+        try:
+            run.save(update_fields=["status", "finished_at"])
+        except DatabaseError as record_error:
+            # A broken connection or transaction must not replace the
+            # original job error with the secondary monitoring failure.
+            logger.error("could not record failure for job %r (%s)",
+                         name, type(record_error).__name__)
         raise
     else:
         run.status = JobRun.STATUS_SUCCESS

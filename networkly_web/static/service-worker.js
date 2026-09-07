@@ -42,6 +42,14 @@ self.addEventListener("push", function (event) {
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
   var url = (event.notification.data && event.notification.data.url) || "/opportunities/mine/";
+  // Resolve relative paths once and keep notifications within this app.
+  try {
+    url = new URL(url, self.location.origin);
+    if (url.origin !== self.location.origin) throw new Error("external destination");
+    url = url.href;
+  } catch (e) {
+    url = self.location.origin + "/opportunities/mine/";
+  }
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
       // Focus an already-open Networkly tab rather than piling up a new one
@@ -50,7 +58,15 @@ self.addEventListener("notificationclick", function (event) {
       for (var i = 0; i < list.length; i++) {
         var client = list[i];
         if ("focus" in client) {
-          if ("navigate" in client && client.url !== url) client.navigate(url);
+          if ("navigate" in client && client.url !== url) {
+            // Keep the worker alive until navigation completes; focusing first
+            // can otherwise end the click event while the old page is visible.
+            return client.navigate(url).then(function (updated) {
+              return (updated || client).focus();
+            }).catch(function () {
+              return clients.openWindow ? clients.openWindow(url) : client.focus();
+            });
+          }
           return client.focus();
         }
       }

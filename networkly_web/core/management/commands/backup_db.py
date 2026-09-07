@@ -63,6 +63,7 @@ schedule mean anything.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -70,6 +71,11 @@ from pathlib import Path
 from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+
+
+_SNAPSHOT_NAME = re.compile(
+    r"coverage_\d{4}-\d{2}-\d{2}(?:_\d{6}(?:_\d{6})?)?\.dump"
+)
 
 
 class Command(BaseCommand):
@@ -171,8 +177,12 @@ class Command(BaseCommand):
 
         size_mb = out.stat().st_size / 1_048_576
         # Prune beyond the ring, oldest first, and never the file just written.
-        snapshots = sorted(dest.glob("coverage_*.dump"))
-        for old in snapshots[:-opts["keep"]]:
+        snapshots = sorted(
+            path for path in dest.iterdir()
+            if path.is_file() and _SNAPSHOT_NAME.fullmatch(path.name)
+        )
+        previous = [path for path in snapshots if path != out]
+        for old in previous[:max(0, len(previous) - (opts["keep"] - 1))]:
             old.unlink()
 
         self.stdout.write(self.style.SUCCESS(
@@ -245,15 +255,19 @@ class Command(BaseCommand):
             raise CommandError(f"upload to {bucket} failed: {str(exc)[:400]}") from exc
 
         listing = client.get_paginator("list_objects_v2")
+        listing_prefix = f"{prefix}/" if prefix else ""
         keys = []
-        for page in listing.paginate(Bucket=bucket, Prefix=f"{prefix}/" if prefix else ""):
+        for page in listing.paginate(Bucket=bucket, Prefix=listing_prefix):
             for obj in page.get("Contents", []):
-                if obj["Key"].rsplit("/", 1)[-1].startswith("coverage_"):
+                # A recursive prefix listing can include another project's
+                # snapshots, partial uploads, and unrelated coverage_* files.
+                # Only exact snapshot names directly in this ring are ours.
+                relative = obj["Key"][len(listing_prefix):]
+                if _SNAPSHOT_NAME.fullmatch(relative):
                     keys.append(obj["Key"])
         keys.sort()
-        for old in keys[:-keep]:
-            if old == key:  # never the object just written
-                continue
+        previous = [old for old in keys if old != key]
+        for old in previous[:max(0, len(previous) - (keep - 1))]:
             try:
                 client.delete_object(Bucket=bucket, Key=old)
             except (BotoCoreError, ClientError) as exc:

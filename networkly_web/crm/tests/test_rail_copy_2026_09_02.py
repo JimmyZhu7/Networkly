@@ -180,7 +180,7 @@ def test_both_windows_survive_the_diet():
     """
     card = _card(_page(_st_user_with_two_markets("both@example.com")), "Schedule")
     hk = _face(re.search(r'<li class="dbh"[^>]*>(.*?)</li>', card, re.S).group(1))
-    assert "send " in hk.lower() and "avoid " in hk.lower(), (
+    assert "suggested " in hk.lower() and "avoid " in hk.lower(), (
         "two windows, still two: a send window and an avoid window"
     )
     # A pair of clock times on each side. Matched rather than spelled out:
@@ -192,25 +192,17 @@ def test_both_windows_survive_the_diet():
     assert "desk" in hk, "the row still says whose day this is a fact about"
 
 
-def test_the_send_window_leads_with_a_verb_and_says_what_it_is_for():
-    """"HK desk good 9PM to 10:30PM" led its clause with a bare adjective, so
-    the first three words parse as a verdict on the desk until the time
-    arrives to correct them. It also never said what the window was FOR: this
-    row is `crm.today._send_windows`, the answer to "when is it worth
-    writing", and the card above it is titled Schedule, so nothing on screen
-    connected the hours to an email.
-
-    "send" is the verb the function is named for and the same four characters
-    "good" was, so the pair now reads as two imperatives in one register --
-    send then, avoid then. Measured: one line at 1280 and at 375, both
-    schemes, unchanged.
+def test_the_outreach_window_is_clearly_a_suggestion():
+    """The refined widget identifies suggested outreach times without
+    presenting a time window as a scheduled or automated send.
     """
     card = _card(_page(_st_user_with_two_markets("verb@example.com")), "Schedule")
     # The WHOLE <li>, opening tag included: the word this test says has moved
     # into the `title` is in the attribute, not in the element's children.
     row = re.search(r'<li class="dbh".*?</li>', card, re.S).group(0)
     face = _face(row)
-    assert " send " in f" {face.lower()} ", "the window states the action it is a window for"
+    assert " suggested " in f" {face.lower()} "
+    assert "suggested outreach times" in _face(card).lower()
     assert "good" not in face, (
         "an adjective is leading the clause again; the word belongs in the "
         "title, where the reason the window is good lives"
@@ -241,9 +233,9 @@ def test_the_windows_say_whose_clock_they_are_on():
 
 def test_send_and_avoid_windows_have_visible_labels():
     card = _card(_page(_st_user_with_two_markets("shape@example.com")), "Schedule")
-    assert card.count('<span class="dbh-label">Send</span>') == 2
+    assert card.count('<span class="dbh-label">Suggested</span>') == 2
     assert card.count('<span class="dbh-label">Avoid</span>') == 2
-    assert "your timezone" in _face(card)
+    assert "your timezone" in _face(card).lower()
 
 
 def test_an_ib_only_student_still_gets_no_hint_at_all():

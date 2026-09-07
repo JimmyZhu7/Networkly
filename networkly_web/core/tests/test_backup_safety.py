@@ -156,6 +156,52 @@ def test_a_failed_upload_is_loud_and_keeps_the_only_copy_there_is(tmp_path):
     assert len(list(tmp_path.glob("coverage_*.dump"))) == 1
 
 
+def test_remote_retention_preserves_other_prefixes_and_non_snapshot_objects(tmp_path):
+    preserved = [
+        "db/other-project/coverage_2026-01-01_000000_000000.dump",
+        "db/coverage_2026-01-01_000000_000000.dump.partial",
+        "db/coverage_2026-01-01_report.csv",
+        "db/coverage_notes.dump",
+    ]
+    old_snapshot = "db/coverage_2026-01-01_000000_000000.dump"
+    fake = FakeS3(existing=[old_snapshot, *preserved])
+    with patch("core.management.commands.backup_db.subprocess.run", side_effect=_dump_writes()), \
+            patch.object(Command, "client", return_value=fake), \
+            override_settings(BACKUP_S3_BUCKET="coverage-backups", BACKUP_S3_PREFIX="db/"):
+        call_command("backup_db", dest=str(tmp_path), keep=1, require_s3=True)
+    assert fake.deleted == [old_snapshot]
+    assert set(preserved).issubset(fake.objects)
+
+
+def test_local_retention_only_removes_timestamped_snapshot_files(tmp_path):
+    old_snapshot = tmp_path / "coverage_2026-01-01_000000_000000.dump"
+    old_snapshot.write_bytes(b"old snapshot")
+    unrelated = tmp_path / "coverage_notes.dump"
+    unrelated.write_bytes(b"user notes")
+    with patch("core.management.commands.backup_db.subprocess.run", side_effect=_dump_writes()), \
+            override_settings(BACKUP_S3_BUCKET=""):
+        call_command("backup_db", dest=str(tmp_path), keep=1)
+    assert unrelated.read_bytes() == b"user notes"
+    assert not old_snapshot.exists()
+    assert len(list(tmp_path.glob("coverage_*.dump"))) == 2
+
+
+def test_new_backup_survives_a_clock_rollback_locally_and_remotely(tmp_path):
+    # A previous host's clock can be ahead. The newly completed dump is
+    # still the one this invocation must retain and upload.
+    future_name = "coverage_9999-01-01_000000_000000.dump"
+    (tmp_path / future_name).write_bytes(b"previous snapshot")
+    fake = FakeS3(existing=[f"db/{future_name}"])
+    with patch("core.management.commands.backup_db.subprocess.run", side_effect=_dump_writes()), \
+            patch.object(Command, "client", return_value=fake), \
+            override_settings(BACKUP_S3_BUCKET="coverage-backups", BACKUP_S3_PREFIX="db/"):
+        call_command("backup_db", dest=str(tmp_path), keep=1, require_s3=True)
+    (filename, _bucket, key), = fake.uploaded
+    assert Path(filename).read_bytes() == b"complete-dump"
+    assert not (tmp_path / future_name).exists()
+    assert fake.objects == [key]
+
+
 def test_a_bucket_that_cannot_be_pruned_still_reports_a_successful_backup(tmp_path):
     fake = FakeS3(existing=["db/coverage_2026-01-01_000000_000000.dump"], fail_delete=True)
     with patch("core.management.commands.backup_db.subprocess.run",

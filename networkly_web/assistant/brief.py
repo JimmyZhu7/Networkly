@@ -78,6 +78,7 @@ from django.utils import timezone
 from core.templatetags.textstyle import smart_person_name, smart_title
 
 from .client import get_client, is_configured
+from .lifecycle import require_active_user
 from .models import DailyBrief
 
 BRIEF_MODEL = "claude-haiku-4-5-20251001"
@@ -959,6 +960,7 @@ def get_or_build(
     prompt += "\n" + _END_DATA + "\n\n" + _CLOSING_RULES
 
     try:
+        require_active_user(user)
         client = client or get_client()
         response = client.messages.create(
             model=BRIEF_MODEL,
@@ -970,6 +972,7 @@ def get_or_build(
             (getattr(b, "text", None) or (isinstance(b, dict) and b.get("text")) or "")
             for b in response.content
         ).strip()
+        require_active_user(user)
     except Exception:  # noqa: BLE001 — never break the Today page over this
         return None
 

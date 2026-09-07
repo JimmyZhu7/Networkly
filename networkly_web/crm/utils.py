@@ -299,6 +299,7 @@ def _touch_dicts(touches) -> list[dict[str, Any]]:
     """
     return [
         {
+            "id": t.pk,
             "contact_id": t.contact_id,
             "ts": local_date(t.ts),
             "kind": t.kind,
@@ -482,5 +483,4 @@ def confirmed_firm_dates():
         confidence=CONFIRMED_CONFIDENCE,
         precision__in=CONFIRMED_PRECISIONS,
     )
-
 

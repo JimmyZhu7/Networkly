@@ -30,6 +30,7 @@ from functools import lru_cache
 
 from django.contrib.auth.decorators import login_required
 from django.db.models import Case, Count, F, IntegerField, Max, Q, Value, When
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
@@ -4920,6 +4921,7 @@ def track_eligible(request):
         .values_list("opportunity_id", "dismissed")
     )
     saved_ids: list[int] = []
+    saved_row_ids: list[int] = []
     for o in Opportunity.objects.filter(
             id__in=offered, status="open", bucket__in=TARGET_BUCKETS):
         # The COLUMN's own gate, re-applied — not the retired year test. A
@@ -4940,8 +4942,11 @@ def track_eligible(request):
         # bare `.create()` there raises IntegrityError and 500s the whole
         # confirm; `track_opportunity`'s own upsert already takes this same
         # defence for the identical race.
-        UserOpportunity.all_objects.get_or_create(user=request.user, opportunity=o)
-        saved_ids.append(o.id)
+        row, created = UserOpportunity.all_objects.get_or_create(
+            user=request.user, opportunity=o)
+        if created:
+            saved_ids.append(o.id)
+            saved_row_ids.append(row.pk)
     saved = len(saved_ids)
     # The offer is consumed either way: a second POST of the same confirm
     # (a double-click, a back-then-resubmit) must not re-run against a batch
@@ -4951,7 +4956,9 @@ def track_eligible(request):
         record_event("eligible_bulk_saved", user=request.user, count=saved)
         # Overwrites any earlier, presumably-already-seen batch — only the
         # most recent bulk save is ever offered an undo.
-        request.session[BULK_SAVE_SESSION_KEY] = {"ids": saved_ids, "count": saved}
+        request.session[BULK_SAVE_SESSION_KEY] = {
+            "ids": saved_ids, "row_ids": saved_row_ids, "count": saved,
+        }
     from django.contrib import messages
     from django.shortcuts import resolve_url
 
@@ -4990,14 +4997,18 @@ def track_eligible_undo(request):
     from analytics.models import UserOpportunity
 
     batch = request.session.get(BULK_SAVE_SESSION_KEY)
-    ids = (batch or {}).get("ids") or []
+    # Row identity matters: a role removed and saved again after this batch
+    # belongs to the later action. Legacy batches cannot prove which row
+    # they created, so expire their undo instead of deleting by role id.
+    ids = (batch or {}).get("row_ids") or []
     if not ids:
+        request.session.pop(BULK_SAVE_SESSION_KEY, None)
         return HttpResponseBadRequest("nothing to undo")
 
     removed, _ = (
         UserOpportunity.objects.for_user(request.user)
         .filter(Q(applied_status="") | Q(applied_status="saved"),
-                opportunity_id__in=ids, dismissed=False)
+                pk__in=ids, dismissed=False)
         .delete()
     )
     request.session.pop(BULK_SAVE_SESSION_KEY, None)
@@ -5168,7 +5179,8 @@ def track_opportunity(request, pk):
     elif status == "undismiss":
         # Reversible by construction: hiding is a judgement, and judgements
         # about a cycle you have not started change.
-        UserOpportunity.objects.for_user(request.user).filter(opportunity=opp).delete()
+        UserOpportunity.objects.for_user(request.user).filter(
+            opportunity=opp, dismissed=True).delete()
         record_event("opportunity_undismissed", user=request.user)
     elif status not in _TRACK_STATES:
         return HttpResponseBadRequest("unknown status")
@@ -5176,12 +5188,15 @@ def track_opportunity(request, pk):
         uo, _ = UserOpportunity.all_objects.get_or_create(
             user=request.user, opportunity=opp
         )
-        uo.applied_status = "" if status == "saved" else status
-        uo.dismissed = False
-        # Stamp applied_at the first time the role enters the funnel.
-        if status in _FUNNEL_STATES and uo.applied_at is None:
-            uo.applied_at = timezone.now()
-        uo.save(update_fields=["applied_status", "applied_at", "dismissed"])
+        updates = {
+            "applied_status": "" if status == "saved" else status,
+            "dismissed": False,
+        }
+        # Resolve first entry against the stored value at UPDATE time. A
+        # concurrent request may have stamped it since get_or_create read it.
+        if status in _FUNNEL_STATES:
+            updates["applied_at"] = Coalesce("applied_at", timezone.now())
+        UserOpportunity.objects.for_user(request.user).filter(pk=uo.pk).update(**updates)
         record_event("opportunity_tracked", user=request.user, status=status)
 
     # Five callers, five response shapes:

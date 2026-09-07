@@ -35,6 +35,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.html import format_html
 from django.views.decorators.http import require_GET, require_POST
 
 from accounts.middleware import activate_for_user
@@ -469,6 +470,12 @@ def send(request: HttpRequest) -> HttpResponse:
                 agent.reject_attachments(request.user, conversation, text, errors)
     elif text or blocks:
         result = agent.run_turn(request.user, conversation, text, attachment_blocks=blocks)
+        if result.reason == "inactive_user":
+            # No further private history/credit reads, and no persisted
+            # notice that could recreate rows after hard account deletion.
+            return HttpResponse(format_html(
+                '<div id="as-thread" class="as-thread"><p role="status">{}</p></div>', result.reply.text,
+            ))
         busy = result.reason == "busy"
     context = _context(request, conversation)
     if busy:

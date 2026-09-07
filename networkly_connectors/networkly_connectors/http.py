@@ -46,6 +46,7 @@ this module raises cleanly and lets the caller decide what to log where.
 from __future__ import annotations
 
 import json
+from http.client import IncompleteRead
 import re
 import ssl
 import time
@@ -53,10 +54,15 @@ import urllib.error
 import urllib.request
 from typing import Any
 
-USER_AGENT = "networkly-connectors/0.1 (+https://coverage.app; deterministic ATS/board fetcher)"
+USER_AGENT = "networkly-connectors/0.1 (+https://github.com/JimmyZhu7/Networkly; deterministic ATS/board fetcher)"
 DEFAULT_TIMEOUT_SECONDS = 15
 DEFAULT_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
+MAX_RESPONSE_BYTES = 32 * 1024 * 1024
+
+
+class ResponseTooLarge(ValueError):
+    """A board response exceeded the per-request memory budget."""
 
 
 def _build_ssl_context() -> ssl.SSLContext:
@@ -106,7 +112,16 @@ def _do_request(
     with urllib.request.urlopen(  # noqa: S310 — deliberate plain HTTP client
         req, timeout=timeout, context=SSL_CONTEXT
     ) as resp:
-        return resp.read()
+        body = resp.read(MAX_RESPONSE_BYTES + 1)
+        if len(body) > MAX_RESPONSE_BYTES:
+            raise ResponseTooLarge(f"response exceeds {MAX_RESPONSE_BYTES} bytes")
+        # HTTPResponse.read(size) does not raise on a premature EOF the
+        # way read() does. Preserve that integrity check explicitly: even
+        # a syntactically valid JSON prefix must not become a complete board.
+        remaining = getattr(resp, "length", None)
+        if isinstance(remaining, int) and remaining > 0:
+            raise IncompleteRead(body, remaining)
+        return body
 
 
 def fetch_bytes(
@@ -122,6 +137,8 @@ def fetch_bytes(
     up to `retries` times. A `404` is raised immediately, unretried — see
     module docstring."""
     last_exc: BaseException | None = None
+    if retries < 0:
+        raise ValueError("retries must be non-negative")
     for attempt in range(retries + 1):
         try:
             return _do_request(url, data=data, headers=headers, timeout=timeout)
@@ -131,7 +148,11 @@ def fetch_bytes(
             # a definitive "this posting no longer exists".
             if e.code in (404, 410):
                 raise
+            if e.code < 500 and e.code not in (408, 429):
+                raise FetchError(url, method_label, e) from e
             last_exc = e
+        except ResponseTooLarge as e:
+            raise FetchError(url, method_label, e) from e
         except Exception as e:  # noqa: BLE001 — network/timeout/etc, retry-eligible
             last_exc = e
         if attempt < retries:

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import time
 
+from unittest.mock import Mock
+
 import pytest
 import requests
 from django.utils import timezone
@@ -84,7 +86,7 @@ def test_a_successful_run_pings_its_configured_healthcheck_url(settings, monkeyp
     calls = []
     monkeypatch.setattr(
         "ops.tracking.requests.get",
-        lambda url, timeout: calls.append((url, timeout)),
+        lambda url, timeout: (calls.append((url, timeout)), Mock())[1],
     )
 
     with track_job_run("scrape"):
@@ -232,7 +234,7 @@ def test_a_beat_pings_the_jobs_healthcheck(settings, monkeypatch):
     pings the check, so a job cannot do one without the other."""
     settings.HEALTHCHECK_URLS = {"gmail-poll": "https://hc-ping.com/fake-poll-id"}
     calls = []
-    monkeypatch.setattr("ops.tracking.requests.get", lambda url, **kw: calls.append(url))
+    monkeypatch.setattr("ops.tracking.requests.get", lambda url, **kw: (calls.append(url), Mock())[1])
 
     JobHeartbeat("gmail-poll").beat()
 

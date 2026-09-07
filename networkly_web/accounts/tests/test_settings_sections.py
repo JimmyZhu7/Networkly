@@ -55,7 +55,10 @@ def test_settings_renders_the_new_sections(client, logged_in):
     body = resp.content.decode()
     for anchor in ("work-auth", "cadence"):
         assert f'id="{anchor}"' in body
-        assert f'href="#{anchor}"' in body  # rail entry
+    # The redundant rail was removed at the owner's request. The forms
+    # remain in the initial HTML; browser tests cover their Manage controls.
+    assert 'name="section" value="work_auth"' in body
+    assert 'name="section" value="cadence"' in body
 
 
 def test_the_weekly_pace_control_moved_into_the_cadence_card(client, logged_in):
