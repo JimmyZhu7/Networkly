@@ -367,7 +367,7 @@ approval; D = still doable without payment.
 | Item | Class | Exact dependency | Next action | Who |
 |---|---|---|---|---|
 | Calendar reschedule and cancel as user actions | D | Nothing; in progress on its own branch | Merge, run the integrated suite, record here | Engineering |
-| Final integrated suite green locally and on the clean CI runner | D | The calendar merge | Run once on the final tree; push; read CI | Engineering |
+| Final integrated suite green locally and on the clean CI runner | Done | `578614e`: CI 11,978 passed, 13 skipped, 0 failed | None; re-run on any new head | Engineering |
 | Resume hosting: web, database, worker, crons (12 services in the Blueprint) | A | Render billing | Follow "After Payment" below | Owner resumes; engineering runs the gates |
 | Domain, DNS, HTTPS, Google callbacks, Resend sender, `EMAIL_URL` | A | A bought domain | Dossier section "Domain, DNS and console changes" | Owner buys and publishes DNS; engineering sets config |
 | AI features live (assistant, Scan Now, Autopilot, region enrichment) | A | Anthropic credit balance (empty as of 4 September) | Top up; keep existing spend limits | Owner |
@@ -506,7 +506,8 @@ deployed job.
   snapshots, run straddled midnight UTC), `ff4df89` failed 1 with 11,976
   passed and 13 skipped (a "two hours ago is this week" premise on a Monday
   before 02:00). The fix for the second, with a pinned-clock regression test,
-  is the head on CI at the time of writing. The
+  is the final head `578614e`: CI passed **11,978, 13 skipped, 0 failed** in
+  32 min 15 s, Docker image built, `pip-audit` clean. The
   two counts differ by the live-network skips (45 locally, 13 on CI) and the
   matrix. Migration drift: no
   changes. These checks do not establish deployed OAuth, push delivery or
