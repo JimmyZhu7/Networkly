@@ -30,9 +30,28 @@ from directory.views import _place
 
 pytestmark = pytest.mark.django_db
 
-NOW = timezone.now()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _now():
+    return _CLOCK.setdefault("_now", timezone.now())
 def _firm(slug="hsbc", name="HSBC"):
     return Firm.objects.get_or_create(slug=slug, defaults={"name": name})[0]
 

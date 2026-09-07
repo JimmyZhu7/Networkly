@@ -24,9 +24,28 @@ from directory.models import Firm, Opportunity
 pytestmark = pytest.mark.django_db(transaction=True)
 
 User = get_user_model()
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 def _user(email, *, onboarded=True, deleted=False, **kw):
     user = User.objects.create_user(email=email, password="pw12345!", **kw)
     if onboarded:
@@ -41,7 +60,7 @@ def _closing_opp(user, n=1, *, days=2):
     firm = Firm.objects.create(name=f"Firm {n}", slug=f"firm-{n}")
     o = Opportunity.objects.create(
         firm=firm, url=f"https://x/{n}", title=f"Summer Analyst {n}",
-        bucket="internship", status="open", deadline=TODAY + timedelta(days=days),
+        bucket="internship", status="open", deadline=_today() + timedelta(days=days),
     )
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
     return o
@@ -91,7 +110,7 @@ def test_the_plain_text_body_never_html_escapes_an_ampersand(mailoutbox):
     firm = Firm.objects.create(name="Smith & Co", slug="smith-and-co")
     o = Opportunity.objects.create(
         firm=firm, url="https://x/amp?a=1&b=2", title="Analyst & Associate",
-        bucket="internship", status="open", deadline=TODAY + timedelta(days=2),
+        bucket="internship", status="open", deadline=_today() + timedelta(days=2),
     )
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
@@ -335,7 +354,7 @@ def test_a_picks_prose_read_deadline_is_marked_and_the_key_printed_once(mailoutb
     Opportunity.objects.create(
         firm=firm, url="https://x/alpha/pick", title="Summer Analyst 2028",
         bucket="internship", status="open", cohort="2028", confidence=0.6,
-        deadline=TODAY + timedelta(days=12),
+        deadline=_today() + timedelta(days=12),
     )
 
     _run()
@@ -357,7 +376,7 @@ def test_the_key_is_not_printed_twice_when_both_sections_carry_the_marker(mailou
     Opportunity.objects.create(
         firm=firm, url="https://x/alpha/pick", title="Summer Analyst 2028",
         bucket="internship", status="open", cohort="2028", confidence=0.6,
-        deadline=TODAY + timedelta(days=12),
+        deadline=_today() + timedelta(days=12),
     )
 
     _run()
@@ -377,7 +396,7 @@ def test_a_picks_board_published_deadline_prints_without_a_marker(mailoutbox):
     Opportunity.objects.create(
         firm=firm, url="https://x/alpha/pick", title="Summer Analyst 2028",
         bucket="internship", status="open", cohort="2028", confidence=1.0,
-        deadline=TODAY + timedelta(days=12),
+        deadline=_today() + timedelta(days=12),
     )
 
     _run()

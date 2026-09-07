@@ -22,9 +22,28 @@ from directory.firm_merge import find_duplicate_firm_groups, merge_firms
 from directory.models import EmailPatternStats, Firm, FirmDate, Opportunity
 
 User = get_user_model()
-NOW = timezone.now()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _now():
+    return _CLOCK.setdefault("_now", timezone.now())
 def _user(email):
     return User.objects.create_user(email=email, password="x")
 
@@ -81,14 +100,14 @@ def test_merge_folds_a_url_collision_into_one_row_open_wins():
         status="closed", location="", deadline=None,
     )
     Opportunity.objects.filter(pk=keep.pk).update(
-        first_seen=NOW - timedelta(days=10), last_verified=NOW - timedelta(days=5))
+        first_seen=_now() - timedelta(days=10), last_verified=_now() - timedelta(days=5))
 
     lose = Opportunity.objects.create(
         firm=duplicate, url=url, title="Rive Sud Event", bucket="insight",
         status="open", location="Montreal", deadline=None,
     )
     Opportunity.objects.filter(pk=lose.pk).update(
-        first_seen=NOW - timedelta(days=3), last_verified=NOW - timedelta(days=1))
+        first_seen=_now() - timedelta(days=3), last_verified=_now() - timedelta(days=1))
 
     stats = merge_firms(canonical, duplicate)
 
@@ -98,8 +117,8 @@ def test_merge_folds_a_url_collision_into_one_row_open_wins():
     assert survivor.firm_id == canonical.id
     assert survivor.status == "open"          # open beats closed
     assert survivor.location == "Montreal"     # a stated location beats a blank one
-    assert survivor.first_seen == NOW - timedelta(days=10)  # earliest first_seen kept
-    assert survivor.last_verified == NOW - timedelta(days=1)  # most recent verification kept
+    assert survivor.first_seen == _now() - timedelta(days=10)  # earliest first_seen kept
+    assert survivor.last_verified == _now() - timedelta(days=1)  # most recent verification kept
 
 
 @pytest.mark.django_db

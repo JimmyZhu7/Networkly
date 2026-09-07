@@ -29,8 +29,28 @@ from directory.models import Firm, Opportunity
 pytestmark = pytest.mark.django_db(transaction=True)
 
 User = get_user_model()
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
 
+
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 VAPID_SETTINGS = dict(
     VAPID_PUBLIC_KEY="test-public-key",
     VAPID_PRIVATE_KEY="test-private-key",
@@ -56,7 +76,7 @@ def _tracked(user, *, n=1, days, applied_status="saved", status="open"):
     firm = Firm.objects.create(name=f"Firm {n}", slug=f"firm-{n}")
     o = Opportunity.objects.create(
         firm=firm, url=f"https://x/{n}", title=f"Summer Analyst {n}",
-        bucket="internship", status=status, deadline=TODAY + timedelta(days=days),
+        bucket="internship", status=status, deadline=_today() + timedelta(days=days),
     )
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status=applied_status)
     return o

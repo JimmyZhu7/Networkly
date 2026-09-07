@@ -61,8 +61,8 @@ ROLE_STYLES = (
 )
 
 # The REAL current date, not a hardcoded one. Most tests below pass this
-# straight into the pure functions (`open_run_days(..., TODAY, ...)`,
-# `firm_open_runs([...], TODAY)`), which is self-consistent whatever it is --
+# straight into the pure functions (`open_run_days(..., _today(), ...)`,
+# `firm_open_runs([...], _today())`), which is self-consistent whatever it is --
 # but the two that render `/opportunities/` do NOT get to choose: the view
 # measures elapsed openness against `timezone.localdate()`, the real clock.
 # Hardcoded to 2026-08-31, this file passed the day it was written and broke
@@ -71,16 +71,35 @@ ROLE_STYLES = (
 # "Open 13d" against an assertion of "Open 12d". Same date-fragility that
 # `test_closing_soon.py` was fixed for earlier (a `timedelta(days=62)` offset
 # read against a hardcoded "2 months"). One clock, shared by fixture and view.
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 def _firm(slug="gs", name="Goldman Sachs"):
     return Firm.objects.create(slug=slug, name=name)
 
 
 def _opp(firm, *, days_ago, status="open", bucket="internship", title=None,
          deadline=None, url=None):
-    """A posting first seen `days_ago` days before TODAY.
+    """A posting first seen `days_ago` days before _today().
 
     `first_seen` is `auto_now_add`, so backdating is an `.update()` after the
     fact — exactly what real time passing does to the column.
@@ -128,9 +147,9 @@ def test_the_onboarding_batch_gets_no_duration_at_all():
     watched = _opp(firm, days_ago=12, url="https://example.test/c")
     cutoffs = onboarding_cutoffs([firm.id])
 
-    assert open_run_days(onboarding_a, TODAY, cutoffs) is None
-    assert open_run_days(onboarding_b, TODAY, cutoffs) is None
-    assert open_run_days(watched, TODAY, cutoffs) == 12
+    assert open_run_days(onboarding_a, _today(), cutoffs) is None
+    assert open_run_days(onboarding_b, _today(), cutoffs) is None
+    assert open_run_days(watched, _today(), cutoffs) == 12
 
 
 def test_a_closed_posting_carries_no_open_run():
@@ -143,7 +162,7 @@ def test_a_closed_posting_carries_no_open_run():
     closed = _opp(firm, days_ago=10, status="closed", url="https://example.test/x")
     cutoffs = onboarding_cutoffs([firm.id])
 
-    assert open_run_days(closed, TODAY, cutoffs) is None
+    assert open_run_days(closed, _today(), cutoffs) is None
 
 
 def test_a_posting_first_seen_today_is_zero_days_not_absent():
@@ -154,7 +173,7 @@ def test_a_posting_first_seen_today_is_zero_days_not_absent():
     fresh = _opp(firm, days_ago=0, url="https://example.test/fresh")
     cutoffs = onboarding_cutoffs([firm.id])
 
-    assert open_run_days(fresh, TODAY, cutoffs) == 0
+    assert open_run_days(fresh, _today(), cutoffs) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -182,8 +201,8 @@ def test_the_cutoff_is_firm_wide_not_campus_only():
     same_day_campus = _opp(firm, days_ago=30, url="https://example.test/campus")
     cutoffs = onboarding_cutoffs([firm.id])
 
-    assert cutoffs[firm.id] == TODAY - dt.timedelta(days=30)
-    assert open_run_days(same_day_campus, TODAY, cutoffs) is None
+    assert cutoffs[firm.id] == _today() - dt.timedelta(days=30)
+    assert open_run_days(same_day_campus, _today(), cutoffs) is None
 
 
 def test_scoping_the_cutoff_to_some_firms_matches_the_unscoped_answer():
@@ -213,7 +232,7 @@ def test_a_firm_below_the_sample_floor_returns_nothing():
     for i in range(CYCLE_OBSERVATION_MIN_SAMPLE - 1):
         _opp(firm, days_ago=5 + i, url=f"https://example.test/w{i}")
 
-    assert firm_open_runs([firm.id], TODAY) == {}
+    assert firm_open_runs([firm.id], _today()) == {}
 
 
 def test_a_firm_at_the_floor_reports_its_census_and_its_longest_run():
@@ -226,7 +245,7 @@ def test_a_firm_at_the_floor_reports_its_census_and_its_longest_run():
     _opp(firm, days_ago=9, url="https://example.test/w2")
     _opp(firm, days_ago=3, url="https://example.test/w3")
 
-    assert firm_open_runs([firm.id], TODAY) == {
+    assert firm_open_runs([firm.id], _today()) == {
         firm.id: {"count": 3, "longest_days": 22}
     }
 
@@ -243,7 +262,7 @@ def test_onboarding_and_closed_rows_do_not_pad_a_firm_to_the_floor():
     _opp(firm, days_ago=8, status="closed", url="https://example.test/cl2")
     _opp(firm, days_ago=6, url="https://example.test/w1")
 
-    assert firm_open_runs([firm.id], TODAY) == {}
+    assert firm_open_runs([firm.id], _today()) == {}
 
 
 def test_non_campus_volume_never_counts_toward_a_recruiting_line():
@@ -257,7 +276,7 @@ def test_non_campus_volume_never_counts_toward_a_recruiting_line():
              url=f"https://example.test/retail{i}")
     _opp(firm, days_ago=4, url="https://example.test/campus1")
 
-    assert firm_open_runs([firm.id], TODAY) == {}
+    assert firm_open_runs([firm.id], _today()) == {}
 
 
 # ---------------------------------------------------------------------------

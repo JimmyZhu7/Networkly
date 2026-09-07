@@ -23,7 +23,7 @@ string the rail refuses to print can still appear.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -81,7 +81,11 @@ def test_a_future_touch_never_renders_a_negative_day_count():
 
 def test_a_touch_dated_today_reads_as_zero():
     """The clamp's own boundary, and the value the sentence is built for."""
-    row = _bench_row(_user(), touch_at=timezone.now() - timedelta(hours=2))
+    # An instant that is unambiguously today in the active zone. "Two hours
+    # ago" is yesterday for two hours of every day, which is when this test
+    # failed on a run that crossed midnight UTC.
+    today_start = timezone.make_aware(datetime.combine(timezone.localdate(), time(0, 1)))
+    row = _bench_row(_user(), touch_at=today_start)
 
     assert row is not None
     assert row["days_since"] == 0

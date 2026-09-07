@@ -36,15 +36,34 @@ from directory.models import Firm, Opportunity
 
 from .test_tracking import _user
 
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 def _opp(firm, n, *, days=None, bucket="internship"):
     """One open campus role, `days` from today (None = rolling/no deadline)."""
     return Opportunity.objects.create(
         firm=firm, url=f"https://x/{n}", title=f"Summer Analyst {n}",
         bucket=bucket, status="open",
-        deadline=None if days is None else TODAY + timedelta(days=days),
+        deadline=None if days is None else _today() + timedelta(days=days),
     )
 
 
@@ -69,8 +88,8 @@ def board(db):
 # ---------------------------------------------------------------------------
 
 def test_window_is_ten_days_inclusive():
-    first, last = closing_soon_window(TODAY)
-    assert first == TODAY
+    first, last = closing_soon_window(_today())
+    assert first == _today()
     assert (last - first).days == CLOSING_SOON_DAYS - 1 == 9
 
 
@@ -78,13 +97,13 @@ def test_window_is_ten_days_inclusive():
     (-1, False), (0, True), (1, True), (9, True), (10, False), (90, False),
 ])
 def test_is_closing_soon_edges(days, expected):
-    assert is_closing_soon(TODAY + timedelta(days=days), today=TODAY) is expected
+    assert is_closing_soon(_today() + timedelta(days=days), today=_today()) is expected
 
 
 def test_a_rolling_role_is_never_closing_soon():
     """A null deadline has no urgency signal at all. It must not slip into the
     window, and it must not blow up on the comparison either."""
-    assert is_closing_soon(None, today=TODAY) is False
+    assert is_closing_soon(None, today=_today()) is False
 
 
 @pytest.mark.django_db
@@ -95,7 +114,7 @@ def test_shared_window_agrees_with_the_today_widget(board):
     user = _user()
     campus = Opportunity.objects.filter(status="open", bucket__in=TARGET_BUCKETS)
 
-    shared_ids = set(closing_soon_filter(campus, today=TODAY).values_list("id", flat=True))
+    shared_ids = set(closing_soon_filter(campus, today=_today()).values_list("id", flat=True))
     today_widget = _dashboard_context(user)["dash"]["closing_10"]
 
     # Named rather than counted, so a failure says WHICH edge moved.
@@ -148,7 +167,7 @@ def test_the_widget_says_how_many_of_the_closing_dates_are_our_own_reading():
     reported_ids = set(
         closing_soon_filter(
             Opportunity.objects.filter(status="open", bucket__in=TARGET_BUCKETS),
-            today=TODAY,
+            today=_today(),
         ).filter(confidence__lt=1.0).values_list("id", flat=True)
     )
     assert reported_ids == {prose_a.id, prose_b.id}
@@ -196,7 +215,7 @@ def test_closing_lens_matches_the_shared_window(client, board, tracked):
     resp = client.get(reverse("my_applications"))
     campus = Opportunity.objects.filter(status="open", bucket__in=TARGET_BUCKETS)
     assert len(_lens(resp, "closing")["items"]) == closing_soon_filter(
-        campus, today=TODAY
+        campus, today=_today()
     ).count()
     assert _titles(_lens(resp, "closing")) == {
         board["today"].title, board["last_in"].title,

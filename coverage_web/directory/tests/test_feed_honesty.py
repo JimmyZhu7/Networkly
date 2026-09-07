@@ -20,9 +20,30 @@ from directory.views import (
     _urgency_feed, _urgency_item,
 )
 
-TODAY = timezone.localdate()
-NOW = timezone.now()
+_CLOCK: dict = {}
 
+
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
+def _now():
+    return _CLOCK.setdefault("_now", timezone.now())
 # The page inlines its stylesheet, and CSS COMMENTS reach the response body.
 # Any assertion about card copy has to strip them or it can pass off a note
 # someone left about a retired element — see
@@ -43,7 +64,7 @@ def _opp(firm, url, *, deadline=None, region="", bucket="internship", **kw):
 
 def _seen(o, days_ago):
     """Backdate `first_seen` past `auto_now_add` — `.update()` bypasses it."""
-    Opportunity.objects.filter(pk=o.pk).update(first_seen=NOW - timedelta(days=days_ago))
+    Opportunity.objects.filter(pk=o.pk).update(first_seen=_now() - timedelta(days=days_ago))
     o.refresh_from_db()
     return o
 
@@ -87,8 +108,8 @@ def test_feed_badge_reads_first_seen_not_new(client):
 @pytest.mark.django_db
 def test_a_passed_deadline_is_not_rolling():
     firm = _firm()
-    o = _opp(firm, "https://x/1", deadline=TODAY - timedelta(days=5))
-    item = _urgency_item(o, now=NOW, today=TODAY, my_firm_ids=set())
+    o = _opp(firm, "https://x/1", deadline=_today() - timedelta(days=5))
+    item = _urgency_item(o, now=_now(), today=_today(), my_firm_ids=set())
     assert item["level"] == "passed"
     assert item["dated"] is True          # NOT rolling
     assert item["countdown"] == "Deadline passed"
@@ -98,12 +119,12 @@ def test_a_passed_deadline_is_not_rolling():
 def test_a_future_deadline_is_still_dated_and_a_null_deadline_is_rolling():
     firm = _firm()
     dated = _urgency_item(
-        _opp(firm, "https://x/1", deadline=TODAY + timedelta(days=5)),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        _opp(firm, "https://x/1", deadline=_today() + timedelta(days=5)),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     assert dated["level"] in ("today", "soon", "upcoming")
     rolling = _urgency_item(
-        _opp(firm, "https://x/2", deadline=None), now=NOW, today=TODAY, my_firm_ids=set(),
+        _opp(firm, "https://x/2", deadline=None), now=_now(), today=_today(), my_firm_ids=set(),
     )
     assert rolling["level"] == "rolling"
     assert rolling["dated"] is False
@@ -116,18 +137,18 @@ def test_fuse_pct_shrinks_as_the_deadline_approaches():
     OWN remaining length: near 100 when the deadline is far off, near the
     floor of 4 when it is imminent, and exactly 0 once it has passed
     (`_urgency_item`'s "passed" branch, pinned separately above). A stray
-    `1 -` in the formula inverted this: a role closing TODAY computed to a
+    `1 -` in the formula inverted this: a role closing _today() computed to a
     full 100, and a role at the far edge of `_FUSE_HORIZON` computed to the
     floor of 4 — a role about to close looking safer than one over a month
     out."""
     firm = _firm()
     closing_today = _urgency_item(
-        _opp(firm, "https://x/today", deadline=TODAY), now=NOW, today=TODAY,
+        _opp(firm, "https://x/today", deadline=_today()), now=_now(), today=_today(),
         my_firm_ids=set(),
     )
     far_out = _urgency_item(
-        _opp(firm, "https://x/far", deadline=TODAY + timedelta(days=45)),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        _opp(firm, "https://x/far", deadline=_today() + timedelta(days=45)),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     assert closing_today["fuse_pct"] < far_out["fuse_pct"], (
         "a role closing today must show a SHORTER remaining fuse than one "
@@ -151,15 +172,15 @@ def test_elapsed_pct_grows_with_time_and_caps_at_the_horizon():
     firm = _firm()
     fresh = _urgency_item(
         _seen(_opp(firm, "https://x/fresh", deadline=None), 0),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     mid = _urgency_item(
         _seen(_opp(firm, "https://x/mid", deadline=None), 20),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     old = _urgency_item(
         _seen(_opp(firm, "https://x/old", deadline=None), 90),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     assert fresh["elapsed_pct"] == 0        # just posted: nothing observed yet
     assert 0 < mid["elapsed_pct"] < old["elapsed_pct"]
@@ -173,18 +194,18 @@ def test_elapsed_pct_is_absent_for_any_dated_role():
     or `elapsed_pct`, never both, and never neither on a rolling card."""
     firm = _firm()
     passed = _urgency_item(
-        _opp(firm, "https://x/passed", deadline=TODAY - timedelta(days=5)),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        _opp(firm, "https://x/passed", deadline=_today() - timedelta(days=5)),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     upcoming = _urgency_item(
-        _opp(firm, "https://x/upcoming", deadline=TODAY + timedelta(days=10)),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        _opp(firm, "https://x/upcoming", deadline=_today() + timedelta(days=10)),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     assert passed.get("elapsed_pct") is None
     assert upcoming.get("elapsed_pct") is None
     rolling = _urgency_item(
         _opp(firm, "https://x/rolling", deadline=None),
-        now=NOW, today=TODAY, my_firm_ids=set(),
+        now=_now(), today=_today(), my_firm_ids=set(),
     )
     assert rolling.get("fuse_pct") is None
     assert rolling["elapsed_pct"] is not None
@@ -209,7 +230,7 @@ def test_rolling_card_renders_the_observed_footer_not_the_fuse(client):
     rolling_firm = _firm(slug="evercore", name="Evercore")
     dated_firm = _firm(slug="jefferies", name="Jefferies")
     _seen(_opp(rolling_firm, "https://x/rolling", deadline=None), 15)
-    _opp(dated_firm, "https://x/dated", deadline=TODAY + timedelta(days=10))
+    _opp(dated_firm, "https://x/dated", deadline=_today() + timedelta(days=10))
     body = _STYLE_RE.sub("", client.get(reverse("opportunities")).content.decode())
 
     # The undated row: no date posted, elapsed time stated in words, and its
@@ -227,8 +248,8 @@ def test_rolling_card_renders_the_observed_footer_not_the_fuse(client):
 @pytest.mark.django_db
 def test_a_passed_deadline_never_shows_the_freshness_badge():
     firm = _firm()
-    o = _seen(_opp(firm, "https://x/1", deadline=TODAY - timedelta(days=1)), 0)
-    item = _urgency_item(o, now=NOW, today=TODAY, my_firm_ids=set())
+    o = _seen(_opp(firm, "https://x/1", deadline=_today() - timedelta(days=1)), 0)
+    item = _urgency_item(o, now=_now(), today=_today(), my_firm_ids=set())
     # `is_fresh` may still be true (seen today), but the template only shows
     # the badge when `not r.dated` — and a passed deadline IS dated.
     assert item["dated"] is True
@@ -240,17 +261,17 @@ def test_passed_deadlines_sort_after_live_closing_roles():
     three-way split must sort it to the END of `closing`, not first (a
     negative `days_left` would otherwise sort as MOST urgent)."""
     firm = _firm()
-    live = _opp(firm, "https://x/1", deadline=TODAY + timedelta(days=3))
-    passed = _opp(firm, "https://x/2", deadline=TODAY - timedelta(days=30))
+    live = _opp(firm, "https://x/1", deadline=_today() + timedelta(days=3))
+    passed = _opp(firm, "https://x/2", deadline=_today() - timedelta(days=30))
     qs = Opportunity.objects.filter(pk__in=[live.pk, passed.pk])
-    feed = _urgency_feed(qs, now=NOW, today=TODAY, my_firm_ids=set())
+    feed = _urgency_feed(qs, now=_now(), today=_today(), my_firm_ids=set())
     assert [i["url"] for i in feed["closing"]] == [live.url, passed.url]
 
 
 @pytest.mark.django_db
 def test_feed_and_firm_page_agree_a_passed_deadline_has_passed(client):
     firm = _firm()
-    o = _opp(firm, "https://x/1", deadline=TODAY - timedelta(days=2))
+    o = _opp(firm, "https://x/1", deadline=_today() - timedelta(days=2))
     feed_body = client.get(reverse("opportunities")).content.decode()
     firm_body = client.get(reverse("directory:firm_detail", args=[firm.slug])).content.decode()
     assert "Deadline passed" in feed_body
@@ -1116,7 +1137,7 @@ def test_unconfirmed_note_is_empty_on_a_clean_confirmation():
     data; a note here would be noise on every card."""
     firm = Firm.objects.create(slug="citi", name="Citi")
     o = _opp(firm, "https://citi.com/clean")
-    Opportunity.objects.filter(pk=o.pk).update(last_checked=NOW, last_verified=NOW)
+    Opportunity.objects.filter(pk=o.pk).update(last_checked=_now(), last_verified=_now())
     o.refresh_from_db()
     assert _unconfirmed_note(o) == {}
 
@@ -1140,7 +1161,7 @@ def test_unconfirmed_note_fires_when_the_latest_check_ran_ahead_of_confirmation(
     firm = Firm.objects.create(slug="jpm-oracle", name="J.P. Morgan")
     o = _opp(firm, "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210763228")
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=1), last_checked=NOW)
+        last_verified=_now() - timedelta(days=1), last_checked=_now())
     o.refresh_from_db()
     note = _unconfirmed_note(o)
     assert note["label"] == "Not recently confirmed live"
@@ -1162,7 +1183,7 @@ def test_unconfirmed_note_is_empty_once_status_is_actually_closed():
         firm=firm, url="https://td.wd3.myworkdayjobs.com/job/closed",
         title="Banking Associate", bucket="internship", status="closed")
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=1), last_checked=NOW, closed_at=NOW)
+        last_verified=_now() - timedelta(days=1), last_checked=_now(), closed_at=_now())
     o.refresh_from_db()
     assert _unconfirmed_note(o) == {}
 
@@ -1176,7 +1197,7 @@ def test_the_feed_card_marks_a_title_link_it_cannot_currently_vouch_for(client):
     firm = Firm.objects.create(slug="jpm", name="J.P. Morgan")
     o = _opp(firm, "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210763228")
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=1), last_checked=NOW)
+        last_verified=_now() - timedelta(days=1), last_checked=_now())
 
     body = client.get("/opportunities/").content.decode()
     assert "is-unconfirmed" in body
@@ -1195,7 +1216,7 @@ def test_a_freshly_confirmed_card_wears_no_caution(client):
     against for `is-reported`)."""
     firm = Firm.objects.create(slug="citi3", name="Citi 3")
     o = _opp(firm, "https://citi.com/fresh")
-    Opportunity.objects.filter(pk=o.pk).update(last_checked=NOW, last_verified=NOW)
+    Opportunity.objects.filter(pk=o.pk).update(last_checked=_now(), last_verified=_now())
 
     body = re.sub(r"<style.*?</style>", "",
                   client.get("/opportunities/").content.decode(), flags=re.S)
@@ -1211,7 +1232,7 @@ def test_the_drawer_names_the_gap_instead_of_an_unqualified_apply_link(client):
     firm = Firm.objects.create(slug="jpm2", name="J.P. Morgan")
     o = _opp(firm, "https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1001/job/210763228")
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=1), last_checked=NOW)
+        last_verified=_now() - timedelta(days=1), last_checked=_now())
 
     body = client.get(reverse("role_description", args=[o.id])).content.decode()
     assert "drawer-caution" in body
@@ -1225,7 +1246,7 @@ def test_the_drawer_names_the_gap_instead_of_an_unqualified_apply_link(client):
 def test_the_drawer_stays_silent_for_a_freshly_confirmed_role(client):
     firm = Firm.objects.create(slug="citi4", name="Citi 4")
     o = _opp(firm, "https://citi.com/fresh-drawer")
-    Opportunity.objects.filter(pk=o.pk).update(last_checked=NOW, last_verified=NOW)
+    Opportunity.objects.filter(pk=o.pk).update(last_checked=_now(), last_verified=_now())
 
     body = client.get(reverse("role_description", args=[o.id])).content.decode()
     assert "drawer-caution" not in body
@@ -1342,7 +1363,7 @@ def test_an_estimated_deadline_never_reaches_the_firm_page_as_a_day_count(client
     firm = Firm.objects.create(slug="ubs", name="UBS")
     Opportunity.objects.create(
         firm=firm, title="Guessed Analyst", bucket="internship", status="open",
-        deadline=TODAY + timedelta(days=4), deadline_precision="estimated",
+        deadline=_today() + timedelta(days=4), deadline_precision="estimated",
         confidence=0.6, url="https://ubs.com/estimated")
 
     body = re.sub(r"<style.*?</style>", "",
@@ -1375,8 +1396,8 @@ def test_unconfirmed_note_fires_when_a_dead_board_froze_both_stamps():
     relative test read the row as cleanly confirmed. Absolute age is the only
     evidence left, and it has to be enough."""
     firm = _firm(slug="hsbc-dead", name="HSBC")
-    o = _opp(firm, "https://hsbc.com/frozen", deadline=(NOW + timedelta(days=2)).date())
-    stamp = NOW - timedelta(days=6)
+    o = _opp(firm, "https://hsbc.com/frozen", deadline=(_now() + timedelta(days=2)).date())
+    stamp = _now() - timedelta(days=6)
     Opportunity.objects.filter(pk=o.pk).update(last_checked=stamp, last_verified=stamp)
     o.refresh_from_db()
 
@@ -1398,7 +1419,7 @@ def test_unconfirmed_note_stays_quiet_on_a_recent_clean_confirmation():
     anything."""
     firm = _firm(slug="ubs-fresh", name="UBS")
     o = _opp(firm, "https://ubs.com/fresh")
-    stamp = NOW - timedelta(days=1)
+    stamp = _now() - timedelta(days=1)
     Opportunity.objects.filter(pk=o.pk).update(last_checked=stamp, last_verified=stamp)
     o.refresh_from_db()
     assert _unconfirmed_note(o) == {}
@@ -1413,7 +1434,7 @@ def test_unconfirmed_note_still_names_a_failed_check_as_a_failed_check():
     firm = _firm(slug="jpm-failed", name="J.P. Morgan")
     o = _opp(firm, "https://jpmc.oraclecloud.com/failed")
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=9), last_checked=NOW)
+        last_verified=_now() - timedelta(days=9), last_checked=_now())
     o.refresh_from_db()
     note = _unconfirmed_note(o)
     assert "could not confirm it is" in note["why"]
@@ -1437,7 +1458,7 @@ def test_unconfirmed_note_still_names_a_failed_check_as_a_failed_check():
 # --------------------------------------------------------------------------- #
 
 def _bands(rows, **kw):
-    return _urgency_feed(rows, now=NOW, today=TODAY, my_firm_ids=set(), **kw)
+    return _urgency_feed(rows, now=_now(), today=_today(), my_firm_ids=set(), **kw)
 
 
 def _titled(firm, url, title, **kw):
@@ -1456,7 +1477,7 @@ def test_prebuilt_items_give_the_band_exactly_what_it_built_itself():
     must change the COST of the call and nothing else."""
     firm = _firm(slug="one-build", name="One Build")
     dated = _titled(firm, "https://one-build.com/1", "Dated Analyst",
-                    deadline=TODAY + timedelta(days=5))
+                    deadline=_today() + timedelta(days=5))
     rolling = _titled(firm, "https://one-build.com/2", "Rolling Analyst")
     _seen(rolling, 2)
     rows = [dated, rolling]
@@ -1469,7 +1490,7 @@ def test_prebuilt_items_give_the_band_exactly_what_it_built_itself():
 
     cutoffs = onboarding_cutoffs({o.firm_id for o in rows})
     on_its_own = _bands(rows, cutoffs=cutoffs)
-    prebuilt = {o.id: _urgency_item(o, now=NOW, today=TODAY, my_firm_ids=set(),
+    prebuilt = {o.id: _urgency_item(o, now=_now(), today=_today(), my_firm_ids=set(),
                                     cutoffs=cutoffs)
                 for o in rows}
     supplied = _bands(rows, cutoffs=cutoffs, items=prebuilt)
@@ -1486,7 +1507,7 @@ def test_the_bands_card_is_a_copy_not_the_callers_card():
     would be this optimisation leaking onto the page."""
     firm = _firm(slug="no-bleed", name="No Bleed")
     o = _titled(firm, "https://no-bleed.com/1", "Copy Me")
-    prebuilt = {o.id: _urgency_item(o, now=NOW, today=TODAY, my_firm_ids=set())}
+    prebuilt = {o.id: _urgency_item(o, now=_now(), today=_today(), my_firm_ids=set())}
 
     band = _bands([o], items=prebuilt)
     card = (band["closing"] + band["rolling"])[0]
@@ -1539,7 +1560,7 @@ def test_the_card_asks_for_its_eligibility_verdict_once(client, monkeypatch):
         return real(opp, profile)
 
     monkeypatch.setattr(views, "_eligibility", counting)
-    item = _urgency_item(o, now=NOW, today=TODAY, my_firm_ids=set(),
+    item = _urgency_item(o, now=_now(), today=_today(), my_firm_ids=set(),
                          profile={"class_year": 2028, "work_auth": {},
                                   "languages": [], "study_level": ""})
     assert calls == [o.id]
@@ -1561,9 +1582,9 @@ def test_the_card_asks_for_its_eligibility_verdict_once(client, monkeypatch):
 def test_a_stale_row_prints_its_age_where_the_countdown_is(client):
     """Six days old: the age is VISIBLE text, not only a tooltip."""
     firm = Firm.objects.create(slug="hsbc-stale", name="HSBC Stale")
-    o = _opp(firm, "https://hsbc.test/stale", deadline=TODAY + timedelta(days=2))
+    o = _opp(firm, "https://hsbc.test/stale", deadline=_today() + timedelta(days=2))
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=6), last_checked=NOW - timedelta(days=6))
+        last_verified=_now() - timedelta(days=6), last_checked=_now() - timedelta(days=6))
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())
     assert re.search(r'<span class="rr-due-age"[^>]*>Last confirmed live 6 days ago</span>', body), (
@@ -1579,8 +1600,8 @@ def test_a_row_verified_today_prints_no_age(client):
     than invented: 2,627 of 2,723 open campus rows were verified inside 24
     hours on 2026-09-01, so a mark on every row would mark nothing."""
     firm = Firm.objects.create(slug="citi-fresh-age", name="Citi Fresh Age")
-    o = _opp(firm, "https://citi.test/fresh-age", deadline=TODAY + timedelta(days=2))
-    Opportunity.objects.filter(pk=o.pk).update(last_verified=NOW, last_checked=NOW)
+    o = _opp(firm, "https://citi.test/fresh-age", deadline=_today() + timedelta(days=2))
+    Opportunity.objects.filter(pk=o.pk).update(last_verified=_now(), last_checked=_now())
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())
     assert "d old" not in body
@@ -1603,14 +1624,14 @@ def test_the_visible_age_uses_the_unconfirmed_notes_own_threshold():
 
     just_under = _UNCONFIRMED_AFTER_DAYS - 1
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=just_under),
-        last_checked=NOW - timedelta(days=just_under))
+        last_verified=_now() - timedelta(days=just_under),
+        last_checked=_now() - timedelta(days=just_under))
     o.refresh_from_db()
     assert _unconfirmed_note(o) == {}
 
     Opportunity.objects.filter(pk=o.pk).update(
-        last_verified=NOW - timedelta(days=_UNCONFIRMED_AFTER_DAYS),
-        last_checked=NOW - timedelta(days=_UNCONFIRMED_AFTER_DAYS))
+        last_verified=_now() - timedelta(days=_UNCONFIRMED_AFTER_DAYS),
+        last_checked=_now() - timedelta(days=_UNCONFIRMED_AFTER_DAYS))
     o.refresh_from_db()
     note = _unconfirmed_note(o)
     assert note["days"] == _UNCONFIRMED_AFTER_DAYS, (
@@ -1643,7 +1664,7 @@ def test_the_prose_read_measurement_carries_the_day_it_was_taken():
 
     measured = PROSE_READ_DEADLINES["measured_on"]
     assert isinstance(measured, date), "the measurement must carry a real date"
-    assert measured <= TODAY, "a measurement cannot have been taken in the future"
+    assert measured <= _today(), "a measurement cannot have been taken in the future"
     assert (PROSE_READ_DEADLINES["prose_read"]
             <= PROSE_READ_DEADLINES["dated_open_campus"]), (
         "the prose-read subset cannot exceed the dated set it is a subset of"
@@ -1668,9 +1689,9 @@ def test_the_measurements_predicate_is_the_one_the_code_branches_on():
     assert "deadline is not null" in PROSE_READ_DEADLINES["query"]
 
     firm = Firm.objects.create(slug="prov-pred", name="Prov")
-    dated_prose = _opp(firm, "https://prov.test/1", deadline=TODAY + timedelta(days=5))
+    dated_prose = _opp(firm, "https://prov.test/1", deadline=_today() + timedelta(days=5))
     dated_prose.confidence = _CONFIRMED_AT - 0.4
-    dated_stated = _opp(firm, "https://prov.test/2", deadline=TODAY + timedelta(days=5))
+    dated_stated = _opp(firm, "https://prov.test/2", deadline=_today() + timedelta(days=5))
     dated_stated.confidence = _CONFIRMED_AT
     undated = _opp(firm, "https://prov.test/3")
     undated.confidence = _CONFIRMED_AT - 0.4
@@ -1754,8 +1775,8 @@ def test_a_long_abandoned_row_loses_its_save_button_and_says_why(client, django_
     client.force_login(user)
 
     firm = Firm.objects.create(slug="stifel-old", name="Stifel Old")
-    o = _opp(firm, "https://stifel.test/old", deadline=TODAY - timedelta(days=261))
-    Opportunity.objects.filter(pk=o.pk).update(last_verified=NOW, last_checked=NOW)
+    o = _opp(firm, "https://stifel.test/old", deadline=_today() - timedelta(days=261))
+    Opportunity.objects.filter(pk=o.pk).update(last_verified=_now(), last_checked=_now())
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())
     assert "Looks abandoned" in body
@@ -1782,8 +1803,8 @@ def test_a_row_one_day_past_its_deadline_keeps_its_save_button(client, django_us
     client.force_login(user)
 
     firm = Firm.objects.create(slug="accenture-new", name="Accenture New")
-    o = _opp(firm, "https://accenture.test/new", deadline=TODAY - timedelta(days=1))
-    Opportunity.objects.filter(pk=o.pk).update(last_verified=NOW, last_checked=NOW)
+    o = _opp(firm, "https://accenture.test/new", deadline=_today() - timedelta(days=1))
+    Opportunity.objects.filter(pk=o.pk).update(last_verified=_now(), last_checked=_now())
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())
     assert "Save this role" in body
@@ -1800,12 +1821,12 @@ def test_the_abandoned_verdict_has_one_definition():
 
     firm = Firm.objects.create(slug="one-def", name="One Def")
     inside = _opp(firm, "https://one-def.test/inside",
-                  deadline=TODAY - timedelta(days=_ABANDONED_AFTER_DAYS))
+                  deadline=_today() - timedelta(days=_ABANDONED_AFTER_DAYS))
     outside = _opp(firm, "https://one-def.test/outside",
-                   deadline=TODAY - timedelta(days=_ABANDONED_AFTER_DAYS + 1))
+                   deadline=_today() - timedelta(days=_ABANDONED_AFTER_DAYS + 1))
     undated = _opp(firm, "https://one-def.test/undated")
     future = _opp(firm, "https://one-def.test/future",
-                  deadline=TODAY + timedelta(days=5))
+                  deadline=_today() + timedelta(days=5))
 
     assert _abandoned_note(inside) == {}
     assert _abandoned_note(outside)["days"] == _ABANDONED_AFTER_DAYS + 1
@@ -1831,7 +1852,7 @@ def test_an_already_saved_abandoned_row_keeps_the_control_that_undoes_it(client,
     client.force_login(user)
 
     firm = Firm.objects.create(slug="saved-old", name="Saved Old")
-    o = _opp(firm, "https://saved-old.test/1", deadline=TODAY - timedelta(days=100))
+    o = _opp(firm, "https://saved-old.test/1", deadline=_today() - timedelta(days=100))
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
     body = _STYLE_RE.sub("", client.get("/opportunities/").content.decode())

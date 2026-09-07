@@ -41,9 +41,28 @@ from directory.models import Firm, Opportunity
 pytestmark = pytest.mark.django_db(transaction=True)
 
 User = get_user_model()
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 # ---------------------------------------------------------------------------
 # why_line: the scorer's tooltip wording, in the digest's voice.
 # ---------------------------------------------------------------------------
@@ -103,7 +122,7 @@ def digest_ctx():
 
     closing = Opportunity.objects.create(
         firm=firm, url="https://x/gs/close", title="Summer Analyst",
-        bucket="internship", status="open", deadline=TODAY + timedelta(days=3),
+        bucket="internship", status="open", deadline=_today() + timedelta(days=3),
         location="London",
     )
     from analytics.models import UserOpportunity
@@ -117,7 +136,7 @@ def digest_ctx():
         ts=timezone.now() - timedelta(days=30),
     )
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     return user, digest
 
@@ -230,7 +249,7 @@ def picks_ctx(digest_ctx):
             firm=firm, url=f"https://x/gs/pick-{n}", title=f"Summer Analyst {n}",
             bucket="internship", status="open", cohort="2028", location="New York",
         )
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest["picks"], "fixture should have produced picks"
     return user, digest
 

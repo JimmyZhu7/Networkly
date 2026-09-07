@@ -29,7 +29,28 @@ from directory.views import CYCLE_OPEN_MIN_FIRMS, cycle_open_estimate
 
 pytestmark = pytest.mark.django_db
 
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
+
+
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 _STYLE_RE = re.compile(r"<style.*?</style>", re.S)
 
 
@@ -129,11 +150,11 @@ def test_a_date_already_past_is_not_an_answer_to_when_it_opens(django_user_model
                     target_cycles=["2028 Summer Internship"])
     _market("future", region="hk", months=[date(2027, 9, 1)])
     stale = Firm.objects.create(slug="nomura-stale", name="Nomura")
-    _app_open(stale, region="hk", when=TODAY - timedelta(days=1))
+    _app_open(stale, region="hk", when=_today() - timedelta(days=1))
 
     note = cycle_open_estimate(user)
     assert "Sep 2027" in note
-    assert f"{TODAY:%b %Y}" not in note
+    assert f"{_today():%b %Y}" not in note
 
 
 def test_a_desk_the_student_did_not_name_is_not_their_cycle(django_user_model):

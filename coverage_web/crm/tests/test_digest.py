@@ -27,9 +27,28 @@ from directory.models import Firm, Opportunity
 pytestmark = pytest.mark.django_db(transaction=True)
 
 User = get_user_model()
-TODAY = timezone.localdate()
+_CLOCK: dict = {}
 
 
+@pytest.fixture(autouse=True)
+def _one_clock_per_test():
+    """The clock is read on first use inside a test and held for that test.
+
+    Two things were wrong before this. A module-level snapshot was taken at
+    collection, so a suite that started before midnight UTC and finished after
+    it built its fixtures on yesterday: 39 tests failed by one day on the first
+    CI run to cross that line. And a clock read on every call drifts by
+    microseconds between two uses in one test, which breaks equality anchors
+    (`survivor.first_seen == now - 10 days`) and exact day thresholds. This
+    gives each test one instant, read when the test first asks.
+    """
+    _CLOCK.clear()
+    yield
+    _CLOCK.clear()
+
+
+def _today():
+    return _CLOCK.setdefault("_today", timezone.localdate())
 def _user(email="digest@example.com", **kw):
     return User.objects.create_user(email=email, password="pw12345!", **kw)
 
@@ -45,7 +64,7 @@ def _opp(firm, n=1, *, days=None, bucket="internship", status="open"):
     return Opportunity.objects.create(
         firm=firm, url=f"https://x/{firm.slug}/{n}", title=f"Summer Analyst {n}",
         bucket=bucket, status=status,
-        deadline=None if days is None else TODAY + timedelta(days=days),
+        deadline=None if days is None else _today() + timedelta(days=days),
     )
 
 
@@ -62,7 +81,7 @@ def _touch(user, contact, kind, *, days_ago=0):
 
 def test_a_user_with_nothing_due_gets_no_digest():
     user = _user()
-    assert assemble_digest(user, today=TODAY) is None
+    assert assemble_digest(user, today=_today()) is None
 
 
 def test_recommended_picks_alone_never_produce_a_digest():
@@ -75,7 +94,7 @@ def test_recommended_picks_alone_never_produce_a_digest():
     UserFirm.all_objects.create(user=user, firm=firm, tier=1)
     _opp(firm, days=None)  # rolling, open, scores well against the Tier 1 target
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is None
 
 
@@ -92,7 +111,7 @@ def test_a_tracked_role_inside_the_window_appears_once_correctly_labeled():
     o = _opp(firm, days=3)
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     assert len(digest["closing"]) == 1
     item = digest["closing"][0]
@@ -113,7 +132,7 @@ def test_the_window_boundary_matches_closing_soon_days_not_a_hardcoded_week():
     UserOpportunity.all_objects.create(user=user, opportunity=inside, applied_status="saved")
     UserOpportunity.all_objects.create(user=user, opportunity=outside, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     titles = {i["title"] for i in digest["closing"]}
     assert inside.title in titles
     assert outside.title not in titles
@@ -127,7 +146,7 @@ def test_a_done_role_never_appears_as_closing():
     o = _opp(firm, days=2)
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="closed")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is None
 
 
@@ -139,7 +158,7 @@ def test_a_dismissed_role_never_appears_as_closing():
         user=user, opportunity=o, applied_status="saved", dismissed=True
     )
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is None
 
 
@@ -151,7 +170,7 @@ def test_closing_items_sort_soonest_first():
     UserOpportunity.all_objects.create(user=user, opportunity=later, applied_status="saved")
     UserOpportunity.all_objects.create(user=user, opportunity=sooner, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert [i["title"] for i in digest["closing"]] == [sooner.title, later.title]
 
 
@@ -170,7 +189,7 @@ def test_a_due_follow_up_shows_up_as_something_to_ping():
     c = Contact.all_objects.create(user=user, name="Ada Lovelace", school_affiliation=True)
     _touch(user, c, "outreach", days_ago=20)  # long enough to clear follow_up's threshold
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     names = [a["contact"]["name"] for a in digest["actions"]]
     assert "Ada Lovelace" in names
@@ -186,7 +205,7 @@ def test_park_never_shows_up_as_something_to_ping():
     _touch(user, stale, "outreach", days_ago=200)
     _touch(user, stale, "follow_up", days_ago=150)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     if digest is not None:
         assert "Gone Quiet" not in [a["contact"]["name"] for a in digest["actions"]]
 
@@ -197,7 +216,7 @@ def test_actions_are_capped_with_an_honest_overflow_count():
         c = Contact.all_objects.create(user=user, name=f"Contact {i:02d}", school_affiliation=True)
         _touch(user, c, "outreach", days_ago=20)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert len(digest["actions"]) == MAX_ACTIONS
     assert digest["actions_overflow"] == 3
 
@@ -210,7 +229,7 @@ def test_actions_carry_a_ready_compose_link():
     )
     _touch(user, c, "outreach", days_ago=20)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     action = next(a for a in digest["actions"] if a["contact"]["name"] == "Ada Lovelace")
     assert action["mailto"].startswith("https://mail.google.com/mail/?")
 
@@ -225,7 +244,7 @@ def test_an_empty_survey_profile_gets_no_picks_even_with_a_real_digest():
     o = _opp(firm, days=3)
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     assert digest["picks"] == []
 
@@ -240,7 +259,7 @@ def test_a_tier_one_target_firm_surfaces_a_pick():
     urgent_opp = _opp(urgent_firm, n=2, days=2)
     UserOpportunity.all_objects.create(user=user, opportunity=urgent_opp, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     assert any(p["firm_name"] == "Evercore" and p["title"] == pick_opp.title
                for p in digest["picks"])
@@ -261,7 +280,7 @@ def test_an_already_tracked_role_is_never_recommended_as_new():
     urgent_opp = _opp(urgent_firm, n=3, days=2)
     UserOpportunity.all_objects.create(user=user, opportunity=urgent_opp, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     pick_titles = [p["title"] for p in digest["picks"] if p["firm_name"] == "Evercore"]
     assert untracked.title in pick_titles
     assert tracked.title not in pick_titles
@@ -281,7 +300,7 @@ def test_a_posting_the_firm_closed_is_not_advertised_as_closing_this_week():
     o = _opp(_firm(), days=3, status="closed")
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
-    assert assemble_digest(user, today=TODAY) is None
+    assert assemble_digest(user, today=_today()) is None
 
 
 def test_a_closed_posting_is_dropped_from_the_digest_at_every_funnel_stage():
@@ -294,7 +313,7 @@ def test_a_closed_posting_is_dropped_from_the_digest_at_every_funnel_stage():
         o = _opp(firm, n=n, days=3, status="closed")
         UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status=stage)
 
-    assert assemble_digest(user, today=TODAY) is None
+    assert assemble_digest(user, today=_today()) is None
 
 
 def test_a_posting_the_scraper_never_rechecked_still_closes_this_week():
@@ -305,7 +324,7 @@ def test_a_posting_the_scraper_never_rechecked_still_closes_this_week():
     o = _opp(_firm(), days=3, status="")
     UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     assert len(digest["closing"]) == 1
 
@@ -319,7 +338,7 @@ def test_an_open_role_beside_a_closed_one_still_reaches_the_digest():
     for o in (dead, live):
         UserOpportunity.all_objects.create(user=user, opportunity=o, applied_status="saved")
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
     assert digest is not None
     assert [i["title"] for i in digest["closing"]] == [live.title]
 
@@ -519,7 +538,7 @@ def test_the_digest_leads_with_advocates_and_zero_contact_firms():
     Contact.all_objects.create(user=user, name="Cold Call", firm=delta, warmth="cold")
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert digest["coverage"] == {
         "advocates": 1,
@@ -542,7 +561,7 @@ def test_advocates_outside_the_target_firms_are_counted_aside_not_as_zero():
     Contact.all_objects.create(user=user, name="Jeffrey", firm_text="usc", warmth="advocate")
     _digest_with_something_due(user)
 
-    coverage = assemble_digest(user, today=TODAY)["coverage"]
+    coverage = assemble_digest(user, today=_today())["coverage"]
 
     assert coverage["advocates"] == 0
     assert coverage["advocates_elsewhere"] == 2
@@ -556,7 +575,7 @@ def test_more_than_three_zero_contact_firms_are_counted_and_the_worst_three_name
             user=user, firm=_firm(f"Bank {i}", f"bank-{i}"), tier=1)
     _digest_with_something_due(user)
 
-    coverage = assemble_digest(user, today=TODAY)["coverage"]
+    coverage = assemble_digest(user, today=_today())["coverage"]
 
     assert coverage["no_contact"] == 5
     assert coverage["named"] == ["Bank 0", "Bank 1", "Bank 2"]
@@ -572,7 +591,7 @@ def test_a_tier_one_firm_with_nobody_is_named_before_a_tier_two_one():
     UserFirm.all_objects.create(user=user, firm=_firm("Top Tier", "top"), tier=1)
     _digest_with_something_due(user)
 
-    assert assemble_digest(user, today=TODAY)["coverage"]["named"] == ["Top Tier", "Second Tier"]
+    assert assemble_digest(user, today=_today())["coverage"]["named"] == ["Top Tier", "Second Tier"]
 
 
 def test_a_fully_covered_portfolio_says_so_instead_of_counting_zero():
@@ -582,7 +601,7 @@ def test_a_fully_covered_portfolio_says_so_instead_of_counting_zero():
     Contact.all_objects.create(user=user, name="Someone", firm=firm, warmth="cold")
     _digest_with_something_due(user)
 
-    line = assemble_digest(user, today=TODAY)["coverage"]["line"]
+    line = assemble_digest(user, today=_today())["coverage"]["line"]
 
     assert line == "0 advocates across 1 target firm · a contact at every one"
 
@@ -591,7 +610,7 @@ def test_a_student_with_no_tiered_firms_gets_no_coverage_line():
     user = _user()
     _digest_with_something_due(user)
 
-    assert assemble_digest(user, today=TODAY)["coverage"] == {}
+    assert assemble_digest(user, today=_today())["coverage"] == {}
 
 
 def test_an_archived_contact_does_not_cover_a_firm():
@@ -601,7 +620,7 @@ def test_an_archived_contact_does_not_cover_a_firm():
     Contact.all_objects.create(user=user, name="Gone", firm=firm, warmth="advocate", archived=True)
     _digest_with_something_due(user)
 
-    coverage = assemble_digest(user, today=TODAY)["coverage"]
+    coverage = assemble_digest(user, today=_today())["coverage"]
 
     assert coverage["advocates"] == 0
     assert coverage["named"] == ["Evercore"]
@@ -619,7 +638,7 @@ def _pick_opp(firm, *, cohort, n=1, days=None, confidence=0.0):
     return Opportunity.objects.create(
         firm=firm, url=f"https://x/{firm.slug}/pick-{n}", title=f"Summer Analyst {n}",
         bucket="internship", status="open", cohort=cohort, confidence=confidence,
-        deadline=None if days is None else TODAY + timedelta(days=days),
+        deadline=None if days is None else _today() + timedelta(days=days),
     )
 
 
@@ -630,7 +649,7 @@ def test_picks_all_a_year_early_get_one_honest_line_about_the_cycle():
     _pick_opp(firm, cohort="2027")
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert digest["picks"], "fixture should have produced a pick"
     assert digest["picks_note"] == (
@@ -646,7 +665,7 @@ def test_a_pick_for_the_declared_cycle_silences_the_note():
     _pick_opp(firm, cohort="2027", n=2)
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert len(digest["picks"]) == 2
     assert digest["picks_note"] == ""
@@ -661,7 +680,7 @@ def test_a_pick_with_no_intake_year_gets_the_bare_sentence():
     _pick_opp(firm, cohort="")
     _digest_with_something_due(user)
 
-    assert assemble_digest(user, today=TODAY)["picks_note"] == (
+    assert assemble_digest(user, today=_today())["picks_note"] == (
         "Nothing yet for your 2028 Summer Internship cycle"
     )
 
@@ -673,7 +692,7 @@ def test_picks_from_intakes_further_back_are_called_earlier_not_a_year_early():
     _pick_opp(firm, cohort="2026")
     _digest_with_something_due(user)
 
-    assert assemble_digest(user, today=TODAY)["picks_note"].endswith("; these are earlier intakes")
+    assert assemble_digest(user, today=_today())["picks_note"].endswith("; these are earlier intakes")
 
 
 def test_an_insight_week_beside_a_year_early_internship_is_not_called_early():
@@ -691,7 +710,7 @@ def test_an_insight_week_beside_a_year_early_internship_is_not_called_early():
     )
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert len(digest["picks"]) == 2
     assert digest["picks_note"] == (
@@ -710,7 +729,7 @@ def test_picks_in_a_bucket_the_student_did_not_declare_get_the_bare_sentence():
     )
     _digest_with_something_due(user)
 
-    assert assemble_digest(user, today=TODAY)["picks_note"] == (
+    assert assemble_digest(user, today=_today())["picks_note"] == (
         "Nothing yet for your 2028 Summer Internship cycle"
     )
 
@@ -722,7 +741,7 @@ def test_a_student_with_no_declared_cycle_gets_no_note():
     _pick_opp(firm, cohort="2027")
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert digest["picks"]
     assert digest["picks_note"] == ""
@@ -732,7 +751,7 @@ def test_a_student_with_no_declared_cycle_gets_no_note():
 # A pick's deadline travels with its provenance or not at all.
 # ---------------------------------------------------------------------------
 def _only_pick(user):
-    picks = assemble_digest(user, today=TODAY)["picks"]
+    picks = assemble_digest(user, today=_today())["picks"]
     assert len(picks) == 1, picks
     return picks[0]
 
@@ -813,7 +832,7 @@ def test_a_fresh_row_is_picked_over_an_old_one_that_scores_the_same():
         _pick_opp(fresh_firm, cohort="2028", n=n)
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert digest["picks_mode"] == MODE_NEW
     assert digest["picks"], "the fresh rows should have scored"
@@ -835,7 +854,7 @@ def test_one_qualifying_row_is_not_enough_and_the_email_says_so():
     _pick_opp(fresh_firm, cohort="2028", n=4)
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert digest["picks_mode"] == MODE_BEST
     assert len(digest["picks"]) > MIN_NEW_PICKS - 1
@@ -856,7 +875,7 @@ def test_the_boundary_day_still_counts_as_new():
         _age(_pick_opp(firm, cohort="2028", n=n), NEW_WINDOW_DAYS)
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert digest["picks_mode"] == MODE_NEW
     assert [p["first_seen_days"] for p in digest["picks"]] == [NEW_WINDOW_DAYS] * 2
@@ -872,7 +891,7 @@ def test_every_pick_carries_the_age_the_heading_rests_on():
     _age(_pick_opp(firm, cohort="2028", n=2), 3)
     _digest_with_something_due(user)
 
-    digest = assemble_digest(user, today=TODAY)
+    digest = assemble_digest(user, today=_today())
 
     assert sorted(p["first_seen_days"] for p in digest["picks"]) == [0, 3]
     assert digest["picks_mode_line"] == MODE_LINES[digest["picks_mode"]]
