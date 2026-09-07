@@ -476,9 +476,12 @@ deployed job.
   same tree minus the race-test hardening and a checklist note) passed
   **11,977, 13 skipped, 0 failed** in 25 min 34 s with the browser matrix
   running on real Chromium and WebKit, the Docker image built, and `pip-audit`
-  clean across 122 pins; the CI run on `a5886cf` itself has the audit green and
-  the test job in progress at the time of writing. The two counts differ by the
-  live-network skips (45 locally, 13 on CI) and the matrix. Migration drift: no
+  clean across 122 pins; the CI run on `a5886cf` itself, with the hardened race
+  test, then passed **11,977, 13 skipped, 0 failed** (46 min 55 s on a slower
+  runner), image built and audit clean. The final head, which adds only the
+  query-budget fixture fix and this note, is on CI at the time of writing. The
+  two counts differ by the live-network skips (45 locally, 13 on CI) and the
+  matrix. Migration drift: no
   changes. These checks do not establish deployed OAuth, push delivery or
   complete production sync acceptance; live connector tests remain opt-in. The
   earlier figure in this document (11,639) is the handoff's count and is
