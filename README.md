@@ -1,40 +1,51 @@
-# Coverage
+# Networkly
 
-Everyone tracks recruiting deadlines. Nobody tracks the relationship. Coverage
-is a shared, centrally-scraped opportunities feed for campus recruiting
-(consulting, finance) — free, never paywalled, ranked by deadline then
-freshness — wrapped around a private, per-student networking CRM that scans a
-student's own outreach and scores contacts and firms by estimated chance of
-success, feeding that score back into a weekly, prioritized to-do list. The
-feed is a commodity given away for trust; the defensible value is the captured
-email activity a student feeds into their own relationship ledger. See
-`docs/product-brief.md` for the full thesis and `docs/build-plan.md` for the
-technical build plan this repo follows.
+A recruiting workspace for students: find opportunities, keep track of applications,
+and follow up with the people you meet.
 
-## Repo layout
+Networkly connects a shared opportunities directory with a private contact CRM.
+The Today page brings deadlines, outreach tasks, firm updates, and recent activity
+together so students can decide what to do next.
 
-A `uv` workspace with three Python packages:
+## What You Can Do
 
-- **`coverage_web/`** — the Django project: multi-tenant web app, Google
-  sign-in (login-only scopes) + base templates, htmx-served views, the
-  `healthz` endpoint. This is the only package with a runtime entry point
-  (`manage.py`) and the only one that talks HTTP.
-- **`coverage_domain/`** — ported pure-logic libraries: the contact/thread
-  state machine, cadence engine, deterministic apply layer, and fit-score
-  engine, lifted from the founder's existing single-user system. Framework-free
-  — takes a DB connection, knows nothing about Django. *Owned by a separate
-  workstream; this scaffold references it by name in the workspace config but
-  does not create or modify anything under this directory.*
-- **`coverage_connectors/`** — deterministic ATS/board scrapers (Greenhouse,
-  Lever, Workday, Oracle Recruiting Cloud, company-specific fetchers) and the
-  staleness/verification layer. Empty scaffold as of M0; real code lands in
-  M1 (see `docs/build-plan.md`, "7. Sequencing").
+- **Find roles:** search by firm, role, and city; filter opportunities and review personalized picks.
+- **Track applications:** save roles, update application stages, and keep deadlines beside your contacts.
+- **Build your network:** organize contacts and target firms, log conversations, and plan follow-ups.
+- **Plan your week:** view recruiting dates and personal events in the calendar.
+- **Connect your tools:** use Google sign-in, optional Gmail activity logging, and Calendar integration.
+- **Get assistance:** use the contextual AI assistant, email digests, and device notifications.
 
-Why three packages instead of one Django app: `coverage_domain` and
-`coverage_connectors` are meant to be run from cron and imported as plain
-Python, independent of Django request/response cycles — keeping them as
-separate workspace members enforces that boundary at import time, not just by
-convention.
+The interface includes light and dark themes, responsive layouts, keyboard-accessible
+controls, and reviewed company logos with initials as a fallback.
+
+## Beta Scope and Status
+
+The planned release is a **free, invitation-only beta for up to 100 users**, with
+all individual features. Enterprise features and paid checkout are outside this release.
+
+The application is implemented and undergoing release verification. It is **not yet
+verified for public production use**. Hosting activation, domain and sending-email
+configuration, legal operator details, and real production integration checks remain
+launch gates. Automated tests do not prove email delivery or successful provider consent.
+
+See the [release runbook](docs/beta-release-runbook.md) and
+[deployment guide](docs/deploy.md) for configuration and acceptance steps.
+
+## Architecture
+
+Networkly uses Django, PostgreSQL, server-rendered templates, and htmx.
+Python dependencies are managed with a uv workspace.
+
+| Package | Responsibility |
+| --- | --- |
+| `coverage_web/` | Web application, authentication, private user data, integrations, and background commands |
+| `coverage_domain/` | Shared recruiting and relationship logic |
+| `coverage_connectors/` | Recruiting-source connectors and ingestion support |
+
+The internal package and repository names retain `coverage`; the product name is Networkly.
+Gmail access is read-only: it reads mail to log activity and cannot send, reply, or delete.
+Provider credentials and local environment files must stay outside Git.
 
 ## Local setup
 
@@ -71,7 +82,7 @@ uv run python manage.py migrate
 
 # 5. Run the dev server.
 uv run python manage.py runserver
-# -> http://127.0.0.1:8000/         placeholder home page
+# -> http://127.0.0.1:8000/         marketing home page
 # -> http://127.0.0.1:8000/healthz  {"status": "ok"}
 
 # 6. Run the test suite (from the repo root).
