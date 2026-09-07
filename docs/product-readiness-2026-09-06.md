@@ -326,6 +326,29 @@ matrix's screenshot directory defaulted to one developer's absolute path,
 fixed in `c419c11` together with a clean skip when a browser is absent and a
 CI step that installs Chromium and WebKit.
 
+**The suite no longer depends on the wall clock at import.** The first CI run
+to straddle midnight UTC (collected on Sunday, executed on Monday) failed 39
+date-arithmetic tests by exactly one day each: nine test files snapshotted
+`TODAY = timezone.localdate()` or `NOW = timezone.now()` at module level, so
+fixtures were built on yesterday while the code under test read today. Every
+snapshot is now a function evaluated when a test asks for it, and a bench test
+whose premise was "two hours ago is today" now builds its touch at one minute
+past local midnight. Verified by running all twelve affected files during the
+very window that broke them. A suite that takes 25 to 47 minutes on a runner
+will cross that line regularly; this was a latent red-on-some-nights.
+
+**A second clock class, caught the same night.** The CI run on the fix
+(`ff4df89`) reached its assertions at 00:57 UTC on Monday 7 September and
+failed one test of 11,977: the pace ring's mixed-week test dated two touches
+"two hours ago" and "one hour ago", which on a Monday before 02:00 is Sunday,
+outside the ring's week floor. Not an import-time snapshot, a premise: "a
+little earlier is still this week". The past touches are now anchored at no
+earlier than local midnight, which is always on or after the floor and never
+after now, and a regression test pins the clock to that exact Monday minute
+and expects two. The old shape reproduces `assert 0 == 2` under that pin; the
+new one passes. The lesson generalises: any test that subtracts hours from
+now and asserts a week or day membership has a window each week where it lies.
+
 **Suite hygiene fixed in this pass:** the suite's verdict no longer depends
 on the developer's `.env`. `BETA_ENABLED=true` had made every account read as
 Pro and failed twenty free-tier tests on the founder's laptop only; the root
@@ -478,8 +501,12 @@ deployed job.
   running on real Chromium and WebKit, the Docker image built, and `pip-audit`
   clean across 122 pins; the CI run on `a5886cf` itself, with the hardened race
   test, then passed **11,977, 13 skipped, 0 failed** (46 min 55 s on a slower
-  runner), image built and audit clean. The final head, which adds only the
-  query-budget fixture fix and this note, is on CI at the time of writing. The
+  runner), image built and audit clean. After that, two clock classes surfaced
+  on the CI runner and were fixed: `8098645` failed 39 (import-time date
+  snapshots, run straddled midnight UTC), `ff4df89` failed 1 with 11,976
+  passed and 13 skipped (a "two hours ago is this week" premise on a Monday
+  before 02:00). The fix for the second, with a pinned-clock regression test,
+  is the head on CI at the time of writing. The
   two counts differ by the live-network skips (45 locally, 13 on CI) and the
   matrix. Migration drift: no
   changes. These checks do not establish deployed OAuth, push delivery or

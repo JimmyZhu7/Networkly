@@ -28,7 +28,8 @@ is not a display of one row; it is a count, and it feeds `_daily_cap`.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, time, timedelta, timezone as dt_timezone
+from unittest import mock
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -56,6 +57,22 @@ def jane(student):
 def _touch(student, jane, *, kind="outreach", at):
     return Touch.all_objects.create(
         user=student, contact=jane, kind=kind, channel="email", ts=at)
+
+
+def _earlier_this_week(delta):
+    """`now - delta`, but never before today's local midnight.
+
+    The ring's floor is the Monday of the current week, so "two hours ago"
+    is only inside the window when today has been running for two hours.
+    On a Monday between 00:00 and 02:00 (the project clock is UTC) a plain
+    `now() - 2h` lands on Sunday, and CI on 7 September 2026 at 00:57 UTC
+    saw exactly that: `assert 0 == 2`. Midnight today is always on or after
+    the floor and never after now, so it is the safe near edge.
+    """
+    now = timezone.now()
+    midnight = timezone.make_aware(
+        datetime.combine(timezone.localdate(), time.min))
+    return max(midnight, now - delta)
 
 
 def test_outreach_is_one_of_the_kinds_the_ring_counts():
@@ -109,7 +126,7 @@ def test_the_ring_never_claims_progress_the_student_has_not_made(student, jane):
 
 def test_a_touch_logged_earlier_today_still_counts(student, jane):
     today = timezone.localdate()
-    _touch(student, jane, at=timezone.now() - timedelta(minutes=5))
+    _touch(student, jane, at=_earlier_this_week(timedelta(minutes=5)))
 
     assert _pace(student, today)["done"] == 1
 
@@ -132,8 +149,26 @@ def test_a_touch_from_before_this_week_still_does_not_count(student, jane):
 
 def test_a_mix_counts_only_the_part_that_has_happened(student, jane):
     today = timezone.localdate()
-    _touch(student, jane, at=timezone.now() - timedelta(hours=2))
-    _touch(student, jane, kind="follow_up", at=timezone.now() - timedelta(hours=1))
+    _touch(student, jane, at=_earlier_this_week(timedelta(hours=2)))
+    _touch(student, jane, kind="follow_up",
+           at=_earlier_this_week(timedelta(hours=1)))
     _touch(student, jane, kind="thank_you", at=timezone.now() + timedelta(days=2))
 
     assert _pace(student, today)["done"] == 2
+
+
+def test_the_mix_still_counts_two_in_the_first_hours_of_a_monday(student, jane):
+    """The clock CI failed under, pinned: Monday 7 September 2026, 00:57 UTC.
+    The week floor is that same day, so anything dated "earlier" must stay on
+    the Monday side of midnight to be work done this week."""
+    monday_early = datetime(2026, 9, 7, 0, 57, tzinfo=dt_timezone.utc)
+    with mock.patch("django.utils.timezone.now", return_value=monday_early):
+        today = timezone.localdate()
+        assert today.weekday() == 0
+        _touch(student, jane, at=_earlier_this_week(timedelta(hours=2)))
+        _touch(student, jane, kind="follow_up",
+               at=_earlier_this_week(timedelta(hours=1)))
+        _touch(student, jane, kind="thank_you",
+               at=timezone.now() + timedelta(days=2))
+
+        assert _pace(student, today)["done"] == 2
