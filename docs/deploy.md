@@ -1,4 +1,4 @@
-# Deploying Coverage
+# Deploying Networkly
 
 Target: **Render** (managed Postgres + built-in cron for the 6-hourly scrape). The
 `Dockerfile` is host-agnostic, so Fly.io or any container host works too — only
@@ -63,7 +63,7 @@ dollars/month; Google OAuth is free.
 On the web service's **Shell**, before anything else:
 
 ```bash
-uv run --package coverage-web python coverage_web/manage.py deploy_preflight
+uv run --package networkly-web python networkly_web/manage.py deploy_preflight
 ```
 
 One line per thing that has broken a deploy of this app, each `PASS`, `WARN`
@@ -115,11 +115,11 @@ the same ordering: expire, then renew.
 On the web service's **Shell** tab:
 
 ```bash
-uv run --package coverage-web python coverage_web/manage.py createsuperuser
-uv run --package coverage-web python coverage_web/manage.py seed_directory   # 71 firm rows + SA 2028 firm dates
-uv run --package coverage-web python coverage_web/manage.py scrape            # first opportunities pull
-uv run --package coverage-web python coverage_web/manage.py seed_logo_domains  # firm front doors, for logos
-uv run --package coverage-web python coverage_web/manage.py seed_mail_domains  # the domains bankers email FROM
+uv run --package networkly-web python networkly_web/manage.py createsuperuser
+uv run --package networkly-web python networkly_web/manage.py seed_directory   # 71 firm rows + SA 2028 firm dates
+uv run --package networkly-web python networkly_web/manage.py scrape            # first opportunities pull
+uv run --package networkly-web python networkly_web/manage.py seed_logo_domains  # firm front doors, for logos
+uv run --package networkly-web python networkly_web/manage.py seed_mail_domains  # the domains bankers email FROM
 ```
 
 Every seed file these commands read is **tracked in git and ships inside the
@@ -168,7 +168,7 @@ so a verification stall on that client can never break sign-in.
 
 ## 4. Gmail Live — real-time reply/bounce/invite detection (optional)
 
-This is how Coverage's CRM actually fills itself in: connect a Gmail account
+This is how Networkly's CRM actually fills itself in: connect a Gmail account
 and touches log themselves, no habit change required. Full walkthrough,
 including the Google Cloud Console clicks (a SEPARATE OAuth client from
 section 3 — never reuse it) and the Pub/Sub setup, lives in
@@ -179,7 +179,7 @@ extra until `GMAIL_LIVE_*` is set.
 ### 4b. The daily Gmail sync (an older, still-useful path)
 
 A separate, simpler route: for a mailbox already being scanned outside
-Coverage by hand (an agent searching Gmail and emitting typed findings), apply
+Networkly by hand (an agent searching Gmail and emitting typed findings), apply
 that same batch here — one search serves both systems. This needs no Google
 review of its own; it just applies findings someone else already gathered.
 
@@ -391,7 +391,7 @@ reason it is being accepted — never left unread.
 
 `uv run pip-audit --strict` on its own reports an error rather than a finding:
 `--strict` refuses to skip a package it cannot resolve, and this workspace's
-own three packages (coverage-web, coverage-domain, coverage-connectors) are
+own three packages (coverage-web, networkly-domain, networkly-connectors) are
 editable installs with no PyPI entry to resolve against. Export first, then
 audit the export — which is exactly what `.github/workflows/pip-audit.yml`
 already does on every push, on every pull request, and every Monday:

@@ -6,24 +6,24 @@
 
 | Area | Concrete defect and resulting behavior | Source |
 | --- | --- | --- |
-| Ingest eligibility | A repeat listing could derive a graduation year before consulting preserved stated graduation facts. The merge now happens first, so a surviving stated window prevents a contradictory heuristic year. A material content change can still invalidate old extracted facts and permit fresh derivation. | `coverage_web/directory/ingest.py` |
-| Ingest location | Whitespace location now counts as silence and preserves the stored place. A newly stated, different location that cannot be mapped retracts the old market, preventing recommendations from continuing to use a contradicted region. | `coverage_web/directory/ingest.py` |
+| Ingest eligibility | A repeat listing could derive a graduation year before consulting preserved stated graduation facts. The merge now happens first, so a surviving stated window prevents a contradictory heuristic year. A material content change can still invalidate old extracted facts and permit fresh derivation. | `networkly_web/directory/ingest.py` |
+| Ingest location | Whitespace location now counts as silence and preserves the stored place. A newly stated, different location that cannot be mapped retracts the old market, preventing recommendations from continuing to use a contradicted region. | `networkly_web/directory/ingest.py` |
 | Connector completeness | Phenom, Eightfold, Lumesse, Société Générale, McKinsey, and Goldman Sachs now report incomplete known-count results when a cap, early empty page, or repeated page leaves jobs unseen. Short-page offset providers advance by the actual returned batch length. Existing ingest guards then preserve unseen jobs instead of treating the partial listing as proof of closure. | Six connector files listed below |
-| Phenom response validity | Malformed/error-shaped HTTP 200 envelopes return a failed fetch instead of appearing to be a successful empty board or escaping as an unhandled parsing error. | `coverage_connectors/coverage_connectors/phenom.py` |
-| Dedupe eligibility | Both duplicate folding and role-family folding retain separate roles when stated graduation windows or nonblank entry routes conflict. Equivalent class-year/raw-fact representations and missing facts can still fold. Existing requisition, location, deadline, cohort, and sponsorship safeguards remain. | `coverage_web/directory/dupes.py` |
+| Phenom response validity | Malformed/error-shaped HTTP 200 envelopes return a failed fetch instead of appearing to be a successful empty board or escaping as an unhandled parsing error. | `networkly_connectors/networkly_connectors/phenom.py` |
+| Dedupe eligibility | Both duplicate folding and role-family folding retain separate roles when stated graduation windows or nonblank entry routes conflict. Equivalent class-year/raw-fact representations and missing facts can still fold. Existing requisition, location, deadline, cohort, and sponsorship safeguards remain. | `networkly_web/directory/dupes.py` |
 
-## Exact Changed Source and Test Coverage
+## Exact Changed Source and Test Networkly
 
 | Changed source | Changed or added tests | Verification |
 | --- | --- | --- |
-| `coverage_connectors/coverage_connectors/phenom.py` | New `coverage_connectors/tests/test_phenom.py`: 7 cases | Cap, early empty page, actual offset, repeated page, three unreadable envelopes |
-| `coverage_connectors/coverage_connectors/eightfold.py` | `coverage_connectors/tests/test_eightfold.py`: 3 added cases | Early empty page, repeated page, growing stated count |
-| `coverage_connectors/coverage_connectors/lumesse.py` | New `coverage_connectors/tests/test_pagination_trust.py` | Four providers × cap, early empty page, repeated page, complete traversal = 16 cases |
-| `coverage_connectors/coverage_connectors/socgen.py` | Same matrix | Same |
-| `coverage_connectors/coverage_connectors/mckinsey.py` | Same matrix | Same; preserves per-keyword completeness despite global dedupe |
-| `coverage_connectors/coverage_connectors/goldmansachs.py` | Same matrix | Same |
-| `coverage_web/directory/ingest.py` | `coverage_web/directory/tests/test_ingest.py`: 4 added cases | Preserved stated graduation; changed-content invalidation; unknown replacement market; whitespace location |
-| `coverage_web/directory/dupes.py` | New `coverage_web/directory/tests/test_dedupe_eligibility.py`: 10 cases | Both folding modes retain four kinds of competing eligibility claims; equivalent/missing facts still fold |
+| `networkly_connectors/networkly_connectors/phenom.py` | New `networkly_connectors/tests/test_phenom.py`: 7 cases | Cap, early empty page, actual offset, repeated page, three unreadable envelopes |
+| `networkly_connectors/networkly_connectors/eightfold.py` | `networkly_connectors/tests/test_eightfold.py`: 3 added cases | Early empty page, repeated page, growing stated count |
+| `networkly_connectors/networkly_connectors/lumesse.py` | New `networkly_connectors/tests/test_pagination_trust.py` | Four providers × cap, early empty page, repeated page, complete traversal = 16 cases |
+| `networkly_connectors/networkly_connectors/socgen.py` | Same matrix | Same |
+| `networkly_connectors/networkly_connectors/mckinsey.py` | Same matrix | Same; preserves per-keyword completeness despite global dedupe |
+| `networkly_connectors/networkly_connectors/goldmansachs.py` | Same matrix | Same |
+| `networkly_web/directory/ingest.py` | `networkly_web/directory/tests/test_ingest.py`: 4 added cases | Preserved stated graduation; changed-content invalidation; unknown replacement market; whitespace location |
+| `networkly_web/directory/dupes.py` | New `networkly_web/directory/tests/test_dedupe_eligibility.py`: 10 cases | Both folding modes retain four kinds of competing eligibility claims; equivalent/missing facts still fold |
 
 Total scope: **8 source files and 5 test files**. Unrelated concurrent changes, including firm-logo work in directory models/views/tests, were preserved.
 
@@ -38,11 +38,11 @@ Validated locally without a database:
 Reproduction commands from repository root:
 
 ```sh
-.venv/bin/python -m pytest -c coverage_connectors/pyproject.toml --confcutdir=coverage_connectors coverage_connectors/tests -q -m 'not live'
-PYTHONPATH=coverage_web .venv/bin/python -m pytest -c coverage_connectors/pyproject.toml --confcutdir=coverage_web/directory/tests coverage_web/directory/tests/test_dedupe_eligibility.py -q
+.venv/bin/python -m pytest -c networkly_connectors/pyproject.toml --confcutdir=networkly_connectors networkly_connectors/tests -q -m 'not live'
+PYTHONPATH=networkly_web .venv/bin/python -m pytest -c networkly_connectors/pyproject.toml --confcutdir=networkly_web/directory/tests networkly_web/directory/tests/test_dedupe_eligibility.py -q
 ```
 
-Requested main-task integration coverage includes `coverage_web/directory/tests/test_ingest.py`, `coverage_web/directory/tests/test_dupes.py`, the new dedupe file, and the existing recommendation/eligibility/feed coverage in the full suite. Follow the main task's dedicated database configuration rather than starting another shared test run.
+Requested main-task integration coverage includes `networkly_web/directory/tests/test_ingest.py`, `networkly_web/directory/tests/test_dupes.py`, the new dedupe file, and the existing recommendation/eligibility/feed coverage in the full suite. Follow the main task's dedicated database configuration rather than starting another shared test run.
 
 ## Algorithm Review Boundaries
 
@@ -70,7 +70,7 @@ The health helper's `open_rows` and `ever` counters are aggregated by **firm/pro
 Founder/operator decisions and setup, in priority order:
 
 1. **Deployment gate:** confirm the main task's full suite, then deploy these fixes and run one controlled refresh. Check per-board completeness markers and the aggregate partial result. Do not reopen or close historical jobs merely from this audit.
-2. **Coverage ownership:** assign an owner for EY, Sixth Street, Morgan Stanley, and zero-row-board verification. Decide which limited providers are launch-critical and which require an explicit coverage limitation. Bot protection must not be treated as an empty hiring market.
+2. **Networkly ownership:** assign an owner for EY, Sixth Street, Morgan Stanley, and zero-row-board verification. Decide which limited providers are launch-critical and which require an explicit coverage limitation. Bot protection must not be treated as an empty hiring market.
 3. **Refresh operations:** confirm the deployed scheduler, logs, failure alerts, and freshness target. The repository contains a local macOS refresh wrapper; launch operations need a confirmed deployment schedule and recipient rather than an assumption that a laptop job is sufficient. The main task owns deployment setup.
 4. **Verification capacity:** inspect real backlog against refresh defaults of 400 enrichment candidates and 200 reverifications per run. Adjust only after observing throughput and source limits; establish a freshness service target first.
 5. **Optional AI spend:** deterministic ingestion and guards do not require enabling a new paid deadline pipeline. Any recurring AI enrichment remains a separate cost/benefit decision; none was enabled or called here.

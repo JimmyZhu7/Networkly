@@ -1,7 +1,7 @@
 """Suite-wide test isolation, applied before any test in any package runs.
 
 This file sits next to `pyproject.toml` so pytest loads it once for the whole
-run — `coverage_web`, `coverage_domain` and `coverage_connectors` alike —
+run — `networkly_web`, `networkly_domain` and `networkly_connectors` alike —
 ahead of the narrower `conftest.py` files nested under individual test
 packages.
 """

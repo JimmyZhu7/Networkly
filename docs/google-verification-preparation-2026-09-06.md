@@ -14,7 +14,7 @@ The unverified-app cap is 100 new Google users in total, not a renewable monthly
 
 | Feature | Requested scopes | Current callback path | Evidence |
 |---|---|---|---|
-| Google sign-in | `openid`, `email`, `profile` | `/accounts/google/login/callback/` | `coverage_web/coverage_web/settings/base.py`, allauth routes |
+| Google sign-in | `openid`, `email`, `profile` | `/accounts/google/login/callback/` | `networkly_web/networkly_web/settings/base.py`, allauth routes |
 | Connect Gmail | `https://www.googleapis.com/auth/gmail.readonly` | `/capture/gmail/callback/` | `capture/gmail_live.py`, `capture/urls.py` |
 | Connect Calendar | `https://www.googleapis.com/auth/calendar.readonly` | `/capture/calendar/callback/` | `capture/gcal_live.py`, `capture/urls.py` |
 
@@ -124,4 +124,4 @@ Nothing in class D remains for this dossier except reserving the reviewer seat, 
 
 ## Source-review record
 
-Inspected `coverage_web/coverage_web/settings/base.py`, `coverage_web/coverage_web/urls.py`, `coverage_web/capture/urls.py`, `coverage_web/capture/gmail_live.py`, `coverage_web/capture/gmail_residue.py`, `coverage_web/capture/gcal_live.py`, `coverage_web/accounts/urls.py`, and `coverage_web/templates/legal/privacy.html`; cross-checked `docs/gmail-live-setup.md`. This is a bounded source/document review. No credentials were read, external submissions made, live database tests run, or legal-page files edited by this work.
+Inspected `networkly_web/networkly_web/settings/base.py`, `networkly_web/networkly_web/urls.py`, `networkly_web/capture/urls.py`, `networkly_web/capture/gmail_live.py`, `networkly_web/capture/gmail_residue.py`, `networkly_web/capture/gcal_live.py`, `networkly_web/accounts/urls.py`, and `networkly_web/templates/legal/privacy.html`; cross-checked `docs/gmail-live-setup.md`. This is a bounded source/document review. No credentials were read, external submissions made, live database tests run, or legal-page files edited by this work.

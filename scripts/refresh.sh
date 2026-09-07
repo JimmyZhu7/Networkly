@@ -1,5 +1,5 @@
 #!/bin/bash
-# Daily freshness pass for local Coverage — run by launchd
+# Daily freshness pass for local Networkly — run by launchd
 # (~/Library/LaunchAgents/com.coverage.refresh.plist) and safe to run by hand.
 # Wakes Postgres.app if needed, then: scrape + reclassify + reverify.
 # Logs to ~/Library/Logs/coverage-refresh.log.
@@ -51,6 +51,6 @@ LOG="$HOME/Library/Logs/coverage-refresh.log"
     echo "BACKUP FAILED — the refresh continues, but fix this before trusting the data to one disk."
   fi
 
-  uv run --package coverage-web python coverage_web/manage.py refresh
+  uv run --package networkly-web python networkly_web/manage.py refresh
   echo "── $(date '+%Y-%m-%d %H:%M:%S') refresh finished ──"
 } >>"$LOG" 2>&1

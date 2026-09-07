@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% load csp %}
+{% load textstyle %}
+
+{% block title %}Networkly · Opportunities{% endblock %}
+
+{% block head %}<meta name="htmx-config" content='{"refreshOnHistoryMiss":true}'>{% include "directory/_styles.html" %}{% endblock %}
+
+{% block content %}
+<div class="page page--full directory-page directory-browse" hx-history="false">
+  <header class="pagehead">
+    <div class="pagehead-text">
+      <h1 class="pagehead-title"><span class="directory-title-icon">{% include "directory/_section_icon.html" with name="roles" %}</span>Opportunities</h1>
+      <p class="pagehead-sub">Find your next role. Start with the firms that matter to you.</p>
+    </div>
+    {% if user.is_authenticated %}
+      <div class="pagehead-actions">
+        <nav class="subnav scope-tabs" aria-label="Opportunities views">
+          <a href="{% url 'opportunities' %}" aria-current="page">Browse roles</a>
+          <a href="{% url 'my_applications' %}">My applications</a>
+        </nav>
+      </div>
+    {% endif %}
+  </header>
+
+  {% include "directory/_recommend_bar.html" %}
+
+  <div data-filters-sentinel aria-hidden="true"></div>
+  <form class="filters"
+        hx-get="{% url 'opportunities' %}"
+        hx-target="#cov-results"
+        hx-swap="innerHTML"
+        hx-push-url="true"
+        hx-trigger="change, input from:input[name='q'] delay:350ms, submit"
+        hx-sync="this:replace"
+        method="get"
+        action="{% url 'opportunities' %}">
+
+    <div class="filters-toolbar">
+    <label class="filters-search{% if selected.q %} is-set{% endif %}"><span class="f-cap">Search</span>
+      <svg class="filters-search-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.4 10.4L14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <input type="search" name="q" value="{{ selected.q }}" placeholder="Search firm, role, city" autocomplete="off">
+    </label>
+
+      <label class="filters-role" data-role-choice-label hidden><span class="f-cap">Role type</span>
+        <select id="f-role-choice" data-role-choice aria-label="Role type"></select>
+      </label>
+      <button type="button" class="filters-toggle" data-filters-toggle data-widget-disclosure aria-controls="opportunity-refinements" aria-expanded="{% if filters_more_active or fit %}true{% else %}false{% endif %}" hidden>
+        Filters<span data-filter-active-count>{% if fit %} · {{ filters_more_active|add:"1" }}{% elif filters_more_active %} · {{ filters_more_active }}{% endif %}</span>
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <a class="filters-clear" data-filters-clear href="{% url 'opportunities' %}"{% if not has_filters %} hidden{% endif %}>Clear filters</a>
+    </div>
+
+    <fieldset class="seg">
+      <legend>Role type</legend>
+      <div class="seg-list">
+        {% for s in role_segments %}
+          <input class="seg-input" type="radio" name="role" id="{{ s.input_id }}" value="{{ s.value }}"{% if s.checked %} checked{% endif %}>
+          <label class="seg-pill {{ s.css }}" for="{{ s.input_id }}"><span>{{ s.label }}</span><span class="seg-count">(<span id="{{ s.count_id }}">{{ s.count }}</span>)</span></label>
+        {% endfor %}
+        {% if role_optin_segment %}
+          <input class="seg-input" type="radio" name="role" id="{{ role_optin_segment.input_id }}" value="{{ role_optin_segment.value }}" checked>
+          <label class="seg-pill seg-optin" for="{{ role_optin_segment.input_id }}"><span>{{ role_optin_segment.label }}</span><span class="seg-count">(<span id="{{ role_optin_segment.count_id }}">{{ role_optin_segment.count }}</span>)</span></label>
+        {% endif %}
+      </div>
+    </fieldset>
+
+    <details class="filters-more" id="opportunity-refinements" data-filters-more{% if filters_more_active or fit %} open{% endif %}>
+      <summary class="filters-more-summary">Filters<span data-filter-active-count>{% if fit %} · {{ filters_more_active|add:"1" }}{% elif filters_more_active %} · {{ filters_more_active }}{% endif %}</span></summary>
+      <div class="filters-more-grid">
+
+      <label{% if selected.year %} class="is-set"{% endif %}><span class="f-cap">Programme year</span>
+        <select name="year" id="f-year">{% include "directory/_facet_options.html" with options=year_facet current=selected.year %}</select>
+      </label>
+
+      <label{% if selected.region %} class="is-set"{% endif %}><span class="f-cap">Region</span>
+        <select name="region" id="f-region">{% include "directory/_facet_options.html" with options=facets.regions current=selected.region %}</select>
+      </label>
+
+      <label{% if selected.track %} class="is-set"{% endif %}><span class="f-cap">Track</span>
+        <select name="track" id="f-track">{% include "directory/_facet_options.html" with options=facets.tracks current=selected.track %}</select>
+      </label>
+
+      <label{% if selected.sponsorship %} class="is-set"{% endif %}><span class="f-cap">Sponsorship</span>
+        <select name="sponsorship" id="f-sponsorship">{% include "directory/_facet_options.html" with options=facets.sponsorship current=selected.sponsorship %}</select>
+      </label>
+
+      {% if fit_available %}
+        <label class="fit-toggle" title="Hide roles whose own text states a requirement you don't meet. Roles that state nothing always show.">
+          <input type="checkbox" name="fit" value="1"{% if fit %} checked{% endif %}>
+          <span>Eligible only</span>
+        </label>
+      {% endif %}
+
+      <label{% if selected.firm %} class="is-set"{% endif %}><span class="f-cap">Firms</span>
+        <div class="cmulti" data-cmulti>
+          <button type="button" class="cmulti-btn" aria-haspopup="true" aria-expanded="false">
+            <span class="cmulti-label">All firms</span>
+            <svg class="csel-caret" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="cmulti-menu panel panel--raised">
+            {% for f in all_firms %}
+              <label class="cmulti-opt"><input type="checkbox" name="firm" value="{{ f.slug }}"{% if f.slug in selected.firm %} checked{% endif %}><span>{{ f.name|smart_title }}</span></label>
+            {% endfor %}
+          </div>
+        </div>
+      </label>
+
+      </div>
+    </details>
+
+    <noscript><button type="submit">Apply</button></noscript>
+  </form>
+
+  <span class="vh" id="cov-live" aria-live="polite" aria-atomic="true"></span>
+
+  <div id="cov-results">
+    {% include "directory/_results.html" %}
+  </div>
+</div>
+
+{% include "directory/_drawer.html" %}
+
+{% script %}
+  // "Companies" multi-select: toggle the checkbox panel and keep the button
+  // label in sync. The checkboxes are real form inputs (name="firm"), so the
+  // filter itself is pure htmx — this only manages the panel's open/close.
+  (function () {
+    document.querySelectorAll("[data-cmulti]").forEach(function (wrap) {
+      var btn = wrap.querySelector(".cmulti-btn");
+      var menu = wrap.querySelector(".cmulti-menu");
+      var label = wrap.querySelector(".cmulti-label");
+      menu.hidden = true;
+      wrap.dataset.enhanced = "true";
+      function sync() {
+        var n = wrap.querySelectorAll("input:checked").length;
+        label.textContent = n === 0 ? "All firms" : n + " selected";
+      }
+      function onDoc(e) { if (!wrap.contains(e.target)) close(); }
+      function onResize() { window.covKeepInViewport(menu); }
+      function open() {
+        menu.hidden = false; wrap.dataset.open = "true";
+        btn.setAttribute("aria-expanded", "true");
+        // This panel is a fixed 520px anchored to the button's left edge, and
+        // the button is the last control in the bar — so without this it runs
+        // off the right of the screen at every width that does not happen to
+        // leave 520px to its right. See covKeepInViewport in base.html.
+        window.covKeepInViewport(menu);
+        window.addEventListener("resize", onResize);
+        document.addEventListener("click", onDoc, true);
+        setTimeout(function () {
+          if (!menu.hidden) btn.focus({ preventScroll: true });
+        }, 0);
+      }
+      function close() {
+        menu.hidden = true; wrap.dataset.open = "false";
+        btn.setAttribute("aria-expanded", "false");
+        document.removeEventListener("click", onDoc, true);
+        window.removeEventListener("resize", onResize);
+      }
+      btn.addEventListener("click", function () { menu.hidden ? open() : close(); });
+      menu.addEventListener("change", sync);
+      // Escape closes the popover and returns focus to the button that opened
+      // it. Without this a keyboard user who opens the panel and changes their
+      // mind has no way out that does not involve tabbing through 100+ firm
+      // checkboxes — and would land somewhere with no memory of where they
+      // started. Bound on the wrapper so it fires from the button or any
+      // checkbox inside the panel.
+      wrap.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !menu.hidden) {
+          e.preventDefault(); e.stopPropagation(); close(); btn.focus();
+        }
+      });
+      sync();
+    });
+  })();
+
+  // Keep role radios and OOB count spans authoritative. The unnamed native
+  // select is a compact view of that same choice, never another submitted value.
+  (function () {
+    var form = document.querySelector(".filters");
+    if (!form) return;
+    var radios = Array.from(form.querySelectorAll('input[name="role"]'));
+    var choice = form.querySelector("[data-role-choice]");
+    var choiceLabel = form.querySelector("[data-role-choice-label]");
+    var details = form.querySelector("[data-filters-more]");
+    var toggle = form.querySelector("[data-filters-toggle]");
+    var clear = form.querySelector("[data-filters-clear]");
+    function syncRole() {
+      var visible = radios.filter(function (radio) { return radio.value !== "other" || radio.checked; });
+      while (choice.options.length > visible.length) choice.remove(choice.options.length - 1);
+      visible.forEach(function (radio, i) {
+        var label = form.querySelector('label[for="' + radio.id + '"]');
+        var option = choice.options[i];
+        if (!option) {
+          option = document.createElement("option");
+          option.value = radio.value;
+          choice.appendChild(option);
+        }
+        option.textContent = label.firstElementChild.textContent.trim() + " " + label.querySelector(".seg-count").textContent.trim();
+        option.selected = radio.checked;
+      });
+      if (window.networklyRefreshSelect) window.networklyRefreshSelect(choice);
+    }
+    function syncFilters() {
+      var active = Array.from(details.querySelectorAll('select[name]')).filter(function (el) { return el.value !== ""; }).length;
+      if (details.querySelector('input[name="firm"]:checked')) active++;
+      if (details.querySelector('input[name="fit"]:checked')) active++;
+      form.querySelectorAll("[data-filter-active-count]").forEach(function (el) { el.textContent = active ? " · " + active : ""; });
+      toggle.classList.toggle("is-set", active > 0);
+      clear.hidden = !active && !form.querySelector('input[name="q"]').value.trim() && !radios.some(function (el) { return el.checked && el.value; });
+    }
+    function syncDisclosure() { toggle.setAttribute("aria-expanded", String(details.open)); }
+    choice.addEventListener("change", function (event) {
+      event.stopPropagation();
+      var radio = radios.find(function (el) { return el.value === choice.value; });
+      if (radio && !radio.checked) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+    choice.addEventListener("keyup", function (event) { event.stopPropagation(); });
+    toggle.addEventListener("click", function () { details.open = !details.open; syncDisclosure(); });
+    details.addEventListener("toggle", syncDisclosure);
+    form.addEventListener("change", function () { syncRole(); syncFilters(); });
+    form.addEventListener("input", syncFilters);
+    // Only typing in Search owns the debounced query; menu navigation and
+    // keyboard disclosure activation must not issue a second filter request.
+    form.addEventListener("keyup", function (event) {
+      if (event.target !== form.querySelector('input[name="q"]')) event.stopImmediatePropagation();
+    });
+    document.body.addEventListener("htmx:afterSettle", function () {
+      queueMicrotask(function () { syncRole(); syncFilters(); });
+    });
+    syncRole(); syncFilters(); syncDisclosure();
+    form.querySelector(".seg").hidden = true;
+    choiceLabel.hidden = false;
+    if (window.networklyEnhanceSelects) window.networklyEnhanceSelects(choiceLabel);
+    toggle.hidden = false;
+    details.classList.add("is-enhanced");
+  })();
+
+  // The filter bar's stuck-state skin. A passive scroll listener rather
+  // than an IntersectionObserver: the observer's callbacks are deferrable
+  // (background tabs, embedded panes) in a way that leaves the bar stuck
+  // with no panel behind it, and this check is one getBoundingClientRect
+  // against a number — not worth an observer's machinery.
+  (function () {
+    var bar = document.querySelector(".filters");
+    var sentinel = document.querySelector("[data-filters-sentinel]");
+    var header = document.querySelector(".site-header");
+    if (!bar || !sentinel || !header) return;
+    var stuck = null, calibrated = false;
+    function headerBottom() {
+      // A desktop navigation rail occupies horizontal space, not the top.
+      return getComputedStyle(header).position === "fixed" && header.classList.contains("workspace-nav")
+        ? 0 : header.getBoundingClientRect().bottom;
+    }
+    function check() {
+      var hb = headerBottom();
+      var now = sentinel.getBoundingClientRect().top < hb;
+      if (now !== stuck) { stuck = now; bar.classList.toggle("is-stuck", now); }
+      // One-shot calibration, measured rather than assumed: the CSS `top`
+      // is a first guess, but where a sticky element actually pins varies
+      // (masthead wrap at intermediate widths; one embedded engine renders
+      // sticky descendants a constant 8px low). While stuck, read where the
+      // bar really sits and correct `top` by the difference, once, so the
+      // bar kisses the masthead instead of floating a stripe below it.
+      if (now && !calibrated) {
+        calibrated = true;
+        var delta = bar.getBoundingClientRect().top - (hb - 1);
+        if (Math.abs(delta) > 1) {
+          bar.style.top = (parseFloat(getComputedStyle(bar).top) - delta) + "px";
+        }
+      }
+    }
+    window.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", function () {
+      calibrated = false;
+      bar.style.top = "";
+      check();
+    }, { passive: true });
+    check();
+  })();
+
+  // The bulk-save peek's script lived here. It latched the panel open on a
+  // tap, closed it on Escape and kept `aria-expanded` honest. Gone with the
+  // panel (2026-09-02): the Picked column is the list a bulk save reads from
+  // now, and a column is not a disclosure — there is no open/shut state left
+  // for a script to hold. See `_pickcol.html`.
+
+  // Re-settle each filter <select> after an htmx swap has refreshed its
+  // options with live counts. Two distinct repairs, both observed failing:
+  //
+  // 1. SELECTEDNESS. A <select>'s runtime selection ("selectedness") is a
+  //    different thing from its `selected` ATTRIBUTE, and once the element has
+  //    been rendered the attribute stops governing. htmx swaps innerHTML by
+  //    inserting the new options alongside the old ones and then removing the
+  //    old — and the HTML reset algorithm that runs during that dance leaves
+  //    selectedness on the LAST option. Measured, not theorised: after typing
+  //    in Search, #f-region had `selected` correctly on "Any Region (150)" and
+  //    a live value of "none" — the page would then have filtered to unstated
+  //    regions on the user's next keystroke. The server's rendered attribute
+  //    is the source of truth for what this request selected, so restore from
+  //    it. (Every counted facet guarantees the current selection is present as
+  //    an option, precisely so this always has something to restore from.)
+  //
+  // 2. THE ENHANCED LABEL. base.html wraps every <select> in a styled listbox
+  //    whose button text is a COPY of the selected option's text, taken when
+  //    that option was last read. Without a nudge the hidden native select
+  //    would be correct while the button the user actually reads still showed
+  //    page-load numbers — this redesign's own stale-count bug, one layer up.
+  //
+  // `new Event("change")` DOES NOT BUBBLE by default, and that is load-bearing.
+  // The enhancer's listener is attached directly to the <select>, so it fires;
+  // the form's hx-trigger="change" is attached to the FORM and needs the event
+  // to bubble up to it, so it does not. A bubbling event here would make every
+  // swap trigger another request — an endless loop of the page filtering
+  // itself. Setting `selectedIndex` does not fire `change` on its own.
+  document.body.addEventListener("htmx:afterSettle", function () {
+    document.querySelectorAll(".filters select[name]").forEach(function (sel) {
+      var i = Array.prototype.findIndex.call(sel.options, function (o) {
+        return o.hasAttribute("selected");
+      });
+      if (i > -1 && sel.selectedIndex !== i) sel.selectedIndex = i;
+      sel.dispatchEvent(new Event("change"));
+    });
+  });
+
+  // `is-set` — the class that separates a filter you narrowed from one still
+  // reading "Any X". The server renders it (see the labels above), and that
+  // is the source of truth on load, with JS off, and on a deep link.
+  //
+  // THIS KEEPS IT TRUE FOR THE REST OF THE SESSION, and it has to exist:
+  // the bar sits OUTSIDE `#cov-results`, so an htmx filter change never
+  // re-renders the label carrying the class. Without this, picking "Hong
+  // Kong" would filter the board and leave Region drawn as untouched — the
+  // stale-count bug in a different currency, and on the one control whose
+  // whole job is to say what it is doing.
+  //
+  // Derived from the controls' live VALUES rather than mirrored from the
+  // server, because the values are what the student just changed and what
+  // the next GET will serialize. `.fit-toggle` is deliberately excluded: it
+  // is a checkbox and states its own engaged state in CSS
+  // (`:has(input:checked)`), so giving it a second mechanism would be two
+  // rules for one fact.
+  (function () {
+    var form = document.querySelector(".filters");
+    if (!form) return;
+    // The bar's OWN labels only. A bare `label` selector would also reach the
+    // 100+ `.cmulti-opt` rows inside the Companies panel and stamp the class
+    // on every firm the student ticks — invisible (nothing styles a set
+    // `.cmulti-opt`) and exactly the kind of quiet DOM litter that becomes a
+    // real bug the day someone writes a rule for `.is-set` alone.
+    var SCOPE = ".filters-toolbar > label, .filters-more-grid > label";
+    function sync() {
+      form.querySelectorAll(SCOPE).forEach(function (label) {
+        if (label.classList.contains("fit-toggle")) return;
+        var on = false;
+        label.querySelectorAll("select, input").forEach(function (el) {
+          // The enhancer's own filter box is NOT a filter. Programme Year has
+          // 13 options and base.html's SEARCH_THRESHOLD is 12, so `.csel`
+          // builds it a type-to-filter input INSIDE this label — and without
+          // this guard, typing "2027" to find the option would light Year up
+          // as engaged while the actual selection was still "Any Year".
+          // `.cmulti-menu`'s checkboxes are deliberately NOT excluded: those
+          // are the Companies value, not chrome.
+          if (el.closest(".csel-panel")) return;
+          if (el.type === "checkbox" || el.type === "radio") on = on || el.checked;
+          else on = on || el.value.trim() !== "";
+        });
+        label.classList.toggle("is-set", on);
+      });
+    }
+    form.addEventListener("change", sync);
+    form.addEventListener("input", sync);
+    document.body.addEventListener("htmx:afterSettle", sync);
+    sync();
+  })();
+{% endscript %}
+{% endblock %}

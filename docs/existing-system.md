@@ -168,7 +168,7 @@ input. Stores no password.
 - **Flask dev server** in both apps (`app.run(debug=False, use_reloader=False)`). No gunicorn/
   uwsgi/waitress. Port 5057 is the live UI; 5058 is the retired redirect shim.
 - **214 tests, none using pytest** — plain stdlib asserts and `unittest.TestCase`, run as
-  `python tests/x.py`. Coverage is on pure functions: parsing, ATS URL classification,
+  `python tests/x.py`. Networkly is on pure functions: parsing, ATS URL classification,
   disposition rules, the warmth ratchet, KB promotion. **Nothing tests the Flask routes**, and
   nothing exercises the `claude -p` subprocess end to end.
 - **No auth of any kind.** Grep for session/login/password/current_user returns only Playwright's
@@ -183,7 +183,7 @@ but `recruiting-radar/dashboard/pyproject.toml:14-15,22-23` declares `campaign` 
 editable deps. Unresolved; both are in the repo as-is.
 
 **`coverage.py` is a naming coincidence.** It is the firm×track×region gap engine
-(`live | watching | off-cycle | gap`), unrelated to the Coverage product.
+(`live | watching | off-cycle | gap`), unrelated to the Networkly product.
 
 ---
 

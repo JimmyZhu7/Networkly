@@ -33,10 +33,10 @@ jobs:
           --health-retries=5
 
     env:
-      DJANGO_SETTINGS_MODULE: coverage_web.settings.local
+      DJANGO_SETTINGS_MODULE: networkly_web.settings.local
       DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production
       DATABASE_URL: postgres://coverage:coverage@localhost:5432/coverage
-      COVERAGE_DOMAIN_TEST_DATABASE_URL: postgres://coverage:coverage@localhost:5432/test_coverage_domain
+      COVERAGE_DOMAIN_TEST_DATABASE_URL: postgres://coverage:coverage@localhost:5432/test_networkly_domain
 
     steps:
       - name: Check out repository
@@ -54,18 +54,18 @@ jobs:
         run: uv sync --all-packages --locked
 
       - name: Install the browsers the journey matrix drives
-        run: uv run --package coverage-web playwright install --with-deps chromium webkit
+        run: uv run --package networkly-web playwright install --with-deps chromium webkit
 
       - name: Django system check
-        working-directory: coverage_web
+        working-directory: networkly_web
         run: uv run python manage.py check
 
       - name: Check model changes have migrations
-        working-directory: coverage_web
+        working-directory: networkly_web
         run: uv run python manage.py makemigrations --check --dry-run
 
       - name: Run migrations against the Postgres service container
-        working-directory: coverage_web
+        working-directory: networkly_web
         run: uv run python manage.py migrate --noinput
 
       - name: Create isolated domain test database
@@ -74,7 +74,7 @@ jobs:
           import os
           import psycopg
           with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as conn:
-              conn.execute("CREATE DATABASE test_coverage_domain")
+              conn.execute("CREATE DATABASE test_networkly_domain")
           PY
 
       - name: Run pytest

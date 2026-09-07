@@ -4,7 +4,7 @@
     {
       "name": "coverage-web",
       "runtimeExecutable": "uv",
-      "runtimeArgs": ["run", "python", "coverage_web/manage.py", "runserver", "8000"],
+      "runtimeArgs": ["run", "python", "networkly_web/manage.py", "runserver", "8000"],
       "port": 8000
     }
   ]

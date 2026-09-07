@@ -171,7 +171,7 @@ it does not prove that a particular mailbox refreshed or that a queued scan
 completed. Verify a designated account through connect, scan, retry and reconnect
 before treating the deployment as ready.
 
-## 7. Coverage and Recovery Limits
+## 7. Networkly and Recovery Limits
 
 The deterministic pipeline records supported sent mail, replies, bounces and
 structured calendar evidence against existing contacts. Eligible unmatched mail

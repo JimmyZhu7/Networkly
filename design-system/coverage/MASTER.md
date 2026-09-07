@@ -1,6 +1,6 @@
 # Design System Master File
 
-> **Historical reference — superseded visually on 2026-09-05.** Use [DESIGN.md](../../DESIGN.md) and [workspace.css](../../coverage_web/static/css/workspace.css) for current shared visual decisions. The stylesheet loads after base and route styles in [base.html](../../coverage_web/templates/base.html). This file records the July generator output and its contemporary overrides; its palette values, serif display, density prescriptions, component recipes, and page-override instructions are historical, not authority over the current workspace. Preserve applicable product and functional requirements. Read current route source for page-specific structure.
+> **Historical reference — superseded visually on 2026-09-05.** Use [DESIGN.md](../../DESIGN.md) and [workspace.css](../../networkly_web/static/css/workspace.css) for current shared visual decisions. The stylesheet loads after base and route styles in [base.html](../../networkly_web/templates/base.html). This file records the July generator output and its contemporary overrides; its palette values, serif display, density prescriptions, component recipes, and page-override instructions are historical, not authority over the current workspace. Preserve applicable product and functional requirements. Read current route source for page-specific structure.
 
 ---
 
@@ -20,7 +20,7 @@ towards the generated values.
 
 **Why.** Coverage already has a shipped visual identity — paper/ink/navy, light,
 serif display — defined as CSS custom properties in
-`coverage_web/static/css/coverage.css`. Adopting the generated palette would
+`networkly_web/static/css/coverage.css`. Adopting the generated palette would
 have been an unrequested rebrand of a live product, not a UI pass: it would
 have flipped a light product to dark, replaced a Fraunces/Instrument Sans
 pairing that carries the brand's "considered, premium, not-a-startup" read, and
@@ -32,15 +32,15 @@ design", which the generated dark dashboard palette contradicts directly.
 and should be followed: the Data-Dense Dashboard pattern, the density
 guidance, the component specs, the anti-patterns, and the pre-delivery
 checklist at the bottom. Only the two visual-identity sections below were
-swapped for Coverage's real tokens.
+swapped for Networkly's real tokens.
 
 ---
 
 ## Global Rules
 
-### Color Palette — Coverage's real tokens
+### Color Palette — Networkly's real tokens
 
-Source of truth: `coverage_web/static/css/coverage.css`. Use the variable, never
+Source of truth: `networkly_web/static/css/coverage.css`. Use the variable, never
 the hex, in component CSS.
 
 | Role | Hex | CSS Variable |
@@ -72,7 +72,7 @@ with a word and an SVG glyph. This is a product about deadlines and confidence
 levels; a student who cannot separate the red row from the amber one must still
 be able to read which is which.
 
-### Typography — Coverage's real stack
+### Typography — Networkly's real stack
 
 | Role | Family | CSS Variable |
 |------|--------|--------------|
@@ -100,7 +100,7 @@ Line height: `--lh-body` 1.6, `--lh-tight` 1.25.
 fractions, percentages — takes `font-variant-numeric: tabular-nums`, so it does
 not jiggle its own baseline when it updates.
 
-### Spacing Variables — Coverage's real scale
+### Spacing Variables — Networkly's real scale
 
 *Density 8/10 (Dense / Dashboard) is the right dial for this product; the scale
 below is the one already in the codebase and is what implements it.*
@@ -120,7 +120,7 @@ Radii: `--r-badge` 999px, `--r-ctl` 10px, `--r-panel` 16px.
 Page widths: `--page-w` 960px, `--page-w-narrow` 680px, `--page-w-wide` 1120px,
 `--page-w-full` 1440px.
 
-### Shadow Depths — Coverage's real scale
+### Shadow Depths — Networkly's real scale
 
 Two levels only. Elevation in this product is a hover affordance, not decoration.
 
@@ -146,7 +146,7 @@ must not re-declare their own animations outside it.
 
 ## Component Specs
 
-> **The hex values in the snippets below are the generator's, not Coverage's.**
+> **The hex values in the snippets below are the generator's, not Networkly's.**
 > Read them for *structure* — padding rhythm, radius, which properties
 > transition, where `cursor: pointer` belongs — and substitute the tokens from
 > the palette above for every literal colour. Concretely: `#0F172A` → `var(--surface)`,

@@ -39,11 +39,11 @@ Python dependencies are managed with a uv workspace.
 
 | Package | Responsibility |
 | --- | --- |
-| `coverage_web/` | Web application, authentication, private user data, integrations, and background commands |
-| `coverage_domain/` | Shared recruiting and relationship logic |
-| `coverage_connectors/` | Recruiting-source connectors and ingestion support |
+| `networkly_web/` | Web application, authentication, private user data, integrations, and background commands |
+| `networkly_domain/` | Shared recruiting and relationship logic |
+| `networkly_connectors/` | Recruiting-source connectors and ingestion support |
 
-The internal package and repository names retain `coverage`; the product name is Networkly.
+The application packages and repository use the Networkly name.
 Gmail access is read-only: it reads mail to log activity and cannot send, reply, or delete.
 Provider credentials and local environment files must stay outside Git.
 
@@ -62,7 +62,7 @@ Postgres).
 #    django-environ, htmx is vendored as a static file so nothing to install
 #    there, plus pytest/pytest-django/pytest-cov). Plain `uv sync` alone only
 #    installs the workspace root's own deps — `--all-packages` is required to
-#    pull in coverage_web's (and later coverage_domain's/coverage_connectors')
+#    pull in networkly_web's (and later networkly_domain's/networkly_connectors')
 #    dependencies too.
 uv sync --all-packages
 
@@ -77,7 +77,7 @@ createdb -O coverage coverage
 cp .env.example .env
 
 # 4. Apply migrations.
-cd coverage_web
+cd networkly_web
 uv run python manage.py migrate
 
 # 5. Run the dev server.
@@ -118,9 +118,9 @@ nothing has to be remembered when a test is added:
 |---|---|---|
 | `stress` | any `test_stress_*.py` module | 4,006 of the 9,296 cases, 54 s — a generated matrix over one pure function; it inflates the count far more than the clock |
 | `slow` | any test taking the `client` fixture | 1,369 tests, 251 s — full page renders with a fixture world built per test, which is where the suite's time actually goes |
-| `live` | hand-written, `coverage_connectors` only | hits a real ATS over the network; deselected by its own conftest unless a network run is asked for |
+| `live` | hand-written, `networkly_connectors` only | hits a real ATS over the network; deselected by its own conftest unless a network run is asked for |
 
-`coverage_web/core/tests/test_suite_hygiene.py` pins all three: an
+`networkly_web/core/tests/test_suite_hygiene.py` pins all three: an
 unregistered marker is a warning rather than an error, so it is the kind of
 thing that decays silently.
 
@@ -130,7 +130,7 @@ The `coverage` database above is a **shared, standing dev database** — every
 worktree on a given machine points at the same one by default (only the
 pytest database name is per-worktree, see `settings/base.py`'s Database
 section), and it is also where the founder's own account lives. `uv run
-pytest` / `pytest coverage_web/<app> -q` never touch it — they run against a
+pytest` / `pytest networkly_web/<app> -q` never touch it — they run against a
 throwaway `test_coverage_*` database instead. Anything driven through a
 running `manage.py runserver` or typed into `manage.py shell`, though, lands
 in the real one.

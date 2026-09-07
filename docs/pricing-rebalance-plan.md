@@ -2,7 +2,7 @@
 
 Status: spec for implementation. Template and view changes only unless a
 section says otherwise. Written 2026-08-19 against the live
-`coverage_web/templates/core/pricing.html`, `core/views.py::pricing()`,
+`networkly_web/templates/core/pricing.html`, `core/views.py::pricing()`,
 `billing/credits.py`, `settings/base.py::CREDIT_PLANS`, and
 `docs/credit-system-plan.md`.
 
@@ -24,7 +24,7 @@ full-posting deadlines, eligibility and sponsorship answers) is what gets a
 student to sign up. It stays in Free, generous, with live counts. What goes
 to Pro is the *more-of-it* axis once a student is hooked:
 
-- **Automation** (things Coverage does without being asked): real-time
+- **Automation** (things Networkly does without being asked): real-time
   Gmail sync, Calendar sync, hourly refresh.
 - **Depth** (heavier AI use): a stronger model and three times the credit
   pool.
@@ -36,7 +36,7 @@ and Teal+ keep the job board free and gate auto-tracking, AI volume, and
 integrations; LinkedIn Premium sells depth on a free network. Nobody gates
 the board itself.
 
-It also matches where Coverage's own money goes. The board costs the same
+It also matches where Networkly's own money goes. The board costs the same
 to serve whether one student or fifty read it. The AI surfaces and inbox
 sync are the metered, per-user costs — the credit system exists precisely
 because of them — so they are the honest paid axis.
@@ -155,7 +155,7 @@ order:
 6. `The Today queue and the Network board: warmth lanes, firm tiers,
    one-click logging`
    (merges the old bullets 6 and 7 into one line)
-7. `Talk to Coverage: an advisor that reads your own contacts, firms and
+7. `Talk to Networkly: an advisor that reads your own contacts, firms and
    deadlines before it answers. {{ advisor_free_cap }} messages a day,
    {{ advisor_free_grant }} a month.`
    (adds the monthly ceiling; both numbers measured, never typed)
@@ -173,7 +173,7 @@ recruiting seasons.", `$39` / "one cycle, ~6 months" — but see §9 on the
 price). "Everything in Free, plus" kept. The list goes from five bullets
 to five, rewritten:
 
-1. `Talk to Coverage on a stronger model, with sharper judgement on where
+1. `Talk to Networkly on a stronger model, with sharper judgement on where
    your week should go. Three times the credits: {{ advisor_pro_grant }}
    a month.`
    (replaces "…{{ advisor_pro_cap }} messages a day", which prints 15,
@@ -286,7 +286,7 @@ Group header rows are a single `<td colspan="3">` styled like
 | 10 | Calendar sync | dash | check |
 | 11 | LinkedIn contact import | dash | check |
 | — | **THE ADVISOR** (group) | | |
-| 12 | Talk to Coverage | `Fast model` | `Stronger model` |
+| 12 | Talk to Networkly | `Fast model` | `Stronger model` |
 | 13 | Credits a month, chat and Gmail AI scans | `{{ advisor_free_grant }}` | `{{ advisor_pro_grant }}` |
 | — | **YOUR DATA** (group) | | |
 | 14 | CSV import and export | check | check |
@@ -411,7 +411,7 @@ the same edit:
 
 - **Hero title**: "Free while we earn the right to charge." →
   `"The board is free. The engine is Pro."`
-- **Hero sub**: "Everything Coverage does today is included." →
+- **Hero sub**: "Everything Networkly does today is included." →
   `"Every listing, every deadline, free for everyone. Pro adds sync,
   speed, and a stronger advisor."`
 - **FAQ 1 answer**: drop the Gmail Live mention. New text: `"No. The feed
@@ -441,7 +441,7 @@ bullets.
 1. `pricing()` context: add `advisor_free_grant` / `advisor_pro_grant`.
 2. Rewrite the two Individual cards and supporting copy (§3, §4, §10).
 3. Add the comparison table and its CSS (§6).
-4. Verify: `pytest coverage_web/core` (full-suite run has the known
+4. Verify: `pytest networkly_web/core` (full-suite run has the known
    pre-existing connection-leak issue; verify per-app).
 5. Fast-follow (separate task, before Gmail Live configuration): the plan
    gate in `capture/gmail_live.py` (§7). Optional: the Pro burst raise

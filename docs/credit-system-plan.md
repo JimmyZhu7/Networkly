@@ -1,4 +1,4 @@
-# Credit system plan — metering Coverage's AI surfaces
+# Credit system plan — metering Networkly's AI surfaces
 
 Status, corrected 2026-09-02: **most of this is built.** The header said
 "design for review, nothing built. No code or migrations exist for this yet"
@@ -55,9 +55,9 @@ can be bought.
 
 ## The problem
 
-Coverage now has two AI surfaces a user can spend real money through:
+Networkly now has two AI surfaces a user can spend real money through:
 
-1. **Talk to Coverage** (assistant/) — one student message triggers up to
+1. **Talk to Networkly** (assistant/) — one student message triggers up to
    `MAX_ROUNDS` (8) API round-trips on the plan's model. Today this is capped
    by a per-plan *daily message count* (Free: 15 Haiku messages, Pro: 60
    Sonnet — `assistant/plans.py`, enforced at the top of `agent.run_turn` /
@@ -166,10 +166,10 @@ What the credit-metered market actually does:
   outright.
 - **A few VC-scale tools price below full-burn cost** (Bolt's 13M tokens
   cost more to serve than $20 if fully used) and bank on breakage. Not an
-  option for a bootstrapped app — Coverage must be margin-positive even if
+  option for a bootstrapped app — Networkly must be margin-positive even if
   every user burns everything.
 
-### What Coverage's audience already pays
+### What Networkly's audience already pays
 
 | Tool | Sticker/mo | Cheapest committed/mo |
 |---|---|---|
@@ -193,7 +193,7 @@ sentisight.ai/ai-price-comparison-gemini-chatgpt-claude-grok.
 
 **Read on the market.** Students in an active recruiting cycle demonstrably
 pay $24–40/month for career tools, and $20 is the mental slot for "my one AI
-subscription." Coverage should not fight ChatGPT for the $20 slot — the chat
+subscription." Networkly should not fight ChatGPT for the $20 slot — the chat
 advisor is the surface most substitutable by ChatGPT — and does not need $30
 career-tool pricing to clear healthy margin. **$69 per ~6-month cycle
 (≈ $11.50/mo)** sits under every comp that matters, reads as an add-on
@@ -611,6 +611,6 @@ concurrency primitive needed beyond the `ProcessedStripeEvent` guard above
 7. Meter the coffee-chat brief (`crm/ai_brief.py`, §1): `can_spend`/`spend`
    around `generate_coffee_chat_brief`, new `spend_brief` kind.
 
-Verify per-app (`pytest coverage_web/billing coverage_web/assistant
-coverage_web/capture`) — the full-suite run has a known pre-existing
+Verify per-app (`pytest networkly_web/billing networkly_web/assistant
+networkly_web/capture`) — the full-suite run has a known pre-existing
 connection-leak issue that mass-fails unrelated tests.

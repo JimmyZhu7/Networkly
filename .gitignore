@@ -81,7 +81,7 @@ scripts/seed_founder.py
 
 # Undo journals from data-changing management commands. `backfill_contact_regions`
 # defaults its `--undo-file` to `region_backfill_undo_<timestamp>.json` in the
-# CURRENT DIRECTORY, which for a `manage.py` run is `coverage_web/` — beside the
+# CURRENT DIRECTORY, which for a `manage.py` run is `networkly_web/` — beside the
 # source, where an untracked file is easy to sweep into a `git add`. One already
 # was (866d95b), and it carried the founder's email address and 34 of his live
 # contact IDs mapped to regions into this public repo.

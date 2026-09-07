@@ -1,0 +1,601 @@
+"""The board can show you the same posting twice for two unrelated reasons,
+and they need two different fixes. This module holds both, as pure functions.
+
+CLASS A — one posting, several addresses. An ATS hands the same requisition
+out under more than one URL, so the `(firm, url)` unique key files each copy
+as a distinct posting. `provider_identity` answers "which real posting is this
+URL pointing at?", and ingest uses it to update the row it already has instead
+of minting a second one. Three mechanisms are covered, each confirmed against
+live rows before its rule was written (see each pattern's own note).
+
+CLASS B — several postings, one job. The employer really did open two or more
+requisitions with identical titles in the same city (SIG posts every 2027
+internship under two iCIMS job numbers; Deutsche Bank runs whole apprentice
+intakes as parallel reqs). There is no shared identifier to canonicalize
+toward, and the reqs have independent lifecycles — they can close on different
+days — so merging them would destroy real data. `fold_duplicates` therefore
+suppresses the copies at DISPLAY time only. Every row stays in the database
+and keeps being close-tracked on its own.
+
+Why Class A is not simply a `canonical_url()` extension, which is how the
+`xf-` fix in `networkly_connectors.talnet` handles the same shape of problem:
+that trick needs a canonical URL that still RESOLVES, and tal.net has none.
+Probed live 2026-08-14 against bankcampuscareers / evercore / morganstanley:
+the `/pl/<n>` pool segment is mandatory (dropping it 404s), its valid values
+are board-specific (`pl/1` serves Bank of America's copy but 404s on
+Evercore's, whose pools are 2 and 3), and the posting page's own
+`rel="canonical"` still carries the pool. There is no string every copy can be
+rewritten to that a student could actually click, so the collapse has to
+happen against the stored rows rather than inside the URL.
+"""
+
+from __future__ import annotations
+
+import re
+from functools import lru_cache
+from typing import Any, Iterable, Sequence
+
+# --------------------------------------------------------------------------- Class A
+
+# tal.net. `opp/<id>` is the posting; everything around it is navigation
+# chrome that varies per candidate pool and per brand. Networkly configures two
+# boards per firm (boards.py: `vacancy/1` jobs + `vacancy/2` events), the pool
+# number reappears in every listing URL as `pl/<n>`, and a posting listed on
+# both pools therefore arrives twice. Verified live 2026-08-14: BofA opp 14594
+# under `pl/1` and `pl/2` returns the same posting, and Evercore opp 3145
+# returns the same posting under `brand-5/pl/3`, `brand-6/pl/2` AND
+# `brand-5/pl/2` — so brand is decorative too and is deliberately NOT part of
+# the identity.
+_TALNET_RE = re.compile(
+    r"^https?://(?P<host>[^/]+\.tal\.net)/.*?/opp/(?P<opp>\d+)", re.IGNORECASE
+)
+
+# iCIMS. Job URLs are `/jobs/<id>/<slug>/job`, and the slug is generated from
+# the CURRENT title. Rename the posting and the slug changes, which mints a
+# new row and closes the old one even though `<id>` never moved — observed on
+# SIG job 11260, where "Operations Analyst, Hong Kong" became "Business
+# Operations Analyst (Middle/Back Office), Hong Kong" and Networkly recorded
+# both, one of them wrongly closed.
+_ICIMS_RE = re.compile(
+    r"^https?://(?P<host>[^/]+\.icims\.com)/jobs/(?P<job>\d+)/", re.IGNORECASE
+)
+
+# Workday. `/<site>/job/<location>/<slug>` where the slug ends in the
+# requisition id. On a multi-location posting Workday picks one location for
+# the URL and that choice DRIFTS between scrapes — Blackstone's 2027 Summer
+# Analyst moved from `Berkeley-Square-House-London` to `London`, Morgan
+# Stanley's VEA Team Manager from `Tempe-Arizona…` to `Dallas-Texas…` — each
+# drift minting a new row and closing the live one. 17 such pairs on the
+# current data, every one with a byte-identical slug.
+#
+# The slug is kept WHOLE. Stripping a trailing `-<digits>` as a "collision
+# suffix" is the obvious generalisation and it is wrong: it collapses Bain
+# Capital's `REQ_108333` / `REQ_108333-1` correctly but also collapses
+# Oaktree's `2026-397`, `2026-21` and `2026-83` — real, unrelated requisition
+# ids in `YYYY-NNN` form — into one bogus group of 25 postings. Requisition
+# grammar is per-tenant, so the only safe rule is to discriminate on what
+# differs AROUND an identical id, never to parse the id.
+#
+# Deliberately anchored with `$`, which excludes the `…/apply` variants: those
+# are a sixth path segment and, checked against the live rows, they never pair
+# up with a non-apply copy, so there is nothing to gain and a shape to guess at.
+_WORKDAY_RE = re.compile(
+    r"^https?://(?P<host>[^/]+\.myworkdayjobs\.com)/(?P<site>[^/]+)"
+    r"/job/(?P<loc>[^/]+)/(?P<slug>[^/?#]+)$",
+    re.IGNORECASE,
+)
+
+
+def _workday_has_req(slug: str) -> bool:
+    """Does this Workday slug actually carry a requisition id?
+
+    The identity below ignores the URL's location segment, so it is only
+    sound when something ELSE in the URL pins the posting down. Huatai's board
+    ends every slug at a bare `_` with no id at all
+    (`Private-Wealth-Management---Business-Analyst_`); for those rows title and
+    city are the only signal, which is Class B evidence, not Class A. Refusing
+    an identity here is what keeps two genuinely different Huatai openings from
+    being treated as one — the exact false positive this fix was written to
+    avoid.
+    """
+    head, sep, req = slug.rpartition("_")
+    return bool(sep) and any(c.isdigit() for c in req)
+
+
+def provider_identity(url: str) -> tuple[str, ...] | None:
+    """The real posting `url` points at, as a hashable key, or None when the
+    URL's provider gives no id we can trust.
+
+    None is the honest and common answer. It means "this URL is the only
+    handle we have on this posting", which leaves the existing `(firm, url)`
+    behaviour exactly as it was.
+    """
+    u = (url or "").strip()
+    if not u:
+        return None
+
+    m = _TALNET_RE.match(u)
+    if m:
+        return ("talnet", m.group("host").lower(), m.group("opp"))
+
+    m = _ICIMS_RE.match(u)
+    if m:
+        return ("icims", m.group("host").lower(), m.group("job"))
+
+    m = _WORKDAY_RE.match(u)
+    if m and _workday_has_req(m.group("slug")):
+        return ("workday", m.group("host").lower(), m.group("site"), m.group("slug"))
+
+    return None
+
+
+def collapse_by_identity(rows: Iterable[Any], *, sticky_ids: Iterable[int] = ()) -> list[Any]:
+    """One row per real posting, preserving input order.
+
+    Rows the provider itself identifies as the same posting (`provider_identity`
+    agreeing) collapse to a single representative; a row with no provider
+    identity is always its own group, because None means "this url is the only
+    handle we have", not "these are the same".
+
+    This is the Class A collapse applied to a list already in memory, for
+    callers that have to REASON over the rows rather than render them —
+    `fold_duplicates` is the display-time sibling and deliberately also folds
+    Class B lookalikes, which a reasoner must NOT do: two same-titled
+    requisitions with no shared id may genuinely be two jobs, and collapsing
+    them would answer a question the data cannot answer. Here nothing is
+    guessed at, so the collapse is safe anywhere.
+
+    Written for `applications.match_application`, which refused to mark a
+    confirmation applied because two rows scored identically — they were the
+    same tal.net posting listed under two candidate pools, so "2 roles match
+    that title about equally well" named a choice that did not exist (observed
+    2026-08-15 on Bank of America's Campus Insight Forum, opp 14594).
+    """
+    sticky = frozenset(sticky_ids)
+    rows = list(rows)
+
+    groups: dict[Any, list[Any]] = {}
+    for row in rows:
+        identity = provider_identity(getattr(row, "url", "") or "")
+        key = identity if identity is not None else ("__row__", id(row))
+        groups.setdefault(key, []).append(row)
+
+    keep = {id(min(members, key=lambda m: _survivor_rank(m, sticky)))
+            for members in groups.values()}
+    return [r for r in rows if id(r) in keep]
+
+
+def identity_fragment(identity: Sequence[str]) -> str:
+    """A substring that MUST appear in any URL carrying `identity`, for
+    narrowing a database lookup before the exact check.
+
+    Narrowing only — it is allowed to over-match (`/opp/1459` also matches
+    `/opp/14590`), because every candidate it returns is then confirmed with
+    `provider_identity` equality. It must never UNDER-match, which is why each
+    fragment is taken verbatim out of the pattern that produced the identity.
+    """
+    kind = identity[0]
+    if kind == "talnet":
+        return f"/opp/{identity[2]}"
+    if kind == "icims":
+        return f"/jobs/{identity[2]}/"
+    if kind == "workday":
+        return f"/{identity[3]}"
+    raise ValueError(f"unknown identity kind {kind!r}")
+
+
+# --------------------------------------------------------------------------- Class B
+
+# Curly quotes, en/em dashes and non-breaking spaces are the same characters to
+# a reader and different bytes to a comparison. Deutsche Bank's Jaipur
+# apprentice intake posts "Apprentice hiring for 2026 – 2027" and "Apprentice
+# Hiring for 2026- 2027" for what is plainly the same programme.
+_DASHES = str.maketrans({"‐": "-", "‑": "-", "‒": "-",
+                         "–": "-", "—": "-", "―": "-",
+                         "‘": "'", "’": "'",
+                         "“": '"', "”": '"',
+                         " ": " "})
+_EDGE_NOISE = re.compile(r"^[\s\-–—,;:.·|/]+|[\s\-–—,;:.·|/]+$")
+# A poster reaches for '-', ',', '/', ':', ';' or '|' near-interchangeably to
+# join the same two clauses of a title, and sometimes uses no separator at
+# all. Confirmed live: DRW's Cumberland/FICCO req is titled with a comma on
+# one Greenhouse posting and a dash on the sibling posting of the SAME words
+# (ids 3402/3398 New York, 3401/3399 Greenwich); Fidelity International's
+# Tokyo "Wholesale Sales[,] Senior Manager" the same way (ids 1363/1360,
+# comma vs dash, both independently verified open); a read-only sweep of all
+# 15,479 open rows grouped by firm+location turned up 19 more firm+location
+# groups differing ONLY in which of these characters (or none) joined the
+# same words — MUFG ("AVP-" vs "AVP " with no separator at all), TD
+# Securities, Morgan Stanley (comma+slash vs comma+" / "), PwC Makati,
+# Raymond James, Ares, Societe Generale, SIG (dash vs pipe) and Barclays Pune
+# (dash / en-dash / no separator, one 7-row cluster). The previous version of
+# this function canonicalized whitespace AROUND an existing dash or comma
+# into two different fixed forms (space-free "-" vs ", ") but never equated
+# the two separator styles with each other or with slash/colon/pipe/no-
+# separator renderings, so every pair above hashed to a different
+# `duplicate_key()` and fold_duplicates() left both rows on the board.
+# Collapsing every one of these characters straight to a space — rather than
+# canonicalizing toward one preferred spelling — folds all of the shapes at
+# once, including "no separator" for free, while still leaving genuinely
+# different WORDS (PwC Barcelona's "Legal" vs "Fiscal" practice areas) apart.
+_SEPARATORS = re.compile(r"[-,:;/|]")
+
+
+@lru_cache(maxsize=65536)
+def normalize_label(value: str) -> str:
+    """Casefolded, whitespace- and punctuation-insensitive form of a title or
+    location, for asking "is this the same words?" — never for display.
+
+    MEMOISED on the string, for the same reason and with the same argument as
+    `recommend.role_function_cached`: a pure function of one string over
+    module-level constants, so one caller's answer is every caller's answer,
+    nothing can leak across a tenant boundary, and the only thing that could
+    stale an entry is an edit to the constants above, which is a source
+    change, which restarts the process. The input space is bounded by the
+    board (13,464 distinct titles across 16,029 open rows) rather than by
+    traffic, so `maxsize` is set above it and this is a full memo table in
+    practice.
+
+    Added 2026-09-02 because the Opportunities segmented control now folds
+    before it counts (`views._folded_count`), which means one render folds
+    the same board several times over — once per segment — and every fold
+    normalizes every title and location it sees. Measured on the live
+    16,655-row open board: the five folds a default render performs cost
+    78 ms cold and 10 ms with this cache warm, 67,124 hits against 14,890
+    misses. Every other fold in the product (My Applications, the firm page,
+    the calendar, ingest's own dedupe) is on the same table and gets the same
+    discount."""
+    s = (value or "").translate(_DASHES).casefold()
+    s = _SEPARATORS.sub(" ", s)
+    s = " ".join(s.split())
+    return _EDGE_NOISE.sub("", s)
+
+
+# normalize_label already equates punctuation and separator style ("Wholesale
+# Sales, Senior Manager" == "Wholesale Sales - Senior Manager"), but leaves
+# WORD ORDER as a hard divider. A poster reorders the same clause as often as
+# they reswap its separator: Brookfield posts the identical opening as both
+# "Manager, Finance" (id=955) and "Finance Manager" (id=10488), same firm,
+# same Toronto location, both open — and a full bag-of-words sweep of every
+# open row (round 5) found 18 such groups across Stifel, TD Securities,
+# Barclays, PwC, Morgan Stanley, Deutsche Bank, Point72 ("Quantitative
+# Researcher - Macro" / "Macro Quantitative Researcher") and Blue Owl ("Real
+# Assets Accounting, Senior Associate" / "Senior Associate - Real Assets
+# Accounting"). Sorting the normalized words makes the key order-insensitive
+# on top of separator-insensitive.
+#
+# REPORT-ONLY, DELIBERATELY. This feeds `duplicate_key()` — the
+# dedupe_opportunities LOOKALIKE listing, which only prints candidates for a
+# human to judge — and NOT `fold_duplicates()`, which hides cards from the
+# live feed. Word order alone is too weak a signal to hide a job on:
+# Brookfield genuinely runs "Finance Manager" (id=955, Infrastructure) and
+# "Manager, Finance" (id=10488, Energy) as two different open Toronto
+# requisitions, both deadline-less, so neither the deadline veto nor location
+# clustering would save that pair. A false SPLIT costs a student a scroll; a
+# false FOLD costs them a job they never saw. fold_duplicates() therefore
+# stays word-order strict until some corroborating signal (business unit, or
+# the same requisition id) can tell an anagram apart from a genuine repost.
+def _title_bag(title: str) -> tuple[str, ...]:
+    """Sorted normalized words of a title, for "same words, any order?"."""
+    return tuple(sorted(normalize_label(title).split(" ")))
+
+
+def duplicate_key(row: Any) -> tuple[Any, tuple[str, ...], str]:
+    """The grouping key: same firm, same words for the role (any order),
+    same words for the place."""
+    return (
+        getattr(row, "firm_id", None),
+        _title_bag(getattr(row, "title", "")),
+        normalize_label(getattr(row, "location", "")),
+    )
+
+
+# Workday's LIST endpoint hands over only an aggregate count ("2 Locations")
+# once a posting carries more than one location entry — never the city names
+# — and that count is stored verbatim into `Opportunity.location`
+# (enrich_postings.py's own `_N_LOCATIONS_PLACEHOLDER` documents the same
+# shape on the fetch side). A count is not a place: Franklin Templeton's
+# "Head of Global Talent Acquisition" is one real global hire split into a
+# US-tagged Workday req (location "4 Locations") and a UK-tagged req
+# ("2 Locations") for candidate-sourcing purposes — both postings' own body
+# text states the identical 6-city pool, and both carry
+# `raw["detail_location"] = None`, i.e. Networkly never recovered real
+# place-name text for either row. Treating "4 Locations" and "2 Locations" as
+# two DIFFERENT stated cities (which is what plain `normalize_label` did —
+# they simply don't casefold to the same string) makes the placeholder a
+# hard divider it was never entitled to be. `_cluster_by_location` folds it
+# into the blank bucket instead, the same bucket a genuinely missing location
+# already falls into.
+_N_LOCATIONS_PLACEHOLDER = re.compile(r"^\d+\s+locations?$", re.IGNORECASE)
+
+# A location string is sometimes a real city wrapped in a qualifier that
+# names something OTHER than a place: a country/region code, or (on DBS's
+# Workday board specifically) the posting entity's own internal code. Neither
+# is a place name, so leaving it in the comparison invents a hard divider
+# between two rows that mean the same city — confirmed live on three DBS
+# pairs sharing one requisition-shape each: "PRC - Shanghai" / "Shanghai"
+# (WD80532 / WD83461), "Vadodara-DBIL" / "Vadodara" (WD85424 / WD87755), and
+# "Ahmedabad-DBIL" / "Ahmedabad" (WD85423 / WD86836) — "DBIL" is DBS Bank
+# India Limited's own entity code, not a place.
+#
+# This is deliberately a curated allow-list, not a general "strip the extra
+# word" rule. A bare word-superset rule was checked against a full sweep of
+# DBS's 721 open rows and it ALSO fires on "Ghatkopar Mumbai" vs "Mumbai" and
+# "New Taipei" vs "Taipei" — a real Mumbai suburb and a real, administratively
+# separate city, not qualifier noise. Only tokens confirmed to name something
+# other than a place are ever stripped; every other extra word stays a hard
+# divider, per this module's own rule for genuinely different cities.
+_LOCATION_QUALIFIERS = frozenset({"prc", "dbil"})
+
+
+def _location_cluster_key(location: str) -> str:
+    """`normalize_label(location)` for CLUSTERING only: known non-place
+    qualifier tokens dropped, and the Workday "N Locations" placeholder
+    folded to the same blank key a missing location already uses. Never used
+    for display, and never for `duplicate_key()` — that function's whole job
+    is to stay the strict, unforgiving form of the location."""
+    normalized = normalize_label(location)
+    if _N_LOCATIONS_PLACEHOLDER.match(normalized):
+        return ""
+    words = [w for w in normalized.split(" ") if w not in _LOCATION_QUALIFIERS]
+    return " ".join(words)
+
+
+def _survivor_rank(row: Any, sticky_ids: frozenset) -> tuple:
+    """Which copy the student should see. Lower sorts first.
+
+    The order is fixed and deliberately boring, so the board shows the same
+    copy on every request and the choice can be argued with:
+
+    1. A copy the student has already tracked or applied to. Showing the OTHER
+       copy would render their own pipeline state as if it were never set.
+    2. A copy with a deadline, over one without. A date is the single most
+       actionable fact the card carries.
+    3. A copy with a location, over one without. Same reason, weaker fact —
+       tal.net's second pool routinely drops the city its first pool states.
+    4. A copy with a STATED sponsorship ("yes" or "no"), over one that reads
+       "unknown". views._role_facts only ever renders a sponsorship chip for
+       "yes"/"no" — "unknown" draws no chip at all — so when the tie survives
+       rules 1-3 on an unstated field, picking the "unknown" copy silently
+       erases a fact the OTHER copy actually carried. Confirmed live at SIG:
+       'Quantitative Systematic Trading Internship - PhD: Summer 2027' had
+       id 9100 (sponsorship=unknown) and id 9102 (sponsorship=yes, iCIMS job
+       11084) tied on every earlier rule, and the old order fell through to
+       "seen first" and kept the unknown copy — job 11084's confirmed
+       sponsorship=yes then appeared nowhere on the rendered page. Same
+       pattern on 'Quantitative Research Internship - PhD: Summer 2027' (kept
+       9066/unknown over 9068/yes). This rule only breaks a tie among
+       genuinely identical postings; two copies that STATE different answers
+       ("yes" vs "no") are a data conflict the deadline-style veto would need
+       to catch, not something this ranking should paper over by picking one.
+    5. The one seen first. It is the row that has been on the board longest,
+       so it is the one any link or memory points at.
+    6. Lowest id, purely so the result is total and never depends on input
+       order.
+    """
+    first_seen = getattr(row, "first_seen", None)
+    return (
+        0 if getattr(row, "id", None) in sticky_ids else 1,
+        0 if getattr(row, "deadline", None) else 1,
+        0 if (getattr(row, "location", "") or "").strip() else 1,
+        0 if (getattr(row, "sponsorship", "") or "") in ("yes", "no") else 1,
+        (0, first_seen) if first_seen is not None else (1, None),
+        getattr(row, "id", 0) or 0,
+    )
+
+
+def _stated_grad_claim(row: Any) -> tuple[int, int | None] | None:
+    """The same stated-year precedence as eligibility; never use an inference."""
+    year = str(getattr(row, "class_year", "") or "").strip()
+    if year.isdigit():
+        return int(year), int(year)
+    grad = ((getattr(row, "raw", None) or {}).get("facts") or {}).get("grad") or {}
+    years = [int(y) for y in grad.get("years") or () if str(y).isdigit()]
+    if not years:
+        return None
+    return min(years), None if grad.get("open_high") else max(years)
+
+
+def _competing_claims(cluster: list[Any]) -> bool:
+    """Does this cluster hold two rows that STATE different answers to the
+    same question? Then it is not a duplicate and nothing may be hidden.
+
+    The vetoes live together because there are now two folds that need
+    them (`fold_duplicates` and `fold_city_variants`) and a veto that held on
+    one surface and not the other would be worse than no veto at all. Each
+    one's evidence is written up in `fold_duplicates`' own docstring, which
+    is where the argument for the shape lives; this function is only the
+    single definition of it (P5).
+
+    A blank or "unknown" is a posting that did not say, not a competing
+    claim, so it never blocks — only two DIFFERENT stated values do.
+    """
+    stated_deadlines = {d for d in (getattr(m, "deadline", None) for m in cluster)
+                        if d is not None}
+    stated_cohorts = {c for c in (getattr(m, "cohort", "") or "" for m in cluster)
+                      if c}
+    stated_sponsorship = {v for v in (getattr(m, "sponsorship", "") or ""
+                                      for m in cluster)
+                          if v in ("yes", "no")}
+    stated_grad = {claim for m in cluster if (claim := _stated_grad_claim(m)) is not None}
+    buckets = {getattr(m, "bucket", "") for m in cluster if getattr(m, "bucket", "")}
+    # The same title and city can serve different entry routes or graduation
+    # windows. Keeping only one would hide an eligible posting behind a sibling
+    # whose own requirements exclude the reader.
+    return (len(stated_deadlines) > 1 or len(stated_cohorts) > 1
+            or len(stated_sponsorship) > 1 or len(stated_grad) > 1 or len(buckets) > 1)
+
+
+def _cluster_by_location(members: list[Any]) -> list[list[Any]]:
+    """Split same-firm, same-title rows into one cluster per place.
+
+    A stated city is a hard divider: "Summer Analyst, London" and "Summer
+    Analyst, New York" are two jobs and folding them would delete a city from
+    the board. A BLANK location is not a place, though — it is a missing
+    answer, and tal.net's second candidate pool drops the city its first pool
+    states on the very same posting. So blanks are absorbed into the stated
+    cluster when there is exactly ONE candidate to absorb them into, and left
+    alone as their own cluster whenever the title spans several cities, where
+    guessing which one they belong to would be exactly that, a guess.
+    """
+    by_place: dict[str, list[Any]] = {}
+    for row in members:
+        by_place.setdefault(_location_cluster_key(getattr(row, "location", "")), []).append(row)
+
+    blanks = by_place.pop("", [])
+    if blanks:
+        if len(by_place) == 1:
+            next(iter(by_place.values())).extend(blanks)
+        else:
+            by_place[""] = blanks
+    return list(by_place.values())
+
+
+def fold_duplicates(
+    rows: Iterable[Any], *, sticky_ids: Iterable[int] = (),
+) -> tuple[list[Any], int]:
+    """`(rows_to_show, how_many_were_folded)`, preserving input order.
+
+    Rows fold only when the firm, the role and the place all say the same
+    thing. The database is never touched: this hides a copy from one render,
+    and every row goes on being verified and closed independently, which is
+    the whole point — two requisitions with the same title genuinely can close
+    on different days.
+
+    THE DEADLINE VETO: a cluster holding two or more DIFFERENT stated
+    deadlines is left completely alone. Identical title and city with
+    different act-by dates is the signature of a repeating series rather than
+    a duplicate — Bank of America runs "Quantitative Strategies & Data Group |
+    Recruitment" on both 2026-08-18 and 2026-09-09, and BOCI posts several —
+    and hiding either would cost the student a date they can still make. A
+    cluster where only SOME copies state a deadline still folds, keeping the
+    dated copy: that is one posting recorded twice at different completeness,
+    not two events.
+
+    THE SPONSORSHIP VETO: a cluster holding both a stated "yes" and a stated
+    "no" is likewise left alone. `_survivor_rank` rule 4 breaks a tie on
+    STATED-vs-unknown and says so explicitly — "two copies that STATE
+    different answers ('yes' vs 'no') are a data conflict ... not something
+    this ranking should paper over by picking one" — but nothing was actually
+    catching that case, so the tie fell through to first-seen and the fold
+    picked whichever copy was older. That is the one fold whose cost is not a
+    scroll: `directory.views._eligibility` turns a posting's own "no" into a
+    BLOCKING "Won't sponsor you here" verdict, so hiding the sibling copy that
+    says "yes" leaves an international student looking at a hard wall the
+    board itself contradicts one row away. A blank or "unknown" copy is a
+    posting that did not say and still folds normally, exactly as with the two
+    vetoes below — only two competing claims block. (No cluster on the current
+    15,798 open rows trips this; it is a guard against the shape, not a
+    repair of live data.)
+
+    THE COHORT VETO: a cluster holding two or more DIFFERENT stated `cohort`
+    (programme/intake year) values is likewise left alone. `by_role`/
+    `_cluster_by_location` group purely on firm + normalized title + place,
+    none of which mention the admissions cycle a posting runs — so a firm
+    reposting the identical title+location for its NEXT cohort, with neither
+    copy stating a deadline, used to fold straight down to one survivor and
+    the newer cohort vanished from every fold_duplicates-consuming page, not
+    just from behind a fold-count badge. Confirmed live at Goldman Sachs: four
+    London/Paris pairs (e.g. role IDs 170880/150658 "Global Investment
+    Research — Macro Research, Economics — Seasonal/Off-cycle Internship",
+    London) share firm+title+location byte-for-byte, both sides deadline=None,
+    cohort=2027 vs cohort=2026 — and the 2027 copy was silently dropped in
+    favor of the older 2026 one on Browse Openings, the firm page, My
+    Applications and the calendar alike. As with the deadline veto, a cluster
+    where only SOME copies state a cohort still folds (a blank cohort is a
+    posting that didn't say, not a competing claim) — only two or more
+    DIFFERING non-blank cohorts block the fold.
+    """
+    sticky = frozenset(sticky_ids)
+    rows = list(rows)
+
+    by_role: dict[tuple, list[Any]] = {}
+    for row in rows:
+        key = (getattr(row, "firm_id", None),
+               normalize_label(getattr(row, "title", "")))
+        by_role.setdefault(key, []).append(row)
+
+    keep: set[int] = set()
+    folded = 0
+    for members in by_role.values():
+        if len(members) == 1:
+            keep.add(id(members[0]))
+            continue
+        for cluster in _cluster_by_location(members):
+            if len(cluster) == 1:
+                keep.add(id(cluster[0]))
+                continue
+            if _competing_claims(cluster):
+                keep.update(id(m) for m in cluster)
+                continue
+            winner = min(cluster, key=lambda m: _survivor_rank(m, sticky))
+            keep.add(id(winner))
+            folded += len(cluster) - 1
+
+    return [r for r in rows if id(r) in keep], folded
+
+
+def fold_families(
+    rows: Iterable[Any], family_of, *, sticky_ids: Iterable[int] = (),
+) -> tuple[list[Any], dict[int, int]]:
+    """One row per FAMILY, plus `{survivor_id: how many places it stands for}`.
+    Input order preserved.
+
+    A third fold, for a caller that has to answer "how many distinct JOBS is
+    this?" rather than "which rows are copies of one posting?". `family_of` is
+    the caller's own answer to what makes two rows the same job; a row it
+    returns `None` for is always its own family, because None means "no reason
+    to group this", never "group it with the others".
+
+    WHY THIS IS NOT `fold_duplicates`, and why it must never become it. That
+    function keys on firm plus the normalized title and then splits on the
+    stated city, which it treats as a HARD DIVIDER, deliberately and correctly:
+    a board that folded London into New York would delete a job from the
+    catalogue and the student who wanted London would never learn it existed.
+    This one exists precisely to cross that divider, so it is only ever safe
+    where the surface is a SHORTLIST rather than a catalogue — where a folded
+    row is still one click away on a page the student can reach, and where the
+    cost of naming one job six times is higher than the cost of naming it once.
+    `directory.views.picked_roles` is that surface — the ranked six a bulk
+    "Save all" writes — and carries the argument for its own use of it. A
+    board is not, and must keep using `fold_duplicates`.
+
+    THE SURVIVOR AND THE VETOES ARE THE SAME ONES. `_survivor_rank` picks the
+    copy to keep and `_competing_claims` refuses to fold a family holding two
+    different stated deadlines, cohorts or sponsorship answers — one definition
+    each, shared with `fold_duplicates` (P5), because a veto that held on one
+    fold and not the other would be worse than no veto at all.
+
+    The place count is what keeps the fold from being silent (P4). A survivor
+    standing for four stated places carries `4` so its surface can say so; a
+    family whose rows state fewer than two distinct places carries nothing,
+    because those are repeat listings of one posting rather than one job in
+    several towns, and that is a different fact.
+    """
+    sticky = frozenset(sticky_ids)
+    rows = list(rows)
+
+    families: dict[Any, list[Any]] = {}
+    loose: list[Any] = []
+    for row in rows:
+        fam = family_of(row)
+        if fam is None:
+            loose.append(row)
+        else:
+            families.setdefault(fam, []).append(row)
+
+    keep: set[int] = {id(r) for r in loose}
+    places: dict[int, int] = {}
+    for cluster in families.values():
+        if len(cluster) == 1 or _competing_claims(cluster):
+            keep.update(id(m) for m in cluster)
+            continue
+        winner = min(cluster, key=lambda m: _survivor_rank(m, sticky))
+        keep.add(id(winner))
+        stated = {_location_cluster_key(getattr(m, "location", "") or "")
+                  for m in cluster}
+        stated.discard("")
+        if len(stated) > 1:
+            places[getattr(winner, "id", None)] = len(stated)
+
+    return [r for r in rows if id(r) in keep], places

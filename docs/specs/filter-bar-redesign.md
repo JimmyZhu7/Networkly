@@ -51,7 +51,7 @@ narrow widths.
 Filters", including **Work Authorization**. Student-specific dimension is eligibility
 matching.
 
-**Otta / WTTJ** — the anti-filter pole: onboarding preferences → curated matches. Coverage
+**Otta / WTTJ** — the anti-filter pole: onboarding preferences → curated matches. Networkly
 already has this organ (the "Picked for you" bar) and it correctly lives outside the filters.
 
 **RecruitU — UNVERIFIED.** App is login-gated; marketing pages only. Their events carry

@@ -1,0 +1,1742 @@
+"""The Calendar: three layers on one timeline, and what each refuses to do.
+
+Networkly knew a chat had been SCHEDULED but never when — the Today page's
+"Coming up" says so in its own docstring, reporting when a chat was set up
+"because we do not store a chat datetime anywhere". Meanwhile the capture
+extractors were already pulling a real time off calendar invites and
+dropping it. These tests pin the destination that was missing, plus the
+tenancy and honesty rules that matter once a page starts showing dates.
+"""
+
+from __future__ import annotations
+
+import base64
+import re
+from datetime import timedelta
+
+import pytest
+from django.urls import reverse
+from django.utils import timezone
+
+from capture.gmail import apply_findings
+from crm.models import CalendarEvent, Contact, Touch
+from directory.models import Firm, FirmDate
+
+pytestmark = pytest.mark.django_db(transaction=True)
+
+
+@pytest.fixture
+def user(django_user_model):
+    return django_user_model.objects.create_user(email="jimmy@example.com", password="x")
+
+
+@pytest.fixture
+def logged_in(client, user):
+    client.force_login(user)
+    return user
+
+
+def _at(days=0, hour=15):
+    return timezone.localtime(timezone.now()).replace(
+        hour=hour, minute=0, second=0, microsecond=0) + timedelta(days=days)
+
+
+# ---------------------------------------------------------------------------
+# Layer 1 — chats captured from the mailbox.
+# ---------------------------------------------------------------------------
+
+def test_a_finding_with_a_time_becomes_a_calendar_chat(user):
+    contact = Contact.all_objects.create(user=user, name="Ada Lovelace", email="ada@gs.com")
+    when = _at(days=3)
+    apply_findings(user, [{
+        "name": "Ada Lovelace", "found": True, "email": "ada@gs.com",
+        "thread_id": "t-1", "chat_status": "scheduled",
+        "chat_scheduled_at": when.isoformat(),
+    }])
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert ev.kind == CalendarEvent.KIND_CHAT
+    assert ev.source == CalendarEvent.SOURCE_CAPTURE
+    assert ev.contact_id == contact.id
+    assert "Ada Lovelace" in ev.title
+    assert timezone.localtime(ev.starts_at).hour == when.hour
+
+
+def test_the_twice_daily_sync_updates_one_row_not_many(user):
+    """Keyed on (user, thread). The same invite resurfaces in the search
+    window every run for days; stacking it would fill the month with one
+    chat."""
+    Contact.all_objects.create(user=user, name="Ada Lovelace", email="ada@gs.com")
+    finding = {"name": "Ada Lovelace", "found": True, "email": "ada@gs.com",
+               "thread_id": "t-1", "chat_status": "scheduled",
+               "chat_scheduled_at": _at(days=3).isoformat()}
+    for _ in range(4):
+        apply_findings(user, [finding])
+    assert CalendarEvent.objects.for_user(user).count() == 1
+
+
+def test_a_reschedule_on_the_same_thread_moves_the_event(user):
+    Contact.all_objects.create(user=user, name="Ada Lovelace", email="ada@gs.com")
+    base = {"name": "Ada Lovelace", "found": True, "email": "ada@gs.com",
+            "thread_id": "t-1", "chat_status": "scheduled"}
+    apply_findings(user, [{**base, "chat_scheduled_at": _at(days=3).isoformat()}])
+    moved = _at(days=5)
+    apply_findings(user, [{**base, "chat_scheduled_at": moved.isoformat()}])
+
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert timezone.localtime(ev.starts_at).date() == moved.date(), "moved, not duplicated"
+
+
+def test_a_chat_with_no_stated_time_makes_no_event(user):
+    """Most findings have no time. That is not an error and must not invent
+    one — a made-up slot on a calendar is worse than an absent one."""
+    Contact.all_objects.create(user=user, name="Ada Lovelace", email="ada@gs.com")
+    apply_findings(user, [{"name": "Ada Lovelace", "found": True,
+                           "email": "ada@gs.com", "thread_id": "t-1",
+                           "chat_status": "scheduled"}])
+    assert CalendarEvent.objects.for_user(user).count() == 0
+
+
+def test_an_unreadable_time_makes_no_event(user):
+    Contact.all_objects.create(user=user, name="Ada Lovelace", email="ada@gs.com")
+    apply_findings(user, [{"name": "Ada Lovelace", "found": True,
+                           "email": "ada@gs.com", "thread_id": "t-1",
+                           "chat_status": "scheduled",
+                           "chat_scheduled_at": "next Tuesday-ish"}])
+    assert CalendarEvent.objects.for_user(user).count() == 0
+
+
+# --- a reschedule that lands on a DIFFERENT thread ------------------------ #
+#
+# The shape below is a real one from the founder's mailbox (read-only,
+# 2026-08-25): lily.liu@barclays.com sent "Accepted: Jimmy <> Lily Coffee
+# Chat" on thread 1a0346eb227c8a0b, and then "New Time Proposed: Jimmy (USC)
+# <> Lily Coffee Chat" on a DIFFERENT thread, 1a038f4c6b1e59b3 — Google
+# starts a fresh thread for a counter-proposal. Keyed on the thread alone
+# that is two chats, one of them at a time Lily had just moved away from.
+# The .ics UID is the same on both, because RFC 5545 holds it constant
+# across REQUEST / REPLY / COUNTER for one event.
+
+LILY_UID = "0abc1def2ghi3jkl@google.com"
+
+
+def _lily(thread_id, when, *, sent_at=None, uid=LILY_UID, summary="Coffee Chat"):
+    return {
+        "name": "Lily Liu", "found": True, "email": "lily.liu@barclays.com",
+        "thread_id": thread_id, "chat_status": "scheduled",
+        "chat_scheduled_at": when.isoformat(), "ics_uid": uid,
+        "occurred_at": sent_at.isoformat() if sent_at else None,
+        "evidence": f"Calendar invite received: {summary}",
+    }
+
+
+def test_a_counter_proposal_on_a_new_thread_moves_the_chat(user):
+    Contact.all_objects.create(user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    accepted, proposed = _at(days=3, hour=15), _at(days=4, hour=11)
+
+    apply_findings(user, [_lily("1a0346eb227c8a0b", accepted)])
+    apply_findings(user, [_lily("1a038f4c6b1e59b3", proposed)])
+
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert timezone.localtime(ev.starts_at) == proposed, "moved, not duplicated"
+    assert ev.thread_id == "1a038f4c6b1e59b3", "the thread that spoke last"
+    assert ev.ics_uid == LILY_UID
+
+
+def test_the_older_invite_cannot_drag_the_chat_back(user):
+    """Findings are only sorted by time in the backfill. Applied out of
+    order, the stale "Accepted:" must not win: one row at the wrong time is
+    the same wrong answer as two rows, just quieter."""
+    Contact.all_objects.create(user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    accepted, proposed = _at(days=3, hour=15), _at(days=4, hour=11)
+    monday = timezone.now() - timedelta(days=2)
+
+    apply_findings(user, [_lily("1a038f4c6b1e59b3", proposed, sent_at=monday)])
+    apply_findings(user, [
+        _lily("1a0346eb227c8a0b", accepted, sent_at=monday - timedelta(days=1))
+    ])
+
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert timezone.localtime(ev.starts_at) == proposed
+    assert ev.thread_id == "1a038f4c6b1e59b3"
+
+
+def test_a_chat_already_duplicated_is_collapsed_on_the_next_sync(user):
+    """The rows this bug already wrote are on disk with no UID at all. The
+    next sync has to reconcile them, not just stop adding more."""
+    contact = Contact.all_objects.create(
+        user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    accepted, proposed = _at(days=3, hour=15), _at(days=4, hour=11)
+    for thread, when in (("1a0346eb227c8a0b", accepted), ("1a038f4c6b1e59b3", proposed)):
+        CalendarEvent.all_objects.create(
+            user=user, contact=contact, thread_id=thread, title="Chat with Lily Liu",
+            starts_at=when, kind=CalendarEvent.KIND_CHAT,
+            source=CalendarEvent.SOURCE_CAPTURE,
+        )
+
+    apply_findings(user, [
+        _lily("1a0346eb227c8a0b", accepted),
+        _lily("1a038f4c6b1e59b3", proposed),
+    ])
+
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert timezone.localtime(ev.starts_at) == proposed
+    assert ev.thread_id == "1a038f4c6b1e59b3"
+
+
+def test_two_genuinely_separate_invites_stay_two_events(user):
+    """The fix must not over-merge: two chats with the same person are two
+    rows, and it is their distinct UIDs that say so."""
+    Contact.all_objects.create(user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    apply_findings(user, [
+        _lily("thread-a", _at(days=3), uid="first@google.com"),
+        _lily("thread-b", _at(days=10), uid="second@google.com"),
+    ])
+    assert CalendarEvent.objects.for_user(user).count() == 2
+
+
+def test_an_invite_with_no_uid_still_keys_on_its_thread(user):
+    """The UID is the better key, not a required one. A sender whose .ics
+    will not parse keeps exactly the behaviour they had before."""
+    Contact.all_objects.create(user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    moved = _at(days=6)
+    apply_findings(user, [_lily("thread-a", _at(days=3), uid=None)])
+    apply_findings(user, [_lily("thread-a", moved, uid=None)])
+
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert timezone.localtime(ev.starts_at) == moved
+    assert ev.ics_uid == ""
+
+
+def test_a_dry_run_puts_nothing_on_the_calendar(user):
+    Contact.all_objects.create(user=user, name="Ada Lovelace", email="ada@gs.com")
+    result = apply_findings(user, [{
+        "name": "Ada Lovelace", "found": True, "email": "ada@gs.com",
+        "thread_id": "t-1", "chat_status": "scheduled",
+        "chat_scheduled_at": _at(days=2).isoformat()}], dry_run=True)
+    assert CalendarEvent.all_objects.count() == 0
+    assert result.chats_scheduled == 1, "but it still reports what it would add"
+
+
+# ---------------------------------------------------------------------------
+# Layer 2 — hand-added events.
+# ---------------------------------------------------------------------------
+
+def test_adding_an_event_by_hand(client, logged_in):
+    day = _at(days=2).date()
+    resp = client.post(reverse("crm:calendar_add"), {
+        "title": "Superday", "day": day.isoformat(), "at": "09:30",
+        "kind": "event", "location": "Their office",
+        "description": "Bring copies of the resume.",
+    })
+    assert resp.status_code == 302
+    ev = CalendarEvent.objects.for_user(logged_in).get()
+    assert ev.title == "Superday"
+    assert ev.source == CalendarEvent.SOURCE_MANUAL
+    assert ev.all_day is False
+    assert timezone.localtime(ev.starts_at).hour == 9
+
+
+def test_an_event_with_no_time_is_all_day_not_midnight(client, logged_in):
+    """"Superday on the 14th" is a fact about a day. Storing it as 00:00
+    would sort it above a 9am chat and claim a precision nobody gave."""
+    client.post(reverse("crm:calendar_add"), {
+        "title": "Superday", "day": _at(days=2).date().isoformat(),
+        "at": "", "kind": "event",
+    })
+    assert CalendarEvent.objects.for_user(logged_in).get().all_day is True
+
+
+def test_a_bad_date_re_renders_the_form_with_what_was_typed(client, logged_in):
+    resp = client.post(reverse("crm:calendar_add"), {
+        "title": "Superday", "day": "not-a-date", "kind": "event",
+    })
+    assert resp.status_code == 400
+    body = resp.content.decode()
+    assert "Superday" in body, "the typed title survives the error"
+    assert CalendarEvent.all_objects.count() == 0
+
+
+def test_the_contact_dropdown_only_offers_your_own_people(client, logged_in, django_user_model):
+    other = django_user_model.objects.create_user(email="other@x.com", password="x")
+    Contact.all_objects.create(user=other, name="Someone Elses Contact")
+    mine = Contact.all_objects.create(user=logged_in, name="My Contact")
+
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert "My Contact" in body
+    assert "Someone Elses Contact" not in body
+    assert str(mine.id) in body
+
+
+def test_deleting_removes_only_your_own_event(client, logged_in, django_user_model):
+    other = django_user_model.objects.create_user(email="other@x.com", password="x")
+    theirs = CalendarEvent.all_objects.create(
+        user=other, title="Theirs", starts_at=timezone.now())
+    mine = CalendarEvent.all_objects.create(
+        user=logged_in, title="Mine", starts_at=timezone.now())
+
+    client.post(reverse("crm:calendar_delete", args=[theirs.pk]))
+    assert CalendarEvent.all_objects.filter(pk=theirs.pk).exists(), "not yours to delete"
+
+    client.post(reverse("crm:calendar_delete", args=[mine.pk]))
+    assert not CalendarEvent.all_objects.filter(pk=mine.pk).exists()
+
+
+# ---------------------------------------------------------------------------
+# Layer 3 — confirmed firm deadlines, read-only.
+# ---------------------------------------------------------------------------
+
+def test_only_confirmed_deadlines_reach_the_calendar(client, logged_in):
+    """The cadence engine acts only on `confirmed_official`; a calendar that
+    drew rumours at the same weight would put countdowns on the page for
+    events nobody has confirmed."""
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    today = timezone.localdate()
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_close",
+                            date=today.replace(day=15), confidence=1.0)
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="hk",
+                            event_kind="app_open",
+                            date=today.replace(day=16), confidence=0.3)
+
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert "Applications close" in body
+    assert "Applications open" not in body
+
+
+def test_the_month_can_be_paged_and_a_bad_month_falls_back_to_today(client, logged_in):
+    ok = client.get(reverse("crm:calendar"), {"y": 2027, "m": 3})
+    assert ok.status_code == 200
+    assert "March 2027" in ok.content.decode()
+
+    bad = client.get(reverse("crm:calendar"), {"y": "abc", "m": "99"})
+    assert bad.status_code == 200, "a hand-typed querystring must not 500"
+    assert timezone.localdate().strftime("%B %Y") in bad.content.decode()
+
+
+def test_the_calendar_needs_a_login(client):
+    resp = client.get(reverse("crm:calendar"))
+    assert resp.status_code == 302 and "login" in resp["Location"]
+
+
+# ---------------------------------------------------------------------------
+# The page as a thing you can USE.
+# ---------------------------------------------------------------------------
+
+def test_a_bad_submission_still_reports_the_months_real_counts(client, logged_in):
+    """The error re-render used to pass hard-coded zeroes, so mistyping a date
+    made the month's real deadlines read "0" — the page contradicting itself
+    at the moment it tells you you got something wrong."""
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    today = timezone.localdate()
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_close",
+                            date=today.replace(day=15), confidence=1.0)
+
+    resp = client.post(reverse("crm:calendar_add"), {
+        "title": "Superday", "day": "not-a-date", "kind": "event",
+        "y": today.year, "m": today.month,
+    })
+    assert resp.status_code == 400
+    body = resp.content.decode()
+    # One deadline, singular. The negative guard is load-bearing: the
+    # singular string is a substring of the plural one, so the positive
+    # assertion alone still passes against the old hard-coded "s".
+    assert "<b>1</b> Deadline" in body
+    assert "<b>1</b> Deadlines" not in body
+    # The real count either way — the bug this guards against was the error
+    # path passing a hard-coded zero regardless of what the month actually
+    # holds. A zero chip renders nothing now (see the month-rail-style
+    # zero-hiding on the legend), so the context dict, not a chip's text, is
+    # what proves the error re-render used the month's REAL counts rather
+    # than the old placeholder.
+    assert resp.context["counts"]["chat"] == 0
+    assert resp.context["counts"]["event"] == 0
+    assert ('class="cal-key cal-key-chat"' not in body
+            and 'class="cal-key cal-key-event"' not in body)
+
+
+def test_clicking_a_day_prefills_that_date_and_opens_the_form(client, logged_in):
+    today = timezone.localdate()
+    body = client.get(reverse("crm:calendar"),
+                      {"y": today.year, "m": today.month, "day": 14}).content.decode()
+    assert f'value="{today.replace(day=14).isoformat()}"' in body
+    assert "<details class=\"cal-add\" id=\"add\" open>" in body
+
+
+def test_an_impossible_day_is_ignored_not_an_error(client, logged_in):
+    """The day is a convenience. A hand-typed 99 should still leave a usable
+    form rather than a 500 or a date in the following month."""
+    for bad in ("99", "0", "-3", "abc", ""):
+        resp = client.get(reverse("crm:calendar"), {"day": bad})
+        assert resp.status_code == 200, bad
+        assert "cal-add\" id=\"add\" open" not in resp.content.decode(), bad
+
+
+def test_your_own_events_can_be_removed_from_the_page(client, logged_in):
+    """The delete endpoint shipped with no way to reach it. This pins that a
+    rendered event carries its own Remove control."""
+    ev = CalendarEvent.all_objects.create(
+        user=logged_in, title="Superday", starts_at=timezone.now(),
+        description="Bring copies of the resume.")
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert reverse("crm:calendar_delete", args=[ev.pk]) in body
+    assert "Bring copies of the resume." in body, "and the notes are readable, not just a tooltip"
+
+
+def test_a_firm_deadline_offers_no_remove_button(client, logged_in):
+    """Directory data is not the user's to delete from here."""
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_close",
+                            date=timezone.localdate().replace(day=15), confidence=1.0)
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert "Applications close" in body
+    assert "Remove" not in body
+
+
+@pytest.mark.parametrize("hour,minute,expected", [
+    (9, 0, "9am"), (9, 30, "9:30am"), (12, 0, "12pm"), (12, 5, "12:05pm"),
+    (15, 0, "3pm"), (0, 0, "12am"), (23, 45, "11:45pm"),
+])
+def test_the_chip_time_is_short_and_gets_noon_and_midnight_right(
+        client, logged_in, hour, minute, expected):
+    """`time:"g:ia"` renders "12:00p.m." — noise in the narrowest column on
+    the page. Stripping the leading zero off %I turns 12 into an empty
+    string, so noon and midnight are the cases worth pinning."""
+    when = timezone.localtime(timezone.now()).replace(
+        day=14, hour=hour, minute=minute, second=0, microsecond=0)
+    CalendarEvent.all_objects.create(
+        user=logged_in, title="Superday", starts_at=when, all_day=False)
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert f'<span class="cal-ev-time">{expected}</span>' in body
+
+
+def _style_block(body: str) -> str:
+    """Every inline stylesheet on the page, concatenated.
+
+    This used to return the FIRST `<style>` block, which worked only while the
+    calendar page had one. The 2026-09-02 UI pass added a coarse-pointer block
+    to the shell, ahead of the page's own, and three guards below started
+    reading a stylesheet that had never heard of `.cal-grid` — failing with
+    "the rule moved" when nothing had moved at all. The guards are about what
+    the page's CSS says in total, so read it in total; a page is free to split
+    its rules across as many blocks as it likes."""
+    return "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", body, re.DOTALL))
+
+
+def _outside_media(css: str) -> str:
+    """The stylesheet's base rules: @media blocks and comments both removed.
+
+    Comments have to go first. A rule this file forbids is exactly the thing a
+    comment next to it wants to NAME, so scanning raw source makes the guard
+    fire on the explanation of the bug rather than the bug — which is how it
+    failed the first time it ran.
+    """
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+    out, i = [], 0
+    while i < len(css):
+        at = css.find("@media", i)
+        if at == -1:
+            out.append(css[i:])
+            break
+        out.append(css[i:at])
+        depth, j = 0, css.index("{", at)
+        while j < len(css):
+            depth += (css[j] == "{") - (css[j] == "}")
+            if depth == 0:
+                break
+            j += 1
+        i = j + 1
+    return "".join(out)
+
+
+def test_the_agenda_is_never_hidden_by_a_rule_that_outranks_the_breakpoint(client, logged_in):
+    """The narrow layout switch, guarded at the source.
+
+    `.cal-agenda { display: none }` written OUTSIDE a media query has the same
+    specificity as the `display: block` inside the max-width one, so the later
+    of the two wins at every width. Written last, it hid the agenda on narrow
+    screens while the grid was already hidden there: below 820px the month
+    rendered as nothing at all. The fix is two mutually exclusive queries, and
+    this pins it — any bare display rule for `.cal-agenda` is the bug coming
+    back.
+
+    Same failure family as the `.wa-col-short` rule on the settings page, which
+    is why it is worth a test rather than a comment.
+    """
+    css = _style_block(client.get(reverse("crm:calendar")).content.decode())
+    base = _outside_media(css)
+    assert ".cal-agenda {" not in base, (
+        "A bare `.cal-agenda` display rule outranks the breakpoint that shows "
+        "it. Put it inside `@media (min-width: 821px)` instead."
+    )
+    assert "@media (max-width: 820px)" in css and "@media (min-width: 821px)" in css
+    # And the counterweight: the scan is reading a real stylesheet.
+    assert ".cal-grid {" in base
+
+
+# ---------------------------------------------------------------------------
+# The grid as a readable surface: uniform cells, intensity.
+# ---------------------------------------------------------------------------
+
+def test_a_day_is_tinted_by_how_much_is_on_it(client, logged_in):
+    day = timezone.localtime(timezone.now()).replace(
+        day=20, hour=9, minute=0, second=0, microsecond=0)
+    for i in range(2):
+        CalendarEvent.all_objects.create(
+            user=logged_in, title=f"Thing {i}", starts_at=day + timedelta(hours=i))
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert 'class="cal-day load-2' in body
+    assert 'class="cal-day load-0' in body, "quiet days stay untinted"
+
+
+def test_intensity_stops_climbing_past_three(client, logged_in):
+    """Capped on purpose. A day with nine things is not three times harder to
+    read than a day with three, and an uncapped ramp just goes muddy."""
+    day = timezone.localtime(timezone.now()).replace(
+        day=20, hour=9, minute=0, second=0, microsecond=0)
+    for i in range(9):
+        CalendarEvent.all_objects.create(
+            user=logged_in, title=f"Thing {i}", starts_at=day + timedelta(minutes=i))
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert "load-3" in body
+    assert "load-4" not in body and "load-9" not in body
+    assert "9 on this day" in body, "the exact count still reaches the tooltip"
+
+
+def test_every_week_lays_out_on_identical_columns(client, logged_in):
+    """Each week is its own grid container, so a bare `1fr` — which is
+    `minmax(auto, 1fr)` — lets a long title set that column's minimum in ITS
+    week alone, and the six weeks stop lining up down the page. Reported as
+    "each date box should be the same". A zero floor makes the tracks purely
+    proportional so all six grids agree.
+    """
+    css = _style_block(client.get(reverse("crm:calendar")).content.decode())
+    grid = [line for line in css.splitlines() if ".cal-week {" in line]
+    assert grid, "the week grid rule moved; this guard needs updating"
+    assert "repeat(7, minmax(0, 1fr))" in grid[0], (
+        "Week columns must have a zero minimum, or long entry titles widen "
+        "their own week's column and the weeks misalign."
+    )
+    assert "repeat(7, 1fr)" not in grid[0]
+
+
+def test_the_period_title_cannot_shove_the_controls_along_the_bar(client, logged_in):
+    """Reported as "the whole thing moves around when I change from day to
+    month to week".
+
+    `.cal-bar` is one wrapping flex row, and `.cal-month` is the only item on
+    it whose width is content. `_period_label` spans a range no reserved slot
+    can absorb — measured at 1440px in the page's own 26px display black,
+    "May 2026" is 146px and "28 December 2026 to 3 January 2027" is 471px. On
+    a shared line every control after the title inherited that 325px range:
+    switching Month -> Week -> Day on 30 December 2026 moved the view switcher
+    from x=326 to x=595 to x=515, and Today, Subscribe and Add each by 268px.
+
+    `flex-basis: 100%` gives the title the whole first line, so the controls
+    start the next one at a fixed origin. Re-measured after: the switcher sits
+    at x=112 and Today at x=354 in all three views, at 1440px and at 375px.
+
+    UPDATE 2026-08-31, same day: `.cal-month` moved off the 26px display face
+    onto a 20px Instrument Sans (see its comment in calendar.html) and the
+    week format now abbreviates months, so the numbers above are the
+    ORIGINAL bug this guard was written against, not the current live sizes.
+    Re-measured in the new type, the range is 92px ("May 2026") to 306px
+    ("Wednesday 30 September 2026", now the widest case — day overtakes week
+    once week's months abbreviate). Still a real shove if shared, which is
+    what `test_one_date_gets_three_very_differently_sized_headings` in
+    test_calendar_views.py now pins with the current strings and widths.
+
+    Two ways to break it, so two assertions:
+      * dropping the full-width basis, which puts the title back on the
+        controls' line;
+      * introducing a SECOND content-width item ahead of them, which
+        reintroduces the same shove from a different element.
+    """
+    body = client.get(reverse("crm:calendar")).content.decode()
+    css = _style_block(body)
+
+    assert ".cal-month {" in css, "the .cal-month rule moved; update this guard"
+    block = css.split(".cal-month {", 1)[1].split("}", 1)[0]
+    assert "flex-basis: 100%" in block, (
+        "The period title must take the whole first line of .cal-bar. Sharing "
+        "it, a 325px swing in the label's own width drags the switcher, Today, "
+        "Subscribe and Add along with it."
+    )
+
+    # Nothing content-width may precede the controls. The title opens
+    # `.cal-bar` and `.cal-nav` opens the control run, so the only tags
+    # between them are the title's own.
+    bar = body.split('<div class="cal-bar">', 1)[1].split('<div class="cal-nav">', 1)[0]
+    assert re.findall(r"</?([a-z0-9]+)", bar) == ["h2", "h2"], (
+        "Only the period title may sit between the start of .cal-bar and "
+        ".cal-nav. A second item there shares the controls' line and moves "
+        "them again."
+    )
+    assert 'class="cal-month"' in bar
+
+
+# ---------------------------------------------------------------------------
+# The control line: one height, one hierarchy, four words fewer.
+#
+# Reported live as "refine this part of the calendar, simplify and ensure it
+# is visually harmonious". Measured at 1280px before the pass: six controls
+# in one row at FOUR different heights — arrows 36px, the switcher's track
+# 40.4, Today and Subscribe 37.6, Add 39 — every one of them whatever its own
+# padding happened to compute, and all six drawn as outlined boxes at one
+# weight whether they were pressed every visit (the arrows) or once ever
+# (Subscribe).
+# ---------------------------------------------------------------------------
+
+def _bar_markup(body: str) -> str:
+    """The control line: `.cal-bar`, minus its <style> blocks and minus the
+    add panel's form.
+
+    Two subtractions, each for a reason that has already bitten this file.
+    The <style> blocks, because the bar's rules name its class names and
+    several of its comments SHIP — a `/* */` inside a rendered <style> is
+    page text, so a copy guard reading the raw response reads the
+    explanation of a label as well as the label. The form, because the
+    <details> lives inside `.cal-bar` and its submit button is a second
+    `.btn-primary`: counting filled controls on the ROW has to stop at the
+    disclosure, which is where the row stops.
+
+    Sliced by depth rather than by the first `</div>`, which closes
+    `.cal-nav` and would cut the bar off after its first control.
+    """
+    markup = re.sub(r"<style[^>]*>.*?</style>", "", body, flags=re.DOTALL)
+    start = markup.index('<div class="cal-bar">')
+    depth, i = 0, start
+    for tag in re.finditer(r"<(/?)div\b", markup[start:]):
+        depth += -1 if tag.group(1) else 1
+        if depth == 0:
+            i = start + tag.end()
+            break
+    else:                                     # pragma: no cover - malformed
+        raise AssertionError("the .cal-bar element never closes")
+    bar = markup[start:i]
+    return re.sub(r"<form\b.*?</form>", "", bar, flags=re.DOTALL)
+
+
+def test_every_control_on_the_bar_is_the_same_height(client, logged_in):
+    """Four heights on one row is what "busy" was measuring: 36 / 40.4 / 37.6
+    / 39 at 1280px, so nothing lined up along either edge. `--cal-h` states
+    the row's height once and every control is set to it — which also means a
+    control added later cannot quietly introduce a fifth.
+
+    Asserted on the declarations rather than on rendered pixels, because a
+    template test has no layout engine: the guarantee is that no control on
+    this bar sizes itself, and that is a property of the CSS.
+    """
+    css = _style_block(client.get(reverse("crm:calendar")).content.decode())
+    css_bare = _outside_media(css)
+
+    assert re.search(r"\.cal-bar \{[^}]*--cal-h: 40px", css_bare), (
+        "the control line's height must be declared once, on .cal-bar"
+    )
+    assert "@media (pointer: coarse) { .cal-bar { --cal-h: 44px; } }" in css, (
+        "a finger still owes 44px; the row's own token is where that is said"
+    )
+
+    for selector, expected in (
+        (r"\.cal-nav \.btn \{", "height: var(--cal-h)"),
+        (r"\.cal-nav \.cal-arrow \{", "width: var(--cal-h)"),
+        (r"\.cal-views\.scope-tabs a \{", "height: calc(var(--cal-h) - 10px)"),
+        (r"\.cal-add > summary \{", "height: var(--cal-h)"),
+    ):
+        block = re.search(selector + r"(.*?)\}", css_bare, re.DOTALL)
+        assert block, f"the rule matching {selector} moved; update this guard"
+        assert expected in block.group(1), (
+            f"{selector} must take its size from --cal-h, not from its own "
+            f"padding. Expected {expected!r}."
+        )
+
+
+def test_today_is_joined_to_the_arrows_it_shares_a_job_with(client, logged_in):
+    """Back a period, to today, forward a period: one job, and now one
+    control. Today used to stand four controls away from the arrows, past the
+    view switcher, dressed exactly like Subscribe — which it has nothing in
+    common with.
+
+    Two halves, because either can regress alone: the three links have to sit
+    inside `.cal-nav` in that order, and the group has to be DRAWN as one
+    object (square inner corners, `--r-ctl` on the two outer ones, a shared
+    edge rather than a gap).
+    """
+    body = client.get(reverse("crm:calendar")).content.decode()
+    group = _bar_markup(body).split('<div class="cal-nav">', 1)[1]
+
+    order = re.findall(r'rel="prev"|data-today-link|rel="next"', group)
+    assert order[:3] == ["rel=\"prev\"", "data-today-link", "rel=\"next\""], (
+        "the period group is ‹ / Today / ›, in that order: Today is what the "
+        f"two arrows move away from. Got {order[:3]}."
+    )
+
+    css = _outside_media(_style_block(body))
+    base = re.search(r"\.cal-nav \.btn \{(.*?)\}", css, re.DOTALL).group(1)
+    assert "border-radius: 0" in base and "margin-left: -1px" in base, (
+        "a joined group shares one edge between neighbours and squares the "
+        "corners inside it; gaps and full radii are three boxes again"
+    )
+    first = re.search(r"\.cal-nav \.btn:first-child \{(.*?)\}", css, re.DOTALL)
+    last = re.search(r"\.cal-nav \.btn:last-child \{(.*?)\}", css, re.DOTALL)
+    assert first and "var(--r-ctl) 0 0 var(--r-ctl)" in first.group(1)
+    assert last and "0 var(--r-ctl) var(--r-ctl) 0" in last.group(1)
+    assert re.search(r"\.cal-nav \{[^}]*\}", css).group(0).count("gap") == 0, (
+        "the segments touch; a gap between them is what made them read as "
+        "three separate controls"
+    )
+
+
+def test_the_joined_group_does_not_lift_one_segment_out_of_itself(
+        client, logged_in):
+    """`.btn:hover` translates -1px and casts a shadow, which is right for a
+    free-standing button and wrong inside a group whose outline the other two
+    segments are still drawing: the hovered one tears out of it. Ground and
+    border instead, with the hovered segment raised in the stack so its own
+    edge wins over the neighbour it shares a pixel with."""
+    css = _outside_media(
+        _style_block(client.get(reverse("crm:calendar")).content.decode()))
+    hover = re.search(r"\.cal-nav \.btn:hover \{(.*?)\}", css, re.DOTALL)
+    assert hover, "the group's hover rule moved; update this guard"
+    assert "transform: none" in hover.group(1)
+    assert "box-shadow: none" in hover.group(1)
+    assert "z-index: 1" in hover.group(1)
+
+
+def test_the_bar_names_exactly_one_primary_action(client, logged_in):
+    """Six outlined boxes at one weight said nothing about which of them
+    matters. Adding an entry is the only thing this page lets you DO, so it
+    is the only filled control on the row; everything else moves you around
+    the calendar or reports what is on it.
+
+    "Exactly one" is the assertion, not "at least one": a second primary here
+    would put the hierarchy straight back where it was.
+    """
+    bar = _bar_markup(client.get(reverse("crm:calendar")).content.decode())
+    assert bar.count("btn-primary") == 1, (
+        "one filled control on the control line, and it is Add"
+    )
+    assert '<summary class="btn btn-primary">Add event</summary>' in bar
+
+
+def test_subscribe_recedes_to_a_link_without_leaving_the_bar(client, logged_in):
+    """Subscribe is a once-ever action — point Apple or Google Calendar at the
+    feed one time and never touch it again — and it was drawn at exactly the
+    weight of Today, which is pressed several times a session.
+
+    Demoted, NOT deleted and NOT moved off the page: this is the only place
+    in the product that HANDS OUT the feed (Settings' Calendar Link row only
+    resets it), so it stays on the calendar's own bar, at the quiet end
+    beside the counts. The demotion is size only — it keeps the accent ink
+    and hover underline every link in the product has, because a control that
+    matches the static text beside it is not a quieter control, it is one you
+    cannot tell is a control.
+    """
+    body = client.get(reverse("crm:calendar")).content.decode()
+    bar = _bar_markup(body)
+
+    link = re.search(r'<a class="[^"]*\bcal-sub\b[^"]*"[^>]*>', bar)
+    assert link, "the Subscribe control left the calendar bar"
+    assert "webcal://" in link.group(0) and "calendar/feed/" in link.group(0)
+    assert "btn-primary" not in link.group(0), "subscription remains secondary to Add event"
+
+    css = _outside_media(_style_block(body))
+    rule = re.search(r"\.cal-sub \{(.*?)\}", css, re.DOTALL)
+    assert rule, "the .cal-sub rule moved; update this guard"
+    assert "font-size: var(--fs-xs)" in rule.group(1)
+    assert "color:" not in rule.group(1), (
+        "size is the demotion; overriding the colour costs the link its own "
+        "affordance"
+    )
+
+
+def test_the_bars_labels_say_their_object_without_saying_the_page(
+        client, logged_in):
+    """Two copy changes, opposite directions.
+
+    "Add to the calendar" was four words next to two one-word controls, and
+    the object it named is the page it is printed on. The commit action under
+    the form still reads "Add to calendar", so the object is stated where it
+    is being committed rather than on the disclosure that reveals the form.
+
+    "Subscribe" named no object at all, on a product that sells subscriptions
+    and links Pricing in its own footer: to a student who has read no
+    documentation a lone "Subscribe" can as easily mean "start paying". The
+    destination app settles both questions. The verb itself stays, because it
+    is the word Apple and Google use in the dialog the link opens and the one
+    Settings' Calendar Link row refers back to.
+    """
+    body = client.get(reverse("crm:calendar")).content.decode()
+    bar = _bar_markup(body)
+
+    assert ">Add event</summary>" in bar
+    assert "Add to the calendar" not in bar
+    # The commit still names what it commits to.
+    assert ">Add to calendar</button>" in body
+
+    assert "Subscribe to calendar" in bar
+    assert not re.search(r">\s*Subscribe\s*<", bar), (
+        "the bare verb named no object"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Timezone anchoring: what a reported time MEANS.
+# ---------------------------------------------------------------------------
+
+def test_an_offset_carrying_time_passes_through_untouched(user):
+    """"10am HKT" arrives as +08:00. The stored instant must be exactly that
+    instant — 02:00 UTC — regardless of server or account settings."""
+    Contact.all_objects.create(user=user, name="Jim Li", email="jim@jefferies.com")
+    apply_findings(user, [{
+        "name": "Jim Li", "found": True, "email": "jim@jefferies.com",
+        "thread_id": "t-hk", "chat_status": "scheduled",
+        "chat_scheduled_at": "2026-08-05T10:00:00+08:00"}])
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert ev.starts_at.isoformat() == "2026-08-05T02:00:00+00:00"
+
+
+def test_a_naive_time_is_anchored_to_the_users_own_zone(user, django_user_model):
+    """The sync runs in a management command, which never passes through
+    TimezoneMiddleware — so "the current timezone" there is the server's UTC.
+    A naive "10am" from a Hong Kong user's thread must still mean 10am in
+    Hong Kong (02:00 UTC), not 10am UTC (6pm her time)."""
+    user.timezone = "Asia/Hong_Kong"
+    user.save(update_fields=["timezone"])
+    Contact.all_objects.create(user=user, name="Jim Li", email="jim@jefferies.com")
+    apply_findings(user, [{
+        "name": "Jim Li", "found": True, "email": "jim@jefferies.com",
+        "thread_id": "t-naive", "chat_status": "scheduled",
+        "chat_scheduled_at": "2026-08-05T10:00:00"}])
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert ev.starts_at.isoformat() == "2026-08-05T02:00:00+00:00"
+
+
+def test_an_unset_or_garbage_zone_falls_back_to_the_project_default(user):
+    """Same discipline as TimezoneMiddleware: a blank or unloadable zone name
+    must not crash the sync — it falls back to settings.TIME_ZONE (UTC)."""
+    user.timezone = "Not/A_Zone"
+    user.save(update_fields=["timezone"])
+    Contact.all_objects.create(user=user, name="Jim Li", email="jim@jefferies.com")
+    apply_findings(user, [{
+        "name": "Jim Li", "found": True, "email": "jim@jefferies.com",
+        "thread_id": "t-bad", "chat_status": "scheduled",
+        "chat_scheduled_at": "2026-08-05T10:00:00"}])
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert ev.starts_at.isoformat() == "2026-08-05T10:00:00+00:00"
+
+
+# ---------------------------------------------------------------------------
+# The ICS feed — the calendar reaching the calendar app the user lives in.
+# ---------------------------------------------------------------------------
+
+def test_the_feed_serves_events_and_confirmed_deadlines(client, user):
+    c = Contact.all_objects.create(user=user, name="Ada Lovelace")
+    CalendarEvent.all_objects.create(
+        user=user, contact=c, title="Chat with Ada Lovelace",
+        starts_at=_at(days=2), kind="chat", thread_id="t-ics")
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_close",
+                            date=timezone.localdate() + timedelta(days=9),
+                            confidence=1.0)
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="hk",
+                            event_kind="app_open",
+                            date=timezone.localdate() + timedelta(days=9),
+                            confidence=0.3)
+
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+    assert "BEGIN:VCALENDAR" in body
+    assert "Chat with Ada Lovelace" in body
+    assert "Applications close" in body
+    assert "Applications open" not in body, "rumours stay off the feed too"
+
+
+def test_a_wrong_token_is_a_404_not_an_empty_calendar(client, user):
+    resp = client.get("/app/calendar/feed/not-a-real-token.ics")
+    assert resp.status_code == 404
+
+
+def test_the_feed_is_tenant_scoped(client, user, django_user_model):
+    other = django_user_model.objects.create_user(
+        email="other-ics@x.com", password="x")
+    CalendarEvent.all_objects.create(
+        user=other, title="Their private chat", starts_at=_at(days=1))
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+    assert "Their private chat" not in body
+
+
+def test_the_feed_needs_no_session(client, user):
+    """Calendar apps fetch from their own servers, cookie-less. The token IS
+    the auth."""
+    c = client.get(f"/app/calendar/feed/{user.calendar_token}.ics")
+    assert c.status_code == 200
+    assert c["Content-Type"].startswith("text/calendar")
+
+
+# ---------------------------------------------------------------------------
+# Layer 4 — the closing dates of roles this user tracks.
+#
+# The layer exists because layer 3 answers a different question: a FirmDate is
+# the firm's whole cycle, while these are the postings the user actually
+# starred. They were extracted, stored, shown on the feed, and invisible on the
+# two surfaces that exist to warn you.
+# ---------------------------------------------------------------------------
+
+def _pinned_day(day, months_ahead=0):
+    """Day `day` of the month `months_ahead` months from now."""
+    first = timezone.localdate().replace(day=1)
+    for _ in range(months_ahead):
+        first = (first + timedelta(days=32)).replace(day=1)
+    return first.replace(day=day)
+
+
+def _tracked_role(user, *, day, title="Summer Analyst", status="", dismissed=False,
+                  firm=None, url=None, posting_status="open", months_ahead=0):
+    """`day` is a day of THIS month, the same anchoring `_firm_date` uses.
+
+    `months_ahead` moves that same pinned day into a LATER month, for the one
+    test that has to straddle a month boundary on purpose rather than wait for
+    the calendar to hand it one. It is not an offset from today either — the
+    day stays pinned, only the month moves — so it inherits the same
+    every-day-of-the-year stability as the default.
+
+    It used to be `days`, an offset from today, which reads better and is
+    wrong: the grid is bounded by `_month_bounds`, so in the last week of
+    any month `today + 7 days` files the fixture under
+    NEXT month and the assertion goes looking for it on a page the test never
+    asked for. Nothing about these tests is actually relative to today —
+    `_tracked_deadlines` has no past/future filter and `is_posting_closed`
+    reads `Opportunity.status`, not the date — so the month is pinned instead.
+    Days 15-18 are used throughout: every month has them.
+
+    `status` is the STUDENT's funnel stage (`applied_status`);
+    `posting_status` is the POSTING's own (`Opportunity.status`, written by the
+    nightly reverify pass). Both spell "closed" and they mean different
+    things — see directory/deadlines.py's `is_posting_closed`."""
+    from analytics.models import UserOpportunity
+    from directory.models import Opportunity
+
+    firm = firm or Firm.objects.filter(slug="gs").first() or Firm.objects.create(
+        slug="gs", name="Goldman Sachs")
+    opp = Opportunity.objects.create(
+        firm=firm, title=title, status=posting_status,
+        deadline=_pinned_day(day, months_ahead),
+        url=url or f"https://gs.com/{title.lower().replace(' ', '-')}-{day}"
+            + (f"-m{months_ahead}" if months_ahead else ""))
+    UserOpportunity.all_objects.create(
+        user=user, opportunity=opp, applied_status=status, dismissed=dismissed)
+    return opp
+
+
+def _grid(client, when):
+    """The month grid for the month `when` falls in.
+
+    A bare GET of the calendar renders THIS month, so a fixture written as
+    "five days out" silently falls off the grid for the last week of every
+    month — a presence assertion then fails, and an absence assertion passes
+    for the wrong reason, according to the date the suite happens to run.
+    (Six of the tests below did exactly that on 2026-08-27, with the product
+    working correctly.) `_firm_date` further down already sidesteps this by
+    pinning to the 15th; asking for the deadline's OWN month is the same
+    guard without changing what each fixture date means.
+    """
+    return client.get(reverse("crm:calendar"), {"y": when.year, "m": when.month})
+
+
+def test_a_deadline_in_the_next_month_is_on_that_month_and_not_this_one(
+        logged_in, client):
+    """The month-boundary case, forced rather than waited for.
+
+    Every other tracked-deadline test here reads "N days out", which only
+    crosses a month for the last few days of each one — so the whole class of
+    bug hid until the suite happened to run on the 27th. This one dates the
+    role into next month unconditionally, so it holds the rule on every day of
+    the year: the grid renders ONE month, and a role closing in the next one
+    belongs on that month's grid, not on this one's.
+    """
+    today = timezone.localdate()
+    next_month = _pinned_day(10, months_ahead=1)
+    opp = _tracked_role(logged_in, day=10, months_ahead=1,
+                        title="Next Month Analyst")
+    assert opp.deadline == next_month
+
+    assert "Next Month Analyst" in _grid(client, next_month).content.decode()
+    assert "Next Month Analyst" not in _grid(client, today).content.decode(), (
+        "a role closing next month is not this month's business"
+    )
+
+
+def test_a_tracked_roles_deadline_lands_on_the_calendar(logged_in, client):
+    _tracked_role(logged_in, day=15, title="Summer Analyst")
+    body = client.get("/app/calendar/").content.decode()
+    assert "Summer Analyst" in body
+
+
+def test_an_untracked_roles_deadline_stays_off_the_calendar(logged_in, client):
+    from directory.models import Opportunity
+
+    firm = Firm.objects.create(slug="ms", name="Morgan Stanley")
+    opp = Opportunity.objects.create(
+        firm=firm, title="Nobody Tracks This", status="open",
+        # In-month, per `_tracked_role`: a deadline that drifts off this
+        # month's grid would pass this assertion for the wrong reason.
+        deadline=timezone.localdate().replace(day=15),
+        url="https://ms.com/untracked")
+    body = _grid(client, opp.deadline).content.decode()
+    assert "Nobody Tracks This" not in body
+
+
+def test_a_dismissed_role_stays_off_the_calendar(logged_in, client):
+    _tracked_role(logged_in, day=15, title="Not For Me", dismissed=True)
+    body = client.get("/app/calendar/").content.decode()
+    assert "Not For Me" not in body
+
+
+def test_a_finished_application_stops_showing_its_deadline(logged_in, client):
+    _tracked_role(logged_in, day=15, title="Already Done", status="closed")
+    body = client.get("/app/calendar/").content.decode()
+    assert "Already Done" not in body
+
+
+def test_one_users_tracked_deadline_is_not_anothers(client, user, django_user_model):
+    other = django_user_model.objects.create_user(email="other-uo@x.com", password="x")
+    opp = _tracked_role(other, day=15, title="Their Saved Role")
+    client.force_login(user)
+    body = _grid(client, opp.deadline).content.decode()
+    assert "Their Saved Role" not in body
+
+
+def test_the_feed_carries_tracked_deadlines_with_alarms(client, user):
+    _tracked_role(user, day=16, title="Summer Analyst",
+                  url="https://gs.com/sa-2028")
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+    assert "Summer Analyst closes" in body
+    assert "https://gs.com/sa-2028" in body
+    # A week out and a day out. The alarms are the reason to subscribe rather
+    # than visit: a deadline you have to remember to check is one you can miss.
+    assert "TRIGGER;RELATED=START:-P7D" in body
+    assert "TRIGGER;RELATED=START:-P1D" in body
+
+
+def test_a_date_that_opens_something_gets_no_alarm(client, user):
+    firm = Firm.objects.create(slug="jpm", name="J.P. Morgan")
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_open",
+                            date=timezone.localdate() + timedelta(days=9),
+                            confidence=1.0)
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+    assert "Applications open" in body
+    assert "BEGIN:VALARM" not in body, "nothing is lost by reading an opening late"
+
+
+def test_a_prose_read_deadline_is_marked_on_the_calendar(logged_in, client):
+    """Layer 4 does not copy layer 3's confidence bar — a posting's own stated
+    date is worth showing even when we read it out of prose rather than a
+    published field (92 of 121 dated open roles). It is MARKED instead of
+    withheld, on the grid and in the feed a phone subscribes to."""
+    opp = _tracked_role(logged_in, day=17, title="Reported Analyst")
+    opp.confidence = 0.6
+    opp.save(update_fields=["confidence"])
+
+    body = _grid(client, opp.deadline).content.decode()
+    assert "Reported Analyst" in body
+    assert "reported date" in body, "the caveat must be spoken, not only hovered"
+
+    ics = client.get(f"/app/calendar/feed/{logged_in.calendar_token}.ics").content.decode()
+    assert "(reported)" in ics
+
+
+def test_a_provider_stated_deadline_is_not_marked(logged_in, client):
+    opp = _tracked_role(logged_in, day=17, title="Stated Analyst")
+    opp.confidence = 1.0
+    opp.save(update_fields=["confidence"])
+
+    ics = client.get(f"/app/calendar/feed/{logged_in.calendar_token}.ics").content.decode()
+    assert "Stated Analyst closes" in ics
+    assert "(reported)" not in ics
+
+
+# ---------------------------------------------------------------------------
+# Layer 4 — a tracked role's title reads the same here as it does in the feed.
+#
+# The calendar applied no smart_title at all: `_role_label` returned the raw
+# `Opportunity.title` and _calendar_event.html rendered {{ ev.title }}
+# unfiltered, so every tracked, dated role read differently on the two pages.
+# ---------------------------------------------------------------------------
+def test_a_tracked_role_reads_the_same_on_the_calendar_as_in_the_feed(client, logged_in):
+    from analytics.models import UserOpportunity
+    from core.templatetags.textstyle import smart_title
+    from directory.models import Opportunity
+
+    raw = "Discovery Program: equity + macro research (On-site)"
+    firm = Firm.objects.create(slug="pjt", name="PJT Partners")
+    today = timezone.localdate()
+    opp = Opportunity.objects.create(
+        firm=firm, title=raw, bucket="internship", status="open",
+        url="https://pjt.com/discovery", deadline=today.replace(day=15),
+    )
+    UserOpportunity.all_objects.create(user=logged_in, opportunity=opp)
+
+    body = client.get(reverse("crm:calendar")).content.decode()
+    shown = smart_title(raw)
+    assert shown in body, "the calendar shows the standardized title"
+    assert raw not in body, "and not the raw scrape casing"
+    # The clause-boundary rule is what makes the two agree on this title.
+    assert "Discovery Program: Equity + Macro Research (On-Site)" == shown
+
+
+def test_the_ics_feed_carries_the_same_standardized_title(client, logged_in):
+    """The .ics summary is the copy that lands on a phone's lock screen, so it
+    is the one that most needs to match. Same helper, so it cannot drift."""
+    from analytics.models import UserOpportunity
+    from directory.models import Opportunity
+
+    firm = Firm.objects.create(slug="bofa", name="Bank of America")
+    opp = Opportunity.objects.create(
+        firm=firm, title="campus insight forum: the power to lead",
+        bucket="event", status="open", url="https://bofa.com/forum",
+        deadline=timezone.localdate() + timedelta(days=5),
+    )
+    UserOpportunity.all_objects.create(user=logged_in, opportunity=opp)
+
+    logged_in.refresh_from_db()
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "Campus Insight Forum: The Power to Lead" in body
+
+
+def test_a_curated_firm_name_is_not_recased_by_the_calendar(client, logged_in):
+    """`smart_title` rewrites "PIMCO" to "Pimco". Firm names are curated, not
+    scraped, so only the ROLE half of the label goes through the filter."""
+    from analytics.models import UserOpportunity
+    from directory.models import Opportunity
+
+    firm = Firm.objects.create(slug="pimco", name="PIMCO")
+    opp = Opportunity.objects.create(
+        firm=firm, title="summer analyst programme", bucket="internship",
+        status="open", url="https://pimco.com/sa",
+        deadline=timezone.localdate().replace(day=15),
+    )
+    UserOpportunity.all_objects.create(user=logged_in, opportunity=opp)
+
+    body = client.get(reverse("crm:calendar")).content.decode()
+    assert "PIMCO · Summer Analyst Programme" in body
+
+
+# ---------------------------------------------------------------------------
+# Layer 4 — identity duplicates must fold, the same way Browse Openings and
+# My Applications do. _tracked_deadlines() never called fold_duplicates, so
+# a requisition filed under two candidate-pool addresses and tracked under
+# both showed up twice on the grid and twice in the .ics feed. See
+# directory/dupes.py and the round-8 dedup finding this fix addresses.
+# ---------------------------------------------------------------------------
+
+def _duplicate_pair(user, *, day, status_a="", status_b=""):
+    """`day` is a day of this month, for the reason `_tracked_role` gives."""
+    from analytics.models import UserOpportunity
+    from directory.models import Opportunity
+
+    firm = Firm.objects.filter(slug="bofa-dup").first() or Firm.objects.create(
+        slug="bofa-dup", name="Bank of America")
+    deadline = timezone.localdate().replace(day=day)
+    opp_a = Opportunity.objects.create(
+        firm=firm, title="Campus Insight Forum", location="New York, NY",
+        bucket="event", status="open", deadline=deadline,
+        url="https://bankcampuscareers.tal.net/pl/1/opp/14594")
+    opp_b = Opportunity.objects.create(
+        firm=firm, title="Campus Insight Forum", location="New York, NY",
+        bucket="event", status="open", deadline=deadline,
+        url="https://bankcampuscareers.tal.net/pl/2/opp/14594")
+    UserOpportunity.all_objects.create(user=user, opportunity=opp_a, applied_status=status_a)
+    UserOpportunity.all_objects.create(user=user, opportunity=opp_b, applied_status=status_b)
+    return opp_a, opp_b
+
+
+def test_a_tracked_identity_duplicate_shows_once_on_the_grid(logged_in, client):
+    """Counted through the context, not the rendered HTML: the template
+    includes each day's events twice (the grid cell and the narrow-screen
+    agenda), so a raw text count would double even a correctly-folded
+    single event."""
+    _duplicate_pair(logged_in, day=15)
+    resp = client.get("/app/calendar/")
+    tracked = [e for week in resp.context["weeks"] for cell in week
+               for e in cell["events"] if e["source"] == "tracked"]
+    assert len(tracked) == 1
+    assert tracked[0]["title"] == "Bank of America · Campus Insight Forum"
+
+
+def test_the_ics_feed_carries_the_duplicate_once(client, logged_in):
+    """Counted by VEVENT, not by substring: each event's two VALARMs repeat
+    the summary text in their own DESCRIPTION, so a bare substring count
+    would read 3 even for one correctly-folded event."""
+    _duplicate_pair(logged_in, day=16)
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert body.count("SUMMARY:Bank of America · Campus Insight Forum closes") == 1
+
+
+def test_the_progressed_duplicate_wins_on_the_calendar(logged_in, client):
+    """Applied on one address, only saved on the other: the applied copy is
+    what the student actually acted on, so it is the one that should
+    survive the fold rather than an arbitrary tie-break."""
+    opp_a, opp_b = _duplicate_pair(logged_in, day=15, status_a="saved", status_b="submitted")
+    resp = client.get("/app/calendar/")
+    events = [e for day in resp.context["weeks"] for cell in day
+              for e in cell["events"] if e["source"] == "tracked"]
+    assert len(events) == 1
+    assert events[0]["stage"] == "submitted"
+
+
+# ---------------------------------------------------------------------------
+# An opening is not a deadline
+#
+# Live on August 2026: the legend read "1 chat · 0 events · 6 deadlines" while
+# one of the six rows was "Goldman Sachs · applications open" on the 15th. The
+# layer-3 loop stamped kind="deadline" on every FirmDate regardless of its
+# `event_kind`, and the tally counts by kind — so the row's own text and the
+# count above it disagreed, and the opening wore the deadline-coloured border
+# to match.
+# ---------------------------------------------------------------------------
+def _firm_date(event_kind, day=15, *, slug="gs", name="Goldman Sachs"):
+    firm = Firm.objects.get_or_create(slug=slug, defaults={"name": name})[0]
+    today = timezone.localdate()
+    return FirmDate.objects.create(
+        firm=firm, cycle="sa2028", region="us", event_kind=event_kind,
+        date=today.replace(day=day), confidence=1.0)
+
+
+def _month(client):
+    today = timezone.localdate()
+    return client.get(reverse("crm:calendar"),
+                      {"y": today.year, "m": today.month})
+
+
+def test_an_applications_open_row_is_not_counted_as_a_deadline(client, logged_in):
+    """The live August 2026 row, exactly."""
+    _firm_date("app_open")
+    resp = _month(client)
+    assert resp.context["counts"]["deadline"] == 0
+    assert resp.context["counts"]["opening"] == 1
+    body = resp.content.decode()
+    # A zero count earns no chip at all now. The deadline key isn't there
+    # to miscount against; it just isn't there.
+    assert 'class="cal-key cal-key-deadline"' not in body
+    assert "<b>1</b> Opening" in body and "<b>1</b> Openings" not in body
+
+
+def test_an_insight_open_row_is_covered_by_the_same_rule(client, logged_in):
+    """`insight_open` would have miscounted the same way in any month one
+    fell in. Keyed off event_kind, so it never had to be found first."""
+    _firm_date("insight_open")
+    assert _month(client).context["counts"] == {
+        "chat": 0, "event": 0, "deadline": 0, "opening": 1}
+
+
+@pytest.mark.parametrize("event_kind", ["app_close", "insight_deadline"])
+def test_the_dates_you_can_actually_miss_are_still_deadlines(client, logged_in, event_kind):
+    _firm_date(event_kind)
+    counts = _month(client).context["counts"]
+    assert counts["deadline"] == 1 and counts["opening"] == 0
+
+
+def test_a_mixed_month_splits_the_tally_instead_of_lumping_it(client, logged_in):
+    """August 2026's real shape: closes, an insight deadline, and one
+    opening. The honest reading is 3 deadlines and 1 opening, not 4."""
+    _firm_date("app_close", day=1, slug="mlt", name="MLT")
+    _firm_date("app_close", day=2, slug="apollo", name="Apollo")
+    _firm_date("insight_deadline", day=6, slug="ms", name="Morgan Stanley")
+    _firm_date("app_open", day=15)
+    counts = _month(client).context["counts"]
+    assert counts["deadline"] == 3
+    assert counts["opening"] == 1
+
+
+def test_the_opening_no_longer_wears_the_deadline_colour(client, logged_in):
+    """The row carried .cal-ev-deadline, so it was red-barred as well as
+    miscounted. Matched as a class attribute — the page inlines its own
+    stylesheet, which names both classes in rules."""
+    _firm_date("app_open")
+    body = _month(client).content.decode()
+    assert re.search(r'class="cal-ev cal-ev-opening[^"]*"[^>]*'
+                     r'title="Goldman Sachs · US · Applications open"', body)
+    assert not re.search(r'class="cal-ev cal-ev-deadline[^"]*"[^>]*'
+                         r'title="Goldman Sachs · US · Applications open"', body)
+
+
+def test_the_page_head_lists_what_the_page_now_counts(client, logged_in):
+    """The eyebrow used to spell out "Chats, events, deadlines, openings" in
+    prose; the legend row right below already says the same thing in colour,
+    with the month's real counts, so the eyebrow was shortened to match every
+    other page's two-word pattern ("Your relationships", "Your pipeline").
+    What has to survive that cut is the legend itself still naming all four
+    kinds, each with its own count, when all four occur in the same month."""
+    now = timezone.localtime(timezone.now())
+    CalendarEvent.all_objects.create(
+        user=logged_in, kind=CalendarEvent.KIND_CHAT,
+        source=CalendarEvent.SOURCE_MANUAL, title="Coffee with Ada",
+        starts_at=now.replace(day=5, hour=15, minute=0, second=0, microsecond=0))
+    CalendarEvent.all_objects.create(
+        user=logged_in, kind=CalendarEvent.KIND_EVENT,
+        source=CalendarEvent.SOURCE_MANUAL, title="Superday", all_day=True,
+        starts_at=now.replace(day=6, hour=0, minute=0, second=0, microsecond=0))
+    _firm_date("app_close", day=10)
+    _firm_date("app_open", day=20, slug="ms", name="Morgan Stanley")
+    body = _month(client).content.decode()
+    for chip, label in (("cal-key-chat", "Chat"), ("cal-key-event", "Event"),
+                        ("cal-key-deadline", "Deadline"),
+                        ("cal-key-opening", "Opening")):
+        assert chip in body and label in body
+
+
+def test_an_opening_still_reaches_the_subscribed_feed_without_an_alarm(client, logged_in):
+    """The ICS export alarms only on dates you can miss. Reclassifying must
+    not drop the opening from the feed, nor start alarming on it."""
+    _firm_date("app_open")
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "SUMMARY:Goldman Sachs · US · Applications open" in body
+    assert "BEGIN:VALARM" not in body
+
+
+# ---------------------------------------------------------------------------
+# A posting the FIRM took down (Opportunity.status), which is a different fact
+# from the student's own "Done" stage tested above.
+#
+# The incident: layer 4 read neither the grid nor the .ics against
+# `Opportunity.status`, so a dead posting kept its "closes this day" row and,
+# worse, kept firing VALARM reminders at -P7D and -P1D inside the student's own
+# calendar app for a role that no longer existed.
+# ---------------------------------------------------------------------------
+
+def test_a_closed_posting_raises_no_alarm_in_the_subscribed_feed(client, user):
+    """The harm being fixed. A VALARM is a phone waking someone up to act, and
+    a pulled posting leaves nothing to act on."""
+    _tracked_role(user, day=16, title="Dead Role", posting_status="closed",
+                  url="https://gs.com/dead")
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+
+    assert "BEGIN:VALARM" not in body
+    assert "TRIGGER;RELATED=START:-P7D" not in body
+
+
+def test_a_closed_posting_keeps_its_event_rather_than_vanishing(client, user):
+    """The deliberate choice against dropping the VEVENT. This feed is
+    SUBSCRIBED, so the event is already in the student's own calendar app;
+    omitting it would delete it from their week at the next refresh, silently.
+    It stays on its day and says what happened instead."""
+    _tracked_role(user, day=16, title="Dead Role", posting_status="closed",
+                  url="https://gs.com/dead")
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+
+    assert body.count("BEGIN:VEVENT") == 1
+    assert "Goldman Sachs · Dead Role" in body
+    assert "https://gs.com/dead" in body
+
+
+def test_a_closed_postings_summary_leads_with_closed_not_a_tensed_verb(client, user):
+    """The marker rides at the FRONT of the SUMMARY because a lock-screen
+    notification shows the summary and nothing else, and "closes" against
+    "closed" is one character of difference in that position."""
+    _tracked_role(user, day=16, title="Dead Role", posting_status="closed")
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+
+    assert "SUMMARY:Closed: Goldman Sachs · Dead Role" in body
+    assert "Dead Role closes" not in body
+
+
+def test_a_closed_posting_stops_claiming_to_close_on_the_grid(client, logged_in):
+    """The in-app month grid told the same lie in its own tense."""
+    _tracked_role(logged_in, day=15, title="Dead Role", posting_status="closed")
+    body = client.get("/app/calendar/").content.decode()
+
+    assert "Dead Role" in body, "the student's own tracked row is never dropped"
+    assert "Closed: Goldman Sachs · Dead Role" in body
+    assert "Dead Role closes this day" not in body
+
+
+def test_an_open_posting_beside_a_closed_one_keeps_its_alarms(client, user):
+    """The over-reach guard: one dead row must not strip the alarms off the
+    live rows sharing the feed."""
+    _tracked_role(user, day=16, title="Dead Role", posting_status="closed",
+                  url="https://gs.com/dead")
+    _tracked_role(user, day=18, title="Live Role", url="https://gs.com/live")
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+
+    assert "SUMMARY:Goldman Sachs · Live Role closes" in body
+    assert "TRIGGER;RELATED=START:-P7D" in body
+    assert body.count("BEGIN:VALARM") == 2, "two alarms, both from the live row"
+
+
+def test_a_posting_the_scraper_never_rechecked_still_alarms(client, user):
+    """The over-filtering guard. `Opportunity.status` defaults to "" and most
+    rows have never been reverified, so the rule is `== "closed"` rather than
+    `!= "open"` — otherwise the feed would go silent for nearly everyone."""
+    _tracked_role(user, day=16, title="Unchecked Role", posting_status="")
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+
+    assert "Unchecked Role closes" in body
+    assert "TRIGGER;RELATED=START:-P7D" in body
+
+
+# ---------------------------------------------------------------------------
+# The two halves of "confirmed": confidence AND precision.
+# ---------------------------------------------------------------------------
+
+def test_an_estimated_date_stays_off_the_grid_even_at_full_confidence(
+        client, logged_in):
+    """`confidence` says how sure we are the firm holds this date;
+    `precision` says how exactly the stored day locates it. The calendar read
+    only the first half, so a row whose own column says the day is a
+    month-level guess got a specific square on the grid, a deadline colour,
+    and a place in the month tally — the same date the firm timeline prints
+    honestly as "~ Nov 2026".
+
+    `import_firm_dates` reads the two from independent keys of one YAML
+    entry, so this pairing is one seed line away, not hypothetical.
+    """
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    when = _pinned_day(15)
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_close", date=when,
+                            precision="estimated", confidence=1.0)
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="hk",
+                            event_kind="insight_deadline", date=when,
+                            precision="month", confidence=1.0)
+
+    body = _grid(client, when).content.decode()
+    # "Insight programme deadline" — see `crm.utils.FIRM_DATE_LABELS`'s
+    # 2026-09-01 fix, which collapsed this map onto
+    # `directory.timeline.EVENT_LABELS` and picked up its own earlier fix for
+    # this exact string.
+    assert "Insight programme deadline" in body, (
+        "a month-precision date is confirmed — the firm timeline says so too"
+    )
+    assert "Applications close" not in body
+
+
+def test_an_estimated_date_raises_no_alarm_on_a_phone(client, user):
+    """The .ics feed is the copy that wakes someone up. A VALARM a week
+    before a date nobody stated is the worst version of this bug."""
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    FirmDate.objects.create(firm=firm, cycle="sa2028", region="us",
+                            event_kind="app_close",
+                            date=timezone.localdate() + timedelta(days=9),
+                            precision="estimated", confidence=1.0)
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+    assert "Applications close" not in body
+    assert "BEGIN:VALARM" not in body
+
+
+def test_the_precision_vocabulary_is_closed_at_the_database(user):
+    """Every renderer branches on ""/day/month/estimated and falls through to
+    an exact "Nov 15, 2026" for anything else — so an unrecognised string
+    does not read as "unknown precision", it CLAIMS day precision. The guard
+    is on the column for the same reason `firm_dates_confidence_in_range` is:
+    `import_firm_dates` passes the value through raw from a hand-written
+    findings file, and `full_clean()` never runs on a bare `.save()`.
+    """
+    from django.db import IntegrityError
+
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    with pytest.raises(IntegrityError):
+        FirmDate.objects.create(
+            firm=firm, cycle="sa2028", region="us", event_kind="app_close",
+            date=timezone.localdate(), precision="aproximate", confidence=0.6)
+
+
+# ---------------------------------------------------------------------------
+# The feed's own timezone. It is the one calendar surface with no session.
+# ---------------------------------------------------------------------------
+
+def test_the_feed_puts_an_all_day_event_on_the_users_own_day(client, user):
+    """`TimezoneMiddleware` reads `request.user`, and this request carries a
+    token instead of a session — so without the view activating the zone
+    itself, `localtime(...).date()` here resolves on the UTC day while the
+    grid resolves on the student's. A Hong Kong all-day event stored as
+    16:00Z the previous day then sat on two different dates on two surfaces
+    reading one row, and the feed is the copy that reaches a phone.
+    """
+    from datetime import datetime, timezone as dt_timezone
+
+    user.timezone = "Asia/Hong_Kong"
+    user.save(update_fields=["timezone"])
+    # 2026-09-01 00:00 Hong Kong == 2026-08-31 16:00 UTC.
+    CalendarEvent.all_objects.create(
+        user=user, title="Superday", all_day=True,
+        starts_at=datetime(2026, 8, 31, 16, 0, tzinfo=dt_timezone.utc))
+
+    body = client.get(f"/app/calendar/feed/{user.calendar_token}.ics").content.decode()
+    assert "DTSTART;VALUE=DATE:20260901" in body, body
+
+
+def test_the_feed_leaves_no_timezone_activated_behind(client, user):
+    """Threads are reused. A leaked activation would put this student's zone
+    on whatever request the worker serves next — including an anonymous one."""
+    user.timezone = "Asia/Hong_Kong"
+    user.save(update_fields=["timezone"])
+    client.get(f"/app/calendar/feed/{user.calendar_token}.ics")
+    assert timezone.get_current_timezone_name() == "UTC"
+
+
+def test_the_last_representable_month_is_not_a_500(client, logged_in):
+    """`date(9999, 12, 1)` is valid, so the existing guard passed it — and
+    then the grid's trailing week reached into January 10000 and raised from
+    inside the template context. A hand-edited querystring gets this month
+    back, not a server error."""
+    resp = client.get(reverse("crm:calendar"), {"y": "9999", "m": "12"})
+    assert resp.status_code == 200
+    assert timezone.localdate().strftime("%B %Y") in resp.content.decode()
+
+
+def test_a_second_reschedule_of_the_same_invite_still_moves_one_row(user):
+    """The original fix was demonstrated on ONE reschedule. Organisers move a
+    chat twice; the guard has to hold on the third invite as well as the
+    second, and it does because `invite_sent_at` records which invite is
+    currently speaking rather than counting how many have arrived."""
+    Contact.all_objects.create(user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    first, second, third = _at(days=3, hour=15), _at(days=4, hour=11), _at(days=6, hour=9)
+    monday = timezone.now() - timedelta(days=3)
+
+    apply_findings(user, [_lily("thread-a", first, sent_at=monday)])
+    apply_findings(user, [_lily("thread-b", second, sent_at=monday + timedelta(days=1))])
+    apply_findings(user, [_lily("thread-c", third, sent_at=monday + timedelta(days=2))])
+
+    ev = CalendarEvent.objects.for_user(user).get()
+    assert timezone.localtime(ev.starts_at) == third
+    assert ev.thread_id == "thread-c"
+    assert ev.ics_uid == LILY_UID
+
+
+def test_a_cancelled_invite_adds_no_chat_and_logs_no_scheduled_touch(user):
+    """End to end for the cancellation gap. A cancellation carries the whole
+    event — same UID, same DTSTART — so read for its DTSTART it re-asserted
+    the meeting and climbed the ladder a second time.
+
+    What this pins is that a cancellation stops ADDING to the lie: no second
+    row is minted, and no second `chat_scheduled` touch is logged.
+
+    The KNOWN LIMIT this used to record — that the row already on the
+    calendar was left standing — is now closed, in
+    `capture.gmail._retire_cancelled_chat`. It is asserted here rather than
+    only in `capture/tests/test_gmail_invite_honesty.py` because the two
+    halves have to hold together: reporting no time and retiring the row are
+    one behaviour seen from two ends, and a regression in either one alone
+    would leave a cancelled chat reading as scheduled again.
+    """
+    from capture import gmail_live
+
+    contact = Contact.all_objects.create(
+        user=user, name="Lily Liu", email="lily.liu@barclays.com")
+    when = _at(days=3, hour=15)
+    apply_findings(user, [_lily("thread-a", when, sent_at=timezone.now() - timedelta(days=1))])
+    assert CalendarEvent.objects.for_user(user).count() == 1
+    before = Touch.objects.for_user(user).filter(
+        contact=contact, kind="chat_scheduled").count()
+
+    cancel = {
+        "threadId": "thread-z",
+        "payload": {
+            "headers": [
+                {"name": "From", "value": "Lily Liu <lily.liu@barclays.com>"},
+                {"name": "To", "value": user.email},
+                {"name": "Subject", "value": "Cancelled: Coffee Chat"},
+            ],
+            "parts": [{
+                "mimeType": "text/calendar",
+                "body": {"data": base64.urlsafe_b64encode(
+                    ("BEGIN:VCALENDAR\nMETHOD:CANCEL\nBEGIN:VEVENT\n"
+                     f"UID:{LILY_UID}\nDTSTART:20260901T140000Z\n"
+                     "SUMMARY:Coffee Chat\nEND:VEVENT\nEND:VCALENDAR\n"
+                     ).encode()).decode()},
+            }],
+        },
+    }
+    finding = gmail_live._classify_message(user.email, cancel)
+    assert finding["chat_status"] == "none"
+    assert finding["chat_scheduled_at"] is None
+
+    apply_findings(user, [finding])
+    assert CalendarEvent.all_objects.filter(user=user).count() == 1, (
+        "no second chat minted from a cancellation"
+    )
+    assert Touch.objects.for_user(user).filter(
+        contact=contact, kind="chat_scheduled").count() == before, (
+        "a cancellation is not progress up the ladder"
+    )
+
+    ev = CalendarEvent.all_objects.get(user=user)
+    assert ev.cancelled_at is not None, "and the one that exists is retired"
+    assert ev.title == "Cancelled: Chat with Lily Liu"
+    assert timezone.localtime(ev.starts_at) == when, (
+        "retired, not erased — the date it was booked for is a real fact"
+    )
+
+
+def test_subscribed_cancellation_keeps_uid_and_releases_the_busy_slot(client, logged_in):
+    event = CalendarEvent.all_objects.create(
+        user=logged_in, title="Coffee chat", kind="chat", starts_at=_at(days=3),
+    )
+    feed = reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    uid = f"UID:coverage-ev-{event.pk}@coverage.app"
+    original = client.get(feed).content.decode()
+    assert uid in original
+    assert "STATUS:CANCELLED" not in original
+
+    event.cancelled_at = timezone.now()
+    event.save(update_fields=["cancelled_at"])
+    cancelled = client.get(feed).content.decode()
+    assert cancelled.count(uid) == 1
+    assert "STATUS:CANCELLED\r\n" in cancelled
+    assert "TRANSP:TRANSPARENT\r\n" in cancelled
+    assert "SUMMARY:Coffee chat" in cancelled
+
+    event.cancelled_at = None
+    event.save(update_fields=["cancelled_at"])
+    restored = client.get(feed).content.decode()
+    assert uid in restored
+    assert "STATUS:CANCELLED" not in restored
+    assert "TRANSP:TRANSPARENT" not in restored
+
+
+# ---------------------------------------------------------------------------
+# WHICH MARKET, AND WHETHER THE DATE HAS ALREADY GONE
+#
+# A `FirmDate` is scoped to a market — `region` is part of its unique key and
+# `networkly_domain.cadence._closing_soon` buckets by it — and these two
+# surfaces printed the firm and the event alone. Measured on the founder's own
+# account 2026-09-01: his September grid read "Goldman Sachs · Applications
+# close" on a row with no region, no source and no cycle on file, and his
+# October read "HSBC · Applications close" on a Hong Kong deadline he is not
+# recruiting into. Five of his eight firm-date VEVENTs were already in the
+# past, and every closed one still carried two alarms.
+# ---------------------------------------------------------------------------
+
+def test_the_grid_names_the_market_a_deadline_belongs_to(client, logged_in):
+    firm = Firm.objects.create(slug="hsbc", name="HSBC")
+    when = _pinned_day(15)
+    FirmDate.objects.create(firm=firm, cycle="sa2027", region="hk",
+                            event_kind="app_close", date=when, confidence=1.0)
+    body = _grid(client, when).content.decode()
+    assert "HSBC · HK · Applications close" in body
+
+
+def test_a_row_with_no_market_on_file_says_so_rather_than_reading_global(
+        client, logged_in):
+    """Two live rows (gs id 48, jpm id 47) carry no region at all. A blank
+    does not mean "everywhere", it means nobody recorded where — and printing
+    nothing lets it pass for a date that applies to every market."""
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    when = _pinned_day(15)
+    FirmDate.objects.create(firm=firm, cycle="", region="",
+                            event_kind="app_close", date=when, confidence=1.0)
+    body = _grid(client, when).content.decode()
+    assert "Goldman Sachs · market unstated · Applications close" in body
+
+
+def test_the_subscribed_feed_names_the_market_too(client, logged_in):
+    """The SUMMARY is all a phone shows."""
+    firm = Firm.objects.create(slug="hsbc", name="HSBC")
+    FirmDate.objects.create(firm=firm, cycle="sa2027", region="hk",
+                            event_kind="app_close",
+                            date=timezone.localdate() + timedelta(days=20),
+                            confidence=1.0)
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "SUMMARY:HSBC · HK · Applications close" in body
+
+
+def test_the_feed_names_an_unstated_market_as_unstated(client, logged_in):
+    firm = Firm.objects.create(slug="gs", name="Goldman Sachs")
+    FirmDate.objects.create(firm=firm, cycle="", region="",
+                            event_kind="app_close",
+                            date=timezone.localdate() + timedelta(days=20),
+                            confidence=1.0)
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "SUMMARY:Goldman Sachs · market unstated · Applications close" in body
+
+
+def test_the_feed_carries_the_caveat_on_a_time_read_out_of_prose(
+        client, logged_in):
+    """THE SURFACE THE CAVEAT MATTERS MOST ON. A subscribed feed puts this
+    time on a phone with nothing around it — no dotted underline, no
+    "reported" beside the clock — so a time `capture.chattime` READ OUT OF A
+    SENTENCE would arrive looking exactly like one an invite stated. The
+    sentence rides along in the one field a phone will show."""
+    contact = Contact.all_objects.create(user=logged_in, name="Lily Liu")
+    CalendarEvent.all_objects.create(
+        user=logged_in, contact=contact, title="Chat with Lily Liu",
+        starts_at=_at(days=2), kind="chat", source="capture",
+        thread_id="t-prose", time_confidence=0.6,
+        time_evidence="6pm tomorrow works great for me.",
+    )
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "Time reported from your mail\\, not from an invite" in body
+    assert "6pm tomorrow works great for me." in body
+
+
+def test_the_feed_adds_no_caveat_to_a_time_an_invite_stated(client, logged_in):
+    contact = Contact.all_objects.create(user=logged_in, name="Lily Liu")
+    CalendarEvent.all_objects.create(
+        user=logged_in, contact=contact, title="Chat with Lily Liu",
+        starts_at=_at(days=2), kind="chat", source="capture",
+        thread_id="t-ics", ics_uid="uid-1",
+    )
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "Chat with Lily Liu" in body
+    assert "Time reported" not in body
+
+
+def test_a_deadline_already_gone_keeps_its_place_and_loses_its_alarms(
+        client, logged_in):
+    """The feed reaches 30 days back on purpose, so a deadline stays in the
+    week it belongs to. But a VALARM is a phone waking someone up to act, and
+    there is nothing left to act on — the same reasoning the closed tracked
+    postings already follow."""
+    firm = Firm.objects.create(slug="blackrock", name="BlackRock")
+    FirmDate.objects.create(firm=firm, cycle="sa2027", region="hk",
+                            event_kind="app_close",
+                            date=timezone.localdate() - timedelta(days=2),
+                            confidence=1.0)
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert "SUMMARY:BlackRock · HK · Applications close" in body, "still on the feed"
+    assert "BEGIN:VALARM" not in body, "but nothing left to be reminded about"
+
+
+def test_a_deadline_still_ahead_keeps_both_alarms(client, logged_in):
+    """The guard against over-correcting: the alarm is the point of the feed
+    for every date a student can still miss."""
+    firm = Firm.objects.create(slug="hsbc", name="HSBC")
+    FirmDate.objects.create(firm=firm, cycle="sa2027", region="hk",
+                            event_kind="app_close",
+                            date=timezone.localdate() + timedelta(days=30),
+                            confidence=1.0)
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert body.count("BEGIN:VALARM") == 2
+
+
+def test_a_deadline_closing_today_still_alarms(client, logged_in):
+    """Today is not past. A deadline is missable right up to its own day."""
+    firm = Firm.objects.create(slug="hsbc", name="HSBC")
+    FirmDate.objects.create(firm=firm, cycle="sa2027", region="hk",
+                            event_kind="app_close",
+                            date=timezone.localdate(), confidence=1.0)
+    body = client.get(
+        reverse("crm:calendar_ics", args=[logged_in.calendar_token])
+    ).content.decode()
+    assert body.count("BEGIN:VALARM") == 2

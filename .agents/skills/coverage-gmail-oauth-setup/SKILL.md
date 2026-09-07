@@ -1,12 +1,12 @@
 ---
 name: coverage-gmail-oauth-setup
-description: "Set up Gmail API access for the Coverage app: create/configure a Google Cloud project, enable the Gmail API, configure the OAuth consent screen, create a Web-application OAuth 2.0 client, choose least-privilege Gmail scopes, and wire up the authorization-code flow (redirect, token exchange, refresh-token storage). Use when building or debugging Gmail sign-in/authorization, Gmail OAuth client credentials, Google Cloud Console setup for Gmail, Gmail API scopes, or the mail-scanning (history.list / watch+Pub/Sub) calls that read a connected mailbox's message history. Not for Drive, Calendar, Docs, Sheets, or Chat setup, and not for operating an already-connected mailbox day to day."
+description: "Set up Gmail API access for the Networkly app: create/configure a Google Cloud project, enable the Gmail API, configure the OAuth consent screen, create a Web-application OAuth 2.0 client, choose least-privilege Gmail scopes, and wire up the authorization-code flow (redirect, token exchange, refresh-token storage). Use when building or debugging Gmail sign-in/authorization, Gmail OAuth client credentials, Google Cloud Console setup for Gmail, Gmail API scopes, or the mail-scanning (history.list / watch+Pub/Sub) calls that read a connected mailbox's message history. Not for Drive, Calendar, Docs, Sheets, or Chat setup, and not for operating an already-connected mailbox day to day."
 compatibility: Codex-only
 ---
 
 # Gmail API OAuth Setup
 
-Guide for setting up Google Cloud + OAuth 2.0 credentials so the Coverage app
+Guide for setting up Google Cloud + OAuth 2.0 credentials so the Networkly app
 can obtain per-user Gmail API access, and for wiring the resulting credentials
 into an authorization-code OAuth flow. Scope is intentionally Gmail-only —
 do not enable or reference other Google Workspace APIs (Drive, Calendar,
@@ -16,7 +16,7 @@ this project.
 ## Prerequisites
 
 - Access to Google Cloud Console (console.cloud.google.com)
-- A decision on Coverage's OAuth redirect URI(s) — e.g.
+- A decision on Networkly's OAuth redirect URI(s) — e.g.
   `http://localhost:3000/auth/google/callback` for local dev and
   `https://<prod-domain>/auth/google/callback` for production
 
@@ -79,7 +79,7 @@ Direct the user to:
 `https://console.cloud.google.com/apis/credentials?project=PROJECT_ID`
 
 1. **Create Credentials → OAuth client ID**
-2. Application type: **Web application** (not Desktop app — Coverage is a
+2. Application type: **Web application** (not Desktop app — Networkly is a
    server-side web app doing per-user OAuth via an HTTP redirect, not a
    personal CLI tool)
 3. Add the exact redirect URI(s) decided in Prerequisites under
@@ -132,7 +132,7 @@ sends or drafts mail.
 
 Standard OAuth 2.0 authorization-code flow against Google's endpoints
 (language-agnostic — implement with whatever HTTP/OAuth library fits
-Coverage's stack):
+Networkly's stack):
 
 1. **Redirect the user** to
    `https://accounts.google.com/o/oauth2/v2/auth` with `client_id`,

@@ -340,5 +340,5 @@ means it said and the answer is outside the six tracked markets. It now asserts
 tracked markets may never be promoted INTO one), and a second test was added
 for the silence case it was half-covering.
 
-`directory/tests/` 4,185 passed. `coverage_connectors` 269 passed, 12 skipped
+`directory/tests/` 4,185 passed. `networkly_connectors` 269 passed, 12 skipped
 (live network).

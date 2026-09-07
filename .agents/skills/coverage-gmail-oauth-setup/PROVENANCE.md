@@ -24,7 +24,7 @@ Chat, Tasks, Slides, Forms, People, Admin SDK), recommends `gws auth login
 running `npx skills add googleworkspace/cli -g --agent claude-code --all`,
 which installs 90+ skills **globally** into `~/.claude/skills/` (not scoped
 to this project). That is the opposite of what this project needs: a
-narrow, Gmail-only skill that helps *build* Coverage's own OAuth
+narrow, Gmail-only skill that helps *build* Networkly's own OAuth
 integration, not a skill that installs and drives a separate general-purpose
 Workspace CLI against a live mailbox.
 
@@ -43,7 +43,7 @@ Workspace CLI against a live mailbox.
   `"installed"`).
 - Replaced "full access (recommended)" scope guidance with a least-privilege
   Gmail scope table (`gmail.readonly`, `gmail.metadata`, `gmail.send`,
-  `gmail.compose`, `gmail.modify`, full-account scope) mapped to Coverage's
+  `gmail.compose`, `gmail.modify`, full-account scope) mapped to Networkly's
   actual features (mail scanning, BCC/draft handling).
 - Replaced the `gws auth login` / `gws` CLI-based authenticate-and-verify
   steps with a generic OAuth 2.0 authorization-code flow description
@@ -54,11 +54,11 @@ Workspace CLI against a live mailbox.
 - Added a "Gotchas" section, including a note that BCC-prefill into a
   user's own native Gmail compose window has no REST API path (needs a
   Gmail Add-on or browser extension) — directly relevant to one of
-  Coverage's stated features and not covered by the source skill or any
+  Networkly's stated features and not covered by the source skill or any
   of the other candidates evaluated.
 - Added a short mail-scanning-patterns section (`users.history.list`
   incremental sync vs. `users.watch` + Cloud Pub/Sub push) since this is
-  central to Coverage's "scan sent/received mail" feature and wasn't
+  central to Networkly's "scan sent/received mail" feature and wasn't
   covered by the source skill.
 - Added a verification/sensitive-scope callout (Google's OAuth app
   verification requirement and ~100-test-user cap for Gmail scopes) since
@@ -72,7 +72,7 @@ Workspace CLI against a live mailbox.
 - Did not incorporate the companion `gws-install` skill (quick reinstall
   of `gws` on an additional machine using existing credentials) — that
   workflow is specific to a personal per-machine CLI tool and doesn't map
-  to Coverage's one-time, per-project OAuth client setup.
+  to Networkly's one-time, per-project OAuth client setup.
 
 ## Audit verdict
 

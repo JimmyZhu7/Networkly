@@ -36,7 +36,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>__REPO__/.venv/bin/python</string>
-    <string>__REPO__/coverage_web/manage.py</string>
+    <string>__REPO__/networkly_web/manage.py</string>
     <string>gmail_poll</string>
     <string>--interval</string>
     <string>120</string>
@@ -48,7 +48,7 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>DJANGO_SETTINGS_MODULE</key>
-    <string>coverage_web.settings.local</string>
+    <string>networkly_web.settings.local</string>
   </dict>
 
   <key>RunAtLoad</key>

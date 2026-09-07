@@ -15,7 +15,7 @@ Read live Figma design context and screenshots for Assistant `29:75`, Account Se
 
 ## Browser evidence
 
-`coverage_web/e2e/test_conditional_ui_refinement.py`: **8 passed** on Chromium and WebKit at 1280×900 and 375×812, using a uniquely named isolated test database. Cases exercise invalid CSV error feedback, the onboarding return link, successful import with a long unmatched firm name and accessible selector, Assistant empty state, and interrupted partial streaming with restored composer access. Model requests are intercepted; this does not establish real model delivery. Checks include horizontal overflow and recorded console/page errors under the existing browser suite's documented exclusions.
+`networkly_web/e2e/test_conditional_ui_refinement.py`: **8 passed** on Chromium and WebKit at 1280×900 and 375×812, using a uniquely named isolated test database. Cases exercise invalid CSV error feedback, the onboarding return link, successful import with a long unmatched firm name and accessible selector, Assistant empty state, and interrupted partial streaming with restored composer access. Model requests are intercepted; this does not establish real model delivery. Checks include horizontal overflow and recorded console/page errors under the existing browser suite's documented exclusions.
 
 The existing fresh-account setup browser journey was also rerun against the current templates: **4 passed** (both engines and viewports), submitting all four stages and reaching Today with persisted completion. One existing Django deprecation warning remains.
 

@@ -35,12 +35,12 @@ for _ in $(seq 1 30); do pg_isready -h localhost -p 5432 -q 2>/dev/null && break
 # exists and is tenant-isolated — run `manage.py seed_demo` by hand if you
 # ever need a populated account to show someone.
 echo "• Preparing your data…"
-uv run --package coverage-web python coverage_web/manage.py migrate --noinput >/dev/null 2>&1
+uv run --package networkly-web python networkly_web/manage.py migrate --noinput >/dev/null 2>&1
 
 # 2b) If the listings haven't been refreshed in 12+ hours, refresh them in the
 #     background (scrape + classify + re-verify) so the feed is never stale
 #     just because the daily job didn't get a chance to run.
-FRESHNESS=$(uv run --package coverage-web python coverage_web/manage.py shell -c "
+FRESHNESS=$(uv run --package networkly-web python networkly_web/manage.py shell -c "
 from django.utils import timezone
 from directory.models import ScrapeRun
 r = ScrapeRun.objects.filter(status__in=['ok','partial']).order_by('-started').first()
@@ -60,7 +60,7 @@ if [ "$COVERAGE_NO_OPEN" != "1" ]; then
 fi
 
 echo ""
-echo "  ✓ Coverage is starting. A browser tab will open in a moment."
+echo "  ✓ Networkly is starting. A browser tab will open in a moment."
 echo ""
 echo "    Opportunities feed (no login): http://127.0.0.1:8000/opportunities/"
 echo "    Log in to see the CRM:         http://127.0.0.1:8000/accounts/login/"
@@ -73,4 +73,4 @@ echo "  KEEP THIS WINDOW OPEN while you use Coverage. Close it to stop."
 echo "──────────────────────────────────────────────"
 
 # 4) Run the site (this holds the window open).
-exec uv run --package coverage-web python coverage_web/manage.py runserver 127.0.0.1:8000
+exec uv run --package networkly-web python networkly_web/manage.py runserver 127.0.0.1:8000

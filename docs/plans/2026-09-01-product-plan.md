@@ -1,4 +1,4 @@
-# Coverage product plan, 2026-09-01
+# Networkly product plan, 2026-09-01
 
 Written from nine measured read-only audits taken on the night of 2026-09-01, the
 twelve graded research reports from the same night, the mined follow-up list
@@ -100,8 +100,8 @@ P9. **The board cannot see what the ATS does not publish.** Structured
 E1. Work in a git worktree per workstream (`isolation: worktree`). The venv is
     at the MAIN repo root: `/Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python`.
     Copy `.env` into the worktree before a full-suite run (the Google
-    sign-in CSP test needs it). The editable `coverage_domain` resolves to
-    MAIN, so prepend `PYTHONPATH=<worktree>/coverage_domain` when testing an
+    sign-in CSP test needs it). The editable `networkly_domain` resolves to
+    MAIN, so prepend `PYTHONPATH=<worktree>/networkly_domain` when testing an
     engine change. Full suite on the merged main is the only real gate.
 E2. `pytest` only, NEVER `manage.py test`. Private test DB per worktree via a
     settings module on PYTHONPATH overriding `DATABASES["default"]["TEST"]["NAME"]`.
@@ -110,7 +110,7 @@ E3. Every behaviour change gets a test. An existing test that pins the OLD
     behaviour is REWRITTEN to pin the correct one and its docstring says why;
     a test is never weakened or deleted to make a change pass. A query-budget
     test is raised only with the justification written beside the number.
-E4. `coverage_domain/` is a pure package: no Django imports, ever. Calendar
+E4. `networkly_domain/` is a pure package: no Django imports, ever. Calendar
     constants (holidays, cycle months) do not go in the engine; they are
     VIEW decisions in `crm/today.py`.
 E5. Tenancy: `Model.objects` raises on unscoped queries; use `.for_user(u)`
@@ -189,7 +189,7 @@ not drift: `docs/design-spec.md` §0 is wrong in five binding places.
   (`audit-ui.md §15`); 98 buttons in the Network contact grid, 49 of them navy
   primaries (`audit-ui.md §4` defect 3); all five Network warmth rows are collapsed
   by default, so a page called Network shows zero people on first visit
-  (`audit-ui.md §4` defect 1); the Coverage Gaps copy reads "aim for 2-20" for a
+  (`audit-ui.md §4` defect 1); the Networkly Gaps copy reads "aim for 2-20" for a
   rule that means two per firm and twenty in all (`audit-ui.md §4` defect 6).
 - **the change:** as dispatched. A written control-shape rule plus the squaring of
   `.scope-undo-btn`, `.prop-undo-btn`, `.cal-nav`, `.fc-tier`, `.filters-clear`,
@@ -502,7 +502,7 @@ not drift: `docs/design-spec.md` §0 is wrong in five binding places.
 - **files/seams:** `docs/design-spec.md` §6.1; if the decision goes the other way,
   every template with a button or heading label.
 - **measured defect:** `audit-ui.md §16.9`. `docs/design-spec.md` §6.1 mandates
-  sentence case and is violated on every page: "Add Contact", "Coverage Gaps",
+  sentence case and is violated on every page: "Add Contact", "Networkly Gaps",
   "Welcome Back", "Build My Queue", "Tell Us About Your Search", "Log Touch", "Your
   Network Here". The audit's own reading is that it is consistent enough to be a
   decision, not drift.
@@ -534,7 +534,7 @@ not drift: `docs/design-spec.md` §0 is wrong in five binding places.
   posted" span plus a decorative rule, or give the existing dash a `title` and a
   visually hidden sibling. Prefer removing the character entirely: P7.
 - **acceptance criteria:**
-  - `grep -cP '&mdash;|\x{2014}' coverage_web/templates/directory/_rolecard.html` returns 0.
+  - `grep -cP '&mdash;|\x{2014}' networkly_web/templates/directory/_rolecard.html` returns 0.
   - An axe scan of `/opportunities/` reports 0 violations and the accessible name of
     every `.rr-due-none` cell is "No date posted".
 - **degradation (P3):** rows that carry a deadline are untouched. 2,382 of 2,723 open
@@ -605,7 +605,7 @@ not drift: `docs/design-spec.md` §0 is wrong in five binding places.
   fails on a shared-file class with zero references in templates.
 - **acceptance criteria:**
   - A new test enumerates class selectors defined in `static/css/coverage.css` and
-    asserts each appears at least once in `coverage_web/templates/` or in another
+    asserts each appears at least once in `networkly_web/templates/` or in another
     stylesheet, with a documented allowlist for state classes set by JavaScript.
   - The allowlist has fewer than 20 entries and each entry names its setter.
 - **degradation (P3):** none.
@@ -845,7 +845,7 @@ it.
   consultancies). Multiple concurrent formats exist at Barclays, BofA, Cantor,
   Guggenheim, JPMorgan, KeyBanc, Perella Weinberg, Stephens and Truist (Grade B,
   same section), so the retry proposes one alternate and never asserts it. SMTP
-  verification is least reliable at exactly the large banks Coverage targets, because
+  verification is least reliable at exactly the large banks Networkly targets, because
   Proofpoint, Mimecast and MessageLabs anti-probe throttle regardless of mailbox
   existence (`research-outreach-mechanics.md §1c`, Grade A); the bounce is the only
   reliable verifier, which is why this is a retry and not a checker.
@@ -974,7 +974,7 @@ it.
   closed late Sep to end Oct 2026, against the same banks' US SA 2027 which opened
   Dec 2025 to Jan 2026 and closed by Feb 2026 (`research-hongkong.md §1`, Grade A on
   the HK leg, Grade B on the gap). The magnitude is one cycle only, so the tool
-  answers from Coverage's own `FirmCycleObservation` and `FirmDate` rows and cites
+  answers from Networkly's own `FirmCycleObservation` and `FirmDate` rows and cites
   them, rather than returning the research constant
   (`SYNTHESIS-PLAN.md` "Where this plan turns a decaying constant into a live
   signal").
@@ -1038,7 +1038,7 @@ it.
   where the column is empty, then dropping `User.language`, the `assets` keys and the
   export column. Stop `seed_demo` writing `fr`.
 - **acceptance criteria:**
-  - `git grep -n "assets\[.angles.\]\|assets.get(.angles" coverage_web/` returns 0
+  - `git grep -n "assets\[.angles.\]\|assets.get(.angles" networkly_web/` returns 0
     hits.
   - A migration test asserts the founder-shaped row (five angle strings, empty
     `affiliations`) ends with five affiliations and no `assets.angles`.
@@ -1139,7 +1139,7 @@ it.
   is deterministic and is the one being fixed.
 - **Do not build open tracking or read receipts.** `research-outreach-mechanics.md §7`
   (Grade A): detection is live at banks and punished, and the signal is corrupted in
-  both directions by secure email gateways at exactly Coverage's recipients.
+  both directions by secure email gateways at exactly Networkly's recipients.
 - **Do not build a merge-field or bulk-template drafting system.**
   `research-nontarget-access.md` Verdict §3 (Grade A, first-hand and countable): a
   recruiter received twelve identical cold emails in one week.
@@ -1154,7 +1154,7 @@ it.
 - **Do not add a third "days since" implementation.** `audit-ai-mechanisms.md` D6
   found the second; P5 forbids the third. `cadence._CLOCK_SILENT_KINDS` is the one
   definition.
-- **Do not put calendar constants in `coverage_domain`.** E4. The blackout is a view
+- **Do not put calendar constants in `networkly_domain`.** E4. The blackout is a view
   decision in `crm/today.py` and WS-AI-11 reads it from there.
 
 ---
@@ -1204,7 +1204,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
     6) in the commit body.
   - `test_facts.py` asserts a single figure with a currency and a unit extracts with
     `low == high`; measured pay coverage rises from 183 rows toward roughly 370.
-  - `grep -cP '\x{2014}' coverage_web/directory/recommend.py` returns 0.
+  - `grep -cP '\x{2014}' networkly_web/directory/recommend.py` returns 0.
   - Every changed weight carries a paragraph in the module docstring saying what it
     encodes, why that magnitude and what would change it (P6).
 - **degradation (P3):** a student with no regions gets no region penalty; a student
@@ -1219,7 +1219,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
 #### WS-OPP-02 · Connectors and board health
 - **size:** M
 - **status:** dispatched (verify on merge)
-- **files/seams:** `coverage_connectors/**`, `directory/health.py`,
+- **files/seams:** `networkly_connectors/**`, `directory/health.py`,
   `directory/reverify.py`, `directory/boards.py`, `directory/scrape.py`, the
   `reverify` command
 - **measured defect:** `audit-opportunities.md §B`. Fifteen of eighteen connectors
@@ -1258,7 +1258,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
   - `reverify` orders campus buckets first; a test asserts the first 150 candidate
     ids are all in `TARGET_BUCKETS` when campus rows are stale.
   - Catalog entries carry `campus_board: False` where the registered site is an
-    experienced-hire site, and the firm page renders "Coverage does not read this
+    experienced-hire site, and the firm page renders "Networkly does not read this
     firm's campus board yet" for those firms. A test asserts the string for Moelis.
   - EY and HSBC fetch without an SSL error, or the diagnosis is written into
     `docs/` with the exact failing command. Measured target: the 92 rows at least 3
@@ -1286,7 +1286,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
   IB Networking Event", "Virtual Career Information Session", which is the founder's
   number three pick); `_ENTRY`'s bare `\bcampus\b` promotes "EU Campus - Aarhus
   Hackathon". D13: `bucket_from_contract` maps every non-graduate campus contract to
-  `internship`, so CA-CIB's "Graduate Trainee in CIB Coverage" management-trainee
+  `internship`, so CA-CIB's "Graduate Trainee in CIB Networkly" management-trainee
   programme is filed as an internship.
 - **evidence that binds it (P6):** `classify_role` misses 17 of 24 real 2026
   programme names and the `_INSIGHT` vocabulary is UK-shaped, with "Insight Forum"
@@ -1389,7 +1389,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
     `precision="estimated"`, and never presents a date as confirmed.
   - A student whose regions have no matching `FirmDate` rows sees the existing "a
     year early" sentence and no invented months.
-  - `grep -cP '\x{2014}' coverage_web/directory/views.py` returns 0 for the new copy.
+  - `grep -cP '\x{2014}' networkly_web/directory/views.py` returns 0 for the new copy.
 - **degradation (P3):** a student with no declared cycle or no regions sees today's
   behaviour.
 - **blast radius:** one header sentence in the Picked column and one line in the
@@ -1451,7 +1451,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
   - `test_today.py` asserts the ribbon's qualifier names the reported count, and
     that it reads from `directory.deadlines.closing_soon_filter`, not from a second
     inline arithmetic (P5).
-  - `git grep -n "deadline__range" coverage_web/crm/` returns 0 hits.
+  - `git grep -n "deadline__range" networkly_web/crm/` returns 0 hits.
 - **degradation (P3):** 2,627 of 2,723 rows are verified inside 24 hours, so most
   cards gain nothing visible.
 - **blast radius:** the 92 rows at least 3 days stale, and one ribbon.
@@ -1487,7 +1487,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
 #### WS-OPP-09 · Parse the tal.net location label
 - **size:** S
 - **status:** open
-- **files/seams:** `coverage_connectors/talnet.py`
+- **files/seams:** `networkly_connectors/talnet.py`
 - **measured defect:** `audit-personalization-opportunities.md` D7 and the
   `145feb2` commit note. 126 open campus rows have a blank region and are charged
   `W_REGION_UNKNOWN` for the product's own ignorance; the Nomura "Discover" row,
@@ -1498,7 +1498,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
   guess a region from prose anywhere else.
 - **acceptance criteria:**
   - A connector fixture built from a Nomura Discover page yields
-    `location == "London"`; `coverage_connectors/tests/test_talnet.py`.
+    `location == "London"`; `networkly_connectors/tests/test_talnet.py`.
   - After a scrape, the count of blank-region open campus rows drops from 126; state
     the after number in the commit body.
   - A page with no label table yields a blank location, unchanged.
@@ -1514,7 +1514,7 @@ out of prose, so 95.9% of every deadline displayed is our own reading (P1, P9).
 - **status:** open
 - **rank reason:** it unblocks. Two Grade A same-day observations disagree, and the
   answer decides whether the four bot-walled boards are worth any further work.
-- **files/seams:** `coverage_connectors/talnet.py`, `directory/health.py` (the
+- **files/seams:** `networkly_connectors/talnet.py`, `directory/health.py` (the
   bot-wall reporting), `docs/` for the written answer
 - **measured defect:** `research-ats-lifecycle.md` Q1 and Q6 assert Morgan Stanley's
   tal.net campus board is reachable with plain curl and a browser user agent (HTTP
@@ -1918,7 +1918,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
 #### WS-CRM-01 · Contact lifecycle
 - **size:** L
 - **status:** dispatched (verify on merge)
-- **files/seams:** `coverage_domain/pipeline.py` (`apply_touch`, `set_state`) and its
+- **files/seams:** `networkly_domain/pipeline.py` (`apply_touch`, `set_state`) and its
   tests, `crm/services.py`, `crm/views.py` (`_contact_card` context, bulk park,
   park-all, accept-all), `capture/apply*`, `templates/capture/**`, new
   `replay_states` and `fix_school_firms` commands
@@ -1928,7 +1928,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
   overturned by an older reply written afterwards; two contacts are un-parked today
   with no un-park audit row, and Lily Liu regressed from `chat_scheduled` to
   `replied` (D1). Seven "Gmail USC discovery" rows sit at free-text firm "usc" while
-  their address resolves to a directory firm, so they never reach Firm Coverage, a
+  their address resolves to a directory firm, so they never reach Firm Networkly, a
   tier, a firm date or Firm Fit (D3). 158 of 265 cards are parked and
   indistinguishable from active ones: "Emailed, No Reply" mixes 92 active with 129
   parked and "Advocate" shows 2 parked people as the whole advocate bench (D4). The
@@ -1940,7 +1940,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
 - **the change:** as dispatched: L1 to L8, with the two data repairs shipping as
   management commands whose default is `--dry-run`.
 - **acceptance criteria:**
-  - `coverage_domain/tests/test_pipeline.py` asserts that a touch older than the
+  - `networkly_domain/tests/test_pipeline.py` asserts that a touch older than the
     newest state-moving touch or override is inserted and does not move the state,
     and returns `stale=True`; and that a hand-logged touch with `now=None` ratchets
     exactly as today (P3).
@@ -2169,7 +2169,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
 - **rank reason:** the queue's own honesty. `6559e07` shipped the expiry; this item
   is the residual verification plus the one relationship-state split the evidence
   supports.
-- **files/seams:** `coverage_domain/cadence.py` (branch 6 and a new post-chat branch),
+- **files/seams:** `networkly_domain/cadence.py` (branch 6 and a new post-chat branch),
   `crm/today.py::TUNABLE_CADENCE_PARAMS`, `accounts/forms.py::CADENCE_LABELS`
 - **measured defect:** `audit-personalization-networking.md` D6 measured the original
   defect (44 of 44 queue cards were a follow-up on a note sent 27 business days
@@ -2189,7 +2189,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
   collects. Do not add any other interval. Do not change
   `chatted_touch_min_weeks`.
 - **acceptance criteria:**
-  - `coverage_domain/tests/test_cadence.py` asserts the new branch fires only when
+  - `networkly_domain/tests/test_cadence.py` asserts the new branch fires only when
     the debrief records a promised action, and that a chat with nothing promised
     falls to the existing keep-warm branch at 6 weeks.
   - A test asserts `chatted_touch_min_weeks` default is unchanged at 6 and the
@@ -2197,7 +2197,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
   - The new parameter, if tunable, has a matching entry in `CADENCE_LABELS`; a test
     asserts every `TUNABLE_CADENCE_PARAMS` key has a label (a missing one 500s the
     Settings page, `SYNTHESIS-PLAN.md` A4).
-  - `coverage_domain` imports no Django: `git grep -n "^import django\|from django" coverage_domain/`
+  - `networkly_domain` imports no Django: `git grep -n "^import django\|from django" networkly_domain/`
     returns 0 (E4).
 - **degradation (P3):** a student with no debriefs never sees the branch. The founder
   has 12 debriefs, 3 answering "would advocate: yes", 0 promoted.
@@ -2328,7 +2328,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
   (`research-networking-norms.md §3a`, Grade A). The calendar itself must not be
   hardcoded: the peak demonstrably moved from March to May in 2021 to about November
   to January in 2026 (`research-networking-norms.md §4d`), so the window is derived
-  from Coverage's own listings.
+  from Networkly's own listings.
 - **the change:** `season_mode(user, today)` reads, per user track, the share of this
   cycle's target-bucket roles already open against the median open date from
   `FirmCycleObservation`; "early" raises the weight on `first_outreach` relative to
@@ -2337,7 +2337,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
 - **acceptance criteria:**
   - `test_relevance.py` asserts both modes and asserts that a track with no
     observations produces equal weights and today's order exactly (P3).
-  - `git grep -in "december\|january\|march\|november" coverage_web/crm/relevance.py`
+  - `git grep -in "december\|january\|march\|november" networkly_web/crm/relevance.py`
     returns 0 hits.
   - The docstring states the mechanism, the two sources and what would retire the
     rule (P6).
@@ -2369,7 +2369,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
   to advocate, written from the debrief's existing referral-contact field, so the
   promotion is an audited event rather than a hand override.
 - **acceptance criteria:**
-  - `coverage_domain/tests/test_pipeline.py` asserts the new kind ratchets to
+  - `networkly_domain/tests/test_pipeline.py` asserts the new kind ratchets to
     advocate and that it is refused where a higher-ranked touch is already on record
     at or after that time (the existing rule).
   - A test asserts a debrief answering "would advocate: yes" offers the promotion and
@@ -2412,7 +2412,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
   - `test_today.py` asserts a single-region HK user gets the overlay and that the
     founder (hk+us) gets the global defaults byte for byte (P3).
   - A test asserts `wechat` is loggable and counts as a real touch for the clock.
-  - `git grep -n "CHANNEL_LABELS" coverage_web/` shows one definition (P5), and a
+  - `git grep -n "CHANNEL_LABELS" networkly_web/` shows one definition (P5), and a
     migration or a data check confirms no existing touch uses a retired value.
   - The overlay's numbers each carry a paragraph naming the Grade B source and what
     would change them (P6).
@@ -2498,7 +2498,7 @@ touches; region blank on 94 live rows, role blank on 137, LinkedIn blank on all 
     it.
   - The archived list sorts by `archived_at` with nulls last; a test asserts the
     order for a mixed set.
-  - `git grep -n "_MANUAL_OVERRIDE_PARSE" coverage_web/` shows the parse is used for
+  - `git grep -n "_MANUAL_OVERRIDE_PARSE" networkly_web/` shows the parse is used for
     the note text only, not for the timestamp.
 - **degradation (P3):** existing rows have a null timestamp and sort last.
 - **blast radius:** 41 archived rows today.
@@ -2674,7 +2674,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 - **status:** dispatched (verify on merge)
 - **files/seams:** `billing/**`, `accounts/trials.py` and the trial-expire command,
   `capture/management/commands/gmail_poll.py`, `ops/`, `render.yaml`,
-  `coverage_web/settings/*`, `docs/deploy.md`,
+  `networkly_web/settings/*`, `docs/deploy.md`,
   `templates/accounts/settings.html` (the trial banner),
   `docs/plans/b2b2c-sketch.md`
 - **measured defect:** `audit-billing-deploy.md` Part 1 defects 2 to 8 and Part 2.
@@ -2726,7 +2726,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 #### WS-OPS-03 · Security hardening
 - **size:** M
 - **status:** dispatched (verify on merge)
-- **files/seams:** `coverage_web/settings/*`, `coverage_web/urls.py`, `core/`,
+- **files/seams:** `networkly_web/settings/*`, `networkly_web/urls.py`, `core/`,
   `pyproject.toml`, the calendar-token reset in `crm/` and
   `templates/accounts/settings.html`, `capture/views.py` (disconnect),
   `accounts/views.py` (push subscribe), the enrichers,
@@ -2764,8 +2764,8 @@ found is a data leak between students. Four blockers, all dispatched or decided 
     block the deletion.
   - `SECURE_HSTS_PRELOAD` is False until `SECURE_HSTS_SECONDS >= 31536000`; a test in
     `test_production_settings.py` asserts the pairing.
-  - `coverage_connectors/http.py` and both enrichers send the project user agent and
-    consult `robots.txt` per host; `git grep -c "Mozilla/5.0" coverage_web/ coverage_connectors/`
+  - `networkly_connectors/http.py` and both enrichers send the project user agent and
+    consult `robots.txt` per host; `git grep -c "Mozilla/5.0" networkly_web/ networkly_connectors/`
     returns 0.
   - `templates/legal/privacy.html` states that message bodies of matched threads are
     read, and names Anthropic as the processor; a test asserts both strings.
@@ -2911,7 +2911,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 #### WS-OPS-08 · Fernet key rotation
 - **size:** S
 - **status:** open
-- **files/seams:** `coverage_web/settings/base.py`, `capture/gmail_live.py` (the
+- **files/seams:** `networkly_web/settings/base.py`, `capture/gmail_live.py` (the
   encrypt and decrypt helpers), a new `rotate_gmail_tokens` command,
   `docs/gmail-live-setup.md`
 - **measured defect:** `audit-security.md` finding 9. The Gmail refresh token is
@@ -2938,7 +2938,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 - **size:** S
 - **status:** open
 - **files/seams:** `core/views.py` and `billing/views.py` (the throttle helpers),
-  `coverage_web/settings/base.py` (`ENABLED_SOCIAL_PROVIDERS`, the CSP style-src),
+  `networkly_web/settings/base.py` (`ENABLED_SOCIAL_PROVIDERS`, the CSP style-src),
   `assistant/attachments.py`
 - **measured defect:** `audit-security.md` findings 10, 12, 16 and 17. The throttles
   trust the first `X-Forwarded-For` hop, which is spoofable if the edge does not
@@ -3030,7 +3030,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 #### WS-OPS-12 · Date fragility guard
 - **size:** S
 - **status:** open
-- **files/seams:** `coverage_web/conftest.py`, `pyproject.toml`
+- **files/seams:** `networkly_web/conftest.py`, `pyproject.toml`
 - **measured defect:** `audit-perf-tests.md §2`. No test was found that goes red on a
   specific future date, but the guard is one reader's manual pass over 256 date
   literals in 40 test files, and `test_recommend.py` uses `date(2030, 1, 1)` as "far
@@ -3055,7 +3055,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 #### WS-OPS-13 · Second Workday site per tenant, and the regional banks
 - **size:** M
 - **status:** open, **blocked-by: D-20**
-- **files/seams:** `directory/boards.py`, `coverage_connectors/workday.py`
+- **files/seams:** `directory/boards.py`, `networkly_connectors/workday.py`
 - **measured defect:** `audit-opportunities.md §B5`. Eight of the founder's tiered
   firms have a connector pointed at the experienced-hire site and have never produced
   a campus row: Ares 273 rows, Fidelity International 167, Oaktree 97, Blue Owl 61,
@@ -3070,7 +3070,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
   BlackRock, so enumeration must be audited by membership, not by row count (same
   section, Grade A). Moelis's `University-Hires` site holds exactly one posting, a
   talent community open for 1,267 days, while the real programme sits on a host
-  Coverage never queries (same section, Grade A): a row count would have called that
+  Networkly never queries (same section, Grade A): a row count would have called that
   site healthy. Workday's unfiltered `total` caps at 2,000 while Citi's board holds
   about 4,393 by facet, so any new board is crawled per
   `Country_and_Jurisdiction` (`research-ats-lifecycle.md` Q5, Grade A).
@@ -3152,7 +3152,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 - **size:** S
 - **status:** open
 - **files/seams:** the memory files under
-  `~/.claude/projects/-Users-zhujimmy-Claude-Projects-Coverage/memory/`
+  `~/.claude/projects/-Users-zhujimmy-Claude-Projects-Networkly/memory/`
 - **measured defect:** `todo-mined.md §6c`. Three memory files are stale:
   `coverage-gmail-live-v2` says the setup needs the founder's Google Cloud work, and
   the environment now carries all five `GMAIL_LIVE_*` values with the poller running;
@@ -3227,7 +3227,7 @@ found is a data leak between students. Four blockers, all dispatched or decided 
 - **size:** S
 - **status:** open, **blocked-by: D-16**
 - **files/seams:** `Dockerfile`, `render.yaml` (the `coverage-scrape` service),
-  `coverage_connectors/beisen.py`
+  `networkly_connectors/beisen.py`
 - **measured defect:** `audit-billing-deploy.md §2.4`. The image installs Playwright
   Chromium, roughly 300 MB, for the CICC Beisen connector alone, and
   `coverage-scrape` on the starter plan may run out of memory on that connector. Not
@@ -3326,7 +3326,7 @@ club, seat and membership models across every app returns nothing
 paid cycle, so even self-serve Pro cannot be represented as a six-month entitlement;
 Pro today is an admin flip plus a calendar reminder. The memory records the pivot as
 made: institutions pay, students use, OSG agency pilot spring 2027
-(`coverage-b2b2c-pivot`). `coverage_web/tenancy.py` is ready for it: `for_user` is
+(`coverage-b2b2c-pivot`). `networkly_web/tenancy.py` is ready for it: `for_user` is
 the only read path and `all_objects` is the greppable escape hatch, so a mentor view
 is a second explicit manager method rather than a widening.
 
@@ -3366,7 +3366,7 @@ deadlines (`research-am-corpbank.md §4.2` to `§4.4`, Grade A on timing). The
 30 September cluster is one date across three tracks and is a shippable feature
 (`research-am-corpbank.md §7`).
 
-**Evidence against.** Measured on Coverage's own board today, against the gate the
+**Evidence against.** Measured on Networkly's own board today, against the gate the
 synthesis wrote (at least 20 open campus rows across at least 5 firms in the user's
 regions, no single firm above 40%): `cb` is 18 rows across 7 firms at 22%, failing on
 count by two rows; `wm` is 66 rows across 12 firms at 47% Goldman, failing on
@@ -3402,7 +3402,7 @@ facet, keeping the nine firms and the storage vocabulary?
 it by title and 0 firms tagged with it have a connector
 (`audit-opportunities.md §A4`). Seven of the founder's 54 tiered firms are
 corp-strat firms and all seven have zero contacts, which is 28% of his 25
-zero-contact tiered firms (`SYNTHESIS-PLAN.md` Part D recommendation 1). The Coverage
+zero-contact tiered firms (`SYNTHESIS-PLAN.md` Part D recommendation 1). The Networkly
 Gaps strip ranked eleven off-track zero-contact firms above HSBC, a Tier 1 firm with
 8 contacts and a confirmed close 59 days out
 (`audit-personalization-networking.md §1` Q8). Leaving a track selectable while it
@@ -3458,7 +3458,7 @@ either way. **Confidence: high** on the pairing, and it is strictly gated by D-1
 ### D-5 · Git-history scrub of the PII backfill file
 
 **Question.** Rewrite the public repository's history to remove
-`coverage_web/region_backfill_undo_20260826T062308.json`, or only untrack it going
+`networkly_web/region_backfill_undo_20260826T062308.json`, or only untrack it going
 forward?
 
 **Evidence for.** `git ls-files` confirms the file is tracked in a public repository
@@ -3591,7 +3591,7 @@ after and an undo file (which must then be gitignored, D-5).
 
 **Cost if not.** The advisor keeps reading a different cycle for HSBC than the
 student's, two contacts stay un-parked by accident, and 7 alumni at target-adjacent
-firms stay invisible to Firm Coverage.
+firms stay invisible to Firm Networkly.
 
 **Recommendation.** Run `relabel_firm_dates --apply` first: it touches the directory,
 not the founder's private data, and its evidence is Grade A. Read the
@@ -3787,7 +3787,7 @@ page changes, and that is unknown.
 that it should be sentence case?
 
 **Evidence for making it the convention.** It is used on every page, consistently:
-"Add Contact", "Coverage Gaps", "Welcome Back", "Build My Queue", "Tell Us About Your
+"Add Contact", "Networkly Gaps", "Welcome Back", "Build My Queue", "Tell Us About Your
 Search", "Log Touch", "Your Network Here". The audit's own reading is that it is
 consistent enough to be a decision, not drift (`audit-ui.md §16.9`).
 
@@ -3958,7 +3958,7 @@ six HK closes.
 
 ### D-20 · Crawling `Disallow:` Workday sites
 
-**Question.** Does Coverage fetch Workday career sites that a tenant's `robots.txt`
+**Question.** Does Networkly fetch Workday career sites that a tenant's `robots.txt`
 disallows, such as BlackRock's `BlackRock_Early_Careers_Program`?
 
 **Evidence for.** The sites hold exactly the campus inventory the product exists to
@@ -4081,7 +4081,7 @@ itself says the number must not be shipped.
 | 20 | **A track by seniority cadence matrix.** | `research-networking-norms.md §8a` and `§8f`: the sources discuss track and seniority extensively and none conditions cadence on either. Splitting one unfounded interval into five unfounded intervals is precision theatre. WS-CRM-10 is one multiplier on one axis. |
 | 21 | **A per-region cadence beyond the single HK overlay.** | Same section, plus `audit-personalization-networking.md` Q6: nothing in the product differs by region today, and the only evidenced HK difference is intensity, Grade B. WS-CRM-13 is the whole permitted scope. |
 | 22 | **A deal-season suppressor.** | `research-networking-norms.md §4c` and `§8f`; `SYNTHESIS-PLAN.md` Part C item 5: deal load is idiosyncratic per banker and invisible to the sender. There is nothing to key it on. |
-| 23 | **Any hardcoded recruiting month, in the engine or the view.** | `SYNTHESIS-PLAN.md` Part C item 6; `research-consulting-forums.md §7` (Grade A/B): McKinsey's undergraduate deadline moved 3.5 months between consecutive cycles while its full-time deadline moved the other way, and BCG's moved three weeks. Any constant is wrong for at least one firm-role pair within twelve months. E4 also forbids calendar constants in `coverage_domain`. |
+| 23 | **Any hardcoded recruiting month, in the engine or the view.** | `SYNTHESIS-PLAN.md` Part C item 6; `research-consulting-forums.md §7` (Grade A/B): McKinsey's undergraduate deadline moved 3.5 months between consecutive cycles while its full-time deadline moved the other way, and BCG's moved three weeks. Any constant is wrong for at least one firm-role pair within twelve months. E4 also forbids calendar constants in `networkly_domain`. |
 | 24 | **Shortening `chatted_touch_min_weeks` from 6.** | `research-networking-norms.md §1d`: 6 weeks already sits at the aggressive end of the evidenced range. `research-nontarget-access.md` Verdict §4 confirms it is not contradicted. `coverage-keepwarm-6-weeks-deliberate` memory records it as the founder's own dial. Do not re-flag it as a bug. |
 | 25 | **A one-week follow-up on a cold first contact**, or a clock-driven keep-warm beyond what exists. | `research-networking-norms.md §1b` and `§1d` (Grade D on both): the one-week number is a business-to-business sales import and "stay in touch every two to three months" is prep-blog origin. The workable pattern is event-triggered. |
 | 26 | **Coffee-chat prompts, keep-warm timers or coverage gaps at quant and proprietary firms.** | `research-st-quant.md` Q3 (Grade A): Jane Street's own FAQ declines one-to-one chats by policy, and Citadel Securities' campus funnel is entirely competitions and events. Note the limit the file itself states: no source shows networking is counterproductive, so the copy says the firm hires by assessment and never says networking hurts. |
@@ -4096,12 +4096,12 @@ itself says the number must not be shipped.
 
 | # | Do not build | Killed by |
 |---|---|---|
-| 33 | **Open tracking or read receipts, and any nudge built on "opened".** | `research-outreach-mechanics.md §7` (Grade A): detection is live at banks and punished, and the signal is inflated by gateway pre-fetch and deflated by Outlook's external-image blocking, hardest at exactly the biggest banks. Reply detection is the honest signal and Coverage already has it. |
+| 33 | **Open tracking or read receipts, and any nudge built on "opened".** | `research-outreach-mechanics.md §7` (Grade A): detection is live at banks and punished, and the signal is inflated by gateway pre-fetch and deflated by Outlook's external-image blocking, hardest at exactly the biggest banks. Reply detection is the honest signal and Networkly already has it. |
 | 34 | **A merge-field or bulk-template drafting system.** | `research-outreach-mechanics.md §5b` and `§9.3` (Grade A): "I get 10+ resumes a season with the wrong bank or wrong name (or both)". `research-nontarget-access.md §6` (Grade A): a recruiter received twelve identical cold emails in one week. If drafting is touched at all, the pre-send mismatch guard ships first (WS-CRM-14). |
 | 35 | **Volume nudges, send streaks or a leaderboard.** | `research-outreach-mechanics.md §5c` (Grade A): the banker forwards about five resumes a year out of roughly 1,350 emails, so student volume cannot expand the scarce resource. `research-nontarget-access.md` Verdict: the two documented failure accounts sit at the top of the volume range, 1,000 emails to 0 interviews and 1,100 to 2 referrals. |
 | 36 | **Claiming .edu improves deliverability, or pairing .edu with volume.** | `research-outreach-mechanics.md §3` (Grade A, primary DNS): usc.edu, nyu.edu and utexas.edu publish no DMARC record at all, while gmail.com publishes `p=none` with one of the strongest domain reputations on the internet. And university acceptable-use policies suspend accounts for unapproved bulk sending, so the pairing points the student at the one account that can be shut off. |
 | 37 | **Defaulting or nudging the resume-attachment decision.** | `research-outreach-mechanics.md §4a` (Grade A on both sides): the attachment is what routes an email into the recruiting pipeline, and at least two firms send any mail from a new sender with an attachment straight to spam. Surface both rationales; do not pick. |
-| 38 | **SMTP verification of an address.** | `research-outreach-mechanics.md §1c` and `§1d` (Grade A): every one of 15 major firms sits behind a gateway, and Proofpoint, Mimecast and MessageLabs anti-probe throttle regardless of mailbox existence, so verification is least reliable at exactly the firms Coverage cares about. The bounce is the only reliable verifier, which is why WS-AI-05 is a retry. |
+| 38 | **SMTP verification of an address.** | `research-outreach-mechanics.md §1c` and `§1d` (Grade A): every one of 15 major firms sits behind a gateway, and Proofpoint, Mimecast and MessageLabs anti-probe throttle regardless of mailbox existence, so verification is least reliable at exactly the firms Networkly cares about. The bounce is the only reliable verifier, which is why WS-AI-05 is a retry. |
 | 39 | **LLM classification of prose-only scheduling, or creating contacts from unknown senders.** | `coverage-gmail-live-v2` memory: recorded as deliberately not built. The `.ics` path is deterministic and WS-AI-02 fixes it. |
 
 ### 5.5 Objects and schema
@@ -4143,7 +4143,7 @@ listed so that a grep can enforce them.
 | 59 | "Networking is essential in Hong Kong" as a sourced claim | The passage is WSO's AI bot and contradicts the human guide in the same corpus; retract it if any earlier pass ingested it (`research-hongkong.md §6`, Grade D). |
 | 60 | Any response-rate benchmark without a date stamp | `research-outreach-mechanics.md §9.10` (Grade A): the measured cold baseline is about 5 to 10%, and every self-reported rate above it was measured with an open-tracking tool that does not work at these recipients. |
 | 61 | "Corporate banking is less competitive than IB" | Prep-course marketing and forum anecdote (`research-am-corpbank.md §3.7`, Grade C/D). |
-| 62 | "The target-school student needs a calendar" | Not supported: the target student needs no part of Coverage; the non-target needs all five (`research-nontarget-access.md` Verdict). |
+| 62 | "The target-school student needs a calendar" | Not supported: the target student needs no part of Networkly; the non-target needs all five (`research-nontarget-access.md` Verdict). |
 | 63 | Demographic eligibility for any programme, taken from a secondary source | `research-diversity-early-programs.md §10.7` (Grade A): Goldman's affinity-segmented Summits URL now 404s and the live Series states no criterion; JPM's Fellowship page says "All sophomore students, regardless of background". Scrape the firm's own live page or say nothing. |
 
 **Enforcement.** WS-OPS-15 owns a `git grep` check over templates and Python for the
@@ -4154,7 +4154,7 @@ strings in 5.7; a match fails the check and the number must be removed, not sour
 ## 6. Sequencing
 
 Four waves. The gate between every pair of waves is the same two things: **the full
-`coverage_web` suite green on merged main**, and **one named founder-visible check**
+`networkly_web` suite green on merged main**, and **one named founder-visible check**
 that a human looks at. A wave does not start because the previous one is "mostly
 done".
 
@@ -4446,7 +4446,7 @@ section 4 owners beside them.
 | O-10 | Founder-run write commands pending | D-21, D-8 |
 | O-11 | B2B2C calendar: OSG email late February 2027, kill criteria June and September 2027 | D-1 (recorded; a calendar, not a build) |
 | O-12 | Founder answers: HK sponsorship, timezone | D-21 |
-| O-13 | Re-check calendar for hardcoded facts | **no owner.** The expiry table in `SYNTHESIS-PLAN.md` is the register and WS-OPS-14 preserves it; the dates are 2027-01-15 (blackout), 2027-03-01 (the firm cap against Coverage's own reply data, and the role-function census), 2027-06-01 (Jane Street, Citadel, Optiver), 2027-09-01 (the Goldman cap and the HK observation counts), and every autumn for the early-programme vocabulary and the Workday robots lists. |
+| O-13 | Re-check calendar for hardcoded facts | **no owner.** The expiry table in `SYNTHESIS-PLAN.md` is the register and WS-OPS-14 preserves it; the dates are 2027-01-15 (blackout), 2027-03-01 (the firm cap against Networkly's own reply data, and the role-function census), 2027-06-01 (Jane Street, Citadel, Optiver), 2027-09-01 (the Goldman cap and the HK observation counts), and every autumn for the early-programme vocabulary and the Workday robots lists. |
 
 ### Hygiene
 
@@ -4467,7 +4467,7 @@ section 4 owners beside them.
 | id | Item | Owner |
 |---|---|---|
 | R-01 | Gmail Limited Use and CASA compliance | D-17, and it gates D-1 |
-| R-02 | Coverage's own outcome data as the evidence base | WS-OPP-11 for the weight half. The per-send reply attribution half is **no owner**: it needs a season of Coverage-mediated sends before there is anything to attribute, and the founder's own 44-person blast produced 0 replies with no attribution (`audit-personalization-networking.md §4`). |
+| R-02 | Networkly's own outcome data as the evidence base | WS-OPP-11 for the weight half. The per-send reply attribution half is **no owner**: it needs a season of Networkly-mediated sends before there is anything to attribute, and the founder's own 44-person blast produced 0 replies with no attribution (`audit-personalization-networking.md §4`). |
 | R-03 | Does the live model actually phrase the reported-deadline caveat | WS-AI-15 |
 | R-04 | Why `advocate_touch_min_weeks` moves nothing on the founder's queue | **no owner.** One trace of two parked advocate rows; do it while verifying WS-CRM-01, and if the branch is genuinely unreachable for a parked row, that is a defect in WS-AI-03's parked-advocate line, not a new item. |
 | R-05 | Mandarin statement rate: one in seven against 4 of 131 HK rows | **no owner.** `research-hongkong.md §2` (Grade A) resolves the shape: only 1 of 7 HK postings states a Chinese-language requirement and it is a location-conditional clause, while the de-facto gate is Grade B. The product stays silent on the gate and shows only the stated sentence, so neither number changes what is built. |

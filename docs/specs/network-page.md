@@ -5,7 +5,7 @@
 modules that feed it: `crm/coverage.py`, `crm/sourcing.py`, `crm/campaigns.py`,
 `crm/recruitment.py`. Audience: the next agent to change this page.*
 
-*Revised 2026-09-02 (evening): the Coverage Gaps strip this file described in
+*Revised 2026-09-02 (evening): the Networkly Gaps strip this file described in
 full was deleted and its status moved onto the firm cards as a "CG" tag. Where
 this document and the code disagree, the code wins and this document is the bug,
 same rule `docs/design-spec.md` states for itself. Numbers below were measured
@@ -41,7 +41,7 @@ Order, top to bottom, at every width:
    park Undo strip when there is one, then the warmth ledger, then the sticky
    bulk bar.
 
-There is no Coverage Gaps strip. One stood between the scope tabs and Covered
+There is no Networkly Gaps strip. One stood between the scope tabs and Covered
 Firms until 2026-09-02 and is deleted (Part 3, D11). Nothing may take its
 place: a second list of firms above a board that already lists every firm is
 the seam that got it removed.
@@ -71,7 +71,7 @@ guess. Place them"), and that line is the entire nag budget for the unplaced
 pool. It is zero on All and on School, so those scopes carry no caveat and no
 route into the Unplaced tool.
 
-### B. Coverage exposure, and the CG tag
+### B. Networkly exposure, and the CG tag
 
 There is no strip. `coverage.rank_gaps` still ranks EVERY tiered firm with a
 gap, worst first, and what the page renders off it is one mark: firms whose
@@ -126,9 +126,9 @@ Rules the tag inherits from the strip's own arguments:
   arithmetic in a hover; a card is not, because a card is not in a ranked list
   and there is nothing to compare it against.
 - **The mark is readable without a hover.** "CG" is two letters. The key at
-  the foot of the panel says "Coverage gap, nobody warm yet" in words a
+  the foot of the panel says "Networkly gap, nobody warm yet" in words a
   touchscreen can reach, and it renders whether or not any card is tagged. The
-  pill's own `title=` carries the sentence: "Coverage gap. You ranked this firm
+  pill's own `title=` carries the sentence: "Networkly gap. You ranked this firm
   high and nobody here is warm yet."
 - **Red, in a different register from the countdown.** `--danger` is the
   founder's own call and the palette already carries it, but the deadline tag
@@ -441,7 +441,7 @@ close countdown — and they are distinguished by SHAPE, not hue: a soft-filled
 chip against bare mono text. A third red mark on this card needs a third shape
 or it does not go on.
 
-**D11. The Coverage Gaps strip is deleted, whole.** "Delete this widget and
+**D11. The Networkly Gaps strip is deleted, whole.** "Delete this widget and
 route its status of coverage gaps into the actual company cards." Heading,
 ledger, six rows, "Who to find" dropdown, and every CSS rule that drew any of
 them. `.gap-due-tag` is the one class that survived, because the firm card had

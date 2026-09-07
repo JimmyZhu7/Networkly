@@ -1,11 +1,11 @@
-# Coverage — First-Build Plan
+# Networkly — First-Build Plan
 
 *Authored 2026-07-23. Inputs: `product-brief.md`, `existing-system.md`, founder decisions
 (fresh codebase / port selectively; no billing in v1).*
 
 ## What this actually is
 
-Coverage is a shared, centrally-scraped deadline calendar — a commodity, given away free —
+Networkly is a shared, centrally-scraped deadline calendar — a commodity, given away free —
 wrapped around a private per-student relationship ledger whose only defensible value is the
 email activity students feed it. The build is therefore **not** "make the existing system
 multi-tenant." It is: stand up a small multi-tenant web app, lift four proven pure-logic
@@ -43,12 +43,12 @@ against live boards for zero user-visible gain.
 
 Django over Flask/FastAPI is a solo-founder call, not a technology call: `django-allauth`,
 real migrations (replacing the hand-rolled `PRAGMA table_info` style in `db.py:120-144`), and
-the admin. Ported modules live in `coverage_domain/`, take a DB connection, and know nothing
+the admin. Ported modules live in `networkly_domain/`, take a DB connection, and know nothing
 about Django. `apply_touch`'s TOCTOU-safe single-statement update (`pipeline.py:88-101`)
 stays raw SQL — it is the reviewed artifact.
 
-**Repo layout:** one monorepo, three packages — `coverage_web` (Django project),
-`coverage_domain` (state machine, cadence, apply layer, scoring), `coverage_connectors`
+**Repo layout:** one monorepo, three packages — `networkly_web` (Django project),
+`networkly_domain` (state machine, cadence, apply layer, scoring), `networkly_connectors`
 (scrapers + verification). Connectors run from cron on the same deployment.
 
 ## 2. Multi-tenant data model
@@ -150,14 +150,14 @@ Google relationship entirely separate from the Gmail-scopes question.
 | `campaign/confidence.py` | Port verbatim. The "code caps the model's claim" pattern becomes the rule for LLM-extracted capture signals. |
 | `campaign/kb.py` corroboration/promotion | Logic ports; YAML load/save replaced by `firm_dates` reads/writes. |
 | `netdash/gmail_enrich.py` apply layer | Port the stage ratchet, bounce-archive-with-evidence, contact dedup, thread-marker dedup, no-thread 7-day fallback. **Drop:** file-based sync-window/energy-cache plumbing, USC-specific constants (generalize to "school discovery"). |
-| `sources.py` / `discovery.py` | Into `coverage_connectors`. |
+| `sources.py` / `discovery.py` | Into `networkly_connectors`. |
 | `verify_rows.py` | Pointed at `opportunities`. Staleness banners are a brand feature — keep. |
 | `prescan.py` | **Port the mechanism, discard the taxonomy.** HOT/WARM/COLD + RESOLVED/RESIDUE is the generic LLM cost-control asset. `_IB_ST_FIRM_CATEGORY` and the HK/US Class-of-2028/29 scope become rows in `firms`/`user_firms`. |
 
 ### The shared-cache design, concretely
 
 Connectors are already user-agnostic — a JPMorgan Oracle board fetch is identical for every
-student. The per-user parts today are the *filters* applied at fetch time. In Coverage: ingest
+student. The per-user parts today are the *filters* applied at fetch time. In Networkly: ingest
 broadly into shared `opportunities`; per-user relevance becomes a **read-time query**
 (`user_firms` join + region/track predicates), not a fetch.
 
@@ -243,7 +243,7 @@ code in-app — a genuinely smooth assisted setup.
 ### The BCC-prefill gap, honestly
 
 No REST API pre-fills BCC in native compose. The v1 answer is that **composes start from
-Coverage**: every contact and cadence action carries a `mailto:` link with `to` + `bcc`
+Networkly**: every contact and cadence action carries a `mailto:` link with `to` + `bcc`
 prefilled. Works in Gmail-as-handler, Apple Mail, Outlook — **verify with a 30-minute client
 matrix spike in M3.** That converts the weekly priority list into the compose surface, which is
 where we want users anyway.
@@ -348,7 +348,7 @@ my-firms overlay.*
 tests ported *first*; manual quick-log UI with visible warmth-movement feedback; CSV import;
 cadence `due_actions` + today view. **Founder cutover: migrate the real `campaign.db` through the
 import path and stop using the CLI.**
-*DoD: founder runs his actual recruiting week entirely in Coverage; import path proven on real
+*DoD: founder runs his actual recruiting week entirely in Networkly; import path proven on real
 data.*
 
 **M3 — Capture v1 (wk 6–7).** Per-user capture address via Postmark inbound; `capture_events`

@@ -37,11 +37,11 @@ The design retains Instrument Sans, navy/cobalt themes, compact information dens
 
 Implementation is concentrated in the three `presentation-*.css` families, `workspace.css`, and selected Django templates. Existing routes, forms, HTMX targets, and action handlers were retained. Application identity adds two presentation fields to the existing view data.
 
-## Coverage Matrix
+## Networkly Matrix
 
 The source inventory contains **100 non-email templates, including 42 base-page templates**. The inventory is preserved in `docs/networkly-ui-coverage-inventory-2026-09-06.json`; it contains template paths, page flags, extracted headings and state classes. Automated heading extraction can include template/style text, so it is a navigation aid rather than a definitive copy audit. Inventory coverage is not equivalent to browser or functional coverage.
 
-| Family | Source Audit | Implementation in This Pass | Browser Evidence | Remaining Conditional Coverage |
+| Family | Source Audit | Implementation in This Pass | Browser Evidence | Remaining Conditional Networkly |
 |---|---|---|---|---|
 | Today | Page and action/queue/feed states | Summary, plan, action and context layout | Desktop/mobile; light/dark | Active weekday plan, every proposal/undo/error and first-use combination |
 | Network and firm network | Toolbar, groups, cards, cleanup states | Toolbar/card density, selection and alignment | Desktop/mobile; light/dark; search, selection and no-results interactions | Every bulk action, drag operation, empty tier and cleanup outcome |
@@ -62,7 +62,7 @@ The source inventory contains **100 non-email templates, including 42 base-page 
 - `.impeccable/review/full-upgrade/states.json`: successful role loading, a simulated role-load failure with Escape restoring focus, Network no-results filtering, application stage filtering, and logged-out login/signup/reset mobile rendering all passed.
 - A review found that the closed mobile Assistant history could retain keyboard-focusable controls off screen. The fix applies `inert` and `aria-hidden`, synchronizes resize state, and restores focus on close; the Chromium reproduction was rechecked. This is a targeted focus check, not a complete accessibility certification.
 - The existing CRM `0028` migration was applied locally to resolve Today/Calendar failures caused by the local schema being behind the code. No new migration was authored for this UI pass.
-- Automated checks: **261 passed** in 71.85 seconds using an isolated test settings module/database. Coverage includes the visual system, settings page/sections, contact forms/facts, calendar views, and application tracking. One existing Django deprecation warning remains. Earlier database-contention attempts are not counted as passes.
+- Automated checks: **261 passed** in 71.85 seconds using an isolated test settings module/database. Networkly includes the visual system, settings page/sections, contact forms/facts, calendar views, and application tracking. One existing Django deprecation warning remains. Earlier database-contention attempts are not counted as passes.
 
 Screenshots and response checks establish rendering of the exercised data states. They do not establish every interaction, accessible name, keyboard sequence, screen-reader behavior, integration, or production deployment.
 

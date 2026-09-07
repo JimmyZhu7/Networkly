@@ -95,7 +95,7 @@ the same class of over-claim as the "New" badge that meant "we imported it". The
 happened. It *invites* fabricated data: click "Sent" on 29 cards and the CRM believes
 29 follow-ups went out, warmth clocks reset, and the queue is "clear". The honest flow
 is compose-first, log-second, and the log verb should say what it is ("Log it" — an
-attestation you did the thing, possibly outside Coverage), not "Sent".
+attestation you did the thing, possibly outside Networkly), not "Sent".
 
 ### F6: the three lanes are fake
 
@@ -310,7 +310,7 @@ deleted, nothing silently vanishes; tomorrow the oldest-silent items fill first,
 from `weekly_touch_goal`. New cadence key (C) is whitelisted:
 `chatted_touch_min_weeks: (1, 52)`.
 
-### C. New cadence branches (coverage_domain/cadence.py)
+### C. New cadence branches (networkly_domain/cadence.py)
 
 All three changes need: a DIVERGENCE entry in the module docstring (same dated style
 as the existing ones), golden-fixture tests, and updated branch numbering comments.
@@ -418,7 +418,7 @@ clipping twice):
     exists. Compose-first is the honest flow; it also feeds the capture funnel,
     which is the product's stated open risk.
   - Secondary = **"Log it"** (renamed from "Sent" — an attestation that the thing
-    happened, possibly outside Coverage; `title` text: "Record that you did this").
+    happened, possibly outside Networkly; `title` text: "Record that you did this").
     Same POST as today (`today_act` `sent` + kind).
   - **"They replied"** (renamed from "Reply" — it logs `reply_received`, i.e. an
     event about *them*; "Reply" reads as "compose a reply" and mislogs).

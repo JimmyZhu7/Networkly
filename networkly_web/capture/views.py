@@ -1,0 +1,265 @@
+"""Capture app views — Gmail Live (docs/build-plan.md §5's "v2"; see
+capture/gmail_live.py). This is a SEPARATE, incremental OAuth consent — the
+login flow never touches these views or that client's credentials.
+
+The BCC/forward inbound-email webhook (§5's v1) was retired 2026-08-19 once
+Gmail Live made it redundant — a real, connected Gmail account needs no
+habit change (BCC/forward) to get the same touches logged.
+
+Google Calendar's three views live here too (see `capture/gcal_live.py`).
+Same pattern, separate grant: a third incremental consent, read-only, that
+a student can give or refuse without touching whether their mail syncs.
+"""
+
+from __future__ import annotations
+
+from accounts.access import has_individual_features, sync_user_filter, plan_label
+
+import secrets
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import Http404
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from analytics.events import record_event
+from capture import gcal_live, gmail_live, google_revoke
+from capture.models import GmailConnection
+
+_STATE_SESSION_KEY = "gmail_live_oauth_state"
+
+
+@login_required
+def gmail_connect(request):
+    """Redirects to Google's consent screen for the Gmail-read scope, using
+    the SEPARATE Gmail Live OAuth client (never the login one)."""
+    if not gmail_live.is_configured():
+        raise Http404("Gmail Live is not configured on this deploy.")
+    redirect_uri = request.build_absolute_uri(reverse("capture:gmail_callback"))
+    state = secrets.token_urlsafe(24)
+    request.session[_STATE_SESSION_KEY] = state
+    return redirect(gmail_live.build_auth_url(redirect_uri, state))
+
+
+@login_required
+def gmail_callback(request):
+    """Google's redirect back after consent (or a denial/error)."""
+    if not gmail_live.is_configured():
+        raise Http404("Gmail Live is not configured on this deploy.")
+
+    expected_state = request.session.pop(_STATE_SESSION_KEY, None)
+    if not expected_state or request.GET.get("state") != expected_state:
+        messages.error(request, "Gmail connection expired. Connect again.")
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+    if request.GET.get("error"):
+        # The user hit "Cancel" on Google's consent screen, or Google itself
+        # errored. Either way there is nothing to exchange.
+        messages.error(request, "Gmail connection cancelled.")
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+    code = request.GET.get("code", "")
+    redirect_uri = request.build_absolute_uri(reverse("capture:gmail_callback"))
+    try:
+        connection = gmail_live.connect_gmail(request.user, code, redirect_uri)
+    except gmail_live.GmailLiveError as exc:
+        messages.error(request, str(exc))
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+    if connection.status == "revoked":
+        messages.error(
+            request,
+            "Google could not keep this Gmail connection active. Connect Gmail "
+            "again to restore syncing and your historical scan.",
+        )
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+    # The product's magic moment left no trace in the event stream. ~70
+    # `record_event` call sites existed and not one of them fired here, so the
+    # single step that turns Networkly from an empty CRM into a populated one
+    # was the only part of the funnel that could not be counted: a connection
+    # was discoverable as a GmailConnection row, but "when did they connect,
+    # and how long after signing up" was unanswerable.
+    #
+    # Recorded HERE, after the exchange succeeded and the row exists — not on
+    # the redirect out to Google in `gmail_connect`, which is a click on a
+    # button, not a connection, and which a cancelled consent screen would
+    # otherwise record as a success. No address in the props: the event stream
+    # is read on a staff page and a mailbox address is not a metric.
+    record_event(
+        "gmail_connected",
+        user=request.user,
+        plan=request.user.plan,
+        realtime=connection.watch_expiration is not None,
+    )
+    messages.success(request, f"Gmail connected: {connection.gmail_address}.")
+    if connection.watch_expiration is None:
+        if has_individual_features(request.user):
+            # connect_gmail stored a perfectly good connection but could not
+            # register the Pub/Sub watch (see its comment on why that is not
+            # fatal). Everything except real-time push still works, and the
+            # daily gmail_watch_renew retries on its own — but saying so
+            # beats letting the user wonder why nothing arrives instantly.
+            messages.warning(
+                request,
+                "Real-time updates aren't active yet — Networkly will keep "
+                "retrying. Your historical scan will still run.",
+            )
+        else:
+            # Expected, not a failure: real-time sync is Pro-only
+            # (docs/pricing-rebalance-plan.md §7) and `connect_gmail` never
+            # even attempts `register_watch` for a Free plan, so there is
+            # nothing here to retry. A plain info note, not the "still
+            # retrying" warning above, which would wrongly imply this fixes
+            # itself.
+            messages.info(
+                request,
+                "Real-time sync is a Pro feature. Your historical scan will "
+                "still run, and Scan Now works anytime on any plan.",
+            )
+    return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+
+@login_required
+@require_POST
+def gmail_disconnect(request):
+    """Disconnect Gmail and reconcile Google's shared project authorization."""
+    result = google_revoke.disconnect_connections(request.user, GmailConnection)
+    if result["replaced"]:
+        messages.info(request, "Gmail was reconnected while this request was running. Its new connection was kept.")
+    else:
+        messages.success(request, "Gmail disconnected.")
+    if result["related_services"]:
+        messages.info(request, "Google also revoked Calendar access for this account. Reconnect Google Calendar to resume sync. Your imported events are kept.")
+    if result["unconfirmed"]:
+        messages.warning(request, "Google did not confirm revocation. You can remove Networkly’s access in your Google Account permissions.")
+    return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+
+@login_required
+@require_POST
+def gmail_rescan(request):
+    """"Scan Now" — a user-triggered, repeatable re-check of Gmail against
+    ALL of the user's contacts. Distinct from the one-time automatic
+    first-connect backfill above: this only QUEUES the work
+    (`rescan_status="pending"`); the same `gmail_backfill` cron tick that
+    already polls for pending first-connect backfills also picks up a
+    pending rescan and runs `gmail_live.run_rescan` — see that command's
+    docstring for why this stays queue-and-poll rather than running inline
+    here (a year of per-contact Gmail searches, now plus a capped AI pass,
+    is not something a POST's response can wait on).
+
+    Refuses to queue a second rescan while one is already `pending` or
+    `running`, so a student clicking the button five times in a row can't
+    stack five runs — the Settings page also disables the button in that
+    state, this is the server-side guarantee behind it.
+    """
+    connection = GmailConnection.all_objects.select_related("user").filter(
+        user=request.user, status="active"
+    ).first()
+    if connection is None:
+        messages.error(request, "Connect Gmail before running a scan.")
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+    if connection.rescan_status in ("pending", "running"):
+        messages.info(request, "A scan is already in progress.")
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+    unlocks_at = gmail_live.free_rescan_unlocks_at(connection)
+    if unlocks_at is not None:
+        messages.error(
+            request,
+            "Free plan: one scan every "
+            f"{settings.GMAIL_FREE_RESCAN_INTERVAL_DAYS} days. Next scan "
+            f"available {timezone.localtime(unlocks_at):%-d %b}. Pro scans any time.",
+        )
+        return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+    connection.rescan_status = "pending"
+    connection.rescan_requested_at = timezone.now()
+    connection.save(update_fields=["rescan_status", "rescan_requested_at"])
+    messages.success(request, "Scan queued — check back in a few minutes.")
+    return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+
+# ---------------------------------------------------------------------------
+# Google Calendar — a THIRD OAuth consent, read-only (capture/gcal_live.py)
+# ---------------------------------------------------------------------------
+#
+# Deliberately a parallel set of three views rather than a `provider` argument
+# threaded through the Gmail ones. The two grants share an OAuth client and a
+# token key and nothing else: separate scopes, separate rows, separate
+# consent screens, separate disconnects. A single set of views taking a
+# provider would put "which grant am I touching" into a request parameter,
+# and a disconnect that reads the wrong one silently kills the wrong feature.
+
+_GCAL_STATE_SESSION_KEY = "gcal_oauth_state"
+
+
+@login_required
+def gcal_connect(request):
+    """Redirects to Google's consent screen for the calendar READ scope."""
+    if not gcal_live.is_configured():
+        raise Http404("Google Calendar is not configured on this deploy.")
+    redirect_uri = request.build_absolute_uri(reverse("capture:gcal_callback"))
+    state = secrets.token_urlsafe(24)
+    # ITS OWN SESSION KEY. Sharing `_STATE_SESSION_KEY` with the Gmail flow
+    # would have a student who opened both consent screens land back with
+    # one state overwritten by the other, and the second callback would
+    # correctly refuse a request that was never tampered with.
+    request.session[_GCAL_STATE_SESSION_KEY] = state
+    return redirect(gcal_live.build_auth_url(redirect_uri, state))
+
+
+@login_required
+def gcal_callback(request):
+    """Google's redirect back after the calendar consent (or a denial)."""
+    if not gcal_live.is_configured():
+        raise Http404("Google Calendar is not configured on this deploy.")
+
+    expected_state = request.session.pop(_GCAL_STATE_SESSION_KEY, None)
+    if not expected_state or request.GET.get("state") != expected_state:
+        messages.error(request, "Calendar connection expired. Connect again.")
+        return redirect(f"{reverse('accounts:settings')}#google-calendar")
+
+    if request.GET.get("error"):
+        messages.error(request, "Calendar connection cancelled.")
+        return redirect(f"{reverse('accounts:settings')}#google-calendar")
+
+    code = request.GET.get("code", "")
+    redirect_uri = request.build_absolute_uri(reverse("capture:gcal_callback"))
+    try:
+        connection = gcal_live.connect_calendar(request.user, code, redirect_uri)
+    except gcal_live.GcalError as exc:
+        messages.error(request, str(exc))
+        return redirect(f"{reverse('accounts:settings')}#google-calendar")
+
+    # Counted for the same reason `gmail_connected` is: connecting is the
+    # step that turns Networkly from a blank timeline into a populated one,
+    # and a row in the database answers "did they" but not "when, and how
+    # long after signing up". No address in the props — the event stream is
+    # read on a staff page and a calendar address is not a metric.
+    record_event("gcal_connected", user=request.user, plan=request.user.plan)
+    messages.success(request, f"Calendar connected: {connection.google_email}.")
+    return redirect(f"{reverse('accounts:settings')}#google-calendar")
+
+
+@login_required
+@require_POST
+def gcal_disconnect(request):
+    """Disconnect Calendar and reconcile Google's shared project authorization."""
+    from capture.models import GoogleCalendarConnection
+
+    result = google_revoke.disconnect_connections(request.user, GoogleCalendarConnection)
+    if result["replaced"]:
+        messages.info(request, "Google Calendar was reconnected while this request was running. Its new connection was kept.")
+    else:
+        messages.success(request, "Google Calendar disconnected.")
+    if result["related_services"]:
+        messages.info(request, "Google also revoked Gmail access for this account. Reconnect Gmail to resume sync. Your imported records are kept.")
+    if result["unconfirmed"]:
+        messages.warning(request, "Google did not confirm revocation. You can remove Networkly’s access in your Google Account permissions.")
+    return redirect(f"{reverse('accounts:settings')}#google-calendar")

@@ -3,7 +3,7 @@
 Follow-up to `docs/talnet-2026-09.md`, whose closing section recorded two
 things it measured but could not answer. This document answers the first of
 them. Probe run 2026-09-02 06:15 to 06:23 UTC from the scraper host
-(`zhujimmy` macOS, Python 3.13, `coverage_connectors` HTTP layer).
+(`zhujimmy` macOS, Python 3.13, `networkly_connectors` HTTP layer).
 
 ## Why this document exists
 
@@ -31,7 +31,7 @@ confirm page two is real rather than a nav pointing at nothing. Six requests
 in total, spaced two and a half seconds apart. Nothing was written to the
 database and no posting page was opened.
 
-- The user agent is `coverage_connectors.http.USER_AGENT`, the honest one
+- The user agent is `networkly_connectors.http.USER_AGENT`, the honest one
   the scraper actually sends. No browser string was used anywhere in this
   probe.
 - TLS verified against certifi's roots, the fetch layer's default. Nothing

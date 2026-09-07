@@ -141,7 +141,7 @@ guarantee. Its apply mode considers pending turns older than 30 minutes, up to
 
 ## Deployment Gate and Acceptance
 
-Run `uv run --package coverage-web python coverage_web/manage.py deploy_preflight --launch`
+Run `uv run --package networkly-web python networkly_web/manage.py deploy_preflight --launch`
 in the production web environment after migrations. Missing individual-feature
 configuration fails this launch gate; Stripe is unnecessary in beta.
 `--warn-only` is diagnostic and is not a passed gate. The command checks effective

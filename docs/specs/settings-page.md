@@ -2,7 +2,7 @@
 
 *Authored 2026-07-30. Inputs: full read of `accounts/{views,forms,services,models}.py`,
 `templates/accounts/settings.html`, `crm/views.py`, `crm/coverage.py`, `capture/*`,
-`coverage_domain/cadence.py`, settings modules, live page + allauth routes inspected in the
+`networkly_domain/cadence.py`, settings modules, live page + allauth routes inspected in the
 browser against the founder account (137 contacts / 129 touches / 25 archived), and read-only
 DB queries. Product posture per `docs/product-brief.md` and `docs/build-plan.md`.*
 
@@ -25,9 +25,9 @@ The founder account signs in with an email + password (`has_usable_password() ==
   providers are conditionally registered in `settings/base.py`)
 
 Verified in the browser: `/accounts/password/change/` renders **allauth's raw default
-template** — no Coverage shell, black text on the dark background, a bare `<ul>` "Menu:"
+template** — no Networkly shell, black text on the dark background, a bare `<ul>` "Menu:"
 with Change Email / Account Connections / Sign Out links. Only `login / logout / signup /
-password_reset*` have Coverage templates (`templates/account/`). Nothing on the Settings
+password_reset*` have Networkly templates (`templates/account/`). Nothing on the Settings
 page links to any of these. A real product's most basic account controls exist here as
 unreachable, broken-looking pages. Settings has no Account section at all.
 
@@ -53,7 +53,7 @@ year, the ignored setting).
 
 `User.language` is written by the Settings POST and read back **only to re-render the same
 dropdown**. There is no `LocaleMiddleware`, no `django.utils.translation.activate()` call,
-no `{% trans %}`/`{% load i18n %}` anywhere in `coverage_web/templates/`, and no translation
+no `{% trans %}`/`{% load i18n %}` anywhere in `networkly_web/templates/`, and no translation
 catalogs. Choosing 中文 changes nothing. This is precisely the defect the codebase's own
 comments warn about ("a settings page that happily saves a value the engine then ignores"
 — `accounts/forms.py:35`). Cut the section until an i18n pass exists. Keep the column
@@ -77,7 +77,7 @@ control is cheap and closes a real hole.
 (`crm/views.py:328,559,708`) — i.e. UTC's date. The stated audience is **HK and US**
 students. For an HK student (UTC+8), the cadence queue, the pace-ring week, follow-up
 windows, and "app closes in N days" all roll over at **8 a.m. their time**, and their
-Sunday-evening logging lands on the wrong week. `coverage_domain/cadence.py` takes an
+Sunday-evening logging lands on the wrong week. `networkly_domain/cadence.py` takes an
 explicit as-of date, so it honours whatever day the web layer passes — the fix is a
 per-user timezone plus a tiny activation middleware, and every `localdate()` call site is
 correct automatically. There is currently no field, no control, and no honest label saying
@@ -169,7 +169,7 @@ on you."** Ten flat cards is fine at this count *if the rail communicates those 
 quarantined at the bottom, each gated by a type-to-confirm where the button stays disabled
 until the typed value matches
 ([DataCamp on GitHub's flow](https://www.datacamp.com/tutorial/how-to-delete-a-github-repository),
-[Zapier](https://zapier.com/blog/github-delete-repository/)). Coverage's delete page
+[Zapier](https://zapier.com/blog/github-delete-repository/)). Networkly's delete page
 already matches this (server-side match on the typed email). Keep destructive actions on
 their own confirm page, never a one-click on the settings page itself.
 
@@ -179,7 +179,7 @@ Delete Account, permanence stated, deactivate offered as the softer alternative
 Teal: delete from account settings with confirmation; help docs explicitly tell users to
 **export before deleting** because deletion is unrecoverable
 ([Teal Knowledge Base](https://help.tealhq.com/en/articles/9457676-deleting-your-account)).
-Coverage already links export from the delete page — matching the best practice.
+Networkly already links export from the delete page — matching the best practice.
 
 **Export.** Huntr's "Download My Data" is the model for the category: **one ZIP of multiple
 CSVs, one per data type** (Job Data, Activity Data, Profile Data, Contacts Data), from
@@ -193,7 +193,7 @@ partial export labeled "all your data" is below it.
 **Notifications.** LinkedIn and Notion both give notifications their own top-level section
 with per-type toggles ([Notion](https://www.notion.com/help/notification-settings)). Nobody
 ships a notification section with zero notification types — which supports deferring
-Coverage's until the digest exists.
+Networkly's until the digest exists.
 
 **The finance-student tools set a low bar.** The Trackr's product is tracker tables + paid
 alerts ([the-trackr.com](https://the-trackr.com/)); OffCycle is a feed + HR-contact unlock
@@ -257,15 +257,15 @@ independently guards against bad stored values.
   column. Value is an IANA zone name validated against `zoneinfo.available_timezones()`.
   Blank means **unset**.
 - **Widget:** one `<select>`. A curated shortlist first (Hong Kong, US Eastern/Central/
-  Mountain/Pacific, London, Singapore — the six-market region vocabulary Coverage already
+  Mountain/Pacific, London, Singapore — the six-market region vocabulary Networkly already
   uses), then an "All timezones" optgroup with the full sorted zoneinfo list. No JS needed.
 - **What reads it:** a new ~15-line middleware: if `request.user.is_authenticated` and
   `user.timezone`, call `django.utils.timezone.activate(ZoneInfo(user.timezone))`, else
   `deactivate()` (falls back to UTC). Every existing `timezone.localdate()` call site
   (Today's as-of date, the pace week, snooze checks) becomes correct with **zero changes**;
-  `coverage_domain/cadence.py` already takes the resulting date as an explicit parameter.
+  `networkly_domain/cadence.py` already takes the resulting date as an explicit parameter.
 - **Default / unset behaviour:** UTC, and the field's hint says so honestly:
-  *"Unset: Coverage uses UTC days, so 'today' rolls over at midnight UTC."* Do not guess
+  *"Unset: Networkly uses UTC days, so 'today' rolls over at midnight UTC."* Do not guess
   from `regions` — a guessed timezone silently moving someone's week boundary is the exact
   bug class this page exists to avoid.
 - **Onboarding is untouched** (this is not an onboarding step; the honest UTC default is
@@ -304,7 +304,7 @@ All rows are links/buttons to dedicated pages — no inline password fields on S
 1. **Email** — display `user.email` with a "Verified" tick when the primary
    `EmailAddress.verified` is true. Button "Manage email" → `/accounts/email/`.
    **Requires styling the allauth template** (`templates/account/email.html`) in the
-   Coverage shell — the route already works. Recommend also setting
+   Networkly shell — the route already works. Recommend also setting
    `ACCOUNT_CHANGE_EMAIL = True` so allauth runs a single-address change flow (add new →
    verify → old replaced) instead of exposing a multi-address list a student doesn't need.
    Note for the builder: email is the USERNAME_FIELD; allauth keeps `user.email` in sync
@@ -333,7 +333,7 @@ All rows are links/buttons to dedicated pages — no inline password fields on S
   Placeholder shows the default, matching the other cadence rows. Range rationale: the read
   side rejects `< 1`; above 5 the gap ladder is unreachable for any real student — clamp
   and say so in the error message.
-- **Label/desc:** "Advocate Target — advocates per firm before Coverage calls that firm
+- **Label/desc:** "Advocate Target — advocates per firm before Networkly calls that firm
   covered. Feeds the gap ladder on Network and the network axis of your firm fit score.
   Default: 2."
 - **What reads it:** `crm/coverage.advocate_target()` (guarded), `crm/views.py:785,1170`.
@@ -393,7 +393,7 @@ Shared pattern (matches GitHub/Simplify/Teal findings and the existing delete pa
    digest). Conversely, no engine parameter that is user-facing should be Settings-invisible
    (this adds Advocate Target).
 2. **Blank is unset, and unset is labeled.** Every optional control states what happens
-   when empty ("uses the default of 10", "stays honestly unknown", "Coverage uses UTC
+   when empty ("uses the default of 10", "stays honestly unknown", "Networkly uses UTC
    days"). Never render a default value INTO an input — placeholders only.
 3. **Counts mean what they say.** Any number on the page states its population ("25
    archived" split out; capture "Nothing received yet" rather than an empty-looking zero).
@@ -465,7 +465,7 @@ Constraints throughout: Django + htmx server-rendered, no React; design tokens
    Responsive `.set-row` stack at ≤560px; capture-address wrap.
 5. **Sign-In & Security card** + styled allauth templates (`account/password_change.html`,
    `account/password_set.html`, `account/email.html`, `socialaccount/connections.html`)
-   extending `base.html` in Coverage's visual language. Conditional rows per D6. Set
+   extending `base.html` in Networkly's visual language. Conditional rows per D6. Set
    `ACCOUNT_CHANGE_EMAIL = True`. Route-level tests: pages render inside the shell,
    anonymous users redirected.
 6. **Sign out everywhere:** view + confirm page + session sweep (spare current key) +
@@ -521,7 +521,7 @@ migration risk.
   catalogs for the five LANGUAGES). The column and choices are ready.
 - **Two-factor / passkeys** (allauth `mfa` module) — right-sized after real users exist;
   the Sign-In & Security card gives it an obvious home.
-- **Deactivate (soft-pause) as an alternative to delete** — Simplify offers it; Coverage's
+- **Deactivate (soft-pause) as an alternative to delete** — Simplify offers it; Networkly's
   `deleted_at` column exists but is unused. Product decision: is a paused-account state
   worth its support surface pre-launch? Not before real users.
 - **Plan/It's-free row** — deliberately absent; billing is out of v1 by decision. Add an

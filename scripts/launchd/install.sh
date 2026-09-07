@@ -1,5 +1,5 @@
 #!/bin/bash
-# Install Coverage's four local background jobs as launchd agents.
+# Install Networkly's four local background jobs as launchd agents.
 #
 # These are the local stand-ins for four of render.yaml's services — see
 # docs/see-it-locally.md, "The background jobs", for which stands in for

@@ -1,4 +1,4 @@
-"""Import a recruiting-radar `targets.yaml` into Coverage as one user's firm list.
+"""Import a recruiting-radar `targets.yaml` into Networkly as one user's firm list.
 
 Run: `manage.py shell < scripts/import_targets.py` (mirrors scripts/demo_seed.py).
 

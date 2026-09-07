@@ -21,7 +21,7 @@ string with no `ends_at` for a **paid** Pro cycle (only the trial has one),
 so even self-serve Pro cannot be represented as a 6-month entitlement today;
 it is an admin flip and a calendar reminder.
 
-`coverage_web/tenancy.py` helps more than it hinders: `TenantManager.
+`networkly_web/tenancy.py` helps more than it hinders: `TenantManager.
 get_queryset()` raises, `for_user()` is the only read path, `all_objects` is
 the greppable escape hatch. Every private row carries `user_id` only; there
 is no `org_id`, so org-wide views are a join through a membership table

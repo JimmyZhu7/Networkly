@@ -5,7 +5,7 @@ this file into a shell. Kept here, thin, so `manage.py shell <
 scripts/demo_seed.py` (docs/see-it-locally.md's old instruction, anything
 else that still calls it that way) keeps working.
 
-Prefer: python coverage_web/manage.py seed_demo
+Prefer: python networkly_web/manage.py seed_demo
 """
 from django.core.management import call_command
 

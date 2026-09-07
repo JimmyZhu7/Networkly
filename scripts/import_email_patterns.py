@@ -1,4 +1,4 @@
-"""Port the email-pattern ledger from campaign.db into Coverage.
+"""Port the email-pattern ledger from campaign.db into Networkly.
 
 WHAT THIS DATA IS. Every outbound email either lands or bounces. Counted per
 firm, that is a running measurement of whether the address format you guessed
@@ -14,7 +14,7 @@ help everyone, while the raw bounce events — who you emailed and when — stay
 in your own private Touch rows. Nothing identifying moves here; two integers
 per firm do.
 
-MERGE, DO NOT REPLACE. Coverage may already hold counts for a firm from its
+MERGE, DO NOT REPLACE. Networkly may already hold counts for a firm from its
 own sending. The two ledgers describe the same underlying fact from different
 windows, so the counts are ADDED. Re-running would therefore double-count,
 which is why this writes a marker file and refuses a second run unless
@@ -31,8 +31,8 @@ from pathlib import Path
 
 import django
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "coverage_web"))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "coverage_web.settings.local")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "networkly_web"))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "networkly_web.settings.local")
 django.setup()
 
 from directory.models import EmailPatternStats, Firm  # noqa: E402
@@ -42,8 +42,8 @@ CAMPAIGN_DB = Path(
 )
 MARKER = Path(__file__).resolve().parent.parent / "data" / "imports" / ".email_patterns_imported"
 
-# campaign.db firm ids that differ from Coverage's slugs. Empty, and checked:
-# Coverage's directory was seeded from the same firms.yaml, so the two id
+# campaign.db firm ids that differ from Networkly's slugs. Empty, and checked:
+# Networkly's directory was seeded from the same firms.yaml, so the two id
 # spaces are identical down to the abbreviations (`db`, `stanchart`,
 # `bnpparibas` are the slugs on both sides). The first draft of this script
 # "helpfully" expanded those three to `deutsche-bank` / `standard-chartered` /
@@ -109,7 +109,7 @@ def main() -> int:
                 stats.save(update_fields=["delivered", "bounced", "last_updated"])
 
     if unresolved:
-        print("\nNo matching Coverage firm (skipped, nothing invented):")
+        print("\nNo matching Networkly firm (skipped, nothing invented):")
         for u in unresolved:
             print(f"  {u}")
 

@@ -17,7 +17,7 @@ the finding carries a proposed patch and is marked FOR THE OWNER.
 
 Interpreter for every command below:
 `/Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python`, run from the
-worktree root with `DJANGO_SETTINGS_MODULE=coverage_web.settings.local`.
+worktree root with `DJANGO_SETTINGS_MODULE=networkly_web.settings.local`.
 
 ---
 
@@ -25,7 +25,7 @@ worktree root with `DJANGO_SETTINGS_MODULE=coverage_web.settings.local`.
 
 **No launch blocker was found in the security posture itself.** The
 authorization model is the strongest part of this codebase: `PrivateModel`'s
-manager (`coverage_web/coverage_web/tenancy.py:66`) raises on an unscoped
+manager (`networkly_web/networkly_web/tenancy.py:66`) raises on an unscoped
 tenant query, so a cross-tenant read is a loud runtime error rather than a
 silent leak, and every one of the 33 `get_object_or_404` call sites on tenant
 data is `for_user`-scoped.
@@ -50,7 +50,7 @@ callback's decorators and each queryset's tenant scoping. Encoded as a
 permanent test rather than left as a document:
 
     /Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python -m pytest \
-      coverage_web/core/tests/test_route_auth_coverage.py -q
+      networkly_web/core/tests/test_route_auth_coverage.py -q
     # 114 passed
 
 ### Result
@@ -59,11 +59,11 @@ permanent test rather than left as a document:
 `@login_required`; four carry `@staff_member_required` (`ops.views.health_cron`
 `ops/views.py:41`, `ops.views.health_gmail` `ops/views.py:80`,
 `analytics.views.dashboard` `analytics/views.py:181`, and Django's admin at
-`coverage_web/coverage_web/urls.py:26`). Both `/ops/health/*` endpoints are
+`networkly_web/networkly_web/urls.py:26`). Both `/ops/health/*` endpoints are
 correctly staff-gated, which matters because `health_gmail` returns other
 users' `user_email` and `gmail_address` at `ops/views.py:117`.
 
-The private media route is registered at `coverage_web/coverage_web/urls.py:80`
+The private media route is registered at `networkly_web/networkly_web/urls.py:80`
 and enforces ownership in the body rather than by decorator, deliberately:
 `core/media.py:11` requires an authenticated, active, undeleted user whose own
 `avatar.name` equals the requested path. `@login_required` would be strictly
@@ -82,7 +82,7 @@ is therefore one hundred percent per-view decorator, and a view added without
 one is public, looks exactly like a view that is public on purpose, and nothing
 notices. That is a working design; what it lacked was a control.
 
-Added `coverage_web/core/tests/test_route_auth_coverage.py`. It walks the
+Added `networkly_web/core/tests/test_route_auth_coverage.py`. It walks the
 resolver, reads each first-party callback's own decorator lines, and requires
 either a gate or an entry in one of two declared lists (`PUBLIC`, for routes
 that answer anonymous callers on purpose; `GATED_IN_BODY`, for the media route).
@@ -96,8 +96,8 @@ version bump may reshape.
 
 ### 1.2 `university_search` is anonymous and unthrottled — FOR THE OWNER
 
-`coverage_web/accounts/urls.py:30` binds `accounts.views.university_search`
-(`coverage_web/accounts/views.py:1315`), which carries only `@require_GET`.
+`networkly_web/accounts/urls.py:30` binds `accounts.views.university_search`
+(`networkly_web/accounts/views.py:1315`), which carries only `@require_GET`.
 `accounts/urls.py:7-10` states the contract this breaks in its own words:
 "Everything is login-required except the two legal pages and the digest
 unsubscribe link."
@@ -108,7 +108,7 @@ anonymous scanning endpoint in the app without the per-IP burst guard that both
 `core.views.search` (`core/views.py:165`) and `billing.views.waitlist_join`
 (`billing/views.py:107`) carry, and it does an O(10k) Python scan per call.
 
-Proposed patch, `coverage_web/accounts/views.py`:
+Proposed patch, `networkly_web/accounts/views.py`:
 
 ```python
 +from core.views import _search_throttled   # the shared per-IP guard
@@ -124,7 +124,7 @@ number, so the test states today's truth instead of failing on a known item.
 
 ### 1.3 `calendar_ics` compares its bearer token with a plain filter — NOTED
 
-`coverage_web/crm/calendar_views.py:823` looks the user up with
+`networkly_web/crm/calendar_views.py:823` looks the user up with
 `filter(calendar_token=token)`. Not constant time. The token is server-generated
 and rotatable (`calendar_views.py:701`), the comparison happens inside Postgres
 across a network hop, and the code documents the trade at `calendar_views.py:704`.
@@ -138,7 +138,7 @@ component discloses a full read-only calendar.
 ### Proof
 
     /Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python -m pytest \
-      coverage_web/accounts/tests/test_beta_admission.py -q
+      networkly_web/accounts/tests/test_beta_admission.py -q
     # 27 passed
 
 ### Result
@@ -175,8 +175,8 @@ queryset deletions are covered too. `BetaInvitation.delete` raises outright
 
 ### Proof
 
-    grep -rn "csrf_exempt" --include='*.py' coverage_web/ | grep -v '/tests/'
-    # coverage_web/billing/views.py:20, :70   (the only two hits, one import)
+    grep -rn "csrf_exempt" --include='*.py' networkly_web/ | grep -v '/tests/'
+    # networkly_web/billing/views.py:20, :70   (the only two hits, one import)
 
 ### Result
 
@@ -198,7 +198,7 @@ contains the token (`assistant/chat.html:2244` into `:2179`).
 
 ### 3.1 The webhook reflects internal error text to an unauthenticated caller — FOR THE OWNER
 
-`coverage_web/billing/views.py:89`:
+`networkly_web/billing/views.py:89`:
 
 ```python
     except stripe_gateway.StripeGatewayError as exc:
@@ -231,9 +231,9 @@ Proposed patch:
 ### Proof
 
     /Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python -m pytest \
-      coverage_web/core/tests/test_private_media.py \
-      coverage_web/core/tests/test_private_storage.py \
-      coverage_web/core/tests/test_media_serving.py -q
+      networkly_web/core/tests/test_private_media.py \
+      networkly_web/core/tests/test_private_storage.py \
+      networkly_web/core/tests/test_media_serving.py -q
     # 45 passed
 
 ### Result
@@ -271,7 +271,7 @@ review does not report.
 ### Proof
 
     /Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python -m pytest \
-      coverage_web/accounts/tests/test_export.py -q
+      networkly_web/accounts/tests/test_export.py -q
     # 22 passed
 
 Plus a mechanical sweep of every builder for an unscoped query:
@@ -339,7 +339,7 @@ so they authenticate nobody. But `services.sign_out_other_sessions`
 (`accounts/services.py:70`) already exists, already does exactly this, and is
 simply not called from the deletion path.
 
-Proposed patch, `coverage_web/accounts/services.py::delete_user_and_data`:
+Proposed patch, `networkly_web/accounts/services.py::delete_user_and_data`:
 
 ```python
      google_revoke.revoke_all_for_user(user)
@@ -371,12 +371,12 @@ sentence should come back out.
 **No secret is committed on this branch.** Eight matches, every one a test
 fixture with a self-describing value. Naming the files only, per the rule:
 
-- `coverage_web/billing/tests/test_stripe_gateway.py` (three)
-- `coverage_web/ops/tests/test_deploy_preflight_beta.py` (two)
-- `coverage_web/assistant/tests/test_agent.py` (one, plus the assertion that it
+- `networkly_web/billing/tests/test_stripe_gateway.py` (three)
+- `networkly_web/ops/tests/test_deploy_preflight_beta.py` (two)
+- `networkly_web/assistant/tests/test_agent.py` (one, plus the assertion that it
   does *not* appear in a log line)
-- `coverage_web/core/tests/test_migrate_avatar_storage.py` (one UUID filename)
-- `coverage_web/capture/tests/test_gmail_history_recovery.py` (one message id)
+- `networkly_web/core/tests/test_migrate_avatar_storage.py` (one UUID filename)
+- `networkly_web/capture/tests/test_gmail_history_recovery.py` (one message id)
 
 `docs/liam-safe-draft-2026-08-29.md` is absent from the tree and has never been
 committed on any ref (`git log --all --diff-filter=A` returns nothing). `.env`
@@ -394,7 +394,7 @@ rotated, per instruction.
 
 ### 7.1 A heartbeat URL can reach the logs — FOR THE OWNER
 
-`coverage_web/ops/tracking.py:89`:
+`networkly_web/ops/tracking.py:89`:
 
 ```python
     except requests.RequestException:
@@ -435,7 +435,7 @@ holds.
 
 ### 7.2 A contact's email address is logged at WARNING — NOTED
 
-`coverage_web/crm/region_enrich.py:290` and `:293` log `%r` of a contact's
+`networkly_web/crm/region_enrich.py:290` and `:293` log `%r` of a contact's
 address on an API error. Not a secret, and the privacy page's "we do not put
 email bodies in our logs" is about bodies, so nothing is contradicted. Recorded
 because it is third-party personal data in a log stream, and the cheapest fix is
@@ -448,7 +448,7 @@ to log the contact's primary key instead.
 ### Proof
 
     /Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python -m pytest \
-      coverage_web/core/tests/test_sentry_privacy_settings.py -q
+      networkly_web/core/tests/test_sentry_privacy_settings.py -q
     # 3 passed
 
 That suite parses `settings/production.py`'s actual `if SENTRY_DSN:` block out
@@ -500,7 +500,7 @@ the published policy names it.
 | **Shared cache / Redis** (`settings/base.py:521`) | **the email address typed at sign-in, as a rate-limit key** | user | **was missing; now yes** |
 | Stripe (`billing/stripe_gateway.py:153`) | `user_id` and pack key only; no name, no address | user | not listed — see below |
 | healthchecks.io (`ops/tracking.py:88`) | none, a bare GET | cron | correctly absent |
-| Job boards / ATS (`coverage_connectors/http.py:102`) | none; fixed UA, no cookies, no per-user params | cron | correctly absent |
+| Job boards / ATS (`networkly_connectors/http.py:102`) | none; fixed UA, no cookies, no per-user params | cron | correctly absent |
 | LinkedIn (`crm/sourcing.py:296`) | none; a link the browser follows, no server request | user | correctly absent |
 
 Stripe is the one omission left standing, deliberately. It is off in beta
@@ -563,7 +563,7 @@ Google's query log. The page described the flow one way round only.
 
 ### Proof
 
-Booted `coverage_web.settings.production` with dummy env (`DJANGO_SECRET_KEY`,
+Booted `networkly_web.settings.production` with dummy env (`DJANGO_SECRET_KEY`,
 `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, empty `SENTRY_DSN` and
 `REDIS_URL`) and read the headers off a real response through Django's test
 client.
@@ -712,30 +712,30 @@ Recorded so a re-review does not spend the time twice.
 
 ## Files changed by this review
 
-- `coverage_web/templates/legal/privacy.html` — five factual corrections
+- `networkly_web/templates/legal/privacy.html` — five factual corrections
   (findings 6.1, 9.1, 9.2, 9.3, 9.4) and a revision note recording the call
   site behind each. All six placeholders preserved: `[LEGAL ENTITY NAME]`,
   `[REGISTERED ADDRESS]`, `[PRIVACY CONTACT EMAIL]`, `[JURISDICTION]`,
   `[HOSTING REGION]`, `[BACKUP RETENTION PERIOD]`. The DRAFT banner stays.
-- `coverage_web/accounts/tests/test_privacy_disclosures.py` — six guards, one
+- `networkly_web/accounts/tests/test_privacy_disclosures.py` — six guards, one
   per corrected claim, each naming the call site it traces to.
-- `coverage_web/core/tests/test_route_auth_coverage.py` — new; the URLconf
+- `networkly_web/core/tests/test_route_auth_coverage.py` — new; the URLconf
   backstop from finding 1.1.
 
 Combined run:
 
     /Users/zhujimmy/Claude/Projects/Coverage/.venv/bin/python -m pytest \
-      coverage_web/accounts/tests/test_privacy_disclosures.py \
-      coverage_web/core/tests/test_route_auth_coverage.py \
-      coverage_web/core/tests/test_sentry_privacy_settings.py \
-      coverage_web/core/tests/test_private_media.py \
-      coverage_web/core/tests/test_private_storage.py \
-      coverage_web/core/tests/test_media_serving.py \
-      coverage_web/accounts/tests/test_beta_admission.py \
-      coverage_web/accounts/tests/test_security.py \
-      coverage_web/accounts/tests/test_export.py \
-      coverage_web/accounts/tests/test_delete_receipt.py \
-      coverage_web/capture/tests/test_google_revoke.py -q
+      networkly_web/accounts/tests/test_privacy_disclosures.py \
+      networkly_web/core/tests/test_route_auth_coverage.py \
+      networkly_web/core/tests/test_sentry_privacy_settings.py \
+      networkly_web/core/tests/test_private_media.py \
+      networkly_web/core/tests/test_private_storage.py \
+      networkly_web/core/tests/test_media_serving.py \
+      networkly_web/accounts/tests/test_beta_admission.py \
+      networkly_web/accounts/tests/test_security.py \
+      networkly_web/accounts/tests/test_export.py \
+      networkly_web/accounts/tests/test_delete_receipt.py \
+      networkly_web/capture/tests/test_google_revoke.py -q
     # 296 passed
 
 ## Open items for their owners

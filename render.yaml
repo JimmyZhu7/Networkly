@@ -43,7 +43,7 @@ services:
     dockerfilePath: ./Dockerfile
     plan: starter
     healthCheckPath: /healthz
-    preDeployCommand: "uv run --package coverage-web python coverage_web/manage.py migrate --noinput"
+    preDeployCommand: "uv run --package networkly-web python networkly_web/manage.py migrate --noinput"
     envVars:
       # QUOTED, and that is not style. Render's Blueprint schema
       # (https://render.com/schema/render.yaml.json, `envVarFromKeyValue`)
@@ -59,7 +59,7 @@ services:
       - key: BETA_MAX_USERS
         value: 100
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: DATABASE_URL
         fromDatabase:
           name: coverage-db
@@ -219,7 +219,7 @@ services:
     plan: starter
     # --interval 120: see DEFAULT_INTERVAL in gmail_poll.py for why two
     # minutes rather than as fast as the quota allows.
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gmail_poll --interval 120"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py gmail_poll --interval 120"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_GMAIL_POLL
@@ -230,7 +230,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -290,7 +290,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 */6 * * *" # 00:00 / 06:00 / 12:00 / 18:00 UTC
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py refresh"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py refresh"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_SCRAPE
@@ -301,7 +301,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -334,7 +334,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 13 * * *" # 13:00 UTC = 9am US Eastern / 9pm Hong Kong
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py send_deadline_push_alerts"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py send_deadline_push_alerts"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_PUSH_ALERTS
@@ -345,7 +345,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -411,7 +411,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "0 13 * * *" # 13:00 UTC daily = 9am US Eastern / 9pm Hong Kong
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py send_weekly_digest --spread"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py send_weekly_digest --spread"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_WEEKLY_DIGEST
@@ -422,7 +422,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -475,7 +475,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "30 5 * * *" # 05:30 UTC — after trial-expire, clear of the scrape's 00/06/12/18 marks
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gmail_watch_renew"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py gmail_watch_renew"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_GMAIL_WATCH_RENEW
@@ -486,7 +486,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -565,7 +565,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "15 4 * * *" # 04:15 UTC, before the 05:00 daily block
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py backup_db --require-s3 --dest /tmp/coverage-backup --keep 14"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py backup_db --require-s3 --dest /tmp/coverage-backup --keep 14"
     envVars:
       # The off switch. Blank (the default) = this cron does nothing at all.
       # Name a bucket ONLY when its storage is paid for and the service is
@@ -575,7 +575,7 @@ services:
       - key: BACKUP_S3_PREFIX
         sync: false # optional; defaults to "db/"
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -651,7 +651,7 @@ services:
     # clearsessions rides on this daily job rather than a new cron service:
     # deleted accounts and expired logins leave session rows with no foreign
     # key to cascade from, and nothing else purges them.
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py pro_trial_expire && uv run --package coverage-web python coverage_web/manage.py clearsessions"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py pro_trial_expire && uv run --package networkly-web python networkly_web/manage.py clearsessions"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_PRO_TRIAL_EXPIRE
@@ -662,7 +662,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -729,7 +729,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "*/5 * * * *"
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gmail_backfill"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py gmail_backfill"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_GMAIL_BACKFILL
@@ -740,7 +740,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -792,7 +792,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "4-59/5 * * * *"
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py gcal_sync --apply"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py gcal_sync --apply"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_GCAL_SYNC
@@ -803,7 +803,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -873,7 +873,7 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "2-59/5 * * * *" # 02, 07, 12, ... — two minutes off gmail-backfill's */5
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py capture_autopilot_worker"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py capture_autopilot_worker"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_AUTOPILOT
@@ -884,7 +884,7 @@ services:
           name: coverage-web
           envVarKey: BETA_ENABLED
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web
@@ -912,13 +912,13 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     schedule: "*/10 * * * *"
-    dockerCommand: "uv run --package coverage-web python coverage_web/manage.py assistant_reconcile --apply"
+    dockerCommand: "uv run --package networkly-web python networkly_web/manage.py assistant_reconcile --apply"
     envVars:
       # Optional success heartbeat; configure a missed-run alert separately.
       - key: HEALTHCHECK_URL_ASSISTANT_RECONCILE
         sync: false
       - key: DJANGO_SETTINGS_MODULE
-        value: coverage_web.settings.production
+        value: networkly_web.settings.production
       - key: SENTRY_DSN
         fromService:
           type: web

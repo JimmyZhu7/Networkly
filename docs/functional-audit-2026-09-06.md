@@ -48,7 +48,7 @@ your side. This report explains the implementation and its limits.
 | Test isolation | Two domain-test entry points defaulted to the PostgreSQL maintenance database. | An explicit test DSN is required and the connected database name must begin with `test_`. Both entry points refuse app/maintenance databases before executing SQL. CI creates a dedicated domain-test database. |
 
 The unique paid-session field is introduced by
-`coverage_web/billing/migrations/0010_processedstripeevent_stripe_checkout_id.py`.
+`networkly_web/billing/migrations/0010_processedstripeevent_stripe_checkout_id.py`.
 Production deployment must run migrations before accepting webhook traffic.
 Historical rows do not have a stored session ID; if an existing deployment
 already processed payments, reconcile old paid sessions before replaying
@@ -60,7 +60,7 @@ Dependency update references: [Django release notes](https://docs.djangoproject.
 [sqlparse changelog](https://sqlparse.readthedocs.io/en/latest/changes.html).
 An advisory scan is not proof that the application has no security defects.
 
-## Coverage and Product Decisions
+## Networkly and Product Decisions
 
 | Product Surface | Review / Validation Scope | Remaining Boundary |
 |---|---|---|

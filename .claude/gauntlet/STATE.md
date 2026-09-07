@@ -21,7 +21,7 @@ Coverage tells students the truth: every deadline, status, label, and fact
 chip on the live product matches what the firm's own page says today, every
 word earns its place, and the layout/motion craft holds the bar set by the
 benchmark products (Linear, Ramp, Mercury — craft standards, not their
-look; Coverage's paper-ledger identity is deliberate and stays).
+look; Networkly's paper-ledger identity is deliberate and stays).
 
 ## Metric (standing)
 
@@ -38,7 +38,7 @@ re-run for data), not when its tests pass.
   the main session, never an agent's own initiative.
 - NEVER the generic WebFetch tool for external pages — it hung two agents
   35-46 min each on jobs.ubs.com (Taleo). Always
-  coverage_connectors.http.fetch_text/fetch_json (15s timeout, 2 retries)
+  networkly_connectors.http.fetch_text/fetch_json (15s timeout, 2 retries)
   via python -c. Unfetchable = unverifiable, not a finding.
 - Politeness: 1.5s between external fetches, stay within stated budgets.
 - Bot-walled, do not re-report: Evercore/Jefferies/Morgan Stanley/Nomura
@@ -60,8 +60,8 @@ re-run for data), not when its tests pass.
 
 ## Live carve-outs (files other sessions own RIGHT NOW — do not touch)
 
-- coverage_web/directory/applications.py, coverage_web/directory/dupes.py,
-  coverage_web/directory/management/commands/dedupe_opportunities.py
+- networkly_web/directory/applications.py, networkly_web/directory/dupes.py,
+  networkly_web/directory/management/commands/dedupe_opportunities.py
   (uncommitted edits sitting on main from a parallel session — still
   present as of round 13's close, unchanged since round 12). This is
   still what blocks worktree-wf_b418567e-46b-25's two dedup fixes
@@ -378,12 +378,12 @@ closed on branches D-7 has not decided about, which is the same thing as open.
 
 ## Design benchmark standards (for the design lens)
 
-Extracted from Linear/Ramp/Mercury and confirmed against Coverage's own
+Extracted from Linear/Ramp/Mercury and confirmed against Networkly's own
 system: one accent doing real work; every spacing/size value on the token
 scale (no orphan px); motion restrained, meaningful, uniformly staggered,
 reduced-motion respected; contrast measured (4.5:1 text) on the rendered
 page in BOTH themes including composited tints; tap targets 24px+;
-icons one stroke-width (1.5), stroked in currentColor. Coverage's
+icons one stroke-width (1.5), stroked in currentColor. Networkly's
 paper-ledger identity, Fraunces/Instrument Sans/Spline Sans Mono stack,
 and pill-chip grammar are settled identity — audit execution against the
 standards, never propose a rebrand.

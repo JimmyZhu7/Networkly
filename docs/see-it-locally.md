@@ -1,18 +1,18 @@
-# See Coverage on your own Mac
+# See Networkly on your own Mac
 
-No accounts, no cost, no coding. This runs Coverage privately on your computer
+No accounts, no cost, no coding. This runs Networkly privately on your computer
 so you can click around before deciding to put it online.
 
 ## Start it
 
-1. In **Finder**, open the **Coverage** folder.
-2. Double-click **`Start Coverage.command`**.
-   - A black window opens and shows "Starting Coverage…". That window is normal
-     — it's Coverage running. (If macOS says it can't open the file because it's
+1. In **Finder**, open the **Networkly** folder.
+2. Double-click **`Start Networkly.command`**.
+   - A black window opens and shows "Starting Networkly…". That window is normal
+     — it's Networkly running. (If macOS says it can't open the file because it's
      from an unidentified developer: **right-click** the file → **Open** →
      **Open**. You only do this the first time.)
    - After a few seconds, a **browser tab opens** to your Opportunities feed.
-3. **Keep the black window open** while you use Coverage. To stop, just close it.
+3. **Keep the black window open** while you use Networkly. To stop, just close it.
 
 The first start is the slowest (it wakes the database and sets up a demo
 student). Later starts are quick.
@@ -26,7 +26,7 @@ deadline posted". This is the part that's never paywalled. (There was once a
 separate heat-mapped cycle *calendar* page; it was retired in favour of this
 feed. Per-firm cycle timelines still live on each firm's detail page.)
 
-**The CRM** — the part that makes Coverage different. To see it, log in:
+**The CRM** — the part that makes Networkly different. To see it, log in:
 
 - Go to **http://127.0.0.1:8000/accounts/login/** (or click "Sign in")
 - **Your own account:** `you@example.com`, with your 69 target firms
@@ -55,7 +55,7 @@ contacts, opportunities.
 ## Stopping and restarting
 
 - **Stop:** close the black window.
-- **Restart:** double-click `Start Coverage.command` again.
+- **Restart:** double-click `Start Networkly.command` again.
 
 ## The background jobs (optional, and the reason mail goes stale without them)
 
@@ -117,8 +117,8 @@ reading them, and three tests had hardcoded today's date in a single night.
 Two commands run the suite as if the calendar said something else:
 
 ```
-COVERAGE_FAKE_TODAY=2026-12-24 pytest coverage_web/crm coverage_web/core
-COVERAGE_FAKE_TODAY=saturday   pytest coverage_web/crm coverage_web/core
+COVERAGE_FAKE_TODAY=2026-12-24 pytest networkly_web/crm networkly_web/core
+COVERAGE_FAKE_TODAY=saturday   pytest networkly_web/crm networkly_web/core
 ```
 
 Those two dates are the two the product behaves differently on: Dec 24 is
@@ -143,6 +143,6 @@ clock everywhere; or add `time-machine` as a dev dependency and freeze at the C
 level.
 
 The cheap half of this runs on every ordinary `pytest`:
-`coverage_web/core/tests/test_date_fragility.py` fails on a test that compares a
+`networkly_web/core/tests/test_date_fragility.py` fails on a test that compares a
 real-clock read to a bare date literal, which is the shape that actually rots.
 Date literals on their own are fine and the suite is full of them.

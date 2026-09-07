@@ -1,6 +1,6 @@
-# Coverage — Visual Identity & Layout System Specification
+# Networkly — Visual Identity & Layout System Specification
 
-> **Current visual authority — 2026-09-05:** [DESIGN.md](../DESIGN.md) records the implemented personal-index system, including serif page titles and horizontal navigation. [base.html](../coverage_web/templates/base.html) loads the shared [workspace.css](../coverage_web/static/css/workspace.css) and elements layer, followed by the three page-family presentation stylesheets. This document retains historical aesthetic descriptions, typeface inventory, page index, and functional contracts. Historical palette, masthead, spacing, type hierarchy, and motion prescriptions do not override the current system. Read the final cascade before applying a historical CSS example.
+> **Current visual authority — 2026-09-05:** [DESIGN.md](../DESIGN.md) records the implemented personal-index system, including serif page titles and horizontal navigation. [base.html](../networkly_web/templates/base.html) loads the shared [workspace.css](../networkly_web/static/css/workspace.css) and elements layer, followed by the three page-family presentation stylesheets. This document retains historical aesthetic descriptions, typeface inventory, page index, and functional contracts. Historical palette, masthead, spacing, type hierarchy, and motion prescriptions do not override the current system. Read the final cascade before applying a historical CSS example.
 
 *Section 0 was rewritten on 2026-09-01 to describe the system that ships, not
 the system the 2026-07-23 planning pass committed to. Five of its statements had
@@ -108,7 +108,7 @@ thirty-odd independent copies of the same four declarations.
 
 ## 1–2. Design tokens + the shared stylesheet
 
-Shipped verbatim at `coverage_web/static/css/coverage.css`. Read that file for
+Shipped verbatim at `networkly_web/static/css/coverage.css`. Read that file for
 the complete class inventory (tokens; shell; page furniture; panels/empty/
 honesty/msg; buttons; forms; pills/chips/badges; bands + axis bars; warmth
 meter; touches/deflist/summary tables; deadline + markers; onboarding steps;

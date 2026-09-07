@@ -4,7 +4,7 @@
 
 The library contains 138 reviewed company logos. The follow-up replaced all 38 identifiable firms that still had initials after the initial 100-logo pass. No AI-generated recreations remain in the shipped library.
 
-Sources include company websites, company-published press releases and filings, and published logo references hosted by Wikimedia. Each asset has its actual source URL, reference page, review date, and SHA-256 fingerprint in `coverage_web/static/img/firm-logos/sources.json`. Reference-hosted artwork is not described as downloaded from a company website.
+Sources include company websites, company-published press releases and filings, and published logo references hosted by Wikimedia. Each asset has its actual source URL, reference page, review date, and SHA-256 fingerprint in `networkly_web/static/img/firm-logos/sources.json`. Reference-hosted artwork is not described as downloaded from a company website.
 
 The resolver requires a reviewed record and matching bytes. Unreviewed files and legacy media uploads cannot bypass that check. All existing logo surfaces share the resolver.
 

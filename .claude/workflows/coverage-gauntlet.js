@@ -29,7 +29,7 @@ const VERIFY_CAP = 12
 
 const LOGIN_RECIPE = `
 LOGGING IN (any agent that needs the live app): mint a session, never type a password.
-cd ${REPO} && DJANGO_SETTINGS_MODULE=coverage_web.settings.local uv run --project coverage_web python coverage_web/manage.py shell -c "
+cd ${REPO} && DJANGO_SETTINGS_MODULE=networkly_web.settings.local uv run --project networkly_web python networkly_web/manage.py shell -c "
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.backends.db import SessionStore
 U = get_user_model()
@@ -41,7 +41,7 @@ s['_auth_user_hash'] = u.get_session_auth_hash()
 s.save()
 print(s.session_key)
 "
-Then open the Browser pane (preview_start {url:'http://localhost:8000/app/'}), set document.cookie = "sessionid=<key>; path=/" via javascript_tool, navigate. If :8000 is not running, start it backgrounded: DJANGO_SETTINGS_MODULE=coverage_web.settings.local uv run --project coverage_web python coverage_web/manage.py runserver
+Then open the Browser pane (preview_start {url:'http://localhost:8000/app/'}), set document.cookie = "sessionid=<key>; path=/" via javascript_tool, navigate. If :8000 is not running, start it backgrounded: DJANGO_SETTINGS_MODULE=networkly_web.settings.local uv run --project networkly_web python networkly_web/manage.py runserver
 `
 
 phase('Recall')
@@ -73,7 +73,7 @@ const STATE = recall.stateText + '\nCARVE-OUT CORRECTIONS THIS RUN: ' + recall.c
 log('round ' + ROUND + ' — state recalled (' + STATE.length + ' chars)')
 
 const COMMON = `
-Repo: ${REPO} (Django, uv workspace: coverage_web, coverage_domain, coverage_connectors).
+Repo: ${REPO} (Django, uv workspace: networkly_web, networkly_domain, networkly_connectors).
 This is Coverage, Jimmy's recruiting CRM for finance students. You are one
 agent inside ROUND ${ROUND} of its standing Gauntlet Loop (blind critique ->
 adversarial verify -> fix -> live recheck -> integrate -> record).
@@ -201,7 +201,7 @@ Standing rules (non-negotiable):
 - You are in an ISOLATED GIT WORKTREE so builders can run in parallel.
   'git branch --show-current' first; commit there; NEVER merge/push/touch
   main yourself — a merge step follows. If 'uv run' fails on a stale venv,
-  'uv sync --project coverage_web' first.
+  'uv sync --project networkly_web' first.
 - Your worktree may have branched from a STALE base. Before skipping any
   finding as "does not reproduce", check the file on CURRENT MAIN
   (git show origin? no — 'git -C ${REPO} show main:<path>' or read the file
@@ -215,10 +215,10 @@ Standing rules (non-negotiable):
   markup and is not done until you re-measure the live computed style/pixels.
 - If a fix changes a cached raw field, scope-backfill the affected live
   rows or disclose loudly in skipped why the defect stays visible.
-- Isolated test DB: coverage_web/coverage_web/settings/_audit_tmp.py with
+- Isolated test DB: networkly_web/networkly_web/settings/_audit_tmp.py with
   DATABASES["default"]["TEST"]={"NAME":"coverage_audit_tmp_test_<area>"},
-  run uv run pytest coverage_web coverage_connectors
-  --ds=coverage_web.settings._audit_tmp --create-db -q, then rm + dropdb.
+  run uv run pytest networkly_web networkly_connectors
+  --ds=networkly_web.settings._audit_tmp --create-db -q, then rm + dropdb.
 - Tests must exercise the REAL failure mode. Commit style: short
   present-tense user-visible title, body explains root cause with evidence.
 - Real judgment calls get skipped with a clear why, never pushed through.
@@ -249,7 +249,7 @@ Standing rules (non-negotiable):
   fixResults = (await parallel(areas.map(area => () =>
     agent(`
 Repo: ${REPO}. You are the BUILDER for the "${area}" area in round ${ROUND}
-of Coverage's Gauntlet Loop, running in PARALLEL with other area builders.
+of Networkly's Gauntlet Loop, running in PARALLEL with other area builders.
 Fix ROOT CAUSES, one logical fix per commit.
 ${LOGIN_RECIPE}
 ${FIX_RULES}
@@ -349,7 +349,7 @@ ${JSON.stringify((merge && merge.merged) || [])}
 phase('Record')
 
 const record = await agent(`
-Repo: ${REPO}. You close round ${ROUND} of Coverage's Gauntlet Loop by
+Repo: ${REPO}. You close round ${ROUND} of Networkly's Gauntlet Loop by
 REWRITING ${STATE_PATH} — the loop's only memory. Read the current file,
 then rewrite it in place, same section structure, keeping it DISTILLED
 (this is a working card, not a changelog; compress old detail as new detail

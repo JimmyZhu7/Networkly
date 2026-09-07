@@ -1,4 +1,4 @@
-# Coverage — Product Brief
+# Networkly — Product Brief
 
 *Captured 2026-07-23. Source: founder brief + competitive research.
 Competitive table and shipped-surface names refreshed 2026-07-25.*
@@ -58,7 +58,7 @@ audience depends on the tracker being real, not a lead magnet.
 |---|---|---|---|
 | The Trackr | Free + Premium add-on | **$40 one-time (US), £30 (UK)** | alerts/community, not personalization. Price confirmed 2026-07-25 — it lands within $1 of the Season Pass below, which is the strongest external validation the pricing has |
 | OffCycle | One-time unlock, explicitly "no subscription" | $9.99 unlocks | closest analog; wins goodwill by rejecting subscriptions. **Has since pivoted toward networking** — 434 firms refreshed hourly, plus verified HR contact emails and AI-assisted outreach for 10,000+ boutiques |
-| NextCoffee.ai | AI coffee-chat assistant | not established | **Nearest thing to Coverage's thesis found so far** (2026-07-25): prioritizes contacts by response signal, drafts notes, sends from Gmail, follows up. Attacks the *send* side; Coverage's claim is the *sustain* side. Needs a proper teardown before the capture UX is frozen |
+| NextCoffee.ai | AI coffee-chat assistant | not established | **Nearest thing to Networkly's thesis found so far** (2026-07-25): prioritizes contacts by response signal, drafts notes, sends from Gmail, follows up. Attacks the *send* side; Networkly's claim is the *sustain* side. Needs a proper teardown before the capture UX is frozen |
 | Adventis | Free tracker as lead magnet | $295–495 course | one-time, 2yr access |
 | RecruitU | Marketplace | free to students | monetizes employers, not students |
 | WSO Academy | Off-menu sales call | ~$7,000 | one-time mentorship + tracker bundle |
@@ -99,8 +99,8 @@ account") rather than marketing language.
 
 ## Known open risk
 
-Everything that differentiates Coverage from a plain tracker depends on captured
-email activity. If students don't log or BCC their outreach, Coverage quietly
+Everything that differentiates Networkly from a plain tracker depends on captured
+email activity. If students don't log or BCC their outreach, Networkly quietly
 degrades into The Trackr with worse deadline coverage.
 
 Identified mitigations:

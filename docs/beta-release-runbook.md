@@ -62,9 +62,9 @@ in `/ops/health/cron/` is one day, not seven.
 In the production environment, after deployment and migrations:
 
 ```bash
-uv run --package coverage-web python coverage_web/manage.py check --deploy --fail-level WARNING
-uv run --package coverage-web python coverage_web/manage.py migrate --check
-uv run --package coverage-web python coverage_web/manage.py deploy_preflight --launch
+uv run --package networkly-web python networkly_web/manage.py check --deploy --fail-level WARNING
+uv run --package networkly-web python networkly_web/manage.py migrate --check
+uv run --package networkly-web python networkly_web/manage.py deploy_preflight --launch
 ```
 
 All three must exit zero; investigate warnings rather than suppressing them.
@@ -96,7 +96,7 @@ as required for polling. It reports last success; review newer failures too.
 The following read-only command prints timestamps and status without user data:
 
 ```bash
-uv run --package coverage-web python coverage_web/manage.py shell <<'PY'
+uv run --package networkly-web python networkly_web/manage.py shell <<'PY'
 from ops.models import JobRun
 from ops.tracking import EXPECTED_INTERVALS
 for name in sorted(EXPECTED_INTERVALS):
@@ -137,7 +137,7 @@ arguments. Confirm that the selected settings target the intended production
 database before proceeding.
 
 ```bash
-uv run --package coverage-web python coverage_web/manage.py backup_db --dest "${COVERAGE_BACKUP_DIR:?Set a private durable backup directory}" --keep 14
+uv run --package networkly-web python networkly_web/manage.py backup_db --dest "${COVERAGE_BACKUP_DIR:?Set a private durable backup directory}" --keep 14
 ```
 
 Set `COVERAGE_BACKUP_DIR` to a private durable directory before running. A

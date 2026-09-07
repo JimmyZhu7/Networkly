@@ -16,7 +16,7 @@ Compared the actual Figma design contexts and screenshots with fresh authenticat
 
 ## Refinement
 
-Only `coverage_web/static/css/presentation-directory.css` was changed by this visual review. Picked-card stack spacing changed from 12px to 8px, firm-heading spacing from 12px to 8px, and the deadline area's redundant top rule was removed. The first visible card decreased from approximately 351px to 322px at 1440px. All information, disclosures, status controls, footer actions and mobile touch targets remain.
+Only `networkly_web/static/css/presentation-directory.css` was changed by this visual review. Picked-card stack spacing changed from 12px to 8px, firm-heading spacing from 12px to 8px, and the deadline area's redundant top rule was removed. The first visible card decreased from approximately 351px to 322px at 1440px. All information, disclosures, status controls, footer actions and mobile touch targets remain.
 
 ## Evidence and Limits
 

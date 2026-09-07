@@ -123,7 +123,7 @@ Rejected: "until 3 replies have logged themselves" (unbounded; a student
 with no outreach sits on Sonnet forever and never sees a trial end), and
 cycle-aligned trials (same problem, larger). If the mechanics can carry it
 cheaply, the trial-end notice should count what was witnessed: "In two
-weeks Coverage logged N replies and M confirmations for you." That number
+weeks Networkly logged N replies and M confirmations for you." That number
 is the upsell.
 
 Cost of 14 vs 7: bounded by the Pro monthly grant either way ($3.60 worst
@@ -182,7 +182,7 @@ it does in the student's own nouns.
 - Bullets, reordered (Gmail Live is the anchor, so it goes first):
   1. `Gmail Live: replies and confirmations log themselves, in real time.
      Calendar sync too, only if you connect it.`
-  2. `Talk to Coverage on a stronger model, with sharper judgement on where
+  2. `Talk to Networkly on a stronger model, with sharper judgement on where
      your week should go. Three times the credits: {{ advisor_pro_grant }}
      a month.`
   3. `Hourly refresh on your Tier 1 firms, instead of every six hours`
@@ -217,9 +217,9 @@ Comparison table, two rows change:
 - `docs/product-brief.md` lines 75–83: Season Pass $39 → $69/cycle; drop the
   monthly secondary options.
 - `templates/core/pricing.html`: hero, Pro card, two table rows, Team panel
-  (Decision 1). The sign-in note "Coverage never reads your inbox"
+  (Decision 1). The sign-in note "Networkly never reads your inbox"
   (`templates/account/_auth_providers.html`) now contradicts a Pro feature
-  that reads it with consent; change to `Coverage never reads your inbox
+  that reads it with consent; change to `Networkly never reads your inbox
   unless you connect it.`
 
 ---
@@ -258,7 +258,7 @@ work just makes the answered minority as large as it really is.
    - Onboarding preview metric: `{{ answered }} of {{ count }} answer the
      visa question` stays, but the bars become four: `Posting says yes` /
      `Posting says no` / `Firm policy known` / `Not stated`, and the footnote
-     reads: `Most postings never say. Coverage shows you the ones that do,
+     reads: `Most postings never say. Networkly shows you the ones that do,
      tells you when it is the firm's policy rather than the posting, and
      scores the rest as neutral, never as a guess.`
    - Pricing Free bullet: `Eligibility checked against your class year and

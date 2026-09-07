@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Create the local Postgres role + databases Coverage expects.
+# Create the local Postgres role + databases Networkly expects.
 #
 # Run this ONCE, after Postgres.app is installed and initialized (green
 # "running" state). It is idempotent — safe to re-run. It creates:

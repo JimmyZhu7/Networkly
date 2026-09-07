@@ -2,7 +2,7 @@
 
 Approved September 5, 2026: the supplied connected-people N symbol and custom lowercase Networkly wordmark. The blue initial n and dark lettering retain the selected design.
 
-The original high-resolution lockup is preserved unchanged at `coverage_web/static/img/networkly/approved-lockup.png`. It comes from the user-approved `output/networkly-logos/selected/networkly-people-lockup-v2.png`, matching the attached screenshot. `_wordmark.html` uses its exact silhouette as an SVG luminance mask, applying the existing light/dark theme colors. No replacement font is used. `email-lockup.png` is a browser-rendered export of that same component. `_logo.html` and the favicon/install assets share simplified native geometry for compact placements.
+The original high-resolution lockup is preserved unchanged at `networkly_web/static/img/networkly/approved-lockup.png`. It comes from the user-approved `output/networkly-logos/selected/networkly-people-lockup-v2.png`, matching the attached screenshot. `_wordmark.html` uses its exact silhouette as an SVG luminance mask, applying the existing light/dark theme colors. No replacement font is used. `email-lockup.png` is a browser-rendered export of that same component. `_logo.html` and the favicon/install assets share simplified native geometry for compact placements.
 
 The rebrand covers navigation, footer, accessible labels, page and social titles, public/auth/legal screens, onboarding, email bodies and subjects, sender display name, notifications, app manifest, download filenames, calendar display names, checkout labels, and assistant prompts/messages. The shared stylesheet is now `networkly.css`. The streamed assistant avatar reuses the server-rendered mark.
 

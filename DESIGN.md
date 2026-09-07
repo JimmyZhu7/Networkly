@@ -223,7 +223,7 @@ The approved public pages use larger type, product examples, and finite kinetic 
 
 This is the implemented direction approved during the September 2026 refurbishment. It supersedes the warm editorial prescriptions previously in this file, `docs/design-spec.md`, and `design-system/coverage/MASTER.md`; their applicable functional contracts remain. Earlier review artifacts remain historical evidence. The direction and its final addendum live in `.impeccable/review/saas/direction.md`.
 
-The runtime source of truth is the cascade in `coverage_web/templates/base.html`: `networkly.css`, route head styles, `workspace.css`, `elements.css`, `presentation-crm.css`, `presentation-directory.css`, `presentation-support.css`, then `controls.css`. Route scopes and selector specificity also matter. `marketing.css`, `pricing.css`, `auth.css`, and `legal.css` own their named surfaces. The base stylesheet retains legacy declarations; the later shared and scoped layers determine the current design. Documentation tokens below record effective values, not a proposal to add another CSS theme.
+The runtime source of truth is the cascade in `networkly_web/templates/base.html`: `networkly.css`, route head styles, `workspace.css`, `elements.css`, `presentation-crm.css`, `presentation-directory.css`, `presentation-support.css`, then `controls.css`. Route scopes and selector specificity also matter. `marketing.css`, `pricing.css`, `auth.css`, and `legal.css` own their named surfaces. The base stylesheet retains legacy declarations; the later shared and scoped layers determine the current design. Documentation tokens below record effective values, not a proposal to add another CSS theme.
 
 **Key Characteristics:**
 

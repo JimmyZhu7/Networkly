@@ -2,7 +2,7 @@
 
 **WS-OPS-13**, unblocked by **D-20**, 2026-09-01 product plan. Probe run
 2026-09-02 07:20 to 08:05 UTC from the scraper host (`zhujimmy` macOS, Python
-3.13, `coverage_connectors` HTTP layer).
+3.13, `networkly_connectors` HTTP layer).
 
 > **Path note.** Same reason as `docs/talnet-2026-09.md`: `docs/research/` is
 > gitignored because this repo is public and that directory holds real names.
@@ -33,7 +33,7 @@ the plan's own rule is that nothing enters the catalog on a guess:
 
 One `GET /robots.txt` per candidate tenant host, then one `POST` to the CXS
 `jobs` endpoint per candidate site. Requests spaced 2 to 2.5 seconds apart,
-sending `coverage_connectors.http.USER_AGENT` — the honest string the scraper
+sending `networkly_connectors.http.USER_AGENT` — the honest string the scraper
 sends — with TLS verified against certifi's roots, the fetch layer's default.
 No browser user agent anywhere. No `Disallow:`-listed site was fetched, which
 is the decision this document exists to record. Nothing was written to the
@@ -87,7 +87,7 @@ not have told anybody.
 **Raymond James is the finding.** Its registered board is large, healthy and
 answers zero for "2027": the firm's entire campus cycle — Investment Banking
 Summer Analyst in Private Credit and M&A, Equity Research Associate, the Clark
-Capital Mentoring Program — was invisible to Coverage, and nothing in the
+Capital Mentoring Program — was invisible to Networkly, and nothing in the
 health report could have said so, because the board it watches is fine.
 
 **Moelis is the counterexample the research warned about.** `University-Hires`
@@ -134,7 +134,7 @@ treats as a refusal rather than as an absence.
 
 ## What D-20 decided, and what it costs
 
-**Coverage does not fetch a Workday site its tenant disallows.** Two are known
+**Networkly does not fetch a Workday site its tenant disallows.** Two are known
 by name and both are recorded in `boards.UNREACHABLE_BY_POLICY` with a link
 out, so a student gets the address even though we do not read it:
 
