@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
+import pytest
 
 
 def test_sentry_does_not_capture_private_request_or_frame_data(monkeypatch):
@@ -96,3 +97,13 @@ def test_event_scrubber_drops_invalid_url_and_accepts_sparse_events():
     assert scrub_sentry_event({"request": {"url": "https://host:invalid/"}}, {}) == {
         "request": {}
     }
+@pytest.mark.parametrize("path", [
+    "/welcome/unsubscribe/private-signed-token/",
+    "/app/calendar/feed/private-calendar-token.ics",
+])
+def test_monitoring_does_not_publish_bearer_tokens_inside_url_paths(path):
+    from core.monitoring import scrub_sentry_event
+    import json
+    result = scrub_sentry_event({"request": {"url": "https://networkly.test" + path}}, {})
+    assert "private-" not in json.dumps(result)
+    assert "[Filtered]" in result["request"]["url"]

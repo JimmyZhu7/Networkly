@@ -1,6 +1,7 @@
 """Keep private CRM and mailbox payloads out of error monitoring."""
 
 from urllib.parse import urlsplit, urlunsplit
+import re
 
 
 def scrub_sentry_event(event, hint):
@@ -26,8 +27,12 @@ def scrub_sentry_event(event, hint):
                 authority = hostname
                 if parsed.port is not None:
                     authority = f"{authority}:{parsed.port}"
+                # Calendar feeds and email opt-outs carry bearer tokens in
+                # the path, not the query string. Monitoring needs the route,
+                # never a reusable private subscription URL.
+                path = re.sub(r"(/(?:calendar/feed|unsubscribe)/)[^/]+", r"\1[Filtered]", parsed.path)
                 request["url"] = urlunsplit(
-                    (parsed.scheme, authority, parsed.path, "", "")
+                    (parsed.scheme, authority, path, "", "")
                 )
             except (TypeError, ValueError, AttributeError):
                 request.pop("url", None)
