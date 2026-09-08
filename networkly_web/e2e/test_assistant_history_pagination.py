@@ -12,8 +12,14 @@ pytestmark = pytest.mark.django_db(transaction=True)
 
 
 def test_older_history_preserves_position_and_retries_failed_load(session, live_server):
+    # This is an onboarded history fixture, so timezone discovery is already
+    # complete. A blank zone triggers the shell's timezone POST and reload,
+    # aborting in-flight setup requests before this unrelated journey starts.
+    # Keep auto-follow enabled and use the browser's actual IANA zone rather
+    # than changing the shared browser settings or hiding request failures.
+    browser_timezone = session.page.evaluate("Intl.DateTimeFormat().resolvedOptions().timeZone")
     user = User.objects.create_user(email="history-browser@example.test", password="x",
-                                    onboarded_at=timezone.now())
+                                    onboarded_at=timezone.now(), timezone=browser_timezone)
     conversation = ChatConversation.all_objects.create(user=user, title="History pagination")
     rows = [ChatMessage(user=user, conversation=conversation,
                         role="user" if i % 2 == 0 else "assistant",
