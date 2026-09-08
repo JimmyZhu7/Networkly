@@ -38,12 +38,16 @@ class ConversationLock:
             self.database.set_autocommit(True)
             self.raw_connection = self.database.connection
             with self.database.cursor() as cursor:
-                cursor.execute("SELECT pg_try_advisory_lock(%s)", [-self.conversation_id])
+                cursor.execute("SELECT pg_try_advisory_lock(%s)", [self.lock_key])
                 self.acquired = bool(cursor.fetchone()[0])
         except BaseException:
             self.database.close()
             raise
         return self
+
+    @property
+    def lock_key(self):
+        return -self.conversation_id
 
     def ensure_owned(self):
         if not self.acquired or self.raw_connection is None or self.raw_connection.closed:
@@ -57,3 +61,15 @@ class ConversationLock:
         if self.database is not None:
             self.database.close()
         return False
+
+
+class AccountGenerationLock(ConversationLock):
+    """Positive bigint keys serialize a user's free AI generation, separate from chats.
+
+    Capture uses PostgreSQL's separate two-integer namespace. This lock uses
+    a dedicated autocommit session and releases on process death.
+    """
+
+    @property
+    def lock_key(self):
+        return self.conversation_id
