@@ -89,7 +89,7 @@ def test_live_sync_does_not_checkpoint_if_apply_fails(connection):
         "historyId": "50", "history": [{"messagesAdded": [{"message": {"id": "m1"}}]}],
     }
 
-    def partial_apply(user, findings):
+    def partial_apply(user, findings, **kwargs):
         Contact.objects.for_user(user).create(user=user, name="Partial result")
         raise RuntimeError("apply failed")
 

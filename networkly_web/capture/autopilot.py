@@ -1245,6 +1245,14 @@ def execute_run(run: AutopilotRun, *, decide=None) -> AutopilotReport:
         if report.reason == "inactive_user":
             run.status = AutopilotRun.STATUS_FAILED
             run.failure_reason = "This account is no longer active. Nothing was decided or spent."
+            # Retiring an inactive owner's existing job writes no captured
+            # data. CAS cannot recreate a deleted run or revive a newer one.
+            AutopilotRun.all_objects.filter(
+                pk=run.pk, user_id=run.user_id, status=AutopilotRun.STATUS_RUNNING,
+            ).filter(Q(user__is_active=False) | Q(user__deleted_at__isnull=False)).update(
+                status=run.status, failure_reason=run.failure_reason,
+            )
+            return report
         elif report.reason == "unconfigured":
             run.status = AutopilotRun.STATUS_FAILED
             run.failure_reason = (
