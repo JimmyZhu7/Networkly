@@ -366,9 +366,11 @@ def _detect_auto(text: str) -> list[Detected]:
     for sentence in sentences:
         match = _NEW_ADDRESS_RE.search(sentence)
         if match:
-            quote = _quote_of(sentence, text)
+            # Keep the stated address in the visible evidence even when a
+            # long introductory clause would consume the quote's 500 chars.
+            quote = _quote_of(match.group(0), text)
             email = normalize_email(match.group("email"))
-            if quote and email:
+            if quote and email and email.casefold() in quote.casefold():
                 found.append(Detected("address_change", quote, new_email=email))
             break
 
@@ -656,9 +658,9 @@ def consider_finding(
         for sentence in _sentences(text):
             match = _NEW_ADDRESS_RE.search(sentence)
             if match:
-                quote = _quote_of(sentence, text)
+                quote = _quote_of(match.group(0), text)
                 email = normalize_email(match.group("email"))
-                if quote and email and email != sender:
+                if quote and email and email != sender and email.casefold() in quote.casefold():
                     _apply_address_change(
                         user, sender, finding, quote, email, out, dry_run=dry_run
                     )
