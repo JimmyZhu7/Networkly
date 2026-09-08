@@ -251,6 +251,9 @@ def test_warnings_alone_never_fail_the_run(settings):
     """A deploy full of WARNs is a valid deploy — every optional integration
     in this codebase no-ops rather than crashing."""
     settings.STRIPE_SECRET_KEY = ""
+    # This test isolates optional-service warnings, not the developer's .env.
+    # Missing/default signing keys remain a hard failure in production.
+    settings.SECRET_KEY = "fixture-signing-material-" * 4
     settings.SENTRY_DSN = ""
     settings.SITE_URL = "http://localhost:8000"
 

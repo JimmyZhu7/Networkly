@@ -63,7 +63,7 @@ def test_the_receipt_itemises_what_was_destroyed(client, student):
     assert "Nothing is retained" not in flash  # Backups/provider copies are separate.
 
 
-def test_an_empty_account_gets_an_honest_sentence_not_a_row_of_zeros(client, student):
+def test_account_without_contacts_gets_a_concise_receipt_not_a_row_of_zeros(client, student):
     """Padding the receipt with "0 tasks, 0 fit scores" would read as
     boilerplate — the opposite of the point."""
     client.force_login(student)
@@ -71,7 +71,8 @@ def test_an_empty_account_gets_an_honest_sentence_not_a_row_of_zeros(client, stu
         reverse("accounts:delete"), {"confirm": "goodbye@example.com"}, follow=True
     )
     flash = " ".join(_flashes(resp))
-    assert "no other data" in flash
+    # Sign-in itself records bookkeeping data; it is not an empty account.
+    assert "Your account and its data have been deleted." in flash
     assert "0 " not in flash
 
 
@@ -83,6 +84,12 @@ def test_only_non_zero_tables_are_named():
     assert "138 touches" in receipt
     assert "task" not in receipt
     assert "fit score" not in receipt
+
+
+def test_bookkeeping_data_does_not_claim_the_account_was_empty():
+    receipt = _deletion_receipt({"ai_jobs": 1, "account": 1})
+    assert "no other data" not in receipt
+    assert "data have been deleted" in receipt
 
 
 def test_every_receipt_label_names_a_table_that_is_actually_deleted():

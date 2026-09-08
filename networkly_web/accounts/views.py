@@ -20,7 +20,7 @@ from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
+from django.http import FileResponse, HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -945,8 +945,8 @@ def export(request):
         # everything" line promises. `record_event` so the founder can see
         # whether anyone actually exercises the portability promise.
         record_event("export_downloaded", user=request.user, kind="all")
-        resp = HttpResponse(
-            services.export_zip(request.user), content_type="application/zip"
+        resp = FileResponse(
+            services.export_zip_file(request.user), content_type="application/zip"
         )
         resp["Content-Disposition"] = 'attachment; filename="networkly-data.zip"'
         return resp
@@ -1053,6 +1053,8 @@ def _deletion_receipt(counts: dict[str, int]) -> str:
         if counts.get(key)
     ]
     if not parts:
+        if any(value for key, value in counts.items() if key != "account"):
+            return "Your account and its data have been deleted."
         return "Your account has been deleted. There was no other data on it."
     return "Deleted " + ", ".join(parts) + ", and your account."
 

@@ -206,6 +206,7 @@ def test_every_deletable_table_is_also_exportable(student, loaded):
         "chat_folders": "chat_folders.csv",
         "chat_conversations": "chat_conversations.csv",
         "chat_messages": "chat_messages.csv",
+        "ai_jobs": "ai_jobs.csv",
         "assistant_turns": "assistant_turns.csv",
         "advisor_memories": "advisor_memories.csv",
         "daily_briefs": "daily_briefs.csv",
@@ -404,7 +405,8 @@ def test_kind_all_serves_a_zip_attachment(client, student, loaded):
     assert resp.status_code == 200
     assert resp["Content-Type"] == "application/zip"
     assert "networkly-data.zip" in resp["Content-Disposition"]
-    assert zipfile.ZipFile(io.BytesIO(resp.content)).testzip() is None
+    assert resp.streaming
+    assert zipfile.ZipFile(io.BytesIO(b"".join(resp.streaming_content))).testzip() is None
 
 
 def test_the_single_file_downloads_still_work(client, student, loaded):

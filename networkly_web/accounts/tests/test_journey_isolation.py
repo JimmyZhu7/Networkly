@@ -175,7 +175,7 @@ def test_the_ics_feed_carries_only_the_account_whose_token_it_is(client, owner, 
 
 def test_the_export_is_one_accounts_data_and_only_that(as_stranger, owner):
     archive = zipfile.ZipFile(io.BytesIO(
-        as_stranger.get(reverse("accounts:export"), {"kind": "all"}).content))
+        b"".join(as_stranger.get(reverse("accounts:export"), {"kind": "all"}).streaming_content)))
 
     everything = b"".join(archive.read(name) for name in archive.namelist())
 

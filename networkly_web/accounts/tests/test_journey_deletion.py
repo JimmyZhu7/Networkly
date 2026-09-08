@@ -89,7 +89,8 @@ def test_the_export_page_offers_all_three_downloads_and_they_all_work(signed_in,
     assert zip_response.status_code == 200
     assert zip_response["Content-Type"] == "application/zip"
     assert "networkly-data.zip" in zip_response["Content-Disposition"]
-    archive = zipfile.ZipFile(io.BytesIO(zip_response.content))
+    payload = b"".join(zip_response.streaming_content)
+    archive = zipfile.ZipFile(io.BytesIO(payload))
     assert archive.testzip() is None
     assert "README.txt" in archive.namelist()
 
@@ -103,11 +104,12 @@ def test_the_export_page_offers_all_three_downloads_and_they_all_work(signed_in,
 
 def test_the_export_carries_this_account_and_nobody_else(signed_in, student, stranger):
     zip_response = signed_in.get(reverse("accounts:export"), {"kind": "all"})
-    archive = zipfile.ZipFile(io.BytesIO(zip_response.content))
+    payload = b"".join(zip_response.streaming_content)
+    archive = zipfile.ZipFile(io.BytesIO(payload))
 
     names = {row["name"] for row in _rows(archive, "contacts.csv")}
     assert names == {"Dana Banker"}
-    assert "Kim Stranger" not in zip_response.content.decode("utf-8", "replace")
+    assert "Kim Stranger" not in payload.decode("utf-8", "replace")
 
     contacts_csv = signed_in.get(reverse("accounts:export"), {"kind": "contacts"}).content.decode()
     assert "Dana Banker" in contacts_csv and "Kim Stranger" not in contacts_csv

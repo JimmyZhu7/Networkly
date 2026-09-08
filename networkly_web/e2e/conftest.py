@@ -16,6 +16,7 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -37,9 +38,7 @@ ENGINES = ["chromium", "webkit"]
 # not on this list is a real error the page emitted.
 IGNORED_CONSOLE = (
     "favicon",
-    "manifest",
     "net::ERR_ABORTED",
-    "Failed to load resource: the server responded with a status of 404",
 )
 
 
@@ -163,5 +162,22 @@ def session(browser, engine, viewport):
     errors: list[str] = []
     page.on("console", lambda msg: errors.append(msg.text) if msg.type == "error" else None)
     page.on("pageerror", lambda exc: errors.append(f"pageerror: {exc}"))
+    # Console text alone can omit the URL or differ by engine. A missing
+    # action endpoint must fail the journey even if its console message is
+    # generic. Do not record query strings, which can contain private data.
+    def failed_response(response):
+        path = urlsplit(response.url).path
+        if response.status >= 400 and path != "/favicon.ico":
+            errors.append(f"HTTP {response.status}: {path}")
+
+    def failed_request(request):
+        if request.resource_type == "document" and "ERR_ABORTED" in (request.failure or ""):
+            return  # A new navigation can replace its predecessor.
+        path = urlsplit(request.url).path
+        if path != "/favicon.ico":
+            errors.append(f"Request failed: {path}")
+
+    page.on("response", failed_response)
+    page.on("requestfailed", failed_request)
     yield Session(page, errors, engine, viewport)
     context.close()

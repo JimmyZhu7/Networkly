@@ -18,6 +18,7 @@ import io
 import json as _json
 import re
 import zipfile
+from tempfile import SpooledTemporaryFile
 from dataclasses import dataclass, field
 
 # Drop-in for the stdlib `csv` module used everywhere below (reader for
@@ -37,9 +38,10 @@ from dataclasses import dataclass, field
 from defusedcsv import csv
 
 from django.contrib.sessions.models import Session
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.validators import URLValidator
 from django.db import transaction
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from analytics.events import record_event
@@ -47,7 +49,7 @@ from analytics.models import FitScore, Import, ProductEvent, UserOpportunity
 from assistant.models import (
     AdvisorMemory, ChatConversation, ChatFolder, ChatMessage, ChatTurnReservation, DailyBrief,
 )
-from billing.models import CreditLedger, ProWaitlist
+from billing.models import AIJobReservation, CreditLedger, ProWaitlist
 from capture import gmail_live
 from capture.models import (
     ApplicationEvent, AutopilotDecision, AutopilotRun, ContactProposal,
@@ -68,6 +70,13 @@ from .models import PushSubscription, User
 # priority" promotion and tier 3+ for stretch/backup firms — and pairs with
 # status="target". Documented as a decision in the build report.
 DEFAULT_FIRM_TIER = 2
+
+
+def _locked_active_user(user):
+    owner = User.objects.select_for_update().filter(pk=user.pk, is_active=True).first()
+    if owner is None:
+        raise PermissionDenied("This account is no longer active.")
+    return owner
 
 
 def sign_out_other_sessions(user, *, keep_session_key: str | None = None) -> int:
@@ -108,11 +117,13 @@ def set_target_firms(user, firm_ids, *, tier: int = DEFAULT_FIRM_TIER) -> int:
     the resulting count of the user's target firms.
     """
     wanted = set(
-        Firm.objects.filter(id__in=[i for i in firm_ids if str(i).isdigit()])
+        Firm.objects.filter(id__in=[int(i) for i in firm_ids
+                                   if re.fullmatch(r"[0-9]{1,19}", str(i))
+                                   and 0 < int(i) <= 2**63 - 1])
         .values_list("id", flat=True)
     )
     with transaction.atomic():
-        User.objects.select_for_update().get(pk=user.pk, is_active=True)
+        _locked_active_user(user)
         existing = set(
             UserFirm.objects.for_user(user).values_list("firm_id", flat=True)
         )
@@ -379,7 +390,7 @@ def parse_contacts_csv(user, text: str) -> ImportResult:
         return ImportResult(errors=["The file contains unreadable characters. Export a fresh CSV and try again."])
     try:
         with transaction.atomic():
-            User.objects.select_for_update().get(pk=user.pk, is_active=True)
+            _locked_active_user(user)
             return _parse_contacts_csv(user, text)
     except csv.Error:
         return ImportResult(errors=["Couldn't read that CSV. Check its quotes and field lengths, then try again."])
@@ -535,7 +546,7 @@ def import_contacts(user, *, file_bytes: bytes, filename: str) -> ImportResult:
         text = file_bytes.decode("latin-1", errors="replace")
 
     with transaction.atomic():
-        User.objects.select_for_update().get(pk=user.pk, is_active=True)
+        _locked_active_user(user)
         result = parse_contacts_csv(user, text)
         Import.all_objects.create(
             user=user,
@@ -543,19 +554,19 @@ def import_contacts(user, *, file_bytes: bytes, filename: str) -> ImportResult:
             filename=(filename or "contacts.csv")[:255],
             row_stats=result.as_stats(),
         )
-    # `import_completed` is a named funnel event (see analytics/events.py's
-    # canonical list) — it must mean the import actually put rows in the
-    # user's CRM. Firing it unconditionally meant an unreadable CSV, an
-    # all-duplicate file, or an all-empty file counted as activation exactly
-    # like a real import. A no-op import now records `import_failed`
-    # instead, so the funnel number answers "did this work", not "was the
-    # button clicked".
-    if result.created > 0:
-        record_event("import_completed", user=user, count=result.created)
-    else:
-        record_event(
-            "import_failed", user=user, count=0, errors=list(result.errors)
-        )
+        # `import_completed` is a named funnel event (see analytics/events.py's
+        # canonical list) — it must mean the import actually put rows in the
+        # user's CRM. Firing it unconditionally meant an unreadable CSV, an
+        # all-duplicate file, or an all-empty file counted as activation exactly
+        # like a real import. A no-op import now records `import_failed`
+        # instead, so the funnel number answers "did this work", not "was the
+        # button clicked".
+        if result.created > 0:
+            record_event("import_completed", user=user, count=result.created)
+        else:
+            record_event(
+                "import_failed", user=user, count=0, errors=list(result.errors)
+            )
 
     # Free, zero-AI enrichment: if this user already has Gmail connected,
     # check its history for the people this import just created — a
@@ -816,7 +827,12 @@ def _neutralise_tab_or_cr_lead(value):
     return value
 
 
-def _csv(columns: list[str], rows) -> str:
+def _export_rows(rows):
+    """Read large histories in batches without retaining ORM result caches."""
+    return rows.iterator(chunk_size=500) if isinstance(rows, QuerySet) else iter(rows)
+
+
+def _csv(columns: list[str], rows, *, _destination=None) -> str:
     """Header + rows -> CSV text. Every builder below is this plus a query.
 
     `writer.writerow` is defusedcsv's, which neutralises a cell that would
@@ -826,16 +842,16 @@ def _csv(columns: list[str], rows) -> str:
     `_neutralise_tab_or_cr_lead` first, on every cell, so a new export
     builder cannot ship without either guard.
     """
-    buf = io.StringIO()
+    buf = _destination if _destination is not None else io.StringIO()
     writer = csv.writer(buf)
     # Column headers are literals declared in this module, never user text.
     writer.writerow(columns)
     for row in rows:
         writer.writerow([_neutralise_tab_or_cr_lead(cell) for cell in row])
-    return buf.getvalue()
+    return buf.getvalue() if _destination is None else ""
 
 
-def contacts_csv(user) -> str:
+def contacts_csv(user, *, _destination=None) -> str:
     return _csv(
         CONTACT_EXPORT_COLUMNS,
         (
@@ -844,12 +860,13 @@ def contacts_csv(user) -> str:
                 c.school, c.school_affiliation, c.warmth, c.thread_state,
                 c.angle, c.opener, c.notes, c.source, c.archived, _dt(c.created),
             ]
-            for c in Contact.objects.for_user(user).select_related("firm")
+            for c in _export_rows(Contact.objects.for_user(user).select_related("firm"))
         ),
+        _destination=_destination,
     )
 
 
-def touches_csv(user) -> str:
+def touches_csv(user, *, _destination=None) -> str:
     touches = (
         Touch.objects.for_user(user)
         .select_related("contact", "contact__firm")
@@ -864,12 +881,13 @@ def touches_csv(user) -> str:
                 _firm_label(t.contact) if t.contact else "",
                 _dt(t.ts), t.channel or "", t.kind, t.note or "", t.source,
             ]
-            for t in touches
+            for t in _export_rows(touches)
         ),
+        _destination=_destination,
     )
 
 
-def firms_csv(user) -> str:
+def firms_csv(user, *, _destination=None) -> str:
     """The Network board's tiering — the user's own statement of priority, and
     the single biggest input to the cadence engine's ordering."""
     rows = (
@@ -877,11 +895,12 @@ def firms_csv(user) -> str:
     )
     return _csv(
         FIRM_EXPORT_COLUMNS,
-        ([uf.firm.name if uf.firm_id else "", uf.tier, uf.status] for uf in rows),
+        ([uf.firm.name if uf.firm_id else "", uf.tier, uf.status] for uf in _export_rows(rows)),
+        _destination=_destination,
     )
 
 
-def applications_csv(user) -> str:
+def applications_csv(user, *, _destination=None) -> str:
     """Tracked roles from the Opportunities feed, with the interview dates the
     student typed in — the only place those dates exist."""
     rows = (
@@ -902,12 +921,13 @@ def applications_csv(user) -> str:
                 uo.applied_status, _dt(uo.applied_at),
                 _json_cell(uo.interview_dates), uo.dismissed,
             ]
-            for uo in rows
+            for uo in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def tasks_csv(user) -> str:
+def tasks_csv(user, *, _destination=None) -> str:
     rows = Task.objects.for_user(user).select_related("firm")
     return _csv(
         TASK_EXPORT_COLUMNS,
@@ -916,12 +936,13 @@ def tasks_csv(user) -> str:
                 t.title, t.why, t.due.isoformat() if t.due else "", t.kind,
                 t.firm.name if t.firm_id else "", t.status, _dt(t.created),
             ]
-            for t in rows
+            for t in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def play_dismissals_csv(user) -> str:
+def play_dismissals_csv(user, *, _destination=None) -> str:
     """Every Today "play" the student has dismissed — the fact (firm, event
     kind, date) they said "not now" to, and when. See `crm.models.
     PlayDismissal`: both play kinds that ever wrote here — the dated
@@ -939,12 +960,13 @@ def play_dismissals_csv(user) -> str:
                 d.firm.name if d.firm_id else "", d.event_kind,
                 d.date.isoformat() if d.date else "", _dt(d.dismissed_at),
             ]
-            for d in rows
+            for d in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def bench_dismissals_csv(user) -> str:
+def bench_dismissals_csv(user, *, _destination=None) -> str:
     """Every bench card the student has waved off — which parked person, and
     which opening the card was offering them for. Sibling of
     `play_dismissals_csv` above and the same kind of memory: see
@@ -963,12 +985,13 @@ def bench_dismissals_csv(user) -> str:
                 d.contact.name if d.contact_id else "",
                 d.opening_signature, _dt(d.created),
             ]
-            for d in rows
+            for d in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def campaigns_csv(user) -> str:
+def campaigns_csv(user, *, _destination=None) -> str:
     """The bulk sends Networkly detected, and the answer the student gave about
     each. `kind` is their own word about their own mail — an export that left
     it out would hand back the detection without the decision."""
@@ -981,12 +1004,13 @@ def campaigns_csv(user) -> str:
                 _dt(c.first_sent), _dt(c.last_sent),
                 _dt(c.classified_at) if c.classified_at else "",
             ]
-            for c in rows
+            for c in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def campaign_contacts_csv(user) -> str:
+def campaign_contacts_csv(user, *, _destination=None) -> str:
     """Who was in each campaign. `originates` carries the whole consequence of
     the answer (see `crm.models.CampaignContact`), so it is a column rather
     than something the reader has to re-derive."""
@@ -1003,12 +1027,13 @@ def campaign_contacts_csv(user) -> str:
                 m.contact.email if m.contact_id else "",
                 m.originates, _dt(m.sent_at),
             ]
-            for m in rows
+            for m in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def contact_merges_csv(user) -> str:
+def contact_merges_csv(user, *, _destination=None) -> str:
     """Every duplicate-card answer (merged, undone, or "different people").
     Each row is a decision the user made about who is one person — the
     identity of their own network, which is theirs to take along."""
@@ -1027,12 +1052,13 @@ def contact_merges_csv(user) -> str:
                 m.note_line, m.duplicate_was_archived,
                 _dt(m.created), _dt(m.resolved_at),
             ]
-            for m in rows
+            for m in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def contact_proposals_csv(user) -> str:
+def contact_proposals_csv(user, *, _destination=None) -> str:
     """People the mailbox scan proposed, and what the user said. Dismissed
     rows are the "never propose this person again" memory (see
     `capture.models.ContactProposal`), so they are data the user gave the
@@ -1048,12 +1074,13 @@ def contact_proposals_csv(user) -> str:
                 p.thread_subject, p.threaded_reply,
                 p.status, _dt(p.occurred_at), _dt(p.created), _dt(p.resolved_at),
             ]
-            for p in rows
+            for p in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def application_events_csv(user) -> str:
+def application_events_csv(user, *, _destination=None) -> str:
     """What the inbox said about each application, and what the user did
     about it. Dismissed rows are the "don't ask again" memory (see
     `capture.models.ApplicationEvent`), and `detected_by` is here on purpose:
@@ -1074,12 +1101,13 @@ def application_events_csv(user) -> str:
                 e.match_reason, e.detected_by, e.status,
                 _dt(e.occurred_at), _dt(e.created), _dt(e.resolved_at),
             ]
-            for e in rows
+            for e in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def mail_facts_csv(user) -> str:
+def mail_facts_csv(user, *, _destination=None) -> str:
     """What the mail itself stated about people — departures, out-of-office
     returns, routing addresses — with the verbatim sentence each action stood
     on and what Networkly did about it (`capture.models.MailFact`). Dismissed
@@ -1096,12 +1124,13 @@ def mail_facts_csv(user) -> str:
                 f.quote, f.subject, f.detected_by, f.status, f.action_note,
                 _dt(f.occurred_at), _dt(f.created), _dt(f.resolved_at),
             ]
-            for f in rows
+            for f in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def autopilot_runs_csv(user) -> str:
+def autopilot_runs_csv(user, *, _destination=None) -> str:
     """Every Autopilot decide pass: what it read, what it decided, what it
     cost. The audit trail behind the one-tap batch (`capture.autopilot`)."""
     rows = AutopilotRun.objects.for_user(user)
@@ -1114,12 +1143,13 @@ def autopilot_runs_csv(user) -> str:
                 r.llm_calls, r.credits_spent,
                 _dt(r.decided_at), _dt(r.applied_at),
             ]
-            for r in rows
+            for r in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def autopilot_decisions_csv(user) -> str:
+def autopilot_decisions_csv(user, *, _destination=None) -> str:
     """One row per Autopilot verdict, with the quote it stood on and whether
     the user overrode it — the same check-its-work surface as the log page,
     portable."""
@@ -1140,12 +1170,13 @@ def autopilot_decisions_csv(user) -> str:
                 d.detected_by, d.status, d.overridden,
                 _dt(d.created), _dt(d.applied_at),
             ]
-            for d in rows
+            for d in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def chat_debriefs_csv(user) -> str:
+def chat_debriefs_csv(user, *, _destination=None) -> str:
     """What each coffee chat actually taught the student. Free text they wrote
     once and would have no other way to get back."""
     rows = ChatDebrief.objects.for_user(user).select_related("contact")
@@ -1158,12 +1189,13 @@ def chat_debriefs_csv(user) -> str:
                 d.tracked_date.isoformat() if d.tracked_date else "",
                 d.date_note, d.advocate_answer, d.promoted, d.dismissed,
             ]
-            for d in rows
+            for d in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def fit_scores_csv(user) -> str:
+def fit_scores_csv(user, *, _destination=None) -> str:
     """Derived and recomputable, but included anyway: `subject_id` alone is an
     opaque integer, so each row is resolved to the name it scored. Leaving
     this out would have meant the export page listing an exception, and an
@@ -1188,34 +1220,37 @@ def fit_scores_csv(user) -> str:
                 r.composite, _json_cell(r.axes), r.reasoning,
                 r.params_version, _dt(r.computed_at),
             ]
-            for r in rows
+            for r in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def imports_csv(user) -> str:
+def imports_csv(user, *, _destination=None) -> str:
     rows = Import.objects.for_user(user)
     return _csv(
         IMPORT_EXPORT_COLUMNS,
         (
             [_dt(i.created), i.kind, i.filename, _json_cell(i.row_stats)]
-            for i in rows
+            for i in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def product_events_csv(user) -> str:
+def product_events_csv(user, *, _destination=None) -> str:
     """"What you do in the app" (legal/privacy.html) is data we hold about the
     student, so it is data the student gets back. No email bodies live here —
     see the same policy section."""
     rows = ProductEvent.objects.for_user(user)
     return _csv(
         PRODUCT_EVENT_EXPORT_COLUMNS,
-        ([_dt(e.ts), e.event, _json_cell(e.props)] for e in rows),
+        ([_dt(e.ts), e.event, _json_cell(e.props)] for e in _export_rows(rows)),
+        _destination=_destination,
     )
 
 
-def calendar_events_csv(user) -> str:
+def calendar_events_csv(user, *, _destination=None) -> str:
     rows = (
         CalendarEvent.objects.for_user(user).select_related("contact").order_by("starts_at")
     )
@@ -1226,28 +1261,30 @@ def calendar_events_csv(user) -> str:
                 e.title, e.description, _dt(e.starts_at), _dt(e.ends_at), e.all_day,
                 e.kind, e.source, e.contact.name if e.contact_id else "", e.location,
             ]
-            for e in rows
+            for e in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def chat_folders_csv(user) -> str:
+def chat_folders_csv(user, *, _destination=None) -> str:
     rows = ChatFolder.objects.for_user(user).order_by("name")
-    return _csv(CHAT_FOLDER_EXPORT_COLUMNS, ([f.name, _dt(f.created)] for f in rows))
+    return _csv(CHAT_FOLDER_EXPORT_COLUMNS, ([f.name, _dt(f.created)] for f in _export_rows(rows)), _destination=_destination)
 
 
-def chat_conversations_csv(user) -> str:
+def chat_conversations_csv(user, *, _destination=None) -> str:
     rows = ChatConversation.objects.for_user(user).select_related("folder")
     return _csv(
         CHAT_CONVERSATION_EXPORT_COLUMNS,
         (
             [c.title, c.folder.name if c.folder_id else "", _dt(c.created), _dt(c.updated)]
-            for c in rows
+            for c in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def chat_messages_csv(user) -> str:
+def chat_messages_csv(user, *, _destination=None) -> str:
     """Every turn of every "Talk to Networkly" thread — the export's one
     genuinely large file for a heavy user, and exactly the kind of thing the
     privacy policy's "export everything" promise has to mean, since it is a
@@ -1262,40 +1299,55 @@ def chat_messages_csv(user) -> str:
                 m.conversation.title or f"Conversation #{m.conversation_id}",
                 m.role, m.text, _dt(m.created),
             ]
-            for m in rows
+            for m in _export_rows(rows)
         ),
+        _destination=_destination,
     )
 
 
-def beta_invitation_csv(user) -> str:
+def beta_invitation_csv(user, *, _destination=None) -> str:
     return _csv(["email", "invited_at", "joined_at"],
                 ([seat.email, _dt(seat.created_at), _dt(seat.redeemed_at)]
-                 for seat in user.beta_invitations.all()))
+                 for seat in _export_rows(user.beta_invitations.all())), _destination=_destination)
 
 
-def assistant_turns_csv(user) -> str:
+def assistant_turns_csv(user, *, _destination=None) -> str:
     rows = ChatTurnReservation.objects.for_user(user).order_by("created")
     return _csv(
         ["turn_id", "conversation_id", "cost", "model", "status", "created", "completed_at", "reason"],
         ([str(r.id), r.conversation_key, r.cost, r.model, r.status,
-          _dt(r.created), _dt(r.completed_at), r.reason] for r in rows),
+          _dt(r.created), _dt(r.completed_at), r.reason] for r in _export_rows(rows)),
+        _destination=_destination,
     )
 
 
-def advisor_memories_csv(user) -> str:
+def ai_jobs_csv(user, *, _destination=None) -> str:
+    rows = AIJobReservation.objects.for_user(user).order_by("created")
+    return _csv(
+        ["ID", "Kind", "Status", "Allowed Units", "Started Units", "Completed Units",
+         "Successful Units", "Reserved Credits", "Charged Credits", "Created", "Expires At", "Completed At"],
+        ([str(row.pk), row.kind, row.status, row.allowed_units, row.started_units,
+          row.completed_units, row.successful_units, row.reserved_credits, row.charged_credits,
+          _dt(row.created), _dt(row.expires_at), _dt(row.completed_at)] for row in _export_rows(rows)),
+        _destination=_destination,
+    )
+
+
+def advisor_memories_csv(user, *, _destination=None) -> str:
     rows = AdvisorMemory.objects.for_user(user)
-    return _csv(ADVISOR_MEMORY_EXPORT_COLUMNS, ([m.text, _dt(m.created)] for m in rows))
+    return _csv(ADVISOR_MEMORY_EXPORT_COLUMNS, ([m.text, _dt(m.created)] for m in _export_rows(rows)), _destination=_destination)
 
 
-def daily_briefs_csv(user) -> str:
+def daily_briefs_csv(user, *, _destination=None) -> str:
     rows = DailyBrief.objects.for_user(user)
     return _csv(
         DAILY_BRIEF_EXPORT_COLUMNS,
-        ([d.date.isoformat(), d.text, _dt(d.created)] for d in rows),
+        ([d.date.isoformat(), d.text, _dt(d.created)] for d in _export_rows(rows)),
+        _destination=_destination,
     )
 
 
-def gmail_connection_csv(user) -> str:
+def gmail_connection_csv(user, *, _destination=None) -> str:
     conn = GmailConnection.objects.for_user(user).first()
     rows = []
     if conn is not None:
@@ -1303,10 +1355,10 @@ def gmail_connection_csv(user) -> str:
             conn.gmail_address, conn.status, _dt(conn.connected_at),
             _dt(conn.last_notification_at), conn.backfill_status, conn.rescan_status,
         ]]
-    return _csv(GMAIL_CONNECTION_EXPORT_COLUMNS, rows)
+    return _csv(GMAIL_CONNECTION_EXPORT_COLUMNS, rows, _destination=_destination)
 
 
-def gcal_connection_csv(user) -> str:
+def gcal_connection_csv(user, *, _destination=None) -> str:
     conn = GoogleCalendarConnection.objects.for_user(user).first()
     rows = []
     if conn is not None:
@@ -1314,15 +1366,15 @@ def gcal_connection_csv(user) -> str:
             conn.google_email, conn.calendar_id, conn.status,
             _dt(conn.connected_at), _dt(conn.last_synced_at),
         ]]
-    return _csv(GCAL_CONNECTION_EXPORT_COLUMNS, rows)
+    return _csv(GCAL_CONNECTION_EXPORT_COLUMNS, rows, _destination=_destination)
 
 
-def push_subscriptions_csv(user) -> str:
+def push_subscriptions_csv(user, *, _destination=None) -> str:
     rows = PushSubscription.objects.for_user(user).order_by("created")
-    return _csv(PUSH_SUBSCRIPTION_EXPORT_COLUMNS, ([p.user_agent, _dt(p.created)] for p in rows))
+    return _csv(PUSH_SUBSCRIPTION_EXPORT_COLUMNS, ([p.user_agent, _dt(p.created)] for p in _export_rows(rows)), _destination=_destination)
 
 
-def credit_ledger_csv(user) -> str:
+def credit_ledger_csv(user, *, _destination=None) -> str:
     """The whole audit trail behind the Settings credit meter — every grant,
     spend, purchase, and admin adjustment. `props` carries only the audit
     detail `billing.credits`/`billing.stripe_gateway` write (thread counts,
@@ -1331,11 +1383,12 @@ def credit_ledger_csv(user) -> str:
     rows = CreditLedger.objects.for_user(user).order_by("created")
     return _csv(
         CREDIT_LEDGER_EXPORT_COLUMNS,
-        ([_dt(r.created), r.kind, r.delta, r.period, _json_cell(r.props)] for r in rows),
+        ([_dt(r.created), r.kind, r.delta, r.period, _json_cell(r.props)] for r in _export_rows(rows)),
+        _destination=_destination,
     )
 
 
-def pro_waitlist_csv(user) -> str:
+def pro_waitlist_csv(user, *, _destination=None) -> str:
     """Whether this account joined the Pro "notify me" waitlist
     (billing/models.py::ProWaitlist) — at most one row, since a join is
     deduped by email at write time. A logged-out join under the SAME email
@@ -1345,11 +1398,12 @@ def pro_waitlist_csv(user) -> str:
     rows = ProWaitlist.objects.for_user(user)
     return _csv(
         PRO_WAITLIST_EXPORT_COLUMNS,
-        ([w.email, w.source, _dt(w.created)] for w in rows),
+        ([w.email, w.source, _dt(w.created)] for w in _export_rows(rows)),
+        _destination=_destination,
     )
 
 
-def profile_csv(user) -> str:
+def profile_csv(user, *, _destination=None) -> str:
     """The `users` row itself — one header, one row. Everything Settings can
     set, including the answers that feed the fit score (`work_authorization`)
     and the engine (`cadence_params`, `advocate_target`, `weekly_touch_goal`).
@@ -1377,6 +1431,7 @@ def profile_csv(user) -> str:
             _dt(user.created),
             _dt(user.onboarded_at),
         ]],
+        _destination=_destination,
     )
 
 
@@ -1430,6 +1485,7 @@ EXPORT_FILES: list[tuple[str, object, str]] = [
      "Every message in every Talk to Networkly conversation."),
     ("beta_invitation.csv", beta_invitation_csv,
      "Your invitation and beta membership dates."),
+    ("ai_jobs.csv", ai_jobs_csv, "Non-chat AI budgets, completed work, and recovered credits."),
     ("assistant_turns.csv", assistant_turns_csv,
      "AI credit reservations and their settled or refunded outcome."),
     ("advisor_memories.csv", advisor_memories_csv,
@@ -1490,16 +1546,31 @@ def _export_readme() -> str:
 
 
 def export_zip(user) -> bytes:
-    """Every CSV above plus a README, as one ZIP. Built in memory: the whole
-    archive is a few hundred KB even for a heavy user (the founder's 137
-    contacts / 131 touches come to well under 100 KB), so streaming it to a
-    temp file would buy nothing."""
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr("README.txt", _export_readme())
-        for name, builder, _desc in EXPORT_FILES:
-            zf.writestr(name, builder(user))
-    return buf.getvalue()
+    """Bytes convenience API; HTTP downloads use the bounded file API below."""
+    with export_zip_file(user) as archive:
+        return archive.read()
+
+
+def export_zip_file(user):
+    """Build a private archive with bounded buffers; caller owns its closure.
+
+    CSV rows are written directly into compressed members. Beyond 1 MiB the
+    archive rolls onto a temporary file, so long histories do not fill a web
+    worker's memory. No credentials or shared directory tables are included.
+    """
+    archive = SpooledTemporaryFile(max_size=1024 * 1024, mode="w+b")
+    try:
+        with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("README.txt", _export_readme())
+            for name, builder, _desc in EXPORT_FILES:
+                with zf.open(name, "w", force_zip64=True) as member:
+                    with io.TextIOWrapper(member, encoding="utf-8", newline="") as text:
+                        builder(user, _destination=text)
+        archive.seek(0)
+        return archive
+    except BaseException:
+        archive.close()
+        raise
 
 
 # ---------------------------------------------------------------------------
@@ -1570,6 +1641,7 @@ _DELETE_ORDER: list[tuple[str, type]] = [
     # OWN relative order among themselves doesn't affect the counts the way
     # `contact`'s children above do — kept messages-then-conversations-then-
     # folders anyway, for the same readability the rest of this list follows).
+    ("ai_jobs", AIJobReservation),
     ("assistant_turns", ChatTurnReservation),
     ("chat_messages", ChatMessage),
     ("chat_conversations", ChatConversation),
