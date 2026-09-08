@@ -31,6 +31,8 @@ launch gates. Automated tests do not prove email delivery or successful provider
 
 See the [release runbook](docs/beta-release-runbook.md) and
 [deployment guide](docs/deploy.md) for configuration and acceptance steps.
+The [latest functional audit](docs/audits/deep-functional-audit-2026-09-07.md)
+records reliability fixes, measured capacity, test evidence, and remaining launch checks.
 
 ## Architecture
 

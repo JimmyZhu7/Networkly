@@ -59,7 +59,7 @@ not a guarantee against all future provider failures or arbitrary load.
 | `assistant/attachments.py`, `drafts.py`, `mismatch.py`, `templatetags/assistant_extras.py` | Attachment types/count/size, payload extraction, escaped rendering, draft parsing, mismatches, safe draft actions and formatting. |
 | `assistant/brief.py`, `situation.py`, `plans.py`, `models.py` | Daily cache/staleness, quiet-day behavior, source-bound summaries, prioritization, plan/model limits, account generation ownership and stored relationships. |
 | `crm/views.py::contact_ai_brief` | Configuration and tenant checks, last-credit race, admission before provider work, refund/no-answer behavior and response rendering. |
-| `crm/autopilot*` | Reservation integration and pipeline safety are owned and documented by the capture-integrity workstream; this review supplies and tests the shared budget API. |
+| `capture/autopilot.py` | Reservation integration and pipeline safety are owned and documented by the capture-integrity workstream; this review supplies and tests the shared budget API. |
 
 ## Validation
 

@@ -1,5 +1,9 @@
 # Networkly: Current Beta Launch Checklist
 
+For the subsequent engineering verification and remaining acceptance checks,
+see the [7 September deep audit](audits/deep-functional-audit-2026-09-07.md).
+Provider-dashboard observations below retain their stated observation dates.
+
 Updated 6 September 2026. The target is a **free, invitation-only beta with all
 individual features and at most 100 people**. Enterprise, Team, paid Pro and
 Stripe setup are outside this release. AI credits and daily limits still apply;

@@ -1,5 +1,8 @@
 # Networkly Reliability Audit
 
+This is the earlier pass. The [subsequent deep audit](deep-functional-audit-2026-09-07.md)
+records the follow-up fixes, final test evidence and current engineering limits.
+
 7 September 2026 · Local branch `codex/coverage-ui-refurbishment` · Started from `214678d`
 
 This pass fixes reproducible failures in concurrent writes, recovery, provider
