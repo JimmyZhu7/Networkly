@@ -36,8 +36,8 @@ here, and a verdict must quote it verbatim or it cannot act on it.
 
 --dry-run prints the full decision table — every accept and escalation with
 the quote it stands on — and writes NOTHING: no run, no decisions, no
-credit debit. The model calls are real (that is the point: the table is the
-acceptance test), so it still needs ANTHROPIC_API_KEY.
+credit debit or provider calls. Paid decisions are deferred; deterministic
+checks and existing evidence remain available without an API key.
 """
 
 from __future__ import annotations

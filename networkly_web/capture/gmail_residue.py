@@ -303,6 +303,30 @@ def run_residue_stage(
     timeout: float = DEFAULT_TIMEOUT_SECONDS,
     retries: int = DEFAULT_RETRIES,
     max_threads: int | None = None,
+    budget=None,
+) -> dict:
+    """Run bounded classification; direct callers also reserve before work."""
+    state = {"reservation": None}
+    try:
+        return _run_residue_stage(
+            connection, residue, model=model, timeout=timeout, retries=retries,
+            max_threads=max_threads, budget=budget, budget_state=state,
+        )
+    finally:
+        if state["reservation"] is not None:
+            state["reservation"].finish()
+
+
+def _run_residue_stage(
+    connection,
+    residue: list[dict],
+    *,
+    model: str = DEFAULT_MODEL,
+    timeout: float = DEFAULT_TIMEOUT_SECONDS,
+    retries: int = DEFAULT_RETRIES,
+    max_threads: int | None = None,
+    budget=None,
+    budget_state=None,
 ) -> dict:
     """The Phase-3 follow-up stage to a "Scan Now" rescan. `residue` is the
     list `backfill_connection(..., residue_sink=residue)` collected — dicts
@@ -319,10 +343,9 @@ def run_residue_stage(
     the SMALLER wins; this function never spends more API calls than either
     limit allows.
 
-    Never raises: an API failure on one message downgrades that message to
-    "ambiguous" and the run continues; a missing key means the stage is a
-    no-op reporting zero everywhere. Always returns a stats dict, even when
-    unconfigured or given no residue at all.
+    Known provider failures are counted and skipped; a missing key makes
+    this stage a no-op. Stale grants refuse writes and local write failures
+    propagate so the job can retry without advancing its checkpoint.
     """
     stats = {
         "residue_threads_seen": 0,
@@ -333,10 +356,10 @@ def run_residue_stage(
         "ambiguous": 0,
         "touches_logged": 0,
     }
+    from capture import gmail_live
+
     def owner_active():
-        return get_user_model().objects.filter(
-            pk=connection.user.pk, is_active=True, deleted_at__isnull=True,
-        ).exists()
+        return gmail_live._matching_grant(connection).exists()
 
     if not residue or not owner_active():
         return stats
@@ -360,7 +383,19 @@ def run_residue_stage(
     # 101st+ candidate — and, when the caller passed one, the SMALLER of
     # that hard ceiling and whatever the credit system says is affordable
     # right now (see this function's docstring on `max_threads`).
+    if max_threads is not None and (type(max_threads) is not int or max_threads < 0):
+        raise ValueError("max_threads must be a non-negative integer")
     effective_cap = MAX_RESIDUE_THREADS if max_threads is None else min(MAX_RESIDUE_THREADS, max_threads)
+    if budget is None and effective_cap > 0:
+        from billing import credits
+        from billing.job_budget import reserve_job
+        budget = reserve_job(
+            connection.user, kind="spend_rescan",
+            requested_units=min(len(by_thread), effective_cap),
+            units_per_credit=credits.rescan_threads_per_credit(),
+        )
+        budget_state["reservation"] = budget
+        effective_cap = budget.allowed_units if budget else 0
     thread_items = list(by_thread.items())[:effective_cap]
 
     own_email = connection.gmail_address.lower()
@@ -368,13 +403,19 @@ def run_residue_stage(
     for thread_id, message in thread_items:
         if not owner_active():
             break
+        if budget is not None and not budget.start_unit():
+            break
         try:
             outcome, _quote = _classify_one(message, model=model, timeout=timeout, retries=retries)
         except ResidueClassifyError:
             # Failed requests produced no classification to bill for. Keep
             # them distinct from a model's valid "ambiguous" answer.
             stats["residue_threads_failed"] += 1
+            if budget is not None:
+                budget.complete_unit(success=False)
             continue
+        if budget is not None and not budget.complete_unit(success=True):
+            break
         stats["residue_threads_processed"] += 1
         stats[outcome] = stats.get(outcome, 0) + 1
         if outcome == "genuine_reply":
@@ -383,7 +424,7 @@ def run_residue_stage(
                 findings.append(finding)
 
     if findings and owner_active():
-        result = apply_findings(connection.user, findings)
+        result = gmail_live.apply_grant_findings(connection, findings)
         stats["touches_logged"] = result.touches_logged
 
     return stats

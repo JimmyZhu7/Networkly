@@ -216,13 +216,17 @@ class Command(BaseCommand):
 
     def _run_backfill_locked(self, connection, *, dry_run: bool, prefix: str) -> None:
         try:
-            gmail_live._require_active_user(connection)
+            gmail_live.require_current_grant(connection)
         except gmail_live.GmailLiveError:
             return
         if not dry_run:
+            started = timezone.now()
+            if not gmail_live._matching_grant(connection).update(
+                backfill_status="running", backfill_started_at=started,
+            ):
+                return
             connection.backfill_status = "running"
-            connection.backfill_started_at = timezone.now()
-            connection.save(update_fields=["backfill_status", "backfill_started_at"])
+            connection.backfill_started_at = started
 
         try:
             # `sweep_sent=True` HERE and nowhere else. This selection covers
@@ -238,8 +242,7 @@ class Command(BaseCommand):
             )
         except Exception as exc:  # noqa: BLE001
             if not dry_run:
-                connection.backfill_status = "failed"
-                connection.save(update_fields=["backfill_status"])
+                gmail_live._matching_grant(connection).update(backfill_status="failed")
             self.stderr.write(
                 f"{prefix}{connection.gmail_address}: backfill failed, will "
                 f"retry next run: {exc}"
@@ -247,12 +250,16 @@ class Command(BaseCommand):
             return
 
         if not dry_run:
-            Import.all_objects.create(
-                user=connection.user,
-                kind="gmail_backfill",
-                filename=connection.gmail_address,
-                row_stats=result.as_stats(),
-            )
+            try:
+                with gmail_live.application_transaction(connection):
+                    Import.all_objects.create(
+                        user=connection.user,
+                        kind="gmail_backfill",
+                        filename=connection.gmail_address,
+                        row_stats=result.as_stats(),
+                    )
+            except gmail_live.GmailLiveError:
+                return
 
         # `proposals` is named on this line and not on the rescan's because
         # it is the whole point of the sent sweep above: on an empty
@@ -287,20 +294,23 @@ class Command(BaseCommand):
 
     def _run_rescan_locked(self, connection, *, dry_run: bool, prefix: str) -> None:
         try:
-            gmail_live._require_active_user(connection)
+            gmail_live.require_current_grant(connection)
         except gmail_live.GmailLiveError:
             return
         if not dry_run:
+            started = timezone.now()
+            if not gmail_live._matching_grant(connection).update(
+                rescan_status="running", rescan_started_at=started,
+            ):
+                return
             connection.rescan_status = "running"
-            connection.rescan_started_at = timezone.now()
-            connection.save(update_fields=["rescan_status", "rescan_started_at"])
+            connection.rescan_started_at = started
 
         try:
             stats = gmail_live.run_rescan(connection, dry_run=dry_run)
         except Exception as exc:  # noqa: BLE001
             if not dry_run:
-                connection.rescan_status = "failed"
-                connection.save(update_fields=["rescan_status"])
+                gmail_live._matching_grant(connection).update(rescan_status="failed")
             self.stderr.write(
                 f"{prefix}{connection.gmail_address}: rescan failed, will "
                 f"retry next run: {exc}"
@@ -308,18 +318,20 @@ class Command(BaseCommand):
             return
 
         if not dry_run:
-            connection.rescan_status = "done"
-            connection.rescan_completed_at = timezone.now()
-            connection.rescan_stats = stats
-            connection.save(
-                update_fields=["rescan_status", "rescan_completed_at", "rescan_stats"]
-            )
-            Import.all_objects.create(
-                user=connection.user,
-                kind="gmail_rescan",
-                filename=connection.gmail_address,
-                row_stats=stats,
-            )
+            try:
+                with gmail_live.application_transaction(connection) as current:
+                    current.rescan_status = "done"
+                    current.rescan_completed_at = timezone.now()
+                    current.rescan_stats = stats
+                    current.save(update_fields=["rescan_status", "rescan_completed_at", "rescan_stats"])
+                    Import.all_objects.create(
+                        user=connection.user,
+                        kind="gmail_rescan",
+                        filename=connection.gmail_address,
+                        row_stats=stats,
+                    )
+            except gmail_live.GmailLiveError:
+                return
 
         residue = stats.get("residue", {})
         self.stdout.write(

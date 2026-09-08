@@ -119,6 +119,12 @@ def verify(url: str) -> VerificationResult:
     except Exception as e:  # noqa: BLE001
         return VerificationResult("lever", url, "unreachable", str(e)[:200], [])
 
+    if not isinstance(data, list) or any(
+        not isinstance(posting, dict) or not isinstance(posting.get("text"), str)
+        or not posting["text"].strip() for posting in data
+    ):
+        return VerificationResult("lever", url, "needs-verification",
+                                  "postings API returned an unreadable board", [])
     if not data:
         return VerificationResult(
             "lever", url, "closed",

@@ -80,3 +80,20 @@ def mailbox_lock(connection_id: int):
     finally:
         if acquired:
             unlock_mailbox(connection_id)
+
+
+@contextmanager
+def enrichment_lock(user_id: int):
+    """Single flight for optional AI without holding transactional row locks."""
+    namespace = 0x676D656E  # gmen, separate from mailbox writer locks
+    acquired = True
+    if db_connection.vendor == "postgresql":
+        with db_connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(%s, %s)", [namespace, user_id])
+            acquired = bool(cursor.fetchone()[0])
+    try:
+        yield acquired
+    finally:
+        if acquired and db_connection.vendor == "postgresql":
+            with db_connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s, %s)", [namespace, user_id])

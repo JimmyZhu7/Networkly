@@ -6,7 +6,7 @@ is the reviewed, tested, ported artifact (see its module docstring); this
 module's entire job is handing it a connection shaped the way it expects
 and forwarding arguments.
 
-Connection strategy: a dedicated psycopg (v3) connection, opened fresh
+Default connection strategy: a dedicated psycopg (v3) connection, opened fresh
 per call, rather than reusing `django.db.connection.connection` (Django's
 own wrapped DBAPI connection). Reasoning:
 
@@ -27,6 +27,11 @@ own wrapped DBAPI connection). Reasoning:
 - Cost: one extra physical connection per adapter call (no pooler yet at
   v1's scale — see docs/build-plan.md "Background work"). Acceptable now;
   worth revisiting if/when pgbouncer or a connection pool is introduced.
+
+Capture can explicitly opt into `atomic_pipeline()`: then each adapter call
+uses a nested Django savepoint and a cursor-local dict row factory. The proxy
+never commits, rolls back or closes Django's physical connection, so capture
+provenance and domain effects share one atomic unit without leaking ownership.
 
 Connection parameters are read from `settings.DATABASES["default"]`
 (already parsed by django-environ from `DATABASE_URL`) rather than a

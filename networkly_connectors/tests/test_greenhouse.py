@@ -196,7 +196,7 @@ def test_verify_resolves_janestreet_custom_domain_url(monkeypatch, greenhouse_jo
 
     def fake_fetch_json(url, **kw):
         seen_urls.append(url)
-        return greenhouse_job_detail_fixture
+        return {**greenhouse_job_detail_fixture, "id": 8072596002}
 
     monkeypatch.setattr(greenhouse, "fetch_json", fake_fetch_json)
     result = greenhouse.verify(

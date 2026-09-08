@@ -38,6 +38,8 @@ from __future__ import annotations
 import logging
 
 import requests
+from django.contrib.auth import get_user_model
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -124,16 +126,17 @@ def revoke_connection(connection, *, related_services=None) -> bool:
     related = _related_connections(connection)
     confirmed = revoke_token(raw)
     if confirmed:
-        for model, label, row in related:
-            # Never let an old request clear a credential replaced while
-            # Google's response was in flight. Passive refresh errors do not
-            # enter this explicit-disconnect path at all.
-            changed = model.all_objects.filter(user_id=connection.user_id,
-                pk=row["pk"], status="active",
-                refresh_token_encrypted=row["refresh_token_encrypted"],
-            ).update(status="revoked", refresh_token_encrypted="")
-            if changed and related_services is not None:
-                related_services.add(label)
+        with transaction.atomic():
+            get_user_model().objects.select_for_update().filter(pk=connection.user_id).first()
+            for model, label, row in related:
+                # Provider requests have finished. Lock in owner/grant order
+                # and preserve a credential replaced while Google responded.
+                changed = model.all_objects.filter(user_id=connection.user_id,
+                    pk=row["pk"], status="active",
+                    refresh_token_encrypted=row["refresh_token_encrypted"],
+                ).update(status="revoked", refresh_token_encrypted="")
+                if changed and related_services is not None:
+                    related_services.add(label)
     return confirmed
 
 
@@ -150,10 +153,12 @@ def disconnect_connections(user, model):
     for connection in list(model.all_objects.filter(user=user)):
         if not revoke_connection(connection, related_services=related_services):
             unconfirmed = True
-        count, _ = model.all_objects.filter(user=user,
-            pk=connection.pk,
-            refresh_token_encrypted=connection.refresh_token_encrypted,
-        ).delete()
+        with transaction.atomic():
+            get_user_model().objects.select_for_update().filter(pk=user.pk).first()
+            count, _ = model.all_objects.filter(user=user,
+                pk=connection.pk,
+                refresh_token_encrypted=connection.refresh_token_encrypted,
+            ).delete()
         removed += count
         replaced = replaced or count == 0
     return {"removed": removed, "related_services": sorted(related_services),

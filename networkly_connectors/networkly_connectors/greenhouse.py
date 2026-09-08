@@ -123,7 +123,9 @@ def fetch(board: GreenhouseBoard) -> FetchResult:
                     f"greenhouse envelope for token {board.token!r} carries no "
                     f"'jobs' key (got {sorted(data)[:6]})"),
             )
-        jobs = data.get("jobs", data if isinstance(data, list) else [])
+        jobs = data.get("jobs") if isinstance(data, dict) else data
+        if not isinstance(jobs, list):
+            raise ValueError(unreadable("greenhouse jobs is not an array"))
         # The board's own count disagreeing with the rows it sent is the one
         # in-band signal Greenhouse offers, and it is worth acting on: a
         # `total` above zero with no jobs means the list was filtered,
@@ -157,7 +159,8 @@ def fetch(board: GreenhouseBoard) -> FetchResult:
     # the caller's own row history for that case.
     empty_state = not opportunities and stated_total == 0
     return FetchResult(board=board, ok=True, opportunities=opportunities,
-                       raw_count=len(jobs), empty_state=empty_state)
+                       raw_count=len(jobs), empty_state=empty_state,
+                       truncated=type(stated_total) is int and stated_total > len(jobs))
 
 
 def classify_url(url: str) -> dict | None:
@@ -199,9 +202,21 @@ def verify(url: str) -> VerificationResult:
     except Exception as e:  # noqa: BLE001
         return VerificationResult("greenhouse", url, "unreachable", str(e)[:200], [])
 
-    title = data.get("title", "")
-    updated = (data.get("updated_at") or "")[:10]
-    deadline = data.get("application_deadline") or None
+    # A successful HTTP response is not evidence of an open requisition.
+    # WAF/error envelopes and malformed fields must never confirm a role.
+    if not isinstance(data, dict) or not isinstance(data.get("title"), str) or not data["title"].strip():
+        return VerificationResult("greenhouse", url, "needs-verification",
+                                  "job endpoint returned no readable posting", [])
+    if data.get("id") is not None and str(data["id"]) != job_id:
+        return VerificationResult("greenhouse", url, "needs-verification",
+                                  "job endpoint returned a different posting", [])
+    title = data["title"]
+    updated = data.get("updated_at")
+    deadline = data.get("application_deadline")
+    if (updated is not None and not isinstance(updated, str)) or (deadline is not None and not isinstance(deadline, str)):
+        return VerificationResult("greenhouse", url, "needs-verification",
+                                  "job endpoint returned unreadable dates", [])
+    updated = (updated or "")[:10]
     # updated_at is a last-MODIFIED timestamp, not a deadline -- evidence-only,
     # never a "changed" comparator (matches the original's "Date-type
     # awareness" rule). application_deadline, when the firm sets it, IS a

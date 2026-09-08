@@ -101,8 +101,8 @@ class Command(BaseCommand):
             findings = json.loads(raw)
         except json.JSONDecodeError as exc:
             raise CommandError(f"findings is not valid JSON: {exc}") from exc
-        if not isinstance(findings, list):
-            raise CommandError("findings must be a JSON array")
+        if not isinstance(findings, list) or any(not isinstance(row, dict) for row in findings):
+            raise CommandError("findings must be a JSON array of objects")
 
         if opts["dry_run"]:
             # Delegated to apply_findings' own flag, NOT wrapped in
@@ -113,13 +113,18 @@ class Command(BaseCommand):
             self._report(apply_findings(user, findings, dry_run=True), dry_run=True)
             return
 
-        result = apply_findings(user, findings)
-        Import.all_objects.create(
-            user=user,
-            kind="gmail_findings",
-            filename=(opts["findings"] if opts["findings"] != "-" else "stdin")[:255],
-            row_stats=result.as_stats(),
-        )
+        from capture.enrichment import prepare_findings
+        from crm.services import atomic_pipeline
+
+        prepared = prepare_findings(user, findings)
+        with atomic_pipeline():
+            result = apply_findings(user, findings, prepared=prepared)
+            Import.all_objects.create(
+                user=user,
+                kind="gmail_findings",
+                filename=(opts["findings"] if opts["findings"] != "-" else "stdin")[:255],
+                row_stats=result.as_stats(),
+            )
         self._report(result, dry_run=False)
 
     def _report(self, result, *, dry_run: bool) -> None:

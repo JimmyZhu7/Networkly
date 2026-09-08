@@ -201,7 +201,12 @@ class TestRunRescan:
         assert billing_credits.balance(student) == 0
         row = CreditLedger.objects.for_user(student).get(kind=CreditLedger.KIND_SPEND_RESCAN)
         assert row.delta == -2
-        assert row.props == {"threads": 2}
+        assert row.props["reserved_units"] == 2
+        from billing.models import AIJobReservation
+        reserved = AIJobReservation.all_objects.get(debit=row)
+        assert reserved.successful_units == 2
+        assert reserved.charged_credits == 2
+        assert reserved.status == AIJobReservation.SETTLED
 
     @override_settings(ANTHROPIC_API_KEY="sk-test-key")
     def test_zero_affordable_credits_still_runs_the_free_deterministic_pass(self, student, connection):
@@ -261,7 +266,9 @@ class TestRunRescan:
         assert stats["residue"]["residue_threads_processed"] == 0
         assert stats["residue"]["credit_limited"] is False
         assert billing_credits.balance(student) == before
-        assert not CreditLedger.objects.for_user(student).filter(kind=CreditLedger.KIND_SPEND_RESCAN).exists()
+        debit = CreditLedger.objects.for_user(student).get(kind=CreditLedger.KIND_SPEND_RESCAN)
+        refund = CreditLedger.objects.for_user(student).get(refund_of=debit)
+        assert refund.delta == -debit.delta
 
     def test_dry_run_makes_no_ai_call_even_if_configured(self, student, connection, settings):
         settings.ANTHROPIC_API_KEY = "sk-test-key"

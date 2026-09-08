@@ -62,7 +62,8 @@ from dataclasses import dataclass, field
 from datetime import timedelta, timezone as dt_timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from django.db import models
+from django.contrib.auth import get_user_model
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -1238,7 +1239,28 @@ def _bulk_already_logged(user, contact: Contact, thread_id: str, *, reference=No
 # The entry point
 # --------------------------------------------------------------------------- #
 
-def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> SyncResult:
+def apply_findings(user, findings: list[dict], *, dry_run: bool = False, prepared=None) -> SyncResult:
+    """Apply the complete batch atomically across ORM and domain writes.
+
+    The user lock serializes account closure with local application. Provider
+    reads and model calls belong outside this boundary. A failed provenance,
+    calendar, touch, or final checkpoint write can therefore retry the batch
+    without leaving a partially committed relationship behind.
+    """
+    if prepared is None:
+        from .enrichment import prepare_findings
+        prepared = prepare_findings(user, findings, dry_run=dry_run)
+    if dry_run:
+        return _apply_findings(user, findings, dry_run=True, prepared=prepared)
+    with crm_services.atomic_pipeline():
+        if not get_user_model().objects.select_for_update().filter(
+            pk=user.pk, is_active=True, deleted_at__isnull=True,
+        ).exists():
+            raise ValueError("This account is no longer active; capture was skipped.")
+        return _apply_findings(user, findings, dry_run=False, prepared=prepared)
+
+
+def _apply_findings(user, findings: list[dict], *, dry_run: bool, prepared) -> SyncResult:
     """Apply a batch of Gmail findings for one user. Safe to run daily.
 
     Ordering follows the original exactly, because each step guards the next:
@@ -1252,12 +1274,8 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
     it never replaces a populated email (a differing address is noted, not
     substituted). See the two blocks below.
 
-    ``dry_run`` reports what would happen and writes nothing. It is a flag on
-    THIS function rather than a caller-side `transaction.atomic()` rollback,
-    because a rollback cannot cover the writes: `crm.services.log_touch`
-    deliberately opens its own psycopg connection and commits there (see that
-    module's docstring), so it is invisible to Django's transaction management
-    and would survive the unwind. Every matching, ratchet and dedup decision
+    ``dry_run`` reports what would happen and writes nothing. Every matching,
+    ratchet and dedup decision
     still runs on the one shared code path — only the three write sites are
     guarded, so the report cannot drift from the real behaviour.
 
@@ -1280,7 +1298,8 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
     # ATS mail in it builds nothing and queries nothing.
     appmail_resolver = appmail.Resolver(user)
 
-    for finding in findings:
+    for index, finding in enumerate(findings):
+        enrichment = prepared[index]
         name = (finding.get("name") or "").strip() or "(unnamed)"
 
         if not finding.get("found"):
@@ -1308,9 +1327,11 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
         # mail-facts failure — the counters exist so an operator knows which
         # layer to go and fix.
         try:
-            outcome = appmail.consider_finding(
-                user, finding, resolver=appmail_resolver, dry_run=dry_run
-            )
+            with transaction.atomic():
+                outcome = appmail.consider_finding(
+                    user, finding, resolver=appmail_resolver, dry_run=dry_run,
+                    allow_ai=False, prepared_detection=enrichment.application,
+                )
         except Exception as exc:  # noqa: BLE001 — see the comment above.
             result.app_events_errors += 1
             result.details.append(
@@ -1369,9 +1390,11 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
         # work exists to end. The counter rides out in `as_stats()`, so it
         # lands in the `Import` ledger rows and on /ops/health/capture/.
         try:
-            facts = mailfacts.consider_finding(
-                user, finding, firm_domains=firm_domains, dry_run=dry_run
-            )
+            with transaction.atomic():
+                facts = mailfacts.consider_finding(
+                    user, finding, firm_domains=firm_domains, dry_run=dry_run,
+                    allow_ai=False, prepared_auto=enrichment.auto,
+                )
         except Exception as exc:  # noqa: BLE001 — see the comment above.
             result.mail_facts_errors += 1
             result.details.append(
@@ -1412,10 +1435,11 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
             # and that must cost this one proposal, not the rest of the
             # batch still behind it.
             try:
-                outcome = discovery.consider_finding(
-                    user, finding, firm_domains=firm_domains, dry_run=dry_run,
-                    batch=batch_context,
-                )
+                with transaction.atomic():
+                    outcome = discovery.consider_finding(
+                        user, finding, firm_domains=firm_domains, dry_run=dry_run,
+                        batch=batch_context,
+                    )
             except Exception:  # noqa: BLE001 — same trade as the two hooks above.
                 logger.exception(
                     "apply_findings: discovery hook raised on a finding for %s",
@@ -1792,7 +1816,8 @@ def apply_findings(user, findings: list[dict], *, dry_run: bool = False) -> Sync
     # trade than one late campaign card.
     if not dry_run:
         try:
-            crm_campaigns.detect(user)
+            with transaction.atomic():
+                crm_campaigns.detect(user)
         except Exception as exc:  # noqa: BLE001 — see the comment above.
             result.details.append(f"campaign detection skipped: {exc}")
 

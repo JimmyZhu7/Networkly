@@ -164,25 +164,31 @@ def gmail_rescan(request):
     if connection is None:
         messages.error(request, "Connect Gmail before running a scan.")
         return redirect(f"{reverse('accounts:settings')}#gmail-live")
-    if connection.rescan_status in ("pending", "running"):
-        messages.info(request, "A scan is already in progress.")
+    try:
+        with gmail_live.application_transaction(connection) as connection:
+            if connection.rescan_status in ("pending", "running"):
+                messages.info(request, "A scan is already in progress.")
+                return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+            unlocks_at = gmail_live.free_rescan_unlocks_at(connection)
+            if unlocks_at is not None:
+                messages.error(
+                    request,
+                    "Free plan: one scan every "
+                    f"{settings.GMAIL_FREE_RESCAN_INTERVAL_DAYS} days. Next scan "
+                    f"available {timezone.localtime(unlocks_at):%-d %b}. Pro scans any time.",
+                )
+                return redirect(f"{reverse('accounts:settings')}#gmail-live")
+
+            connection.rescan_status = "pending"
+            connection.rescan_requested_at = timezone.now()
+            connection.save(update_fields=["rescan_status", "rescan_requested_at"])
+            messages.success(request, "Scan queued — check back in a few minutes.")
+            return redirect(f"{reverse('accounts:settings')}#gmail-live")
+    except gmail_live.GmailLiveError:
+        messages.info(request, "Your Gmail connection changed. Refresh Settings and try again.")
         return redirect(f"{reverse('accounts:settings')}#gmail-live")
 
-    unlocks_at = gmail_live.free_rescan_unlocks_at(connection)
-    if unlocks_at is not None:
-        messages.error(
-            request,
-            "Free plan: one scan every "
-            f"{settings.GMAIL_FREE_RESCAN_INTERVAL_DAYS} days. Next scan "
-            f"available {timezone.localtime(unlocks_at):%-d %b}. Pro scans any time.",
-        )
-        return redirect(f"{reverse('accounts:settings')}#gmail-live")
-
-    connection.rescan_status = "pending"
-    connection.rescan_requested_at = timezone.now()
-    connection.save(update_fields=["rescan_status", "rescan_requested_at"])
-    messages.success(request, "Scan queued — check back in a few minutes.")
-    return redirect(f"{reverse('accounts:settings')}#gmail-live")
 
 
 # ---------------------------------------------------------------------------

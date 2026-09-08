@@ -34,13 +34,12 @@ def student(db):
     return User.objects.create_user(email="residue-student@example.com", password="x")
 
 
-class FakeConnection:
-    """A stand-in for `GmailConnection` — `run_residue_stage` only reads
-    `.user` and `.gmail_address` off its `connection` argument."""
-
-    def __init__(self, user, gmail_address="me@example.com"):
-        self.user = user
-        self.gmail_address = gmail_address
+def FakeConnection(user, gmail_address="me@example.com"):
+    """Use a real grant so offline tests exercise reconnect fencing too."""
+    from capture.models import GmailConnection
+    return GmailConnection.all_objects.get_or_create(
+        user=user, defaults={"gmail_address": gmail_address, "refresh_token_encrypted": "unused"},
+    )[0]
 
 
 def _api_text_response(payload: dict) -> dict:

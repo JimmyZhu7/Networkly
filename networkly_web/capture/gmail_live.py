@@ -86,6 +86,8 @@ on real-time push needs the rest.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+
 from accounts.access import has_individual_features, sync_user_filter, plan_label
 
 import base64
@@ -538,40 +540,45 @@ def connect_gmail(user, code: str, redirect_uri: str) -> GmailConnection:
     # disconnected and reconnected the same mailbox — but a reconnect after
     # a REVOKED grant (backfill_status left at whatever it was, possibly
     # "failed" mid-run) should still get one. Only "done" is sticky.
-    existing = GmailConnection.all_objects.filter(user=user).first()
-    same_mailbox = bool(existing and existing.gmail_address.casefold() == profile["emailAddress"].casefold())
-    backfill_status = "done" if same_mailbox and existing.backfill_status == "done" else "pending"
-    reset_state = {"watch_expiration": None}
-    if existing and not same_mailbox:
-        reset_state.update(
-            last_notification_at=None,
-            backfill_started_at=None, backfill_completed_at=None, backfill_stats={},
-            rescan_status="none", rescan_requested_at=None, rescan_started_at=None,
-            rescan_completed_at=None, rescan_stats={},
-        )
+    with transaction.atomic():
+        if not get_user_model().objects.select_for_update().filter(
+            pk=user.pk, is_active=True, deleted_at__isnull=True,
+        ).exists():
+            raise GmailLiveError("This account is no longer active; connection was skipped.")
+        existing = GmailConnection.all_objects.filter(user=user).first()
+        same_mailbox = bool(existing and existing.gmail_address.casefold() == profile["emailAddress"].casefold())
+        backfill_status = "done" if same_mailbox and existing.backfill_status == "done" else "pending"
+        reset_state = {"watch_expiration": None}
+        if existing and not same_mailbox:
+            reset_state.update(
+                last_notification_at=None,
+                backfill_started_at=None, backfill_completed_at=None, backfill_stats={},
+                rescan_status="none", rescan_requested_at=None, rescan_started_at=None,
+                rescan_completed_at=None, rescan_stats={},
+            )
 
-    connection, _ = GmailConnection.all_objects.update_or_create(
-        user=user,
-        defaults={
-            **reset_state,
-            "gmail_address": profile["emailAddress"],
-            "refresh_token_encrypted": encrypt_token(creds.refresh_token),
-            "history_id": str(profile["historyId"]),
-            "status": "active",
-            "backfill_status": backfill_status,
-            # WHEN THIS REFRESH TOKEN WAS ISSUED, not when this mailbox was
-            # first linked. `connected_at` is `auto_now_add`, so it recorded
-            # the first connect and then never moved again: a student who
-            # reconnected after a revoke still showed the original date, and
-            # nothing in the database said when the token in the row above
-            # actually came from Google. That is the timestamp the seven-day
-            # expiry question needs (`todo-mined.md §4` from
-            # `docs/gmail-live-setup.md §9`; D-17), so the reconnect writes
-            # it. `auto_now_add` only fills the field on INSERT, so an
-            # explicit value in `defaults` is what makes an UPDATE move it.
-            "connected_at": timezone.now(),
-        },
-    )
+        connection, _ = GmailConnection.all_objects.update_or_create(
+            user=user,
+            defaults={
+                **reset_state,
+                "gmail_address": profile["emailAddress"],
+                "refresh_token_encrypted": encrypt_token(creds.refresh_token),
+                "history_id": str(profile["historyId"]),
+                "status": "active",
+                "backfill_status": backfill_status,
+                # WHEN THIS REFRESH TOKEN WAS ISSUED, not when this mailbox was
+                # first linked. `connected_at` is `auto_now_add`, so it recorded
+                # the first connect and then never moved again: a student who
+                # reconnected after a revoke still showed the original date, and
+                # nothing in the database said when the token in the row above
+                # actually came from Google. That is the timestamp the seven-day
+                # expiry question needs (`todo-mined.md §4` from
+                # `docs/gmail-live-setup.md §9`; D-17), so the reconnect writes
+                # it. `auto_now_add` only fills the field on INSERT, so an
+                # explicit value in `defaults` is what makes an UPDATE move it.
+                "connected_at": timezone.now(),
+            },
+        )
 
     # Pro trial (accounts.trials): a Free account's FIRST Gmail connect
     # starts a time-boxed trial, flipping `user.plan` to "pro" BEFORE the
@@ -663,6 +670,47 @@ def _matching_grant(connection: GmailConnection):
         refresh_token_encrypted=connection.refresh_token_encrypted,
         connected_at=connection.connected_at,
     )
+
+
+def require_current_grant(connection: GmailConnection) -> None:
+    """Fence every provider/apply stage against the grant it started with."""
+    _require_active_user(connection)
+    if not _matching_grant(connection).exists():
+        raise GmailLiveError("The Gmail connection changed during sync; retry with the current connection.")
+
+
+@contextmanager
+def application_transaction(connection: GmailConnection, *, history_id=None):
+    """Lock owner and exact grant only while committing local effects.
+
+    The encrypted token and issuance timestamp form the grant generation:
+    reconnect and key rotation both invalidate a stale worker. Domain writes
+    share this transaction, so rollback includes touches and their evidence.
+    """
+    from crm.services import atomic_pipeline
+
+    with atomic_pipeline():
+        if not get_user_model().objects.select_for_update().filter(
+            pk=connection.user_id, is_active=True, deleted_at__isnull=True,
+        ).exists():
+            raise GmailLiveError("This account is no longer active; sync was skipped.")
+        owned = _matching_grant(connection)
+        if history_id is not None:
+            owned = owned.filter(history_id=history_id)
+        current = owned.select_for_update(of=("self",)).first()
+        if current is None:
+            raise GmailLiveError("The Gmail connection changed during sync; retry with the current connection.")
+        yield current
+
+
+def apply_grant_findings(connection: GmailConnection, findings: list[dict]):
+    """Apply classified evidence only while the original grant is current."""
+    from .enrichment import prepare_findings
+
+    require_current_grant(connection)
+    prepared = prepare_findings(connection.user, findings, guard=lambda: require_current_grant(connection))
+    with application_transaction(connection):
+        return apply_findings(connection.user, findings, prepared=prepared)
 
 
 def register_watch(connection: GmailConnection) -> None:
@@ -939,22 +987,21 @@ def sync_connection(connection: GmailConnection):
     _require_active_user(connection)
     if not owned.exists():
         return None
-    result = None
-    if findings:
-        result = apply_findings(connection.user, findings)
-        for line in result.details:
-            logger.info("Gmail Live %s: %s", connection.gmail_address, line)
+    from .enrichment import prepare_findings
 
-    # apply_findings uses the domain adapter's own committed connection;
-    # enclosing it in Django atomic would neither roll back those touches
-    # nor safely share its Contact locks. Check ownership before applying,
-    # and compare-and-set the checkpoint after it succeeds. Failed applies
-    # retain the checkpoint and retry through the existing per-finding dedup.
-    completed_at = timezone.now()
-    if owned.update(history_id=latest_history_id or connection.history_id,
-                    last_notification_at=completed_at):
+    prepared = prepare_findings(connection.user, findings, guard=lambda: require_current_grant(connection))
+    result = None
+    with application_transaction(connection, history_id=connection.history_id):
+        if findings:
+            result = apply_findings(connection.user, findings, prepared=prepared)
+        completed_at = timezone.now()
+        owned.update(history_id=latest_history_id or connection.history_id,
+                     last_notification_at=completed_at)
         connection.history_id = latest_history_id or connection.history_id
         connection.last_notification_at = completed_at
+    if result:
+        for line in result.details:
+            logger.info("Gmail Live %s: %s", connection.gmail_address, line)
     return result
 
 
@@ -2212,17 +2259,44 @@ def _sent_sweep_message_ids(gmail, *, now) -> list[str]:
     )
     ids: list[str] = []
     page_token = None
+    seen_tokens = set()
+    seen_ids = set()
     while True:
         response = gmail.users().messages().list(
             userId="me", q=query, pageToken=page_token
         ).execute()
-        for item in response.get("messages", []) or []:
-            ids.append(item["id"])
+        page_ids, next_token = _message_page(response, set())
+        for message_id in page_ids:
+            if message_id in seen_ids:
+                continue
+            seen_ids.add(message_id)
+            ids.append(message_id)
             if len(ids) >= SWEEP_MAX_MESSAGES:
                 return ids
-        page_token = response.get("nextPageToken")
+        page_token = next_token
         if not page_token:
             return ids
+        if page_token in seen_tokens:
+            raise GmailLiveError("Google repeated an invalid message page; retry the scan.")
+        seen_tokens.add(page_token)
+
+
+def _message_page(response, seen_tokens) -> tuple[list[str], str | None]:
+    """Reject malformed or looping search pages before acknowledging a scan."""
+    if not isinstance(response, dict) or not isinstance(response.get("messages", []), list):
+        raise GmailLiveError("Google returned an incomplete message list; retry the scan.")
+    ids = []
+    for item in response.get("messages", []):
+        message_id = item.get("id") if isinstance(item, dict) else None
+        if not isinstance(message_id, str) or not message_id.strip():
+            raise GmailLiveError("Google returned a message without its ID; retry the scan.")
+        ids.append(message_id)
+    token = response.get("nextPageToken")
+    if token:
+        if not isinstance(token, str) or token in seen_tokens:
+            raise GmailLiveError("Google repeated an invalid message page; retry the scan.")
+        seen_tokens.add(token)
+    return ids, token or None
 
 
 def _backfill_window_start(last_touch, *, now) -> "datetime":
@@ -2292,7 +2366,7 @@ def backfill_connection(
     the "Scan Now" rescan command opts in, feeding the result to
     `gmail_residue.run_residue_stage` afterward.
     """
-    _require_active_user(connection)
+    require_current_grant(connection)
     gmail = _gmail_client(connection)
     user = connection.user
     own_email = connection.gmail_address.lower()
@@ -2320,14 +2394,14 @@ def backfill_connection(
         query = f"(from:{email} OR to:{email}) after:{window_start:%Y/%m/%d}"
 
         page_token = None
+        seen_tokens = set()
         while True:
-            _require_active_user(connection)
+            require_current_grant(connection)
             response = gmail.users().messages().list(
                 userId="me", q=query, pageToken=page_token
             ).execute()
-            for item in response.get("messages", []) or []:
-                message_ids.add(item["id"])
-            page_token = response.get("nextPageToken")
+            page_ids, page_token = _message_page(response, seen_tokens)
+            message_ids.update(page_ids)
             if not page_token:
                 break
 
@@ -2340,14 +2414,14 @@ def backfill_connection(
 
     findings = []
     for message_id in message_ids:
-        _require_active_user(connection)
+        require_current_grant(connection)
         # Same guard as the live path (`_fetch_message`): a per-contact
         # search matches the user's own DRAFTS to that contact, and a
         # message can be deleted between the list and the get. Neither is
         # correspondence, so neither reaches classification OR the residue
         # sink — a draft is not "mail we could not read".
         message = _fetch_message(gmail, message_id)
-        _require_active_user(connection)
+        require_current_grant(connection)
         if message is None:
             continue
         message_findings = classify_message_findings(
@@ -2363,16 +2437,22 @@ def backfill_connection(
     findings = _suppress_stale_bounces(findings)
     findings.sort(key=lambda f: f.get("occurred_at") or "")
 
-    _require_active_user(connection)
-    result = apply_findings(user, findings, dry_run=dry_run)
+    require_current_grant(connection)
+    if dry_run:
+        return apply_findings(user, findings, dry_run=True)
+    from .enrichment import prepare_findings
 
-    if not dry_run and update_backfill_status:
-        connection.backfill_status = "done"
-        connection.backfill_completed_at = timezone.now()
-        connection.backfill_stats = result.as_stats()
-        connection.save(
-            update_fields=["backfill_status", "backfill_completed_at", "backfill_stats"]
-        )
+    prepared = prepare_findings(user, findings, guard=lambda: require_current_grant(connection))
+    with application_transaction(connection) as current:
+        result = apply_findings(user, findings, dry_run=False, prepared=prepared)
+        if update_backfill_status:
+            current.backfill_status = "done"
+            current.backfill_completed_at = timezone.now()
+            current.backfill_stats = result.as_stats()
+            current.save(update_fields=["backfill_status", "backfill_completed_at", "backfill_stats"])
+            connection.backfill_status = current.backfill_status
+            connection.backfill_completed_at = current.backfill_completed_at
+            connection.backfill_stats = current.backfill_stats
 
     return result
 
@@ -2487,14 +2567,31 @@ def run_rescan(connection: GmailConnection, *, dry_run: bool = False) -> dict:
     # `affordable` is threads, already floored at 0 (a student with no
     # credits left still completes the free deterministic pass above; this
     # just means the residue stage below processes nothing).
-    _require_active_user(connection)
-    affordable = billing_credits.affordable_residue_threads(connection.user, distinct_threads)
-    residue_stats = gmail_residue.run_residue_stage(connection, residue, max_threads=affordable)
-    billing_credits.spend_rescan(connection.user, residue_stats["residue_threads_processed"])
+    from billing.job_budget import reserve_job
+
+    require_current_grant(connection)
+    requested = min(distinct_threads, gmail_residue.MAX_RESIDUE_THREADS)
+    reservation = None
+    configured = gmail_residue.is_configured()
+    if requested and configured:
+        attempt = connection.rescan_started_at
+        reservation = reserve_job(
+            connection.user, kind="spend_rescan", requested_units=requested,
+            units_per_credit=billing_credits.rescan_threads_per_credit(),
+            job_key=f"rescan:{connection.pk}:{attempt.isoformat()}" if attempt else None,
+        )
+    affordable = reservation.allowed_units if reservation else 0
+    try:
+        residue_stats = gmail_residue.run_residue_stage(
+            connection, residue, max_threads=affordable, budget=reservation,
+        )
+    finally:
+        if reservation is not None:
+            reservation.finish()
     # Configuration/provider failures are not credit limits. The classifier
     # reports those separately; this flag describes only the actual clamp.
     residue_stats["credit_limited"] = (
-        affordable < min(distinct_threads, gmail_residue.MAX_RESIDUE_THREADS)
+        configured and affordable < min(distinct_threads, gmail_residue.MAX_RESIDUE_THREADS)
     )
     stats["residue"] = residue_stats
     return stats

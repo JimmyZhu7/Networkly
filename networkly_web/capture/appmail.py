@@ -549,7 +549,7 @@ def _snippet_of(finding: dict) -> str:
 
 
 def detect(
-    finding: dict, *, allow_ai: bool = True, firm_domains=None
+    finding: dict, *, allow_ai: bool = True, firm_domains=None, ai_classifier=None
 ) -> Detection:
     """Classify one finding as an application-status message, or not.
 
@@ -633,7 +633,7 @@ def detect(
     if allow_ai:
         from directory import ai_extract
 
-        guess = ai_extract.extract_application_event_ai(subject, snippet)
+        guess = (ai_classifier or ai_extract.extract_application_event_ai)(subject, snippet)
         if guess is not None and guess.value in TARGET_STATUS:
             return Detection(
                 True, guess.value, "ai", reasons + ("classified by AI",),
@@ -814,7 +814,7 @@ class Outcome:
 
 def consider_finding(
     user, finding: dict, *, resolver: Resolver | None = None,
-    dry_run: bool = False, allow_ai: bool = True,
+    dry_run: bool = False, allow_ai: bool = True, prepared_detection=None,
 ) -> Outcome:
     """Run the whole chain over one finding. Writes at most one
     `ApplicationEvent`, and never anything else.
@@ -831,7 +831,7 @@ def consider_finding(
         return Outcome()
 
     resolver = resolver or Resolver(user)
-    detection = detect(
+    detection = prepared_detection if prepared_detection is not None else detect(
         finding, allow_ai=allow_ai, firm_domains=resolver.domains
     )
     if not detection.gated:
@@ -966,6 +966,15 @@ def _advances(user, opportunity, target: str) -> bool:
 # --------------------------------------------------------------------------- #
 
 def accept(event: ApplicationEvent):
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(event) as current:
+        if current is None:
+            return None
+        return _accept(current)
+
+
+def _accept(event: ApplicationEvent):
     """Write the pipeline move this row describes. THE ONLY path from an
     `ApplicationEvent` to a `UserOpportunity`.
 
@@ -983,7 +992,7 @@ def accept(event: ApplicationEvent):
     if event.status != ApplicationEvent.STATUS_PENDING:
         return None
 
-    row, _ = UserOpportunity.all_objects.get_or_create(
+    row, _ = UserOpportunity.all_objects.select_for_update().get_or_create(
         user=event.user, opportunity=event.opportunity
     )
     if _rank(event.target_status) > _rank(row.applied_status):
@@ -1002,9 +1011,11 @@ def accept(event: ApplicationEvent):
 def dismiss(event: ApplicationEvent) -> None:
     """Never ask about this role-and-event again. The row stays — it IS the
     memory, same contract as `capture.discovery.dismiss`."""
-    if event.status != ApplicationEvent.STATUS_PENDING:
-        return
-    _resolve(event, ApplicationEvent.STATUS_DISMISSED)
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(event) as current:
+        if current is not None and current.status == ApplicationEvent.STATUS_PENDING:
+            _resolve(current, ApplicationEvent.STATUS_DISMISSED)
 
 
 def _resolve(event: ApplicationEvent, status: str) -> None:

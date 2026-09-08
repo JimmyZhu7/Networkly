@@ -85,6 +85,7 @@ from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -207,26 +208,32 @@ def connect_calendar(user, code: str, redirect_uri: str) -> GoogleCalendarConnec
             "project and that your account is on the app's test-user list."
         ) from exc
 
-    connection, _ = GoogleCalendarConnection.all_objects.update_or_create(
-        user=user,
-        defaults={
-            # `id` on a calendars.get("primary") response is the calendar's
-            # real address, which is the account's own — the name to show on
-            # the Settings card. `summary` is the calendar's display name and
-            # is often just "user@example.com" too, but not always.
-            "google_email": primary.get("id", "") or "",
-            "refresh_token_encrypted": encrypt_token(creds.refresh_token),
-            "calendar_id": "primary",
-            # A RECONNECT STARTS CLEAN. The old cursor was issued against a
-            # grant that is being replaced, and Google rejects a stale one
-            # with a 410 anyway — clearing it here means the first sync after
-            # a reconnect does its windowed read deliberately rather than
-            # discovering the same thing through an error path.
-            "sync_token": "",
-            "status": "active",
-            "connected_at": timezone.now(),
-        },
-    )
+    with transaction.atomic():
+        if not get_user_model().objects.select_for_update().filter(
+            pk=user.pk, is_active=True, deleted_at__isnull=True,
+        ).exists():
+            raise GcalError("This account is no longer active; connection was skipped.")
+        connection, _ = GoogleCalendarConnection.all_objects.update_or_create(
+            user=user,
+            defaults={
+                # `id` on a calendars.get("primary") response is the calendar's
+                # real address, which is the account's own — the name to show on
+                # the Settings card. `summary` is the calendar's display name and
+                # is often just "user@example.com" too, but not always.
+                "google_email": primary.get("id", "") or "",
+                "refresh_token_encrypted": encrypt_token(creds.refresh_token),
+                "calendar_id": "primary",
+                # A RECONNECT STARTS CLEAN. The old cursor was issued against a
+                # grant that is being replaced, and Google rejects a stale one
+                # with a 410 anyway — clearing it here means the first sync after
+                # a reconnect does its windowed read deliberately rather than
+                # discovering the same thing through an error path.
+                "sync_token": "",
+                "status": "active",
+                "connected_at": timezone.now(),
+            },
+        )
+
     return connection
 
 
@@ -247,11 +254,7 @@ def disconnect(user) -> int:
     """
     from capture import google_revoke
 
-    rows = list(GoogleCalendarConnection.all_objects.filter(user=user))
-    for connection in rows:
-        google_revoke.revoke_connection(connection)
-    GoogleCalendarConnection.all_objects.filter(user=user).delete()
-    return len(rows)
+    return google_revoke.disconnect_connections(user, GoogleCalendarConnection)["removed"]
 
 
 # ---------------------------------------------------------------------------
@@ -781,7 +784,11 @@ def sync_connection(connection: GoogleCalendarConnection, *, dry_run: bool = Fal
         # while the snapshot rejects stale concurrent syncs/reconnects. A
         # failure applying any resource rolls back both rows and cursor.
         with transaction.atomic():
-            current = GoogleCalendarConnection.all_objects.select_for_update().filter(user_id=connection.user_id,
+            if not get_user_model().objects.select_for_update().filter(
+                pk=connection.user_id, is_active=True, deleted_at__isnull=True,
+            ).exists():
+                raise GcalError("The calendar connection changed during sync; retry the sync.")
+            current = GoogleCalendarConnection.all_objects.select_for_update(of=("self",)).filter(user_id=connection.user_id,
                 pk=connection.pk,
                 user__is_active=True, user__deleted_at__isnull=True,
             ).first()

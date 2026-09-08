@@ -1481,7 +1481,16 @@ def school_firm_fields(contact, *, user=None, firm_domains: FirmDomains | None =
 # The tap: accept / dismiss
 # --------------------------------------------------------------------------- #
 
-def accept(
+def accept(proposal: ContactProposal, *, role=None, region=None) -> Contact | None:
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(proposal) as current:
+        if current is None:
+            return None
+        return _accept(current, role=role, region=region)
+
+
+def _accept(
     proposal: ContactProposal,
     *,
     role: str | None = None,
@@ -1641,9 +1650,11 @@ def dismiss(proposal: ContactProposal) -> None:
     """Hide. The row stays — it IS the do-not-re-propose memory, and no scan
     will ever ask about this address again. `restore` below is the way back,
     and only a person can reach it."""
-    if proposal.status != ContactProposal.STATUS_PENDING:
-        return
-    _resolve(proposal, ContactProposal.STATUS_DISMISSED)
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(proposal) as current:
+        if current is not None and current.status == ContactProposal.STATUS_PENDING:
+            _resolve(current, ContactProposal.STATUS_DISMISSED)
 
 
 # What `restore` did, for the caller's message. The user tapped a button and
@@ -1656,6 +1667,15 @@ RESTORE_NOOP = "noop"
 
 
 def restore(proposal: ContactProposal) -> tuple[str, Contact | None]:
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(proposal) as current:
+        if current is None:
+            return RESTORE_NOOP, None
+        return _restore(current)
+
+
+def _restore(proposal: ContactProposal) -> tuple[str, Contact | None]:
     """Undo a dismissal: put the row back to `pending` so the card returns to
     the Today lane. Returns `(outcome, contact)`.
 

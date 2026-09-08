@@ -467,8 +467,14 @@ def verify(url: str) -> VerificationResult:
                                        [deadline] if deadline else [], posted_date=posted or None)
         if search_text:
             data = _fetch_all(tenant_host, site, search_text)
-            postings = data.get("jobPostings", [])
-            total = data.get("total", len(postings))
+            if not isinstance(data, dict) or not isinstance(data.get("jobPostings"), list):
+                return VerificationResult("workday", url, "needs-verification",
+                                          "search endpoint returned no readable postings list", [])
+            postings = data["jobPostings"]
+            total = data.get("total")
+            if type(total) is not int or total < 0 or (total > 0 and not postings) or (total == 0 and postings):
+                return VerificationResult("workday", url, "needs-verification",
+                                          "search endpoint returned inconsistent posting counts", [])
             if total == 0:
                 return VerificationResult("workday", url, "closed",
                                            f'searchText="{search_text}" returned 0 postings — no longer listed', [])

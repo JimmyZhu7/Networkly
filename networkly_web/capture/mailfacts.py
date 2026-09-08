@@ -608,7 +608,7 @@ def _propose_referral(
 
 def consider_finding(
     user, finding: dict, *, firm_domains=None, dry_run: bool = False,
-    allow_ai: bool = True,
+    allow_ai: bool = True, prepared_auto=None,
 ) -> Outcome:
     """Read one finding for stated facts and act/propose/surface per the
     module contract. Called from `capture.gmail.apply_findings` for every
@@ -638,7 +638,7 @@ def consider_finding(
         return out
 
     if finding.get("auto_reply"):
-        detected = _detect_auto(text)
+        detected = prepared_auto if prepared_auto is not None else _detect_auto(text)
         if not detected and allow_ai:
             detected = _detect_ai(text, finding)
         if not detected:
@@ -666,13 +666,13 @@ def consider_finding(
     return out
 
 
-def _detect_ai(text: str, finding: dict) -> list[Detected]:
+def _detect_ai(text: str, finding: dict, *, ai_classifier=None) -> list[Detected]:
     """The long tail: ask the model WHICH fact the text states and WHERE,
     then re-run the deterministic extractors over the grounded text for
     every structured datum. The model can point; it cannot dictate."""
     subject = (finding.get("subject") or "").strip()
     snippet = html.unescape((finding.get("snippet") or "").strip())
-    guess = ai_extract.extract_mail_fact_ai(subject, snippet)
+    guess = (ai_classifier or ai_extract.extract_mail_fact_ai)(subject, snippet)
     if guess is None:
         return []
     quote = _quote_of(guess.phrase, text)
@@ -1221,6 +1221,17 @@ def dead_addresses(user, *, contact_id: int | None = None) -> dict[int, MailFact
 
 
 def undo(fact: MailFact) -> None:
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(fact) as current:
+        if current is None:
+            return
+        if current.contact_id is not None:
+            current.contact = Contact.objects.for_user(current.user).select_for_update().get(pk=current.contact_id)
+        return _undo(current)
+
+
+def _undo(fact: MailFact) -> None:
     """Reverse exactly what the apply did, and only where the state still
     matches what the apply wrote — a value the user changed by hand since is
     never overwritten. Idempotent: only `applied` rows undo."""
@@ -1266,6 +1277,14 @@ def undo(fact: MailFact) -> None:
 
 
 def dismiss(fact: MailFact) -> None:
+    from .transactions import locked_capture_row
+
+    with locked_capture_row(fact) as current:
+        if current is not None:
+            _dismiss(current)
+
+
+def _dismiss(fact: MailFact) -> None:
     """Wave the card away. The row stays — it is the do-not-re-create memory
     (the unique constraint), same contract as every other capture surface."""
     if fact.status not in (MailFact.STATUS_PENDING, MailFact.STATUS_APPLIED):
