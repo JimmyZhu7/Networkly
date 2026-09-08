@@ -77,17 +77,9 @@ PUBLIC: dict[str, str] = {
     "billing.views.webhook": "Stripe's HMAC signature is the authentication; csrf_exempt is correct here",
     # Deliberately reachable signed out, with its own per-IP burst guard.
     "billing.views.waitlist_join": "the pricing page's notify-me form, IP-throttled",
-    # FINDING, 2026-09-06 security review, not yet fixed. `accounts/urls.py`'s
-    # own header states the contract this breaks: "Everything is login-required
-    # except the two legal pages and the digest unsubscribe link." It serves a
-    # bundled `accounts/data/universities.json` and reads no tenant data, so it
-    # leaks nothing — but it is the only anonymous scanning endpoint in the app
-    # without the per-IP guard that `core.views.search` and
-    # `billing.views.waitlist_join` both carry. Listed here so this test states
-    # the current truth rather than failing on a known item; the fix belongs to
-    # the owner of accounts/views.py. See
-    # docs/audits/security-review-2026-09-06.md, finding 1.2.
-    "accounts.views.university_search": "KNOWN GAP: anonymous and unthrottled; static data only",
+    # Signup needs the static university list before authentication. The
+    # shared per-IP search window is covered by test_university_search_throttled.
+    "accounts.views.university_search": "signup autocomplete; static data only and per-IP throttled",
     # Anonymous by design, and already throttled: the contacts branch inside it
     # is gated on `request.user.is_authenticated` and scoped with `for_user`.
     "core.views.search": "the marketing search box; per-IP throttled, tenant branch gated inline",
