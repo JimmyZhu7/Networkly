@@ -26,6 +26,7 @@ def test_older_history_preserves_position_and_retries_failed_load(session, live_
     page = session.page
     page.goto(f"{live_server.url}/assistant/{conversation.pk}/")
     page.wait_for_load_state("networkidle")
+    assert not session.real_console_errors()
     log = page.locator("#as-log")
     assert log.locator(".as-msg").count() == MESSAGE_PAGE_SIZE
     assert log.get_attribute("tabindex") == "0"
@@ -37,6 +38,11 @@ def test_older_history_preserves_position_and_retries_failed_load(session, live_
     link.focus()
     page.keyboard.press("Enter")
     page.get_by_role("status").filter(has_text="Could not load messages").wait_for()
+    expected_failure = "HTTP 503: /assistant/history/"
+    assert expected_failure in session.errors
+    assert not [error for error in session.real_console_errors()
+                if error != expected_failure and "status of 503" not in error]
+    session.errors.clear()
     assert log.locator(".as-msg").count() == MESSAGE_PAGE_SIZE
     assert link.get_attribute("aria-disabled") is None
     page.unroute("**/assistant/history/**")
@@ -52,4 +58,5 @@ def test_older_history_preserves_position_and_retries_failed_load(session, live_
     assert "historical-resume.pdf" in log.text_content()
     assert "private-payload" not in page.content()
     assert session.horizontal_overflow() == 0
-    assert not [error for error in session.real_console_errors() if "status of 503" not in error]
+    assert not session.real_console_errors()
+    session.shoot("assistant-history-loaded")
