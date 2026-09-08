@@ -418,10 +418,9 @@ def test_other_still_matches_no_us_or_hk_close_bucket():
 @pytest.mark.django_db
 def test_importing_two_hundred_contacts_reads_the_declaration_once():
     """(17) Resolution needs the student's declared markets for every row it
-    places. Read from `self.user` per contact that is 200 identical queries
-    on a mailbox import; read once above the loop it is none. The assertion
-    is on queries mentioning the user table, not on a total — the import
-    does plenty of other legitimate work."""
+    places. The import takes one account lock and uses that current account
+    for the entire batch; it must not reread the declaration for each row.
+    Count user reads rather than all of the import's legitimate queries."""
     from accounts.services import parse_contacts_csv
 
     user = _user(["us"])
@@ -435,7 +434,8 @@ def test_importing_two_hundred_contacts_reads_the_declaration_once():
     assert result.created == 200
     user_reads = [q for q in ctx.captured_queries
                   if ' FROM "users"' in q["sql"]]
-    assert len(user_reads) == 0, user_reads
+    assert len(user_reads) == 1, user_reads
+    assert "FOR UPDATE" in user_reads[0]["sql"]
     assert set(
         Contact.all_objects.filter(user=user).values_list(
             "region", "region_source"

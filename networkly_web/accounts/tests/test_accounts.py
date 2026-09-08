@@ -626,7 +626,8 @@ def test_export_contacts_returns_user_rows(client, user, other_user, firms):
     client.force_login(user)
     resp = client.get(reverse("accounts:export") + "?kind=contacts")
     assert resp.status_code == 200
-    body = resp.content.decode()
+    assert resp.streaming
+    body = b"".join(resp.streaming_content).decode()
     assert "Mine" in body
     assert "Goldman Sachs" in body
     assert "Theirs" not in body  # never another tenant's rows
@@ -638,7 +639,8 @@ def test_export_touches_returns_user_rows(client, user, firms):
     client.force_login(user)
     resp = client.get(reverse("accounts:export") + "?kind=touches")
     assert resp.status_code == 200
-    body = resp.content.decode()
+    assert resp.streaming
+    body = b"".join(resp.streaming_content).decode()
     assert "outreach" in body
     assert "Mine" in body
 
