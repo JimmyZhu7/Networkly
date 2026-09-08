@@ -550,6 +550,30 @@ def test_tenancy_is_enforced(client, student, firm):
     assert run.status == AutopilotRun.STATUS_REVIEWED
 
 
+def test_record_decision_rejects_another_owner(student, firm):
+    """A private helper cannot create a decision owned by a different user."""
+    proposal = make_proposal(student, firm)
+    run = AutopilotRun.all_objects.create(user=student)
+    other = User.objects.create_user(email="decision-other@example.test", password=None)
+    with pytest.raises(autopilot.AutopilotError, match="another account"):
+        autopilot._record_decision(
+            run, user=other, proposal=proposal,
+            decision=AutopilotDecision.DECIDE_ACCEPT,
+        )
+    assert not AutopilotDecision.all_objects.exists()
+
+
+def test_record_decision_rejects_another_tenants_subject(student, firm):
+    other = User.objects.create_user(email="subject-other@example.test", password=None)
+    proposal = make_proposal(other, firm)
+    run = AutopilotRun.all_objects.create(user=student)
+    assert autopilot._record_decision(
+        run, user=student, proposal=proposal,
+        decision=AutopilotDecision.DECIDE_ACCEPT,
+    ) is None
+    assert not AutopilotDecision.all_objects.exists()
+
+
 def test_undo_on_a_matched_contact_never_eats_prior_history(student, firm):
     """Regression: `accept` on a proposal that MATCHES an existing live
     contact resolves the proposal without logging any touch — but apply

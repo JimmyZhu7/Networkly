@@ -652,24 +652,26 @@ def _save_running_run(run, *, update_fields):
     with locked_capture_row(run) as current:
         if current is None or current.status != AutopilotRun.STATUS_RUNNING:
             return False
-        AutopilotRun.all_objects.filter(pk=run.pk).update(**values)
+        AutopilotRun.objects.for_user(run.user_id).filter(pk=run.pk).update(**values)
         for name, value in values.items():
             setattr(run, name, value)
         return True
 
 
-def _record_decision(run, **values):
+def _record_decision(run, *, user, **values):
     from .transactions import locked_capture_row
 
+    if user.pk != run.user_id:
+        raise AutopilotError("This review belongs to another account.")
     with locked_capture_row(run) as current:
         if current is None or current.status != AutopilotRun.STATUS_RUNNING:
             raise AutopilotError("This run is no longer active; review stopped.")
         subject = values.get("proposal") or values.get("app_event")
-        if subject is not None and not type(subject).all_objects.filter(
-            pk=subject.pk, user_id=run.user_id, status="pending",
+        if subject is not None and not type(subject).objects.for_user(run.user_id).filter(
+            pk=subject.pk, status="pending",
         ).exists():
             return None
-        return AutopilotDecision.all_objects.create(run=run, **values)
+        return AutopilotDecision.all_objects.create(user=user, run=run, **values)
 
 
 def run_autopilot(
@@ -731,8 +733,8 @@ def _run_autopilot(
         report.reason = "inactive_user"
         return report
 
-    if run is not None and not AutopilotRun.all_objects.filter(
-        pk=run.pk, user_id=user.pk, status=AutopilotRun.STATUS_RUNNING,
+    if run is not None and not AutopilotRun.objects.for_user(user).filter(
+        pk=run.pk, status=AutopilotRun.STATUS_RUNNING,
     ).exists():
         report.ok = False
         report.reason = "invalid_run"
@@ -818,8 +820,8 @@ def _run_autopilot(
                     report.ok = False
                     report.reason = "inactive_user"
                     return report
-                run = AutopilotRun.all_objects.create(
-                    user=user, model=model, source_label=source_label[:200],
+                run = AutopilotRun.all_objects.create(user=user,
+                    model=model, source_label=source_label[:200],
                     status=AutopilotRun.STATUS_RUNNING,
                 )
         run.evidence_note = evidence_note
@@ -1247,8 +1249,8 @@ def execute_run(run: AutopilotRun, *, decide=None) -> AutopilotReport:
             run.failure_reason = "This account is no longer active. Nothing was decided or spent."
             # Retiring an inactive owner's existing job writes no captured
             # data. CAS cannot recreate a deleted run or revive a newer one.
-            AutopilotRun.all_objects.filter(
-                pk=run.pk, user_id=run.user_id, status=AutopilotRun.STATUS_RUNNING,
+            AutopilotRun.objects.for_user(run.user_id).filter(
+                pk=run.pk, status=AutopilotRun.STATUS_RUNNING,
             ).filter(Q(user__is_active=False) | Q(user__deleted_at__isnull=False)).update(
                 status=run.status, failure_reason=run.failure_reason,
             )
@@ -1421,8 +1423,8 @@ def apply_run(run: AutopilotRun) -> tuple[str, int]:
                     continue
                 from analytics.models import UserOpportunity
 
-                prior = UserOpportunity.all_objects.filter(
-                    user=e.user, opportunity=e.opportunity
+                prior = UserOpportunity.objects.for_user(e.user).filter(
+                    opportunity=e.opportunity
                 ).first()
                 d.undo_state = {
                     "existed": prior is not None,
@@ -1569,8 +1571,8 @@ def _undo_decision(decision: AutopilotDecision) -> str:
 
             e = decision.app_event
             state = decision.undo_state or {}
-            row = UserOpportunity.all_objects.select_for_update().filter(
-                user=e.user, opportunity=e.opportunity
+            row = UserOpportunity.objects.for_user(e.user).select_for_update().filter(
+                opportunity=e.opportunity
             ).first()
             expected = state.get("after")
             actual = None if row is None else {

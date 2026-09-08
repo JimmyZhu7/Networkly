@@ -480,11 +480,20 @@ def test_the_unscoped_escape_hatch_has_not_quietly_proliferated():
     (`accounts/views.py::push_subscribe`).
 
     Ceiling 88: 76 plus original headroom and four reviewed cross-tenant
-    maintenance reads/writes in directory.firm_merge. Those preserve mail
-    application evidence and person links when duplicate shared firms are
-    merged; each is restricted to the locked duplicate firm/opportunity.
-    Per-person collision checks use for_user. No request route calls this
-    maintenance function. Raising it still needs the diff
+    maintenance reads/writes in directory.firm_merge:
+    - _merge_opportunity_pair checks all owners' mail events for conflicts
+      and then reparents those events off the locked duplicate opportunity.
+    - merge_firms reparents contact/task/proposal/event firm links and
+      walks dismissals off the locked duplicate firm. Per-person collision
+      checks use for_user. No request route calls this maintenance function.
+
+    Reviewed 2026-09-07: billing.job_budget.reconcile_job_reservations has
+    one new maintenance-only, bounded cross-tenant candidate read when no
+    user is supplied. Each settlement locks its owner, then re-reads the
+    reservation through for_user before any write. Explicit user calls use
+    for_user even during candidate discovery. Capture review/fence queries
+    now use for_user; ledger/reservation creates visibly name their owner.
+    The ceiling stays 88. Raising it still needs the diff
     read and the justification written, exactly as before; what changed is
     that adding a correctly scoped call no longer costs anybody that ritual.
     """

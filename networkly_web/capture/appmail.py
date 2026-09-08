@@ -992,7 +992,7 @@ def _accept(event: ApplicationEvent):
     if event.status != ApplicationEvent.STATUS_PENDING:
         return None
 
-    row, _ = UserOpportunity.all_objects.select_for_update().get_or_create(
+    row, _ = UserOpportunity.objects.for_user(event.user).select_for_update().get_or_create(
         user=event.user, opportunity=event.opportunity
     )
     if _rank(event.target_status) > _rank(row.applied_status):

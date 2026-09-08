@@ -20,8 +20,8 @@ def locked_capture_row(instance):
         ).exists()
         row = None
         if active:
-            row = type(instance).all_objects.select_for_update(of=("self",)).filter(
-                pk=instance.pk, user_id=instance.user_id,
+            row = type(instance).objects.for_user(instance.user_id).select_for_update(of=("self",)).filter(
+                pk=instance.pk,
             ).first()
         if row is None:
             yield None

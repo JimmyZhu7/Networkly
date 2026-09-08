@@ -86,12 +86,12 @@ def reserve_job(user, *, kind, requested_units, units_per_credit, job_key=None,
             return None
         cost = -(-allowed // units_per_credit)
         reservation_id = uuid4()
-        debit = CreditLedger.all_objects.create(
-            user=owner, delta=-cost, kind=kind,
+        debit = CreditLedger.all_objects.create(user=owner,
+            delta=-cost, kind=kind,
             props={"job_reservation_id": str(reservation_id), "reserved_units": allowed},
         )
-        row = AIJobReservation.all_objects.create(
-            id=reservation_id, user=owner, kind=kind, job_key=job_key, debit=debit,
+        row = AIJobReservation.all_objects.create(user=owner,
+            id=reservation_id, kind=kind, job_key=job_key, debit=debit,
             allowed_units=allowed, units_per_credit=units_per_credit, reserved_credits=cost,
             expires_at=timezone.now() + timedelta(seconds=lease_seconds),
         )
@@ -107,8 +107,8 @@ def _finish_locked(row, *, recovered=False, reason=""):
     charge = -(-used // row.units_per_credit)
     refund = row.reserved_credits - charge
     if refund:
-        CreditLedger.all_objects.create(
-            user_id=row.user_id, delta=refund, kind=CreditLedger.KIND_REFUND,
+        CreditLedger.all_objects.create(user_id=row.user_id,
+            delta=refund, kind=CreditLedger.KIND_REFUND,
             refund_of_id=row.debit_id,
             props={"job_reservation_id": str(row.pk), "reason": reason},
         )
@@ -183,10 +183,13 @@ class JobBudget:
 def reconcile_job_reservations(*, user=None, apply=False, limit=100):
     """Inspect/recover expired reservations in bounded batches; dry-run default."""
     _positive_integer(limit, "limit", 1000)
-    rows = AIJobReservation.all_objects.filter(status=AIJobReservation.PENDING,
-                                             expires_at__lte=timezone.now())
-    if user is not None:
-        rows = rows.filter(user_id=user.pk)
+    if user is None:
+        # Maintenance-only discovery crosses tenants, in a bounded batch.
+        # Every settlement below locks its owner and re-reads via for_user.
+        rows = AIJobReservation.all_objects.filter(status=AIJobReservation.PENDING)
+    else:
+        rows = AIJobReservation.objects.for_user(user).filter(status=AIJobReservation.PENDING)
+    rows = rows.filter(expires_at__lte=timezone.now())
     candidates = list(rows.order_by("expires_at", "pk").values_list("pk", "user_id")[:limit])
     stats = {"checked": 0, "recoverable": 0, "recovered": 0}
     for pk, owner_id in candidates:
