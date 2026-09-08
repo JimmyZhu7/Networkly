@@ -1,0 +1,127 @@
+{
+  "runtime_commit": "99be0dcdc7469bfc43b4264d7a2ac63ed628df55",
+  "baseline_gate_commit": "b323515c2db779405df6afc28a7f1a26d04343e5",
+  "baseline_snapshot_files_unchanged": 1124,
+  "final_snapshot_files_unchanged": 1133,
+  "local_gates": {
+    "earlier_application_and_connectors": {
+      "passed": 11727,
+      "skipped": 14,
+      "seconds": 962.72
+    },
+    "domain": {
+      "passed": 625,
+      "skipped": 0,
+      "seconds": 2.25
+    },
+    "integrated_53_new_cases": {
+      "passed": 53,
+      "skipped": 0,
+      "seconds": 9.52
+    },
+    "full_capture_address_patch": {
+      "passed": 1264,
+      "skipped": 0,
+      "seconds": 333.21,
+      "overlaps_other_gates": true
+    },
+    "full_crm_legacy_validation": {
+      "passed": 2998,
+      "skipped": 1,
+      "seconds": 260.15,
+      "overlaps_other_gates": true
+    },
+    "full_capture_provider_validation": {
+      "passed": 1340,
+      "skipped": 0,
+      "seconds": 201.77,
+      "overlaps_other_gates": true
+    },
+    "final_application_and_connectors": {
+      "passed": 11888,
+      "skipped": 14,
+      "seconds": 819.36
+    },
+    "final_integrated_focused": {
+      "passed": 188,
+      "skipped": 0,
+      "seconds": 13.23
+    }
+  },
+  "github_baseline": {
+    "commit": "15a8207d46678d8b724f2da344373a024ff30ccb",
+    "passed": 12405,
+    "skipped": 14,
+    "ci": "https://github.com/JimmyZhu7/Networkly/actions/runs/34179828559",
+    "dependencies": "https://github.com/JimmyZhu7/Networkly/actions/runs/34179828532"
+  },
+  "line_execution": {
+    "modules": 267,
+    "executed_lines": 25391,
+    "executable_lines": 26907,
+    "percent": 94.37,
+    "runtime_changes_since_baseline": {
+      "networkly_web/capture/autopilot.py": "2ed06ffa71fe7195f69b65645ff9f6b940a7ba9715ddd321a0e5101967688b75",
+      "networkly_web/capture/gmail_residue.py": "9fee25c65ec1268099794022152e51e86462ff37c1eee1912c42b9faabc4e7d7",
+      "networkly_web/capture/mailfacts.py": "6e9f37109eecc51697e6668bcff1b8fce555a91db391ea01feeccbd545a10a74",
+      "networkly_web/crm/today.py": "216b40bb44ed4a6fee1266cd37513f7dd1664077ec82d461995024d09fc37445"
+    }
+  },
+  "coverage_provenance": [
+    {
+      "artifact": "networkly-final-release-app-coverage.json",
+      "source_commit": "99be0dcdc7469bfc43b4264d7a2ac63ed628df55",
+      "matched_files": 267,
+      "stale_files_excluded": []
+    },
+    {
+      "artifact": "networkly-deep-domain-final-coverage.json",
+      "source_commit": "b323515",
+      "matched_files": 4,
+      "stale_files_excluded": []
+    }
+  ],
+  "function_inventory": {
+    "functions": 1960,
+    "modules": 211,
+    "execution_evidence": {
+      "All body lines exercised": 1426,
+      "Some body lines exercised": 477,
+      "Body not exercised": 52,
+      "No executable body lines": 1,
+      "Body entry indeterminate (stub body)": 4
+    }
+  },
+  "local_recovery": {
+    "original_tables": 62,
+    "after_migration_tables": 63,
+    "counts_match": true,
+    "forward_billing_migrations": [
+      "0011",
+      "0012"
+    ],
+    "full_row_content_comparison": false,
+    "private_backup_retained": true,
+    "temporary_restore_clone_disposed": true
+  },
+  "limitations": [
+    "Python line execution is not correctness or full branch coverage.",
+    "Coverage excludes tests, migrations and dependencies.",
+    "Local gates use isolated PostgreSQL databases; repeated gates overlap.",
+    "No paid service or watched deployment branch was activated.",
+    "Production delivery and 100 concurrent user capacity remain unproven."
+  ],
+  "github_final": {
+    "commit": "99be0dcdc7469bfc43b4264d7a2ac63ed628df55",
+    "conclusion": "success",
+    "passed": 12513,
+    "skipped": 14,
+    "warnings": 2,
+    "seconds": 1788.96,
+    "test_completed_at": "2026-09-08T04:57:58Z",
+    "ci": "https://github.com/JimmyZhu7/Networkly/actions/runs/34186987321",
+    "image_and_backup_client_checks": "success",
+    "dependency_audit": "success",
+    "dependencies": "https://github.com/JimmyZhu7/Networkly/actions/runs/34186987393"
+  }
+}

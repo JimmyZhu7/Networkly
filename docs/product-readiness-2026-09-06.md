@@ -194,11 +194,11 @@ cron is defined and inert. `coverage-assistant-reconcile` needs no `REDIS_URL`
 (PostgreSQL advisory locks); `coverage-gcal-sync` inherits everything it reads;
 no optional monitoring key became required.
 
-**Owner action before applying the Blueprint:** read `coverage-db`'s
-PostgreSQL major version from the Render dashboard and record it here.
-`postgresMajorVersion` is immutable, it is not in the repo, and it decides
-whether the image's `pg_dump` 18 can dump the server. No pin was added because
-a wrong one is the single edit that could turn an apply into a data event.
+**Completed 7 September:** the Render dashboard confirmed `coverage-db` uses
+PostgreSQL **18**. The audit branch pins that existing value and retains the
+PostgreSQL 18 backup client. This is not an upgrade or a Blueprint apply.
+Reconfirm the target service before activation; never change its immutable major
+version based on an assumed default.
 Plan names `basic-256mb` and `starter` are current in Render's schema; no tier
 changed.
 
@@ -379,14 +379,14 @@ approval; D = still doable without payment.
 | Off-host backup cron running | A | Resumed hosting | Set `BACKUP_S3_BUCKET=networkly-backups` on `coverage-db-backup`, run once by hand, resume the cron, add it to `EXPECTED_INTERVALS` | Owner resumes; engineering verifies |
 | Sentry owner notification actually delivered | B | The Sentry account's notification address | Confirm the address in Sentry account settings, re-fire the test, check that inbox | Owner |
 | Healthchecks: apply the 11 windows, run the synthetic missed-job test, start checks after resume | B | Dashboard or API key | Monitoring Plan above; keep real checks unstarted until resume | Owner |
-| `coverage-db` PostgreSQL major version | B | Render dashboard | Read it; if not 18, pin `postgresMajorVersion` before applying the Blueprint | Owner reads; engineering pins |
+| `coverage-db` PostgreSQL major version | Completed 7 September | Dashboard readback: 18 | Audit branch records the matching version; no Blueprint applied | Engineering verified |
 | Encryption-key recovery record | B | A password manager or sealed record | Store `GMAIL_LIVE_TOKEN_KEY` (ring, newest first) and `DJANGO_SECRET_KEY` with the date | Owner |
 | Legal identity, address, privacy contact, jurisdiction, backup retention | B | Facts only the founder holds; adviser review is his call | Replace the six placeholders on the privacy and terms pages | Owner |
 | Calendar scope minimisation | B then D | Founder decision; one live consent pass after | Decide; if yes, engineering switches to the narrower pair and retests connect, sync, disconnect, reconnect | Owner decides |
 | "Who to Find" | B | Founder decision | Choose a contextual firm-page entry or retire it; unchanged until then | Owner |
 | Push delivery, denial and unsubscribe in a real browser | B | A browser session on the owner's machine | Subscribe in Safari and Chrome on the deployed app, run the daily push job once, deny and unsubscribe | Owner |
-| Local poller running pre-fix code | B | The founder's own launchd agent | `launchctl kickstart -k gui/$(id -u)/com.coverage.gmailpoll` so it loads the merged calendar-ownership and heartbeat fixes | Owner |
-| Outside edits to four static CSS files and an untracked Figma notes file in the main checkout | B | Made by another session while this pass ran | Review and commit or discard; nothing here touched them | Owner |
+| Local poller running pre-fix code | Completed 7 September | Local audited release and migrations | Server and the four existing local jobs restarted after backup and restore checks | Engineering verified |
+| Earlier uncommitted UI edits | Superseded 7 September | Current checkout inspected | Tracked checkout is clean after the audited release; private `docs/content/` remains untracked and unpublished | Engineering verified |
 | Repository visibility | B | GitHub settings | The repo is public; decide whether it stays so before inviting testers | Owner |
 | Google OAuth verification (restricted Gmail scope, assessment) | C after A and B | Deployed origin, domain ownership, legal pages, demo video | Dossier "Submission gates" | Owner submits; Google approves |
 | Real avatar migration into the private bucket | A then B | Deployed storage; a `--rekey` preview reviewed by the owner | Preview, review partial results, apply | Owner authorises |
@@ -394,7 +394,7 @@ approval; D = still doable without payment.
 ## After Payment: Ordered Execution Checklist
 
 1. Top up the Anthropic balance; leave the existing daily limits and credit plans as they are.
-2. In the Render dashboard read `coverage-db`'s PostgreSQL major version. If it is not 18, add `postgresMajorVersion: "<n>"` under the database in `render.yaml` and commit before anything else.
+2. Reconfirm the intended Render database and release. Its major version was verified as 18 on 7 September and is pinned to that value on the audit branch. Reconcile dashboard commands with current `networkly_web` paths before applying anything; leave the watched `main` branch untouched until release activation is authorized.
 3. Store `GMAIL_LIVE_TOKEN_KEY` and `DJANGO_SECRET_KEY` in a password manager with today's date.
 4. Apply the Blueprint (12 services). Confirm every `sync: false` value on `coverage-web` is still present; the new `coverage-gcal-sync`, `coverage-assistant-reconcile` and `coverage-db-backup` inherit from it. Set `BACKUP_S3_BUCKET=networkly-backups` on `coverage-db-backup` only.
 5. Resume the database and `coverage-web` only. Migrations run as the pre-deploy step. On the web shell run the three gate commands from the runbook: `check --deploy --fail-level WARNING`, `migrate --check`, `deploy_preflight --launch`. All three must exit zero.

@@ -1,5 +1,7 @@
 # Billing and Assistant Reliability Review
 
+Final integration, local migrations, combined verification and remaining launch checks are recorded in the [deep functional audit](deep-functional-audit-2026-09-07.md). The results below describe this workstream at its stated checkpoints.
+
 Review date: September 7, 2026. Scope: the free, individual 100-user beta.
 All verification used an isolated worktree and test database. No real AI,
 Stripe, email, or other paid requests were made. This is regression evidence,

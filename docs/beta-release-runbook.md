@@ -46,11 +46,12 @@ Reconcile these Blueprint facts with the dashboard before applying.
   newer CPU-and-RAM slugs. Confirm the dashboard reports the same tier for the
   live services; do not change a tier as part of this release.
 
-`coverage-db-backup` is new in this Blueprint and is **not part of this
-release**. Suspend it immediately after the apply, along with everything else,
-and leave `BACKUP_S3_BUCKET` blank. With that variable blank the command is a
-complete no-op even if the service is resumed by accident. See `docs/deploy.md`
-section 9 for what arming it requires.
+`coverage-db-backup` must remain suspended with `BACKUP_S3_BUCKET` blank until
+the off-host destination, credentials and retention are configured and its
+activation is authorized. A blank bucket keeps the command inactive. Before
+inviting users, verify an off-host backup, a separate restore and alert delivery;
+the verified local backup alone does not cover loss of this computer. See
+`docs/deploy.md` section 9 for the activation checks.
 
 `coverage-weekly-digest` is now a **daily** cron running
 `send_weekly_digest --spread`, not a Monday one. Each student still receives one

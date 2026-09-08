@@ -1,5 +1,7 @@
 # Recruiting Reliability and Capacity Audit
 
+Final integration, local migrations, combined verification and remaining launch checks are recorded in the [deep functional audit](deep-functional-audit-2026-09-07.md). The results below describe this workstream at its stated checkpoints.
+
 Date: 7 September 2026. Baseline: `3d2c49d`. Scope: CRM, directory, and the domain rules. All mutations and benchmarks used disposable local test databases. No live provider calls, customer records, hosting plans, or deployment settings changed.
 
 ## Changes

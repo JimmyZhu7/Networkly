@@ -1,5 +1,7 @@
 # Capture and Connectors Audit Evidence
 
+Final integration, local migrations, combined verification and remaining launch checks are recorded in the [deep functional audit](deep-functional-audit-2026-09-07.md). The results below describe this workstream at its stated checkpoints.
+
 Source: codex/deep-capture-audit; commits e561417 (adapter, already integrated separately), 8770757, 4a00baf.
 
 ## Scope and coverage
