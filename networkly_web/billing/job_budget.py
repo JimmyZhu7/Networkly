@@ -159,7 +159,8 @@ class JobBudget:
             if _owner(self.user) is None:
                 return False
             row = AIJobReservation.objects.for_user(self.user).select_for_update().filter(pk=self.reservation_id).first()
-            if (row is None or row.status != AIJobReservation.PENDING or self._unit is None
+            if (row is None or row.status != AIJobReservation.PENDING or row.expires_at <= timezone.now()
+                    or self._unit is None
                     or row.started_units != self._unit or row.completed_units >= self._unit):
                 return False
             row.completed_units += 1

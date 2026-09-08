@@ -1,6 +1,7 @@
 """Ownership, socket lifecycle, and real concurrent private mutations."""
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from datetime import timedelta
 from threading import Barrier
 from types import SimpleNamespace
@@ -16,7 +17,7 @@ from django.utils import timezone
 
 from analytics.models import UserOpportunity
 from assistant import agent, brief, tools
-from assistant.locks import AccountGenerationLock, ConversationLock
+from assistant.locks import AccountGenerationLock, ConversationLock, OWNERSHIP_LOST_TEXT
 from assistant.models import AdvisorMemory, ChatConversation, ChatMessage
 from assistant import plans
 from assistant.metering import TurnCharge
@@ -40,6 +41,137 @@ def test_free_daily_brief_throttle_and_cache_outage_never_call_provider(owner, m
                 "label": "Follow up", "reason": "Due", "closes_on": None}]
     assert brief.get_or_build(owner, actions, client=provider) is None
     provider.messages.create.assert_not_called()
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+def test_refunded_chat_attempts_cannot_call_provider_without_limit(owner, monkeypatch, streaming):
+    monkeypatch.setattr("assistant.metering.MAX_TURN_ATTEMPTS_PER_HOUR", 2)
+    conversation = ChatConversation(user=owner, title="Failure retries")
+    conversation.save()
+    before = credits.balance(owner)
+    for _ in range(2):
+        assert not agent.run_turn(owner, conversation, "Retry", client=FakeClient([RuntimeError("offline")])).ok
+    assert credits.balance(owner) == before
+    provider = Mock()
+    if streaming:
+        frames = list(agent.stream_turn(owner, conversation, "Retry", client=provider))
+        assert any(frame.get("kind") == "capped" and "in an hour" in frame.get("text", "") for frame in frames)
+    else:
+        result = agent.run_turn(owner, conversation, "Retry", client=provider)
+        assert result.reason == "capped" and "in an hour" in result.reply.text
+    provider.messages.create.assert_not_called()
+    provider.messages.stream.assert_not_called()
+    assert credits.balance(owner) == before
+
+
+def test_brief_attempt_limit_has_accurate_notice_and_closed_owner_is_rejected(owner, client, monkeypatch):
+    contact = Contact(user=owner, name="Brief contact")
+    contact.save()
+    client.force_login(owner)
+    monkeypatch.setattr("crm.views.ai_brief.is_configured", lambda: True)
+    monkeypatch.setattr("billing.job_budget.MAX_RESERVATIONS_PER_HOUR", 0)
+    url = reverse("crm:contact_ai_brief", args=[contact.pk])
+    response = client.post(url)
+    assert response.status_code == 200
+    assert "Too many brief requests" in response.content.decode()
+    assert "midnight" not in response.content.decode()
+    def close_before_admission(*args, **kwargs):
+        get_user_model().objects.filter(pk=owner.pk).update(is_active=False)
+        return None
+    monkeypatch.setattr("billing.job_budget.reserve_job", close_before_admission)
+    assert client.post(url).status_code == 400
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+def test_rewind_failure_rolls_back_deletion_and_keeps_attachment(owner, client, monkeypatch, streaming):
+    conversation = ChatConversation(user=owner, title="Original title")
+    conversation.save()
+    original = [{"type": "text", "text": "Original question"},
+                {"type": "document", "_filename": "resume.pdf", "source": {"data": "private"}}]
+    question = ChatMessage(user=owner, conversation=conversation, role="user", content=original)
+    question.save()
+    answer = ChatMessage(user=owner, conversation=conversation, role="assistant", content=[{"type": "text", "text": "Original answer"}])
+    answer.save()
+    real_save = ChatMessage.save
+    def fail_save(message, *args, **kwargs):
+        if message.pk == question.pk and kwargs.get("update_fields") == ["content"]:
+            raise RuntimeError("fault after deleting later messages")
+        return real_save(message, *args, **kwargs)
+    monkeypatch.setattr(ChatMessage, "save", fail_save)
+    client.force_login(owner)
+    with pytest.raises(RuntimeError, match="fault after deleting"):
+        response = client.post(reverse("assistant:edit_message"),
+                               {"message": question.pk, "text": "Changed question", **({"stream": "1"} if streaming else {})})
+        if streaming:
+            list(response.streaming_content)
+    question.refresh_from_db()
+    conversation.refresh_from_db()
+    assert question.content == original
+    assert conversation.title == "Original title"
+    assert ChatMessage.objects.for_user(owner).filter(pk=answer.pk).exists()
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+def test_rewind_target_deleted_before_ownership_is_a_controlled_response(owner, client, monkeypatch, streaming):
+    from assistant import metering
+    conversation = ChatConversation(user=owner, title="Existing")
+    conversation.save()
+    question = ChatMessage(user=owner, conversation=conversation, role="user", content=[{"type": "text", "text": "Question"}])
+    question.save()
+    answer = ChatMessage(user=owner, conversation=conversation, role="assistant", content=[{"type": "text", "text": "Keep this reply"}])
+    answer.save()
+    original = metering._check_conversation
+    checks = []
+    def delete_before_refresh(user, convo):
+        original(user, convo)
+        checks.append(True)
+        if len(checks) == 2:
+            ChatMessage.objects.for_user(owner).filter(pk=question.pk).delete()
+    monkeypatch.setattr(metering, "_check_conversation", delete_before_refresh)
+    client.force_login(owner)
+    response = client.post(reverse("assistant:edit_message"),
+                           {"message": question.pk, "text": "Changed", **({"stream": "1"} if streaming else {})})
+    if streaming:
+        assert b"message is no longer available" in b"".join(response.streaming_content)
+    else:
+        assert response.status_code == 409
+        assert b"message is no longer available" in response.content
+    assert ChatMessage.objects.for_user(owner).filter(pk=answer.pk).exists()
+
+
+@pytest.mark.parametrize("streaming", [False, True])
+@pytest.mark.parametrize("provider_error", [False, True])
+def test_lost_ownership_returns_only_ephemeral_notice(owner, monkeypatch, streaming, provider_error):
+    conversation = ChatConversation(user=owner, title="Existing conversation")
+    conversation.save()
+    ownerships = []
+    real_enter = ConversationLock.__enter__
+    def capture_ownership(ownership):
+        entered = real_enter(ownership)
+        ownerships.append(ownership)
+        return entered
+    monkeypatch.setattr(ConversationLock, "__enter__", capture_ownership)
+    def lose_ownership(*args, **kwargs):
+        ownerships[-1].database.close()
+        if provider_error:
+            raise RuntimeError("provider failed after session loss")
+        return _response([_text("Stale answer must not persist")], "end_turn")
+    provider = Mock()
+    provider.messages.create.side_effect = lose_ownership
+    @contextmanager
+    def broken_stream(*args, **kwargs):
+        yield SimpleNamespace(text_stream=iter(["Partial"]), get_final_message=lose_ownership)
+    provider.messages.stream.side_effect = broken_stream
+    before = credits.balance(owner)
+    if streaming:
+        events = list(agent.stream_turn(owner, conversation, "Question", client=provider))
+        assert any(event.get("text") == OWNERSHIP_LOST_TEXT for event in events)
+    else:
+        result = agent.run_turn(owner, conversation, "Question", client=provider)
+        assert result.reason == "ownership_lost"
+        assert result.reply.pk is None and result.reply.text == OWNERSHIP_LOST_TEXT
+    assert not ChatMessage.objects.for_user(owner).filter(role="assistant").exists()
+    assert credits.balance(owner) == before
 
 
 @pytest.fixture

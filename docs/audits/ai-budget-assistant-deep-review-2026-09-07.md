@@ -24,6 +24,8 @@ not a guarantee against all future provider failures or arbitrary load.
   shared across job kinds. The unit window is conservative: units in a batch
   active within the last hour also count. These safeguards do not change
   credit prices. Failure/empty-answer loops cannot renew unlimited attempts.
+  Chat additionally admits at most 60 attempts per hour per account; refunded
+  debit records still count and both sync/stream responses explain the limit.
 - Serialize free daily-brief and contact-summary generation per account with
   a dedicated PostgreSQL advisory-lock session. Cached briefs remain free;
   actual daily-brief generation is limited to 10 attempts per hour and fails
@@ -37,6 +39,14 @@ not a guarantee against all future provider failures or arbitrary load.
   writes cannot exceed the cap; Save cannot erase a newer application stage.
 - Admit coffee-chat brief generation before calling its provider and release
   unused credits on failure or unavailability.
+- Commit rewind deletion and the edited message together under the active
+  account lock. A failure rolls back original text, attachments and later
+  replies. If an earlier edit removed the target, return a controlled stale
+  message response instead of deleting more history or raising a server error.
+- Treat loss of the original conversation-lock session as terminal for that
+  worker. Show an ephemeral notice without persisting a stale failure reply
+  or title. Expired non-chat completion cannot renew the lease before
+  reconciliation or revive the old worker's allowance.
 - Load conversation history in pages of at most 60 stored messages, with a
   stable, tenant-scoped `(created, id)` cursor. New replies do not shift older
   pages. Display reads strip stored file payloads and tool inputs/results in
@@ -72,8 +82,14 @@ not a guarantee against all future provider failures or arbitrary load.
   history-pagination tests passed. These exercise keyboard activation,
   temporary HTTP failure/retry, scroll preservation, full older-message access,
   attachment filenames and absence of horizontal overflow.
-- Final combined scope regression result is recorded in the integration
-  report after the workstreams are merged.
+- Combined assistant/billing/coffee-brief scope plus the four browser cases:
+  1,307 passed. The integrated cross-workstream gate is recorded separately.
+- Final independent-review fixes: 211 focused tests passed across durable
+  turns, new fault boundaries, credit reservations, account lifecycle, views,
+  non-chat budgets and coffee briefs. Cases include actual ownership-session
+  closure, sync/stream rewind rollback, stale edit targets, expired completion
+  and refunded chat-attempt limits. The sole warning is Django's existing
+  `FORMS_URLFIELD_ASSUME_HTTPS` deprecation.
 
 The source/module map describes the reviewed contracts, not numerical line
 coverage. Existing regression matrices plus new concurrency, lifecycle and

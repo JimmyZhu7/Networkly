@@ -3266,6 +3266,9 @@ def contact_ai_brief(request: HttpRequest, pk: int) -> HttpResponse:
     zero credits the panel renders the same honest notice the chat uses
     (`ai_brief.credit_block_notice`), not a 500 and not a silent brief."""
     from billing.job_budget import reserve_job
+    from django.contrib.auth import get_user_model
+    from django.db import transaction
+    from django.http import HttpResponseBadRequest
 
     contact = get_object_or_404(Contact.objects.for_user(request.user), pk=pk)
     if not ai_brief.is_configured():
@@ -3275,12 +3278,23 @@ def contact_ai_brief(request: HttpRequest, pk: int) -> HttpResponse:
     budget = reserve_job(request.user, kind=CreditLedger.KIND_SPEND_BRIEF,
                          requested_units=1, units_per_credit=1)
     if budget is None:
+        with transaction.atomic():
+            owner = get_user_model().objects.select_for_update().filter(
+                pk=request.user.pk, is_active=True, deleted_at__isnull=True,
+            ).first()
+            if owner is None:
+                return HttpResponseBadRequest("This account is no longer active.")
+            notice = (
+                "Too many brief requests recently. Try again in an hour."
+                if billing_credits.can_spend(owner, ai_brief.BRIEF_COST)
+                else ai_brief.credit_block_notice(owner)
+            )
         return render(request, "crm/_contact_ai_brief.html", {
             "contact": contact,
             "brief": None,
             "requested": True,
             "blocked": True,
-            "credit_notice": ai_brief.credit_block_notice(request.user),
+            "credit_notice": notice,
         })
     brief = None
     try:

@@ -25,6 +25,8 @@ import json
 import re
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.db.models import Count, JSONField, Q
 from django.db.models.expressions import RawSQL
 from django.http import (
@@ -56,6 +58,8 @@ from . import plans
 from . import tools as tools_mod
 from .client import is_configured
 from .locks import BUSY_TEXT, ConversationLock
+from .lifecycle import InactiveAccountError, require_active_user
+from .metering import StaleMessageError
 from .models import (
     AdvisorMemory, ChatConversation, ChatFolder, ChatMessage, DailyBrief,
 )
@@ -520,6 +524,7 @@ def send(request: HttpRequest) -> HttpResponse:
     text = (request.POST.get("message") or "").strip()[:MAX_MESSAGE_CHARS]
     blocks, errors = attachments_mod.blocks_for(request.FILES.getlist("file"))
     busy = False
+    transient_notice = None
     if errors:
         with ConversationLock(conversation.pk) as ownership:
             busy = not ownership.acquired
@@ -534,11 +539,16 @@ def send(request: HttpRequest) -> HttpResponse:
                 '<div id="as-thread" class="as-thread"><p role="status">{}</p></div>', result.reply.text,
             ))
         busy = result.reason == "busy"
+        if result.reason == "ownership_lost":
+            transient_notice = result.reply.text
     context = _context(request, conversation)
     if busy:
         context["prefill_text"] = text
         context["rows"].append({"role": "assistant", "notice": "busy", "text": BUSY_TEXT,
                                 "segments": [{"type": "prose", "text": BUSY_TEXT}]})
+    if transient_notice:
+        context["rows"].append({"role": "assistant", "notice": "failed", "text": transient_notice,
+                                "segments": [{"type": "prose", "text": transient_notice}]})
     return render(request, "assistant/_thread.html", context)
 
 
@@ -732,8 +742,18 @@ def edit_message(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest("An edited message still needs something in it.")
 
     conversation = message.conversation
+    @transaction.atomic
     def prepare_turn():
-        message.refresh_from_db()
+        nonlocal message
+        owner = get_user_model().objects.select_for_update().filter(pk=request.user.pk).first()
+        if owner is None:
+            raise InactiveAccountError("This account is no longer active.")
+        require_active_user(owner)
+        message = ChatMessage.objects.for_user(owner).select_for_update().filter(
+            pk=message.pk, conversation=conversation,
+        ).first()
+        if message is None:
+            raise StaleMessageError("This message is no longer available. Reload the conversation before editing it.")
         # BEFORE the edit, while `message.created`/`message.id` still describe
         # where in the thread this row sits.
         is_first = not (
@@ -764,6 +784,8 @@ def edit_message(request: HttpRequest) -> HttpResponse:
     if request.POST.get("stream"):
         return _sse(request, conversation, text, [], [], resume=True, prepare_turn=prepare_turn)
     result = agent.run_turn(request.user, conversation, text, resume=True, prepare_turn=prepare_turn)
+    if result.reason == "stale_message":
+        return HttpResponse(result.reply.text, status=409)
     if result.reason == "busy":
         return HttpResponse(BUSY_TEXT, status=409, headers={"Retry-After": "3"})
     return redirect("assistant:chat_conversation", conversation_id=conversation.id)

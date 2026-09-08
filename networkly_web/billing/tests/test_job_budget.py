@@ -107,6 +107,20 @@ def test_recovery_retains_uncertain_call_and_releases_unstarted_units(owner):
     assert reconcile_job_reservations(user=owner, apply=True)["recovered"] == 0
 
 
+def test_expired_completion_cannot_renew_lease_before_recovery(owner):
+    job = reserve(owner)
+    assert job.start_unit()
+    expire(job)
+    expired = AIJobReservation.objects.for_user(owner).get(pk=job.reservation_id).expires_at
+    assert not job.complete_unit(success=True)
+    row = AIJobReservation.objects.for_user(owner).get(pk=job.reservation_id)
+    assert row.expires_at == expired and row.completed_units == 0
+    assert not job.start_unit()
+    assert reconcile_job_reservations(user=owner, apply=True)["recovered"] == 1
+    row.refresh_from_db()
+    assert row.charged_credits == 1
+
+
 def test_live_reservation_is_not_recovered_and_expired_never_started_is_refunded(owner):
     before = credits.balance(owner)
     job = reserve(owner)

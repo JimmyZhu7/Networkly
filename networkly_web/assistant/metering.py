@@ -1,6 +1,7 @@
 """Durable chat credits, settled/refunded once under conversation ownership."""
 
 from contextlib import AbstractContextManager
+from datetime import timedelta
 from functools import wraps
 from uuid import uuid4
 
@@ -12,9 +13,16 @@ from django.utils import timezone
 from billing import credits
 from billing.models import CreditLedger
 from .client import close_client
-from .locks import BUSY_TEXT, ConversationLock
+from .locks import BUSY_TEXT, OWNERSHIP_LOST_TEXT, ConversationLock, OwnershipLostError
 from .lifecycle import INACTIVE_TEXT, InactiveAccountError, require_active_user
 from .models import ChatConversation, ChatMessage, ChatTurnReservation
+
+MAX_TURN_ATTEMPTS_PER_HOUR = 60
+ATTEMPT_LIMIT_TEXT = "You've requested too many replies recently. Try again in an hour."
+
+
+class StaleMessageError(RuntimeError):
+    """A previous edit removed this target before the current edit acquired ownership."""
 
 
 def finish_reservation(user, reservation_id, *, status, reason="", reply=None):
@@ -61,6 +69,7 @@ class TurnCharge(AbstractContextManager):
         self.pending = False
         self.reservation_id = uuid4()
         self._clients = []
+        self.block_notice = ""
 
     def open_client(self, factory):
         client = factory()
@@ -77,6 +86,13 @@ class TurnCharge(AbstractContextManager):
             owner = get_user_model().objects.select_for_update().filter(pk=self.user.pk).first()
             if owner is None or not owner.is_active or owner.deleted_at is not None:
                 raise InactiveAccountError(INACTIVE_TEXT)
+            attempted = CreditLedger.objects.for_user(owner).filter(
+                kind=CreditLedger.KIND_SPEND_CHAT,
+                created__gte=timezone.now() - timedelta(hours=1),
+            ).count()
+            if attempted >= MAX_TURN_ATTEMPTS_PER_HOUR:
+                self.block_notice = ATTEMPT_LIMIT_TEXT
+                return False
             if not credits.can_spend(owner, limits.message_cost):
                 return False
             row = ChatTurnReservation(
@@ -137,10 +153,11 @@ def charge_turn(function):
                 return TurnResult(ok=False, reason="busy", reply=_notice(user, conversation, "busy", BUSY_TEXT))
             _check_conversation(user, conversation)
             prepare = kwargs.pop("prepare_turn", None)
-            if prepare is not None:
-                prepare()
             with TurnCharge(user, conversation, ownership) as charge:
                 try:
+                    charge.ensure_owned()
+                    if prepare is not None:
+                        prepare()
                     result = function(user, conversation, *args, **kwargs, charge=charge)
                     if result.ok:
                         charge.keep(reply=result.reply)
@@ -148,6 +165,15 @@ def charge_turn(function):
                 except InactiveAccountError:
                     charge.refund(reason="account_inactive")
                     return inactive()
+                except OwnershipLostError:
+                    charge.refund(reason="ownership_lost")
+                    return TurnResult(ok=False, reason="ownership_lost", reply=_notice(
+                        user, conversation, ChatMessage.NOTICE_FAILED, OWNERSHIP_LOST_TEXT,
+                    ))
+                except StaleMessageError as exc:
+                    return TurnResult(ok=False, reason="stale_message", reply=_notice(
+                        user, conversation, ChatMessage.NOTICE_FAILED, str(exc),
+                    ))
     return wrapped
 
 
@@ -166,11 +192,13 @@ def charge_stream(function):
                 return
             _check_conversation(user, conversation)
             prepare = kwargs.pop("prepare_turn", None)
-            if prepare is not None:
-                prepare()
             with TurnCharge(user, conversation, ownership) as charge:
-                stream = function(user, conversation, *args, **kwargs, charge=charge)
+                stream = None
                 try:
+                    charge.ensure_owned()
+                    if prepare is not None:
+                        prepare()
+                    stream = function(user, conversation, *args, **kwargs, charge=charge)
                     for event in stream:
                         if event.get("type") == "done":
                             reply = ChatMessage.objects.for_user(user).get(pk=event["message_id"], conversation=conversation)
@@ -179,6 +207,12 @@ def charge_stream(function):
                 except InactiveAccountError:
                     charge.refund(reason="account_inactive")
                     yield {"type": "notice", "kind": "failed", "text": INACTIVE_TEXT}
+                except OwnershipLostError:
+                    charge.refund(reason="ownership_lost")
+                    yield {"type": "notice", "kind": "failed", "text": OWNERSHIP_LOST_TEXT}
+                except StaleMessageError as exc:
+                    yield {"type": "notice", "kind": "failed", "text": str(exc)}
                 finally:
-                    stream.close()
+                    if stream is not None:
+                        stream.close()
     return wrapped

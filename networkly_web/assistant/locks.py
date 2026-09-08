@@ -10,6 +10,11 @@ from django.db import connections
 
 
 BUSY_TEXT = "Another reply is still being prepared in this conversation. Wait for it to finish, then try again."
+OWNERSHIP_LOST_TEXT = "This reply was interrupted. Reload the conversation before trying again."
+
+
+class OwnershipLostError(RuntimeError):
+    """The original worker must stop without any more conversation writes."""
 
 
 class ConversationLock:
@@ -51,10 +56,13 @@ class ConversationLock:
 
     def ensure_owned(self):
         if not self.acquired or self.raw_connection is None or self.raw_connection.closed:
-            raise RuntimeError("Conversation ownership was lost; retry this message.")
+            raise OwnershipLostError(OWNERSHIP_LOST_TEXT)
         # Never reconnect: a new session would not own the original lock.
-        with self.raw_connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
+        try:
+            with self.raw_connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+        except Exception as exc:
+            raise OwnershipLostError(OWNERSHIP_LOST_TEXT) from exc
 
     def __exit__(self, *exc):
         self.acquired = False

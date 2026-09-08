@@ -86,6 +86,7 @@ from . import tools as tools_mod
 from .client import get_client, is_configured
 from .confirmation import approved_settings
 from .lifecycle import InactiveAccountError, require_active_user
+from .locks import OwnershipLostError
 from .metering import charge_stream, charge_turn
 from .models import AdvisorMemory, ChatMessage
 
@@ -763,14 +764,18 @@ def _ai_title(client, user_text: str, assistant_text: str) -> str | None:
     return title[:_TITLE_MAX_CHARS] or None
 
 
-def _retitle_if_first_message(user, conversation, is_first: bool, client, user_text: str, reply: ChatMessage | None):
+def _retitle_if_first_message(user, conversation, is_first: bool, client, user_text: str, reply: ChatMessage | None, *, charge=None):
     if not is_first or reply is None:
         return
     try:
         require_active_user(user)
+        if charge is not None:
+            charge.ensure_owned()
         ai_title = _ai_title(client, user_text, reply.text)
         require_active_user(user)
-    except InactiveAccountError:
+        if charge is not None:
+            charge.ensure_owned()
+    except (InactiveAccountError, OwnershipLostError):
         return
     if ai_title:
         conversation.title = ai_title
@@ -844,7 +849,7 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 user,
                 conversation,
                 ChatMessage.NOTICE_CAPPED,
-                _credit_block_notice(user, limits),
+                charge.block_notice or _credit_block_notice(user, limits),
             )
         )
         return TurnResult(ok=False, reason="capped", reply=reply)
@@ -869,10 +874,10 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 messages=messages,
             )
             charge.ensure_owned()
-        except InactiveAccountError:
+        except (InactiveAccountError, OwnershipLostError):
             raise
         except Exception:  # noqa: BLE001 — see module docstring: never a 500
-            require_active_user(user)
+            charge.ensure_owned()
             if charged:
                 charge.refund(
                     reason="turn_failed_after_charge", model=limits.model
@@ -918,7 +923,7 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
                 # genuinely spent on it, so no refund — just a plain line
                 # under it saying it stops early.
                 _save(_notice(user, conversation, *ending))
-            _retitle_if_first_message(user, conversation, is_first, client, text, last_assistant)
+            _retitle_if_first_message(user, conversation, is_first, client, text, last_assistant, charge=charge)
             return TurnResult(ok=True, rounds=round_no + 1, tool_calls=executed, reply=last_assistant)
 
         results = []
@@ -1077,7 +1082,7 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
     # Same hard-stop-before-the-turn-starts rule as run_turn — see that
     # function's comment on this same check.
     if not charge.reserve(limits):
-        notice_text = _credit_block_notice(user, limits)
+        notice_text = charge.block_notice or _credit_block_notice(user, limits)
         _save(_notice(user, conversation, ChatMessage.NOTICE_CAPPED, notice_text))
         yield {"type": "notice", "kind": "capped", "text": notice_text}
         return
@@ -1116,10 +1121,10 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
             blocks = [_as_dict(b) for b in final.content]
             stop_reason = final.stop_reason
             message_id = final.id or ""
-        except InactiveAccountError:
+        except (InactiveAccountError, OwnershipLostError):
             raise
         except Exception:  # noqa: BLE001 — see module docstring: never a 500
-            require_active_user(user)
+            charge.ensure_owned()
             if charged:
                 charge.refund(
                     reason="turn_failed_after_charge", model=limits.model
@@ -1162,7 +1167,7 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
             # student (the composer already re-enabled on "done") but means
             # the sidebar refresh the frontend fires once the stream CLOSES
             # sees the real title on the very first fetch, not one turn late.
-            _retitle_if_first_message(user, conversation, is_first, client, text, last_reply)
+            _retitle_if_first_message(user, conversation, is_first, client, text, last_reply, charge=charge)
             return
 
         results = []
