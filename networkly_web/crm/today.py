@@ -12,6 +12,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import date, datetime, time as dt_time, timedelta
 from math import ceil
+from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 from django.contrib.auth.decorators import login_required
@@ -232,6 +233,41 @@ def _cadence_params(user) -> dict[str, int]:
 _SNOOZE_EXEMPT_ACTIONS = frozenset({"reping"})
 
 
+def _action_history(user, contacts, *, today):
+    """Reduce a tenant's live-contact ledger without retaining message bodies.
+
+    All history contributes, including outbound counts and old unthanked
+    chats. Server-side iteration bounds transfer batches; the retained state
+    is proportional to contacts rather than to their lifetime email volume.
+    """
+    history = cadence.TouchHistory()
+    chased = {}
+    sent_today = Counter()
+    rows = (
+        Touch.objects.for_user(user)
+        .filter(contact_id__in=[c.id for c in contacts])
+        .exclude(kind__in=cadence._CLOCK_SILENT_KINDS)
+        .order_by()
+        .values_list("id", "contact_id", "kind", "ts", named=True)
+        .iterator(chunk_size=2000)
+    )
+    for row in rows:
+        local_ts = local_date(row.ts)
+        history.add({"id": row.id, "contact_id": row.contact_id,
+                     "kind": row.kind, "ts": local_ts})
+        if row.kind in _PROMISE_CLOSING_KINDS:
+            previous = chased.get(row.contact_id)
+            if previous is None or row.ts > previous:
+                chased[row.contact_id] = row.ts
+        if row.kind in FIRM_PACE_TOUCH_KINDS and local_ts.date() == today:
+            sent_today[row.contact_id] += 1
+    last_real = {
+        cid: SimpleNamespace(**evidence.last_real)
+        for cid, evidence in history.contacts.items() if evidence.last_real is not None
+    }
+    return history, last_real, chased, sent_today
+
+
 def _build_actions(user, *, pace: bool = True):
     """The cadence queue, shared by Today and Network: fetch the user's
     contacts/touches/tiers/firm-dates, run `cadence.due_actions`, and dress
@@ -296,7 +332,7 @@ def _build_actions(user, *, pace: bool = True):
     # The engine sees every live contact; the snooze is applied to the actions
     # it produces, so a snooze can hide a nag without hiding a deadline.
     contacts = list(Contact.objects.for_user(user).filter(archived=False))
-    touches = list(Touch.objects.for_user(user))
+    history, last_real, chased, sent_by_contact = _action_history(user, contacts, today=today)
     snoozed_ids = {
         c.id for c in contacts if c.snoozed_until and c.snoozed_until > now
     }
@@ -454,13 +490,6 @@ def _build_actions(user, *, pace: bool = True):
     promises: dict[int, tuple[str, object]] = {}
     chatted_ids = [c.id for c in contacts if c.warmth == "chatted"]
     if chatted_ids:
-        chased: dict[int, object] = {}
-        for t in touches:
-            if t.kind not in _PROMISE_CLOSING_KINDS:
-                continue
-            prev = chased.get(t.contact_id)
-            if prev is None or t.ts > prev:
-                chased[t.contact_id] = t.ts
         for cid, intro_name, chat_ts in (
             ChatDebrief.objects.for_user(user)
             .filter(dismissed=False, contact_id__in=chatted_ids)
@@ -541,7 +570,7 @@ def _build_actions(user, *, pace: bool = True):
     params = _cadence_params(user)
     actions = cadence.due_actions(
         contact_dicts,
-        _touch_dicts(touches),
+        history,
         firm_dates,
         as_of=now,
         firms=firm_meta,
@@ -555,29 +584,8 @@ def _build_actions(user, *, pace: bool = True):
         or a["action"] in _SNOOZE_EXEMPT_ACTIONS
     ]
 
-    # The card's evidence line: the latest REAL touch per contact. Same
-    # definition the engine's idle clocks use (cadence's C2 divergence) —
-    # a `manual_override` audit row is the system writing to itself, so
-    # showing it as "Last: ..." would claim a contact was touched when the
-    # only thing that happened was a state correction.
+    # Card evidence comes from the same reduced ledger as the cadence clock.
     kind_labels = dict(TOUCH_KIND_LABELS)
-    last_real: dict[int, Touch] = {}
-    for t in touches:
-        # The SAME clock-silent set the engine's idle clocks use
-        # (`cadence._CLOCK_SILENT_KINDS`: `manual_override` AND
-        # `bulk_received`), not just the override kind. Skipping only
-        # `manual_override` here let a `bulk_received` touch — their own
-        # out-of-office auto-reply landing seconds after a genuine reply,
-        # or a newsletter — become the "last real touch": `owed_reply`
-        # went False and the person vanished from the queue with a reply
-        # still owed (live case: contact who replied Aug 21, masked by a
-        # same-day bulk touch). A blast is recorded and visible on the
-        # contact; it is simply not the touch this page reasons from.
-        if t.kind in cadence._CLOCK_SILENT_KINDS:
-            continue
-        prev = last_real.get(t.contact_id)
-        if prev is None or t.ts > prev.ts:
-            last_real[t.contact_id] = t
 
     # WHAT IS LIVE AT THE FIRMS WHERE THIS STUDENT KNOWS SOMEBODY WARM.
     # One FirmDate query and one Opportunity query over the handful of tiered
@@ -687,7 +695,7 @@ def _build_actions(user, *, pace: bool = True):
 
     # WHAT THE STUDENT HAS ALREADY SENT INTO EACH FIRM TODAY — the other half
     # of the per-firm daily budget `_gate_and_rank`'s fourth pass spends. Read
-    # off the `touches` list already in hand, so this costs no query.
+    # from the streaming ledger reduction, so this costs no extra query.
     #
     # It has to be here rather than left implicit at zero: the cap is per DAY,
     # and a student who worked five cards this morning and reopens the page
@@ -704,18 +712,15 @@ def _build_actions(user, *, pace: bool = True):
         cd["id"]: _pace_firm_key(cd) for cd in contact_dicts
     }
     sent_today: Counter = Counter()
-    for t in touches:
-        if t.kind not in FIRM_PACE_TOUCH_KINDS:
-            continue
-        key = pace_key_by_contact.get(t.contact_id)
+    for cid, count in sent_by_contact.items():
+        key = pace_key_by_contact.get(cid)
         if key is None:
             continue
         # `local_date`, the same helper every other clock on this page runs a
         # `ts` through. A raw UTC `.date()` would put an 8am Hong Kong send on
         # yesterday's tally and hand the firm its budget back. See the skew
         # note at the top of this function.
-        if local_date(t.ts).date() == today:
-            sent_today[key] += 1
+        sent_today[key] += count
 
     # The student's own affiliations, as a tuple of strings: a derived fact
     # the ranker may read, the same way it reads `sent_today` - never the
@@ -998,7 +1003,9 @@ def _opening_bench(user, contacts, actions, today) -> list[dict]:
         Touch.objects.for_user(user)
         .filter(contact_id__in=[c.id for c in eligible])
         .exclude(kind__in=cadence._CLOCK_SILENT_KINDS)
-        .order_by("contact_id", "-ts")
+        .order_by("contact_id", "-ts", "-id")
+        .distinct("contact_id")
+        .only("id", "contact_id", "ts", "kind")
     ):
         last_real.setdefault(t.contact_id, t)
 
@@ -4788,4 +4795,3 @@ def _dashboard_context(user) -> dict:
             "funnel_label": funnel_label,
         },
     }
-

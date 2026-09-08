@@ -479,14 +479,19 @@ def test_the_unscoped_escape_hatch_has_not_quietly_proliferated():
     ownership check that exists in order to REFUSE a write
     (`accounts/views.py::push_subscribe`).
 
-    Ceiling 84: 76 plus about 10% headroom. Raising it still needs the diff
+    Ceiling 88: 76 plus original headroom and four reviewed cross-tenant
+    maintenance reads/writes in directory.firm_merge. Those preserve mail
+    application evidence and person links when duplicate shared firms are
+    merged; each is restricted to the locked duplicate firm/opportunity.
+    Per-person collision checks use for_user. No request route calls this
+    maintenance function. Raising it still needs the diff
     read and the justification written, exactly as before; what changed is
     that adding a correctly scoped call no longer costs anybody that ritual.
     """
     lines = _unscoped_lines()
-    assert len(lines) <= 84, (
+    assert len(lines) <= 88, (
         f"{len(lines)} `all_objects.` lines carry no user predicate, up from "
-        "the 76 reviewed on 2026-09-02 against a ceiling of 84. Each new one "
+        "the 76 reviewed on 2026-09-02 against a ceiling of 88. Each new one "
         "needs an explicit `user=` on the line, or a written cross-tenant "
         "justification here — read the diff, then raise this number "
         "deliberately.\n" + "\n".join(lines[-12:])

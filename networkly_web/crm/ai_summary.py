@@ -15,10 +15,10 @@ WHERE IT MAY WRITE — the whole safety story
 `Contact.notes` and `Contact.angle` are the STUDENT'S own words about this
 person. Nothing here writes to either, ever. They are read as CONTEXT for the
 prompt and the model is told not to restate them; the only destination of any
-write in this module is `Contact.ai_summary` / `ai_summary_generated_at`, and
-the `update_fields` on the single `save()` below names those two columns and
-nothing else — so a bug in the prompt, the parsing, or the caller cannot
-reach the student's notes even by accident.
+write in this module is `Contact.ai_summary` / `ai_summary_generated_at`.
+The conditional update below names only those columns, checks that the
+account is still active, and cannot replace a newer summary from another
+writer. Generation has an account-scoped lock and a bounded hourly allowance.
 
 Everything else follows `assistant/brief.py`'s posture, which this is shaped
 after:
@@ -48,7 +48,10 @@ from __future__ import annotations
 
 from django.utils import timezone
 
+from assistant.locks import AccountGenerationLock
+from core.ratelimits import window_exceeded
 from directory.ai_extract import complete_text, is_configured
+from crm.models import Contact, Touch
 
 # Never the plan-selected model (assistant.plans) — see module docstring.
 # Same constant as assistant.brief.BRIEF_MODEL, for the same reason.
@@ -68,6 +71,7 @@ MIN_TOUCHES = 2
 # Three is "enough new history to plausibly change the story" — one reply
 # rarely rewrites a relationship, and a lower bar would nag on every touch.
 STALE_AFTER_TOUCHES = 3
+MAX_GENERATIONS_PER_HOUR = 10
 
 # The model's own escape hatch. Anything containing this is read as "I have
 # nothing specific to say", the same honesty `assistant.brief` gets for free
@@ -90,7 +94,9 @@ If the history below is too thin to say anything specific, reply with exactly: N
 
 def _recent_touches(contact) -> list:
     """This contact's most recent interactions, newest first, capped."""
-    return list(contact.touches.order_by("-ts")[:MAX_TOUCHES])
+    return list(Touch.objects.for_user(contact.user_id).filter(
+        contact_id=contact.pk,
+    ).order_by("-ts", "-id")[:MAX_TOUCHES])
 
 
 def _touch_lines(touches) -> list[str]:
@@ -149,7 +155,9 @@ def touches_since_summary(contact, touches=None) -> int:
         return 0
     if touches is not None:
         return sum(1 for t in touches if t.ts > stamp)
-    return contact.touches.filter(ts__gt=stamp).count()
+    return Touch.objects.for_user(contact.user_id).filter(
+        contact_id=contact.pk, ts__gt=stamp,
+    ).count()
 
 
 def is_stale(contact, touches=None) -> bool:
@@ -167,29 +175,41 @@ def regenerate(contact) -> str | None:
     had. Never raises; see the module docstring."""
     if not is_configured():
         return None
-
-    touches = _recent_touches(contact)
-    if len(touches) < MIN_TOUCHES:
-        return None  # nothing to narrate — don't spend a call to say so
-
     try:
-        text = complete_text(
-            build_prompt(contact, touches),
-            model=SUMMARY_MODEL,
-            max_tokens=MAX_TOKENS,
-        )
+        with AccountGenerationLock(contact.user_id) as owner:
+            if not owner.acquired:
+                contact.summary_notice = "A summary is already being prepared. Try again shortly."
+                return None
+            current = Contact.objects.for_user(contact.user_id).filter(
+                pk=contact.pk, user__is_active=True,
+            ).select_related("user", "firm").first()
+            if current is None:
+                return None
+            touches = _recent_touches(current)
+            if len(touches) < MIN_TOUCHES:
+                return None
+            # This feature stays free. Bound deliberate/replayed requests
+            # before provider work; cache failures fail closed as well.
+            key = f"relationship-summary:{current.user_id}:{current.user.date_joined.isoformat()}"
+            if window_exceeded(key, limit=MAX_GENERATIONS_PER_HOUR, seconds=3600):
+                contact.summary_notice = "Summary limit reached. Try again in an hour."
+                return None
+            text = complete_text(
+                build_prompt(current, touches), model=SUMMARY_MODEL, max_tokens=MAX_TOKENS,
+            )
+            text = (text or "").strip()
+            if not text or _NOTHING_TO_SAY in text.upper():
+                return None
+            text = text[:MAX_SUMMARY_CHARS]
+            owner.ensure_owned()
+            stamp = timezone.now()
+            wrote = Contact.objects.for_user(contact.user_id).filter(
+                pk=contact.pk, user__is_active=True,
+                ai_summary_generated_at=current.ai_summary_generated_at,
+            ).update(ai_summary=text, ai_summary_generated_at=stamp)
+            if not wrote:
+                return None
+            contact.ai_summary, contact.ai_summary_generated_at = text, stamp
+            return text
     except Exception:  # noqa: BLE001 — a summary must never break the page
         return None
-
-    text = (text or "").strip()
-    if not text or _NOTHING_TO_SAY in text.upper():
-        return None
-    text = text[:MAX_SUMMARY_CHARS]
-
-    contact.ai_summary = text
-    contact.ai_summary_generated_at = timezone.now()
-    # THE write-path guarantee, in one line: these two columns and no others.
-    # `notes` and `angle` are not named here and are not assigned above, so
-    # neither can be reached from this module even by accident.
-    contact.save(update_fields=["ai_summary", "ai_summary_generated_at"])
-    return text

@@ -3313,6 +3313,7 @@ def contact_ai_summary(request: HttpRequest, pk: int) -> HttpResponse:
         "contact": contact,
         "requested": True,
         "generated": summary is not None,
+        "summary_notice": getattr(contact, "summary_notice", ""),
         "summary_new_touches": ai_summary.touches_since_summary(contact),
     })
 

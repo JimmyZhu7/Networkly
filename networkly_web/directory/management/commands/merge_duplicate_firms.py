@@ -20,7 +20,7 @@ agent's own initiative.
 
 from __future__ import annotations
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from directory.firm_merge import find_duplicate_firm_groups, merge_firms
@@ -70,7 +70,10 @@ class Command(BaseCommand):
             if options["apply"]:
                 with transaction.atomic():
                     for dup in dupes:
-                        stats = merge_firms(canonical, dup)
+                        try:
+                            stats = merge_firms(canonical, dup)
+                        except ValueError as exc:
+                            raise CommandError(str(exc)) from exc
                         self.stdout.write(f"    merged: {stats}")
             else:
                 self.stdout.write("    (dry run — pass --apply to merge for real)")

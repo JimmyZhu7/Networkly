@@ -1,0 +1,522 @@
+{
+  "status": "Intermediate broad-suite coverage for triage, not final release coverage",
+  "scope": "CRM, directory, domain; excludes tests and migrations",
+  "modules": [
+    {
+      "path": "networkly_web/crm/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/admin.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/ai_brief.py",
+      "functions": 5,
+      "previous_run_line_coverage": "98"
+    },
+    {
+      "path": "networkly_web/crm/ai_summary.py",
+      "functions": 6,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/apps.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/calendar_views.py",
+      "functions": 32,
+      "previous_run_line_coverage": "99"
+    },
+    {
+      "path": "networkly_web/crm/campaigns.py",
+      "functions": 15,
+      "previous_run_line_coverage": "99"
+    },
+    {
+      "path": "networkly_web/crm/coverage.py",
+      "functions": 9,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/debrief.py",
+      "functions": 5,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/crm/digest.py",
+      "functions": 14,
+      "previous_run_line_coverage": "99"
+    },
+    {
+      "path": "networkly_web/crm/forms.py",
+      "functions": 10,
+      "previous_run_line_coverage": "64"
+    },
+    {
+      "path": "networkly_web/crm/health.py",
+      "functions": 3,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/management/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/backfill_contact_regions.py",
+      "functions": 3,
+      "previous_run_line_coverage": "93"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/crm_health.py",
+      "functions": 2,
+      "previous_run_line_coverage": "89"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/detect_campaigns.py",
+      "functions": 6,
+      "previous_run_line_coverage": "90"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/enrich_contact_regions.py",
+      "functions": 4,
+      "previous_run_line_coverage": "92"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/fix_school_firms.py",
+      "functions": 2,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/purge_test_contacts.py",
+      "functions": 2,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/replay_states.py",
+      "functions": 3,
+      "previous_run_line_coverage": "92"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/scrub_manual_override_notes.py",
+      "functions": 2,
+      "previous_run_line_coverage": "87"
+    },
+    {
+      "path": "networkly_web/crm/management/commands/send_weekly_digest.py",
+      "functions": 5,
+      "previous_run_line_coverage": "92"
+    },
+    {
+      "path": "networkly_web/crm/merge.py",
+      "functions": 10,
+      "previous_run_line_coverage": "99"
+    },
+    {
+      "path": "networkly_web/crm/models.py",
+      "functions": 18,
+      "previous_run_line_coverage": "96"
+    },
+    {
+      "path": "networkly_web/crm/recruitment.py",
+      "functions": 7,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/region_enrich.py",
+      "functions": 8,
+      "previous_run_line_coverage": "90"
+    },
+    {
+      "path": "networkly_web/crm/region_inference.py",
+      "functions": 7,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/regions.py",
+      "functions": 4,
+      "previous_run_line_coverage": "93"
+    },
+    {
+      "path": "networkly_web/crm/relevance.py",
+      "functions": 22,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/crm/services.py",
+      "functions": 3,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/sourcing.py",
+      "functions": 8,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/today.py",
+      "functions": 57,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/crm/urls.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/crm/utils.py",
+      "functions": 11,
+      "previous_run_line_coverage": "98"
+    },
+    {
+      "path": "networkly_web/crm/views.py",
+      "functions": 63,
+      "previous_run_line_coverage": "85"
+    },
+    {
+      "path": "networkly_web/directory/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/_logo_domains.py",
+      "functions": 0,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/_mail_domains.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/admin.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/ai_extract.py",
+      "functions": 13,
+      "previous_run_line_coverage": "98"
+    },
+    {
+      "path": "networkly_web/directory/applications.py",
+      "functions": 7,
+      "previous_run_line_coverage": "95"
+    },
+    {
+      "path": "networkly_web/directory/apps.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/boards.py",
+      "functions": 3,
+      "previous_run_line_coverage": "80"
+    },
+    {
+      "path": "networkly_web/directory/classify.py",
+      "functions": 25,
+      "previous_run_line_coverage": "98"
+    },
+    {
+      "path": "networkly_web/directory/cycle_trust.py",
+      "functions": 4,
+      "previous_run_line_coverage": "90"
+    },
+    {
+      "path": "networkly_web/directory/deadlines.py",
+      "functions": 4,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/dupes.py",
+      "functions": 14,
+      "previous_run_line_coverage": "99"
+    },
+    {
+      "path": "networkly_web/directory/estimates.py",
+      "functions": 8,
+      "previous_run_line_coverage": "97"
+    },
+    {
+      "path": "networkly_web/directory/facts.py",
+      "functions": 28,
+      "previous_run_line_coverage": "93"
+    },
+    {
+      "path": "networkly_web/directory/firm_logos.py",
+      "functions": 2,
+      "previous_run_line_coverage": "82"
+    },
+    {
+      "path": "networkly_web/directory/firm_merge.py",
+      "functions": 9,
+      "previous_run_line_coverage": "49"
+    },
+    {
+      "path": "networkly_web/directory/health.py",
+      "functions": 15,
+      "previous_run_line_coverage": "96"
+    },
+    {
+      "path": "networkly_web/directory/ingest.py",
+      "functions": 12,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/directory/management/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/audit_close_trust.py",
+      "functions": 1,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/audit_firm_logos.py",
+      "functions": 2,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/backfill_class_year_derived.py",
+      "functions": 3,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/backfill_detail_locations.py",
+      "functions": 2,
+      "previous_run_line_coverage": "97"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/backfill_sitemap_postal_titles.py",
+      "functions": 2,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/backfill_sponsorship.py",
+      "functions": 2,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/board_health.py",
+      "functions": 2,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/build_cycle_observations.py",
+      "functions": 2,
+      "previous_run_line_coverage": "91"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/calibrate_recommender.py",
+      "functions": 3,
+      "previous_run_line_coverage": "89"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/capture_applications.py",
+      "functions": 4,
+      "previous_run_line_coverage": "86"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/close_confirmed_dead_rows.py",
+      "functions": 2,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/dedupe_opportunities.py",
+      "functions": 3,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/enrich_postings.py",
+      "functions": 17,
+      "previous_run_line_coverage": "83"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/extract_deadlines_ai.py",
+      "functions": 3,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/extract_facts.py",
+      "functions": 2,
+      "previous_run_line_coverage": "53"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/extract_sponsorship_ai.py",
+      "functions": 4,
+      "previous_run_line_coverage": "99"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/fetch_firm_logos.py",
+      "functions": 16,
+      "previous_run_line_coverage": "58"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/import_firm_dates.py",
+      "functions": 4,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/merge_duplicate_firms.py",
+      "functions": 2,
+      "previous_run_line_coverage": "81"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/normalize_workday_locations.py",
+      "functions": 2,
+      "previous_run_line_coverage": "95"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/reclassify.py",
+      "functions": 2,
+      "previous_run_line_coverage": "85"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/refresh.py",
+      "functions": 2,
+      "previous_run_line_coverage": "97"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/refresh_grad_facts.py",
+      "functions": 6,
+      "previous_run_line_coverage": "97"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/relabel_firm_dates.py",
+      "functions": 6,
+      "previous_run_line_coverage": "95"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/reopen_confirmed_live_rows.py",
+      "functions": 2,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/reopen_truncated_oracle_closures.py",
+      "functions": 2,
+      "previous_run_line_coverage": "97"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/repair_blanked_regions.py",
+      "functions": 8,
+      "previous_run_line_coverage": "98"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/reverify.py",
+      "functions": 5,
+      "previous_run_line_coverage": "96"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/review_firm_date_cycles.py",
+      "functions": 3,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/scrape.py",
+      "functions": 3,
+      "previous_run_line_coverage": "79"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/seed_directory.py",
+      "functions": 9,
+      "previous_run_line_coverage": "88"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/seed_logo_domains.py",
+      "functions": 2,
+      "previous_run_line_coverage": "0"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/seed_mail_domains.py",
+      "functions": 3,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/management/commands/set_firm_date_times.py",
+      "functions": 5,
+      "previous_run_line_coverage": "94"
+    },
+    {
+      "path": "networkly_web/directory/models.py",
+      "functions": 13,
+      "previous_run_line_coverage": "95"
+    },
+    {
+      "path": "networkly_web/directory/open_runs.py",
+      "functions": 5,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/recommend.py",
+      "functions": 31,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/seed_parsers.py",
+      "functions": 9,
+      "previous_run_line_coverage": "96"
+    },
+    {
+      "path": "networkly_web/directory/sponsorship.py",
+      "functions": 4,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/timeline.py",
+      "functions": 5,
+      "previous_run_line_coverage": "96"
+    },
+    {
+      "path": "networkly_web/directory/urls.py",
+      "functions": 0,
+      "previous_run_line_coverage": "100"
+    },
+    {
+      "path": "networkly_web/directory/views.py",
+      "functions": 99,
+      "previous_run_line_coverage": "98"
+    },
+    {
+      "path": "networkly_domain/networkly_domain/__init__.py",
+      "functions": 0,
+      "previous_run_line_coverage": null
+    },
+    {
+      "path": "networkly_domain/networkly_domain/cadence.py",
+      "functions": 20,
+      "previous_run_line_coverage": null
+    },
+    {
+      "path": "networkly_domain/networkly_domain/pipeline.py",
+      "functions": 5,
+      "previous_run_line_coverage": null
+    },
+    {
+      "path": "networkly_domain/networkly_domain/scoring.py",
+      "functions": 31,
+      "previous_run_line_coverage": null
+    }
+  ],
+  "notes": [
+    "Broad CRM/directory run: 7207 passed, 1 structural guard failure later fixed and rechecked.",
+    "Source edits overlapped the broad run; per-module percentages cannot certify final lines.",
+    "Domain modules were tested separately; absent percentages mean not collected, not zero coverage.",
+    "Shared crm/services.py and contact_ai_brief ownership belongs to parallel workstreams."
+  ]
+}

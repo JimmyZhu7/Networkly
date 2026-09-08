@@ -137,6 +137,19 @@ class ContactForm(forms.ModelForm):
             pass
         return cleaned
 
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        if commit:
+            if obj._state.adding:
+                obj.save()
+            else:
+                # A Gmail reply or archive may have updated this row since
+                # the edit form loaded it. The form owns only its fields;
+                # a full-row save would silently undo those newer changes.
+                obj.save(update_fields=[*self.Meta.fields, "region_source"])
+            self.save_m2m()
+        return obj
+
 
 class ChatDebriefForm(forms.ModelForm):
     """The four questions asked after a coffee chat.

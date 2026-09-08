@@ -40,14 +40,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.db import transaction
 from django.db.models import Count
 from django.db.models.functions import Lower
 
 from analytics.models import UserOpportunity
-from crm.models import UserFirm
+from crm.models import Contact, PlayDismissal, Task, UserFirm
+from capture.models import ApplicationEvent, ContactProposal
 
 from .applications import STAGE_ORDER
-from .models import EmailPatternStats, Firm, FirmDate, Opportunity
+from .models import EmailPatternStats, Firm, FirmDate, FirmCycleObservation, Opportunity, OpportunityChange
 
 
 def find_duplicate_firm_groups() -> list[list[Firm]]:
@@ -91,8 +93,8 @@ def _merge_user_opportunity(keep: UserOpportunity, lose: UserOpportunity) -> Non
 
 
 def _reparent_user_opportunities(old_opp: Opportunity, new_opp: Opportunity) -> None:
-    for uo in UserOpportunity.all_objects.filter(opportunity=old_opp):
-        existing = UserOpportunity.all_objects.filter(user_id=uo.user_id, opportunity=new_opp).first()
+    for uo in UserOpportunity.all_objects.select_for_update().filter(opportunity=old_opp):
+        existing = UserOpportunity.all_objects.select_for_update().filter(user_id=uo.user_id, opportunity=new_opp).first()
         if existing is None:
             uo.opportunity = new_opp
             uo.save(update_fields=["opportunity"])
@@ -105,6 +107,16 @@ def _merge_opportunity_pair(keep: Opportunity, lose: Opportunity) -> None:
     canonical firm — the exact posting, filed twice. Fold `lose`'s facts
     onto `keep` per the policy `dedupe_opportunities.py` documents, move any
     tracking rows across, then delete `lose`."""
+    keep = Opportunity.objects.select_for_update().get(pk=keep.pk)
+    lose = Opportunity.objects.select_for_update().get(pk=lose.pk)
+    # Two mail records may carry different user decisions/evidence even when
+    # they name the same posting. Refuse an ambiguous destructive merge;
+    # an operator must resolve those records explicitly first.
+    for event in ApplicationEvent.all_objects.filter(opportunity=lose):
+        if ApplicationEvent.objects.for_user(event.user_id).filter(
+            opportunity=keep, event_type=event.event_type,
+        ).exists():
+            raise ValueError("Duplicate application events need review before merging these firms.")
     changed = []
     if lose.first_seen and (keep.first_seen is None or lose.first_seen < keep.first_seen):
         keep.first_seen = lose.first_seen
@@ -130,6 +142,8 @@ def _merge_opportunity_pair(keep: Opportunity, lose: Opportunity) -> None:
         keep.save()
 
     _reparent_user_opportunities(lose, keep)
+    ApplicationEvent.all_objects.filter(opportunity=lose).update(opportunity=keep)
+    OpportunityChange.objects.filter(opportunity=lose).update(opportunity=keep)
     lose.delete()
 
 
@@ -194,11 +208,19 @@ def _merge_email_pattern_stats(canonical: Firm, duplicate: Firm) -> bool:
     return True
 
 
+@transaction.atomic
 def merge_firms(canonical: Firm, duplicate: Firm) -> dict[str, Any]:
     """Reparent every row under `duplicate` onto `canonical`, then delete
     `duplicate`. Idempotent-ish per call — meant to be run once per
     (canonical, duplicate) pair inside a transaction (see the management
     command), never on a schedule."""
+    if canonical.pk is None or duplicate.pk is None or canonical.pk == duplicate.pk:
+        raise ValueError("Choose two different saved firms to merge.")
+    locked = {f.pk: f for f in Firm.objects.select_for_update().filter(
+        pk__in=[canonical.pk, duplicate.pk]).order_by("pk")}
+    if len(locked) != 2:
+        raise ValueError("A firm no longer exists; refresh before merging.")
+    canonical, duplicate = locked[canonical.pk], locked[duplicate.pk]
     stats: dict[str, Any] = {
         "duplicate_id": duplicate.id, "duplicate_slug": duplicate.slug,
         "opportunities_moved": 0, "opportunities_merged": 0,
@@ -217,6 +239,25 @@ def merge_firms(canonical: Firm, duplicate: Firm) -> dict[str, Any]:
     stats["firm_dates_moved"], stats["firm_dates_merged"] = _merge_firm_dates(canonical, duplicate)
     stats["user_firms_moved"], stats["user_firms_merged"] = _merge_user_firms(canonical, duplicate)
     stats["email_pattern_stats_merged"] = _merge_email_pattern_stats(canonical, duplicate)
+
+    # A firm rename must not unplace people's contacts/tasks or discard mail
+    # evidence. Keep their original text fields and change only the link.
+    for model in (Contact, Task, ContactProposal, ApplicationEvent):
+        stats[f"{model._meta.model_name}_moved"] = model.all_objects.filter(
+            firm=duplicate).update(firm=canonical)
+    for row in PlayDismissal.all_objects.filter(firm=duplicate):
+        exists = PlayDismissal.objects.for_user(row.user_id).filter(
+            firm=canonical, event_kind=row.event_kind, date=row.date,
+        ).exists()
+        if exists:
+            row.delete()
+        else:
+            PlayDismissal.objects.for_user(row.user_id).filter(pk=row.pk).update(firm=canonical)
+    # These are derived distributions, not source evidence. Combining counts
+    # would double-count overlapping postings. Invalidate both snapshots;
+    # build_cycle_observations can recompute from the preserved change ledger.
+    stats["cycle_observations_invalidated"] = FirmCycleObservation.objects.filter(
+        firm__in=[canonical, duplicate]).delete()[0]
 
     duplicate.delete()
     return stats

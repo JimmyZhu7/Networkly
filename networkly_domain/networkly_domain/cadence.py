@@ -257,6 +257,7 @@ original lacked).
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
@@ -559,6 +560,70 @@ def _touch_dt(t: Mapping[str, Any]) -> datetime | None:
     return _as_dt(t.get("ts"))
 
 
+def _touch_order(t: Mapping[str, Any]):
+    """Compare instants, including a repeated DST hour, then ledger identity."""
+    dt = _touch_dt(t)
+    ident = t.get("id")
+    return (
+        dt.astimezone(timezone.utc) if dt else datetime.min.replace(tzinfo=timezone.utc),
+        ident if isinstance(ident, int) else 0,
+    )
+
+
+@dataclass
+class ContactHistory:
+    """Sufficient ledger evidence for all cadence branches, independent of age.
+
+    Counts cover the full ledger; latest evidence covers each kind the engine
+    reasons about. This is a reduction, not a time window or row cap.
+    """
+
+    last_real: Mapping[str, Any] | None = None
+    latest_chat: Mapping[str, Any] | None = None
+    latest_thank_you: Mapping[str, Any] | None = None
+    latest_reping_date: date | None = None
+    outbound: int = 0
+
+    def add(self, touch: Mapping[str, Any]) -> None:
+        kind = touch.get("kind")
+        if kind in _OUTBOUND_KINDS:
+            self.outbound += 1
+        if kind not in _CLOCK_SILENT_KINDS:
+            if self.last_real is None or _touch_order(touch) >= _touch_order(self.last_real):
+                self.last_real = touch
+        if kind == "chat":
+            if self.latest_chat is None or _touch_order(touch) >= _touch_order(self.latest_chat):
+                self.latest_chat = touch
+        if kind == "thank_you":
+            if self.latest_thank_you is None or _touch_order(touch) >= _touch_order(self.latest_thank_you):
+                self.latest_thank_you = touch
+        if kind == "reping":
+            day = _as_date(touch.get("ts")) or date.min
+            if self.latest_reping_date is None or day > self.latest_reping_date:
+                self.latest_reping_date = day
+
+
+@dataclass
+class TouchHistory:
+    """Streaming cadence input: memory grows with contacts, not ledger length."""
+
+    contacts: dict[Any, ContactHistory] = field(default_factory=dict)
+
+    def add(self, touch: Mapping[str, Any]) -> None:
+        cid = touch.get("contact_id")
+        evidence = self.contacts.get(cid)
+        if evidence is None:
+            evidence = self.contacts[cid] = ContactHistory()
+        evidence.add(touch)
+
+    @classmethod
+    def from_touches(cls, touches: Iterable[Mapping[str, Any]]) -> TouchHistory:
+        history = cls()
+        for touch in touches:
+            history.add(touch)
+        return history
+
+
 def _firm_meta(firms: Mapping | Iterable[Mapping] | None) -> dict[Any, dict]:
     """Normalize the `firms` argument to {firm_id: {"name", "tier"}}.
 
@@ -650,7 +715,7 @@ def _closing_soon(
 
 def due_actions(
     contacts: Iterable[Mapping[str, Any]],
-    touches: Iterable[Mapping[str, Any]],
+    touches: Iterable[Mapping[str, Any]] | TouchHistory,
     firm_dates: Iterable[Mapping[str, Any]] | None = None,
     *,
     as_of: datetime,
@@ -735,19 +800,14 @@ def due_actions(
     meta = _firm_meta(firms)
     closing_soon = _closing_soon(firm_dates or (), today, reping_days)
 
-    # Group touches by contact once, sorted ascending by timestamp.
-    by_contact: dict[Any, list[Mapping[str, Any]]] = {}
-    for t in touches:
-        by_contact.setdefault(t.get("contact_id"), []).append(t)
-    for lst in by_contact.values():
-        lst.sort(key=lambda t: (_touch_dt(t) or datetime.min.replace(tzinfo=timezone.utc)))
+    history = touches if isinstance(touches, TouchHistory) else TouchHistory.from_touches(touches)
 
     actions: list[dict] = []
     for c in contacts:
         if c.get("archived"):
             continue
         cid = c.get("id")
-        ctouches = by_contact.get(cid, [])
+        evidence = history.contacts.get(cid, ContactHistory())
         firm_id = c.get("firm_id", c.get("firm"))
         # A hand-added contact can genuinely have no firm at all (no firm_id,
         # no firm_text) — capture_discover.py writes exactly that when the
@@ -772,14 +832,8 @@ def due_actions(
         # two places that must agree about what a tier is cannot drift.
         tier = _coerce_tier(meta.get(firm_id, {}).get("tier"))
 
-        # The idle clock reads the last REAL touch, skipping the audit rows
-        # `set_state` writes (C2). `ctouches` is already sorted ascending, so
-        # filtering preserves the order and the last element is still the
-        # most recent. Branch 1 and branch 3 keep reading `ctouches` — they
-        # scan for specific kinds ('chat'/'thank_you' and 'reping'), which a
-        # manual_override row can never be.
-        real_touches = [t for t in ctouches if t.get("kind") not in _CLOCK_SILENT_KINDS]
-        last = real_touches[-1] if real_touches else None
+        # Audit and bulk-mail rows never advance the relationship clock.
+        last = evidence.last_real
         lt_date = _as_date(last.get("ts")) if last else None
 
         def add(action: str, reason: str, prio: int, **ctx: Any) -> None:
@@ -796,20 +850,17 @@ def due_actions(
         #    touch. Once thanked, the contact FALLS THROUGH to the reping /
         #    maintain cadence below instead of dropping out forever.
         if thread_state == "chat_done":
-            chats = [t for t in ctouches if t.get("kind") == "chat"]
-            latest_chat = chats[-1] if chats else None
+            latest_chat = evidence.latest_chat
             chat_dt = _touch_dt(latest_chat) if latest_chat else None
-            thanked = False
-            for t in ctouches:
-                if t.get("kind") != "thank_you":
-                    continue
-                t_dt = _touch_dt(t)
-                if chat_dt is None or (t_dt is not None and t_dt >= chat_dt):
-                    thanked = True
-                    break
+            thank_you = evidence.latest_thank_you
+            thanked_at = _touch_dt(thank_you) if thank_you else None
+            thanked = bool(thank_you is not None and (
+                chat_dt is None or (thanked_at is not None and
+                    thanked_at.astimezone(timezone.utc) >= chat_dt.astimezone(timezone.utc))
+            ))
             hrs = None
             if chat_dt is not None:
-                hrs = (as_of - chat_dt).total_seconds() / 3600
+                hrs = (as_of.astimezone(timezone.utc) - chat_dt.astimezone(timezone.utc)).total_seconds() / 3600
             # The window has closed: too late for the note to read as a thanks.
             # Deliberately checked BEFORE `thanked`, so an expired prompt and a
             # sent one behave identically from here on — both fall through.
@@ -970,11 +1021,7 @@ def due_actions(
                 close = by_region[region]
         if close is not None and warmth in _WARM:
             window_start = close - timedelta(days=reping_days)
-            already = any(
-                t.get("kind") == "reping"
-                and (_as_date(t.get("ts")) or date.min) >= window_start
-                for t in ctouches
-            )
+            already = evidence.latest_reping_date is not None and evidence.latest_reping_date >= window_start
             if not already:
                 add(
                     "reping",
@@ -1125,7 +1172,7 @@ def due_actions(
 
         # 6. cold / no_reply cadence.
         if warmth == "cold" and thread_state == "no_reply":
-            outbound = sum(1 for t in ctouches if t.get("kind") in _OUTBOUND_KINDS)
+            outbound = evidence.outbound
             if outbound == 0:
                 add("first_outreach", "added but never contacted — send the first note", 1)
                 continue

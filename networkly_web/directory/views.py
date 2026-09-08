@@ -4523,11 +4523,6 @@ def picked_roles(user, *, open_qs=None, elig_profile=None, rec_profile=None,
         # silent, and Today ran 1,397 queries for one page load. With the join
         # the same block costs 2.
         #
-        # NOT `.defer("raw")` on top of it: `_eligibility` reads `raw.facts`
-        # for the graduation-window branch, so deferring the column trades
-        # 1,332 firm fetches for 647 deferred-field loads and measured SLOWER
-        # (531 ms against the 373 ms it was meant to fix). The row is wide on
-        # purpose here.
         open_qs = Opportunity.objects.filter(status="open").select_related("firm")
         # The feed drops the student's own dismissals before it ranks; a
         # caller that did not would let a "not for me" row hold a pick slot
@@ -4544,21 +4539,20 @@ def picked_roles(user, *, open_qs=None, elig_profile=None, rec_profile=None,
     profile = _scoring_profile(user) if rec_profile is None else rec_profile
     if profile.is_empty:
         return [], {}
-    candidates = [
-        Candidate.from_opportunity(o)
-        for o in fold_duplicates(
-            [
-                o for o in open_qs.filter(bucket__in=TARGET_BUCKETS)
-                # A pick is a RECOMMENDATION, held to a higher bar than a
-                # listing: a role whose own text blocks this user (wrong
-                # stated year, refuses their visa) may still be worth seeing
-                # on the board, but the product must not point at it and say
-                # "for you" — and must certainly not write it in bulk.
-                if not (lambda v: v and v["blocking"])(_eligibility(o, elig_profile))
-            ],
-            sticky_ids=sticky_ids,
-        )[0]
-    ]
+    # Ranking, eligibility and duplicate folding read raw.facts, not the ATS
+    # body or detail HTML. Project that JSON subtree in SQL before iterating.
+    # A bare defer(raw) would instead cause one lazy database read per role.
+    # These local instances are read-only and never leave the ranking call.
+    eligible_postings = []
+    for o in (open_qs.filter(bucket__in=TARGET_BUCKETS).select_related("firm")
+              .defer("raw").annotate(_pick_facts=F("raw__facts"))
+              .iterator(chunk_size=250)):
+        o.raw = {"facts": o._pick_facts}
+        verdict = _eligibility(o, elig_profile)
+        if not (verdict and verdict["blocking"]):
+            eligible_postings.append(o)
+    postings = fold_duplicates(eligible_postings, sticky_ids=sticky_ids)[0]
+    candidates = [Candidate.from_opportunity(o) for o in postings]
     # `max(…, 1)`, never a bare `len()`: `recommend(limit=0)` is a caller
     # asking for nothing and correctly returns nothing, so an empty board
     # would skip the call entirely — and the guard that pins the feed and the
@@ -4571,7 +4565,7 @@ def picked_roles(user, *, open_qs=None, elig_profile=None, rec_profile=None,
     # the scoring candidate), so it runs over the postings behind the ranking.
     # Ranked order is preserved: `fold_families` keeps input order and the
     # survivor of a family is the copy `_survivor_rank` prefers.
-    by_id = {o.id: o for o in open_qs.filter(id__in=[r.candidate.id for r in ranked])}
+    by_id = {o.id: o for o in postings}
     ordered = [by_id[r.candidate.id] for r in ranked if r.candidate.id in by_id]
 
     def _family(o):
