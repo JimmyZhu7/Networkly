@@ -120,6 +120,7 @@ def _post_json(payload: dict, *, timeout: float, retries: int) -> dict:
             with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — deliberate plain HTTPS client
                 return json.loads(resp.read())
         except urllib.error.HTTPError as e:
+            e.close()
             if e.code < 500:
                 raise ResidueClassifyError(e) from e
             last_error = e
@@ -147,11 +148,19 @@ TEXT:
 
 
 def _extract_response_text(api_response: dict) -> str:
-    blocks = api_response.get("content") or []
+    if not isinstance(api_response, dict):
+        return ""
+    blocks = api_response.get("content")
+    if not isinstance(blocks, list):
+        return ""
+    parts = []
     for block in blocks:
-        if block.get("type") == "text":
-            return block.get("text") or ""
-    return ""
+        if isinstance(block, dict) and block.get("type") == "text":
+            text = block.get("text")
+            if not isinstance(text, str):
+                return ""
+            parts.append(text)
+    return "".join(parts)
 
 
 def _grounded(quote: str | None, source: str) -> bool:
@@ -171,10 +180,11 @@ def _grounded(quote: str | None, source: str) -> bool:
     the source (mod whitespace and case), so a quote with no real basis in
     the text is rejected exactly as before.
     """
-    if not quote:
+    if not isinstance(quote, str) or not quote:
         return False
     norm = lambda s: re.sub(r"\s+", " ", s).strip().casefold()
-    return norm(quote) in norm(source)
+    normalized_quote = norm(quote)
+    return bool(normalized_quote) and normalized_quote in norm(source)
 
 
 def _message_text(message: dict) -> str:
@@ -210,9 +220,12 @@ def _classify_one(message: dict, *, model: str, timeout: float, retries: int) ->
     except (ValueError, TypeError):
         return "ambiguous", None
 
+    if not isinstance(parsed, dict):
+        return "ambiguous", None
     outcome = parsed.get("outcome")
     quote = parsed.get("quote")
-    if outcome not in _OUTCOMES:
+    if (not isinstance(outcome, str) or outcome not in _OUTCOMES
+            or (quote is not None and not isinstance(quote, str))):
         return "ambiguous", None
     if outcome == "ambiguous":
         return "ambiguous", quote

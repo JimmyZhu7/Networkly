@@ -128,6 +128,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import re
 import time
 import urllib.error
@@ -206,6 +207,7 @@ def _post_json(payload: dict, *, timeout: float, retries: int) -> dict:
             with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
                 return json.loads(resp.read())
         except urllib.error.HTTPError as e:
+            e.close()
             if e.code < 500:
                 raise AutopilotError(e) from e
             last_error = e
@@ -217,20 +219,29 @@ def _post_json(payload: dict, *, timeout: float, retries: int) -> dict:
 
 
 def _extract_response_text(api_response: dict) -> str:
+    if not isinstance(api_response, dict):
+        return ""
+    blocks = api_response.get("content")
+    if not isinstance(blocks, list):
+        return ""
     parts = []
-    for block in api_response.get("content") or []:
+    for block in blocks:
         if isinstance(block, dict) and block.get("type") == "text":
-            parts.append(block.get("text") or "")
+            text = block.get("text")
+            if not isinstance(text, str):
+                return ""
+            parts.append(text)
     return "".join(parts)
 
 
 def _grounded(quote: str | None, source: str) -> bool:
     """Whitespace-normalized verbatim-substring check — `ai_extract`'s rule,
     unchanged: a paraphrase never grounds, a reflow still does."""
-    if not quote:
+    if not isinstance(quote, str) or not quote:
         return False
     norm = lambda s: re.sub(r"\s+", " ", s).strip()  # noqa: E731
-    return norm(quote) in norm(source)
+    normalized_quote = norm(quote)
+    return bool(normalized_quote) and normalized_quote in norm(source)
 
 
 # --------------------------------------------------------------------------- #
@@ -493,6 +504,17 @@ EVIDENCE:
 """
 
 
+def _bounded_confidence(value) -> float:
+    """Only a finite, non-boolean number can clear the acceptance floor."""
+    try:
+        confidence = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+    if isinstance(value, bool) or not math.isfinite(confidence):
+        return 0.0
+    return max(0.0, min(1.0, confidence))
+
+
 def _decide_with_model(
     text: str, *, model: str, timeout: float = DEFAULT_TIMEOUT_SECONDS,
     retries: int = DEFAULT_RETRIES,
@@ -518,12 +540,11 @@ def _decide_with_model(
         return "malformed", 0.0, "", "model answer was malformed"
 
     decision = str(answer.get("decision") or "").strip().lower()
-    quote = str(answer.get("quote") or "")
+    quote = answer.get("quote")
+    if not isinstance(quote, str):
+        quote = ""
     reason = str(answer.get("reason") or "")[:300]
-    try:
-        confidence = max(0.0, min(1.0, float(answer.get("confidence"))))
-    except (TypeError, ValueError):
-        confidence = 0.0
+    confidence = _bounded_confidence(answer.get("confidence"))
     return decision, confidence, quote, reason
 
 
@@ -535,6 +556,7 @@ def _gate(
     in `text`, and confidence clears `ACCEPT_FLOOR`) and `escalate`
     (everything else, with the reason naming which guard fired). Escalation
     is never blocked; acceptance is never granted by default."""
+    confidence = _bounded_confidence(confidence)
     if not _grounded(quote, text):
         # An ungrounded answer takes no action, whatever it claimed.
         return (

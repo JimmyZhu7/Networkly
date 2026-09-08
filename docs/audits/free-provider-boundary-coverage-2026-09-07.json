@@ -1,0 +1,566 @@
+{
+  "base_commit": "15a8207d46678d8b724f2da344373a024ff30ccb",
+  "scope": "Full capture regression suite plus real Anthropic SDK contracts with offline transports",
+  "validation": {
+    "tests_passed": 1340,
+    "elapsed_seconds": 201.77,
+    "new_boundary_tests_passed": 83,
+    "isolated_test_database": "test_coverage_0db1834b02",
+    "live_provider_calls": false,
+    "junit_artifact": "/tmp/networkly-free-provider-boundary-junit.xml",
+    "full_coverage_artifact": "/tmp/networkly-free-provider-boundary-coverage.json"
+  },
+  "limitations": [
+    "Mocked provider boundaries do not prove live account permissions, delivery, provider availability or model quality.",
+    "Module totals reflect this capture and focused assistant subset; they are not whole-product coverage."
+  ],
+  "files": {
+    "networkly_web/assistant/client.py": {
+      "source_sha256": "2ccf57a6a885c2389c6935b7ce5cc09da09bdfccac0935f3c3b48c2a9a7ae99e",
+      "module_summary": {
+        "covered_lines": 23,
+        "num_statements": 23,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "targeted_functions": {
+        "get_client": {
+          "summary": {
+            "covered_lines": 10,
+            "num_statements": 10,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "close_client": {
+          "summary": {
+            "covered_lines": 4,
+            "num_statements": 4,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        }
+      }
+    },
+    "networkly_web/capture/autopilot.py": {
+      "source_sha256": "2ed06ffa71fe7195f69b65645ff9f6b940a7ba9715ddd321a0e5101967688b75",
+      "module_summary": {
+        "covered_lines": 584,
+        "num_statements": 628,
+        "percent_covered": 90.65420560747664,
+        "percent_covered_display": "91",
+        "missing_lines": 44,
+        "excluded_lines": 0,
+        "percent_statements_covered": 92.99363057324841,
+        "percent_statements_covered_display": "93",
+        "num_branches": 228,
+        "num_partial_branches": 36,
+        "covered_branches": 192,
+        "missing_branches": 36,
+        "percent_branches_covered": 84.21052631578948,
+        "percent_branches_covered_display": "84"
+      },
+      "targeted_functions": {
+        "_post_json": {
+          "summary": {
+            "covered_lines": 19,
+            "num_statements": 19,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 6,
+            "num_partial_branches": 0,
+            "covered_branches": 6,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_extract_response_text": {
+          "summary": {
+            "covered_lines": 13,
+            "num_statements": 13,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 10,
+            "num_partial_branches": 0,
+            "covered_branches": 10,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_decide_with_model": {
+          "summary": {
+            "covered_lines": 13,
+            "num_statements": 13,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 2,
+            "num_partial_branches": 0,
+            "covered_branches": 2,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_bounded_confidence": {
+          "summary": {
+            "covered_lines": 7,
+            "num_statements": 7,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 2,
+            "num_partial_branches": 0,
+            "covered_branches": 2,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_gate": {
+          "summary": {
+            "covered_lines": 9,
+            "num_statements": 9,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 6,
+            "num_partial_branches": 0,
+            "covered_branches": 6,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_grounded": {
+          "summary": {
+            "covered_lines": 5,
+            "num_statements": 5,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 2,
+            "num_partial_branches": 0,
+            "covered_branches": 2,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        }
+      }
+    },
+    "networkly_web/capture/gcal_live.py": {
+      "source_sha256": "6a0f315b8321e72c1b935727eb5dad3f0acfdaaa30c7f2f638d46c5a8d0ffaa7",
+      "module_summary": {
+        "covered_lines": 275,
+        "num_statements": 288,
+        "percent_covered": 94.84536082474227,
+        "percent_covered_display": "95",
+        "missing_lines": 13,
+        "excluded_lines": 0,
+        "percent_statements_covered": 95.48611111111111,
+        "percent_statements_covered_display": "95",
+        "num_branches": 100,
+        "num_partial_branches": 7,
+        "covered_branches": 93,
+        "missing_branches": 7,
+        "percent_branches_covered": 93.0,
+        "percent_branches_covered_display": "93"
+      },
+      "targeted_functions": {
+        "_credentials": {
+          "summary": {
+            "covered_lines": 1,
+            "num_statements": 1,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_calendar_client": {
+          "summary": {
+            "covered_lines": 1,
+            "num_statements": 1,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        }
+      }
+    },
+    "networkly_web/capture/gmail_live.py": {
+      "source_sha256": "cabe4bae5be370d4458cf3bce70b20a6e88eb15f98185ad8964ad23644c1d591",
+      "module_summary": {
+        "covered_lines": 732,
+        "num_statements": 777,
+        "percent_covered": 92.07373271889401,
+        "percent_covered_display": "92",
+        "missing_lines": 45,
+        "excluded_lines": 0,
+        "percent_statements_covered": 94.2084942084942,
+        "percent_statements_covered_display": "94",
+        "num_branches": 308,
+        "num_partial_branches": 39,
+        "covered_branches": 267,
+        "missing_branches": 41,
+        "percent_branches_covered": 86.68831168831169,
+        "percent_branches_covered_display": "87"
+      },
+      "targeted_functions": {
+        "_credentials": {
+          "summary": {
+            "covered_lines": 1,
+            "num_statements": 1,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_gmail_client": {
+          "summary": {
+            "covered_lines": 1,
+            "num_statements": 1,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        }
+      }
+    },
+    "networkly_web/capture/gmail_residue.py": {
+      "source_sha256": "9fee25c65ec1268099794022152e51e86462ff37c1eee1912c42b9faabc4e7d7",
+      "module_summary": {
+        "covered_lines": 164,
+        "num_statements": 169,
+        "percent_covered": 94.04255319148936,
+        "percent_covered_display": "94",
+        "missing_lines": 5,
+        "excluded_lines": 0,
+        "percent_statements_covered": 97.0414201183432,
+        "percent_statements_covered_display": "97",
+        "num_branches": 66,
+        "num_partial_branches": 9,
+        "covered_branches": 57,
+        "missing_branches": 9,
+        "percent_branches_covered": 86.36363636363636,
+        "percent_branches_covered_display": "86"
+      },
+      "targeted_functions": {
+        "_post_json": {
+          "summary": {
+            "covered_lines": 19,
+            "num_statements": 19,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 6,
+            "num_partial_branches": 0,
+            "covered_branches": 6,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_extract_response_text": {
+          "summary": {
+            "covered_lines": 13,
+            "num_statements": 13,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 10,
+            "num_partial_branches": 0,
+            "covered_branches": 10,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_classify_one": {
+          "summary": {
+            "covered_lines": 20,
+            "num_statements": 20,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 8,
+            "num_partial_branches": 0,
+            "covered_branches": 8,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "_grounded": {
+          "summary": {
+            "covered_lines": 4,
+            "num_statements": 5,
+            "percent_covered": 71.42857142857143,
+            "percent_covered_display": "71",
+            "missing_lines": 1,
+            "excluded_lines": 0,
+            "percent_statements_covered": 80.0,
+            "percent_statements_covered_display": "80",
+            "num_branches": 2,
+            "num_partial_branches": 1,
+            "covered_branches": 1,
+            "missing_branches": 1,
+            "percent_branches_covered": 50.0,
+            "percent_branches_covered_display": "50"
+          },
+          "missing_lines": [
+            184
+          ],
+          "missing_branches": [
+            [
+              183,
+              184
+            ]
+          ]
+        }
+      }
+    },
+    "networkly_web/capture/google_oauth.py": {
+      "source_sha256": "761a16eb1d4aee1cd96dceedf2840612902e077f43e9a4a17f280b86b69a9989",
+      "module_summary": {
+        "covered_lines": 23,
+        "num_statements": 23,
+        "percent_covered": 100.0,
+        "percent_covered_display": "100",
+        "missing_lines": 0,
+        "excluded_lines": 0,
+        "percent_statements_covered": 100.0,
+        "percent_statements_covered_display": "100",
+        "num_branches": 0,
+        "num_partial_branches": 0,
+        "covered_branches": 0,
+        "missing_branches": 0,
+        "percent_branches_covered": 100.0,
+        "percent_branches_covered_display": "100"
+      },
+      "targeted_functions": {
+        "credentials": {
+          "summary": {
+            "covered_lines": 7,
+            "num_statements": 7,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        },
+        "credentials.bounded_request": {
+          "summary": {
+            "covered_lines": 2,
+            "num_statements": 2,
+            "percent_covered": 100.0,
+            "percent_covered_display": "100",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 0,
+            "num_partial_branches": 0,
+            "covered_branches": 0,
+            "missing_branches": 0,
+            "percent_branches_covered": 100.0,
+            "percent_branches_covered_display": "100"
+          },
+          "missing_lines": [],
+          "missing_branches": []
+        }
+      }
+    },
+    "networkly_web/capture/mailfacts.py": {
+      "source_sha256": "6e9f37109eecc51697e6668bcff1b8fce555a91db391ea01feeccbd545a10a74",
+      "module_summary": {
+        "covered_lines": 434,
+        "num_statements": 481,
+        "percent_covered": 84.9929873772791,
+        "percent_covered_display": "85",
+        "missing_lines": 47,
+        "excluded_lines": 0,
+        "percent_statements_covered": 90.22869022869023,
+        "percent_statements_covered_display": "90",
+        "num_branches": 232,
+        "num_partial_branches": 52,
+        "covered_branches": 172,
+        "missing_branches": 60,
+        "percent_branches_covered": 74.13793103448276,
+        "percent_branches_covered_display": "74"
+      },
+      "targeted_functions": {
+        "_detect_ai": {
+          "summary": {
+            "covered_lines": 19,
+            "num_statements": 19,
+            "percent_covered": 90.3225806451613,
+            "percent_covered_display": "90",
+            "missing_lines": 0,
+            "excluded_lines": 0,
+            "percent_statements_covered": 100.0,
+            "percent_statements_covered_display": "100",
+            "num_branches": 12,
+            "num_partial_branches": 3,
+            "covered_branches": 9,
+            "missing_branches": 3,
+            "percent_branches_covered": 75.0,
+            "percent_branches_covered_display": "75"
+          },
+          "missing_lines": [],
+          "missing_branches": [
+            [
+              684,
+              700
+            ],
+            [
+              688,
+              700
+            ],
+            [
+              693,
+              699
+            ]
+          ]
+        }
+      }
+    }
+  }
+}
