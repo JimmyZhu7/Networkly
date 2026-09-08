@@ -804,21 +804,17 @@ that don't already declare explicit htmx behaviour.
           <div class="set-row" data-push-root
                data-vapid-public-key="{{ vapid_public_key }}"
                data-subscribe-url="{% url 'accounts:push_subscribe' %}"
+               data-status-url="{% url 'accounts:push_status' %}"
                data-unsubscribe-url="{% url 'accounts:push_unsubscribe' %}"
                data-csrf="{{ csrf_token }}">
             <div class="set-row-main">
               <label class="set-row-label" for="push-alerts-toggle">Deadline alerts on this device</label>
               <div class="set-row-desc" data-push-status>
-                {% if push_subscribed %}
-                  On. You'll get an alert when a tracked role is closing soon.
-                {% else %}
-                  Off. Turn on to get an alert on this device.
-                {% endif %}
+                Checking this device…
               </div>
             </div>
             <div class="set-row-control">
-              <input type="checkbox" id="push-alerts-toggle" data-push-toggle
-                     {% if push_subscribed %}checked{% endif %}>
+              <input type="checkbox" id="push-alerts-toggle" data-push-toggle disabled>
             </div>
           </div>
           {% endif %}

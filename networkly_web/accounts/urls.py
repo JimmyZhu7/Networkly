@@ -37,6 +37,7 @@ urlpatterns = [
     # Web Push deadline alerts (accounts/push.py); the Settings Notifications
     # toggle POSTs to these directly from JS.
     path("push/subscribe/", views.push_subscribe, name="push_subscribe"),
+    path("push/status/", views.push_status, name="push_status"),
     path("push/unsubscribe/", views.push_unsubscribe, name="push_unsubscribe"),
     # The link in the weekly digest's footer. GET confirms, POST writes the
     # same `weekly_digest_opt_out` flag the Settings toggle writes.

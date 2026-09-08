@@ -37,6 +37,8 @@ from dataclasses import dataclass, field
 from defusedcsv import csv
 
 from django.contrib.sessions.models import Session
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.db import transaction
 from django.utils import timezone
 
@@ -85,7 +87,7 @@ def sign_out_other_sessions(user, *, keep_session_key: str | None = None) -> int
     ended = 0
     now = timezone.now()
     target = str(user.pk)
-    for row in Session.objects.filter(expire_date__gt=now):
+    for row in Session.objects.filter(expire_date__gt=now).iterator(chunk_size=500):
         if row.session_key == keep_session_key:
             continue
         if row.get_decoded().get("_auth_user_id") == target:
@@ -110,6 +112,7 @@ def set_target_firms(user, firm_ids, *, tier: int = DEFAULT_FIRM_TIER) -> int:
         .values_list("id", flat=True)
     )
     with transaction.atomic():
+        User.objects.select_for_update().get(pk=user.pk, is_active=True)
         existing = set(
             UserFirm.objects.for_user(user).values_list("firm_id", flat=True)
         )
@@ -364,7 +367,25 @@ def _group_unmatched_firms(
     return sorted(groups.values(), key=lambda g: g.firm_text.lower())
 
 
+MAX_CONTACT_IMPORT_BYTES = 10 * 1024 * 1024
+MAX_CONTACT_IMPORT_ROWS = 20_000
+
+
 def parse_contacts_csv(user, text: str) -> ImportResult:
+    """Validate a whole file and serialize deduplication for one account."""
+    if len(text) > MAX_CONTACT_IMPORT_BYTES:
+        return ImportResult(errors=["Keep the CSV under 10 MB and try again."])
+    if "\x00" in text:
+        return ImportResult(errors=["The file contains unreadable characters. Export a fresh CSV and try again."])
+    try:
+        with transaction.atomic():
+            User.objects.select_for_update().get(pk=user.pk, is_active=True)
+            return _parse_contacts_csv(user, text)
+    except csv.Error:
+        return ImportResult(errors=["Couldn't read that CSV. Check its quotes and field lengths, then try again."])
+
+
+def _parse_contacts_csv(user, text: str) -> ImportResult:
     """Parse `text` as a contacts CSV and create `Contact` rows for `user`.
 
     Dedup rule (application-layer, per §2): a row is skipped when its
@@ -374,7 +395,7 @@ def parse_contacts_csv(user, text: str) -> ImportResult:
     creates nothing new.
     """
     result = ImportResult()
-    reader = csv.reader(io.StringIO(text))
+    reader = csv.reader(io.StringIO(text), strict=True)
     try:
         header = next(reader)
     except StopIteration:
@@ -404,7 +425,9 @@ def parse_contacts_csv(user, text: str) -> ImportResult:
     # Seed dedup sets from the user's existing contacts.
     existing_emails: set[str] = set()
     existing_name_firm: set[tuple[str, str]] = set()
-    for c in Contact.objects.for_user(user).select_related("firm"):
+    for c in Contact.objects.for_user(user).select_related("firm").only(
+        "name", "email", "firm_id", "firm_text", "firm__name",
+    ).iterator(chunk_size=500):
         if c.email:
             existing_emails.add(c.email.strip().lower())
         firm_token = _norm(c.firm.name) if c.firm_id else _norm(c.firm_text)
@@ -416,6 +439,8 @@ def parse_contacts_csv(user, text: str) -> ImportResult:
         if not row:
             continue  # truly blank line (csv yields []) — not a data row
         result.total_rows += 1
+        if result.total_rows > MAX_CONTACT_IMPORT_ROWS:
+            return ImportResult(errors=["Import up to 20,000 contacts at a time. Split this CSV and try again."])
         values = {
             field_name: (row[idx].strip() if idx < len(row) else "")
             for idx, field_name in col_map.items()
@@ -423,6 +448,14 @@ def parse_contacts_csv(user, text: str) -> ImportResult:
         name = values.get("name", "")
         email = values.get("email", "")
         firm_raw = values.get("firm", "")
+        linkedin = values.get("linkedin", "")
+        if linkedin:
+            try:
+                URLValidator(schemes=["http", "https"])(linkedin)
+            except ValidationError:
+                return ImportResult(errors=[
+                    f"Row {reader.line_num}: use a full http:// or https:// LinkedIn URL, or leave it blank."
+                ])
 
         if not name and not email:
             result.skipped_empty += 1
@@ -494,19 +527,22 @@ def parse_contacts_csv(user, text: str) -> ImportResult:
 def import_contacts(user, *, file_bytes: bytes, filename: str) -> ImportResult:
     """Decode an uploaded CSV, create contacts, and write the bookkeeping
     (`Import` row + `import_completed` event)."""
+    if len(file_bytes) > MAX_CONTACT_IMPORT_BYTES:
+        return ImportResult(errors=["Keep the CSV under 10 MB and try again."])
     try:
         text = file_bytes.decode("utf-8-sig")
     except UnicodeDecodeError:
         text = file_bytes.decode("latin-1", errors="replace")
 
-    result = parse_contacts_csv(user, text)
-
-    Import.all_objects.create(
-        user=user,
-        kind="contacts",
-        filename=(filename or "contacts.csv")[:255],
-        row_stats=result.as_stats(),
-    )
+    with transaction.atomic():
+        User.objects.select_for_update().get(pk=user.pk, is_active=True)
+        result = parse_contacts_csv(user, text)
+        Import.all_objects.create(
+            user=user,
+            kind="contacts",
+            filename=(filename or "contacts.csv")[:255],
+            row_stats=result.as_stats(),
+        )
     # `import_completed` is a named funnel event (see analytics/events.py's
     # canonical list) — it must mean the import actually put rows in the
     # user's CRM. Firing it unconditionally meant an unreadable CSV, an
@@ -1591,6 +1627,11 @@ def delete_user_and_data(user) -> dict[str, int]:
 
     counts: dict[str, int] = {}
     with transaction.atomic():
+        # Sync, imports and credit reservations take this same user lock
+        # before writing. Once deletion begins its sweep, none can recreate
+        # private rows underneath it or leave an incomplete receipt.
+        if not User.objects.select_for_update().filter(pk=user.pk).exists():
+            return {"account": 0}
         for label, model in _DELETE_ORDER:
             deleted, _ = model.objects.for_user(user).delete()
             counts[label] = deleted

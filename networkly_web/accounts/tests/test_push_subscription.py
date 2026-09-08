@@ -273,17 +273,47 @@ def test_settings_omits_the_toggle_entirely_when_vapid_is_unset(client, logged_i
 
 
 @override_settings(VAPID_PUBLIC_KEY="test-public-key", VAPID_PRIVATE_KEY="test-private-key")
-def test_settings_reflects_an_existing_subscription_as_checked(client, logged_in):
+def test_settings_waits_for_this_device_even_when_another_device_is_subscribed(client, logged_in):
     PushSubscription.all_objects.create(
         user=logged_in, endpoint=VALID_PAYLOAD["endpoint"], p256dh="a", auth="b"
     )
     resp = client.get(reverse("accounts:settings"))
     body = resp.content.decode()
     snippet = body[body.index('id="push-alerts-toggle"'):body.index('id="push-alerts-toggle"') + 200]
-    assert "checked" in snippet
+    assert "checked" not in snippet
+    assert "disabled" in snippet
+    assert 'data-status-url="' in body
 
 
 @override_settings(VAPID_PUBLIC_KEY="test-public-key", VAPID_PRIVATE_KEY="test-private-key")
 def test_settings_exposes_the_vapid_public_key_for_the_client_script(client, logged_in):
     resp = client.get(reverse("accounts:settings"))
     assert b'data-vapid-public-key="test-public-key"' in resp.content
+
+
+def test_push_status_is_private_read_only_and_device_scoped(client, user, other_user):
+    PushSubscription.all_objects.create(user=user, endpoint=FCM, p256dh="public", auth="secret")
+    client.force_login(user)
+    response = _post_json(client, "accounts:push_status", {"endpoint": FCM})
+    assert response.json() == {"subscribed": True}
+    assert response["Cache-Control"] == "private, no-store"
+    response = _post_json(client, "accounts:push_status", {"endpoint": FCM + "-other-device"})
+    assert response.json() == {"subscribed": False}
+    client.force_login(other_user)
+    assert _post_json(client, "accounts:push_status", {"endpoint": FCM}).json() == {"subscribed": False}
+    assert PushSubscription.all_objects.get(endpoint=FCM).user_id == user.pk
+
+
+@pytest.mark.parametrize("payload", [[], {}, {"endpoint": True}, {"endpoint": "http://localhost"}])
+def test_push_status_rejects_invalid_input(client, logged_in, payload):
+    assert _post_json(client, "accounts:push_status", payload).status_code == 400
+
+
+def test_push_status_requires_login_post_and_csrf(client, user):
+    from django.test import Client
+    assert _post_json(client, "accounts:push_status", {"endpoint": FCM}).status_code == 302
+    client.force_login(user)
+    assert client.get(reverse("accounts:push_status")).status_code == 405
+    csrf_client = Client(enforce_csrf_checks=True)
+    csrf_client.force_login(user)
+    assert _post_json(csrf_client, "accounts:push_status", {"endpoint": FCM}).status_code == 403

@@ -20,7 +20,7 @@ from django.conf import settings as django_settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -516,7 +516,7 @@ def import_contacts(request):
         else:
             result = services.import_contacts(
                 request.user,
-                file_bytes=upload.read(),
+                file_bytes=upload.read(services.MAX_CONTACT_IMPORT_BYTES + 1),
                 filename=upload.name,
             )
             if result.errors:
@@ -904,7 +904,6 @@ def settings_view(request):
             # same "Setup Needed" posture the social sign-in buttons use for
             # an unconfigured provider. See accounts/push.py.
             "vapid_public_key": django_settings.VAPID_PUBLIC_KEY,
-            "push_subscribed": PushSubscription.objects.for_user(request.user).exists(),
             **_security_context(request.user),
             **_target_firms_context(request.user),
         },
@@ -1207,6 +1206,28 @@ def push_subscribe(request):
             subscription.save(update_fields=list(values))
     record_event("push_subscribed", user=request.user)
     return HttpResponse(status=201)
+
+
+@login_required
+@require_POST
+def push_status(request):
+    """Check this browser's endpoint for this account without changing it.
+
+    POST keeps the private endpoint out of URLs and access logs. An endpoint
+    owned by another account is indistinguishable from an unknown endpoint.
+    """
+    try:
+        payload = json.loads(request.body or b"{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return HttpResponseBadRequest("invalid JSON")
+    endpoint = payload.get("endpoint") if isinstance(payload, dict) else None
+    if not isinstance(endpoint, str) or not push.is_allowed_endpoint(endpoint):
+        return HttpResponseBadRequest("invalid endpoint")
+    response = JsonResponse({
+        "subscribed": PushSubscription.objects.for_user(request.user).filter(endpoint=endpoint).exists(),
+    })
+    response["Cache-Control"] = "private, no-store"
+    return response
 
 
 @login_required

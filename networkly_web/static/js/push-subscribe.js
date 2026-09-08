@@ -52,6 +52,7 @@
     }
 
     function unavailable(text) {
+      toggle.checked = false;
       toggle.disabled = true;
       setStatus(text);
     }
@@ -68,6 +69,31 @@
       unavailable("Blocked. Enable notifications for this site in your browser settings.");
       return;
     }
+
+    // Account-wide subscriptions cannot tell us whether THIS browser is on.
+    // Inspect the browser first, then check ownership without asking for
+    // permission or creating a subscription merely by opening Settings.
+    toggle.disabled = true;
+    toggle.checked = false;
+    setStatus("Checking this device…");
+    navigator.serviceWorker.getRegistration("/static/service-worker.js")
+      .then(function (reg) { return reg ? reg.pushManager.getSubscription() : null; })
+      .then(function (sub) {
+        if (!sub) return { subscribed: false };
+        return post(root.dataset.statusUrl, { endpoint: sub.endpoint })
+          .then(function (response) { return response.json(); });
+      })
+      .then(function (result) {
+        if (!result || typeof result.subscribed !== "boolean") throw new Error("invalid status");
+        toggle.checked = result.subscribed;
+        setStatus(result.subscribed
+          ? "On. You'll get an alert when a tracked role is closing soon."
+          : "Off. Turn on to get an alert on this device.");
+      })
+      .catch(function () {
+        setStatus("Couldn't check this device. Try turning alerts on again.");
+      })
+      .finally(function () { toggle.disabled = false; });
 
     function subscribe() {
       toggle.disabled = true;

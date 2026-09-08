@@ -6,14 +6,14 @@ from playwright.sync_api import expect
 SCRIPT = Path(__file__).resolve().parents[1] / "static/js/push-subscribe.js"
 
 
-def prepare(page):
+def prepare(page, *, subscribed=True, browser_subscription=True, status_ok=True):
     page.set_content("""
     <div data-push-root data-vapid-public-key="AQ" data-csrf="test"
-         data-subscribe-url="/subscribe" data-unsubscribe-url="/unsubscribe">
+         data-subscribe-url="/subscribe" data-unsubscribe-url="/unsubscribe" data-status-url="/status">
       <input type="checkbox" data-push-toggle checked>
       <span data-push-status></span>
     </div>""")
-    page.evaluate("""() => {
+    page.evaluate("""({subscribed, browserSubscription, statusOK}) => {
       window.pushCalls = []; window.replyOK = false; window.redirected = false;
       window.browserOK = true;
       window.PushManager = function () {};
@@ -21,15 +21,17 @@ def prepare(page):
       const sub = {endpoint:'https://push.example/device', toJSON:()=>({endpoint:'https://push.example/device'}),
         unsubscribe:()=>{pushCalls.push('browser'); return Promise.resolve(browserOK);}};
       Object.defineProperty(navigator,'serviceWorker',{configurable:true,value:{
-        getRegistration:()=>Promise.resolve({pushManager:{getSubscription:()=>Promise.resolve(sub)}}),
+        getRegistration:()=>Promise.resolve({pushManager:{getSubscription:()=>Promise.resolve(browserSubscription ? sub : null)}}),
         register:()=>Promise.resolve({pushManager:{subscribe:()=>Promise.resolve(sub)}})
       }});
       window.fetch = (url, options) => {
+        if (url === "/status") return Promise.resolve({ok:statusOK, json:()=>Promise.resolve({subscribed})});
         pushCalls.push(url);
         return Promise.resolve({ok:replyOK, redirected:redirected});
       };
-    }""")
+    }""", {"subscribed":subscribed, "browserSubscription":browser_subscription, "statusOK":status_ok})
     page.add_script_tag(path=str(SCRIPT))
+    expect(page.locator("[data-push-toggle]")).to_be_enabled()
 
 
 def test_failed_unsubscribe_keeps_endpoint_for_retry(session):
@@ -75,4 +77,25 @@ def test_permission_failure_restores_a_retryable_toggle(session):
     expect(page.locator('[data-push-status]')).to_contain_text("Couldn't request permission")
     expect(page.locator('[data-push-toggle]')).not_to_be_checked()
     expect(page.locator('[data-push-toggle]')).to_be_enabled()
+    assert page.evaluate("pushCalls") == []
+
+
+@pytest.mark.parametrize("subscribed,browser_subscription,expected", [
+    (True, True, True), (False, True, False), (True, False, False),
+])
+def test_initial_state_requires_both_browser_subscription_and_account_ownership(
+    session, subscribed, browser_subscription, expected,
+):
+    page = session.page
+    prepare(page, subscribed=subscribed, browser_subscription=browser_subscription)
+    expect(page.locator('[data-push-toggle]')).to_be_checked(checked=expected)
+    expect(page.locator('[data-push-status]')).to_contain_text("On." if expected else "Off.")
+    assert page.evaluate("pushCalls") == []
+
+
+def test_failed_initial_check_is_not_presented_as_a_confirmed_state(session):
+    page = session.page
+    prepare(page, status_ok=False)
+    expect(page.locator('[data-push-toggle]')).not_to_be_checked()
+    expect(page.locator('[data-push-status]')).to_contain_text("Couldn't check this device")
     assert page.evaluate("pushCalls") == []
