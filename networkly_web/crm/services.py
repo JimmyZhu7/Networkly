@@ -37,18 +37,73 @@ config.
 from __future__ import annotations
 
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime
 from typing import Iterator
 
 import psycopg
 from django.conf import settings
+from django.db import connection as django_connection, transaction
 from psycopg.rows import dict_row
 
 from networkly_domain import pipeline
 
 
+_shared_pipeline = ContextVar("shared_pipeline", default=False)
+
+
+@contextmanager
+def atomic_pipeline():
+    """Make ORM and domain writes one transaction, including nested calls.
+
+    Callers finish provider requests before entering this scope. The domain
+    engine keeps its existing standalone transaction contract; only this
+    explicit scope borrows Django's connection. A domain failure rolls back
+    its savepoint, and an outer failure rolls back the entire application.
+    """
+    with transaction.atomic():
+        token = _shared_pipeline.set(True)
+        try:
+            yield
+        finally:
+            _shared_pipeline.reset(token)
+
+
+class _SharedPipelineConnection:
+    """Cursor adapter. Transaction ownership stays entirely with Django."""
+
+    def __init__(self):
+        self.cursors = []
+
+    def cursor(self):
+        cursor = django_connection.cursor()
+        cursor.cursor.row_factory = dict_row
+        self.cursors.append(cursor)
+        return cursor
+
+    def commit(self):
+        # The surrounding savepoint commits when the domain call returns.
+        pass
+
+    def rollback(self):
+        # pipeline always re-raises after this call; atomic rolls it back.
+        pass
+
+    def close_cursors(self):
+        for cursor in self.cursors:
+            cursor.close()
+
+
 @contextmanager
 def _pipeline_connection() -> Iterator[psycopg.Connection]:
+    if _shared_pipeline.get():
+        with transaction.atomic():
+            borrowed = _SharedPipelineConnection()
+            try:
+                yield borrowed
+            finally:
+                borrowed.close_cursors()
+        return
     db = settings.DATABASES["default"]
     conn = psycopg.connect(
         dbname=db["NAME"],
