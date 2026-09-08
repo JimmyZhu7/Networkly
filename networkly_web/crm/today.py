@@ -4534,7 +4534,7 @@ def play_dismiss(request: HttpRequest) -> HttpResponse:
     except (TypeError, ValueError):
         return HttpResponse(status=400)
     event_kind = (request.POST.get("event_kind") or "").strip()
-    if not event_kind:
+    if not event_kind or len(event_kind) > PlayDismissal._meta.get_field("event_kind").max_length:
         return HttpResponse(status=400)
     get_object_or_404(Firm, pk=firm_id)
     PlayDismissal.all_objects.get_or_create(
