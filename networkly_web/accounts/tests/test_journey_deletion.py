@@ -111,7 +111,8 @@ def test_the_export_carries_this_account_and_nobody_else(signed_in, student, str
     assert names == {"Dana Banker"}
     assert "Kim Stranger" not in payload.decode("utf-8", "replace")
 
-    contacts_csv = signed_in.get(reverse("accounts:export"), {"kind": "contacts"}).content.decode()
+    response = signed_in.get(reverse("accounts:export"), {"kind": "contacts"})
+    contacts_csv = b"".join(response.streaming_content).decode()
     assert "Dana Banker" in contacts_csv and "Kim Stranger" not in contacts_csv
 
 

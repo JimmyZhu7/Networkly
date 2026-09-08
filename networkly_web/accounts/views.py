@@ -950,16 +950,14 @@ def export(request):
         )
         resp["Content-Disposition"] = 'attachment; filename="networkly-data.zip"'
         return resp
-    if kind == "contacts":
-        record_event("export_downloaded", user=request.user, kind="contacts")
-        return _csv_download(
-            services.contacts_csv(request.user), "networkly-contacts.csv"
+    if kind in ("contacts", "touches"):
+        record_event("export_downloaded", user=request.user, kind=kind)
+        builder = services.contacts_csv if kind == "contacts" else services.touches_csv
+        response = FileResponse(
+            services.export_csv_file(request.user, builder), content_type="text/csv",
         )
-    if kind == "touches":
-        record_event("export_downloaded", user=request.user, kind="touches")
-        return _csv_download(
-            services.touches_csv(request.user), "networkly-touches.csv"
-        )
+        response["Content-Disposition"] = f'attachment; filename="networkly-{kind}.csv"'
+        return response
     contacts = Contact.objects.for_user(request.user)
     return render(
         request,

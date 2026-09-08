@@ -18,6 +18,8 @@ import io
 import json as _json
 import re
 import zipfile
+from contextlib import closing
+from itertools import islice
 from tempfile import SpooledTemporaryFile
 from dataclasses import dataclass, field
 
@@ -846,8 +848,14 @@ def _csv(columns: list[str], rows, *, _destination=None) -> str:
     writer = csv.writer(buf)
     # Column headers are literals declared in this module, never user text.
     writer.writerow(columns)
-    for row in rows:
-        writer.writerow([_neutralise_tab_or_cr_lead(cell) for cell in row])
+    iterator = iter(rows)
+    try:
+        for row in iterator:
+            writer.writerow([_neutralise_tab_or_cr_lead(cell) for cell in row])
+    finally:
+        close = getattr(iterator, "close", None)
+        if close is not None:
+            close()
     return buf.getvalue() if _destination is None else ""
 
 
@@ -1195,33 +1203,35 @@ def chat_debriefs_csv(user, *, _destination=None) -> str:
     )
 
 
+def _fit_score_export_rows(user):
+    # Scores include potentially long reasoning. Resolve names per batch,
+    # never by retaining the account's complete scoring history and payloads.
+    with closing(FitScore.objects.for_user(user).iterator(chunk_size=500)) as rows:
+        while batch := list(islice(rows, 500)):
+            contact_ids = {r.subject_id for r in batch if r.subject_type == "contact"}
+            firm_ids = {r.subject_id for r in batch if r.subject_type == "firm"}
+            names = {
+                ("contact", pk): name for pk, name in
+                Contact.objects.for_user(user).filter(id__in=contact_ids).values_list("id", "name")
+            }
+            names.update({
+                ("firm", pk): name for pk, name in
+                Firm.objects.filter(id__in=firm_ids).values_list("id", "name")
+            })
+            for r in batch:
+                yield [
+                    r.subject_type,
+                    names.get((r.subject_type, r.subject_id), str(r.subject_id)),
+                    r.composite, _json_cell(r.axes), r.reasoning,
+                    r.params_version, _dt(r.computed_at),
+                ]
+            del batch
+
+
 def fit_scores_csv(user, *, _destination=None) -> str:
-    """Derived and recomputable, but included anyway: `subject_id` alone is an
-    opaque integer, so each row is resolved to the name it scored. Leaving
-    this out would have meant the export page listing an exception, and an
-    exception on a page whose whole claim is "everything" is worse than two
-    lookups."""
-    rows = list(FitScore.objects.for_user(user))
-    contact_ids = {r.subject_id for r in rows if r.subject_type == "contact"}
-    firm_ids = {r.subject_id for r in rows if r.subject_type == "firm"}
-    names: dict[tuple[str, int], str] = {
-        ("contact", c.id): c.name
-        for c in Contact.objects.for_user(user).filter(id__in=contact_ids)
-    }
-    names.update(
-        {("firm", f.id): f.name for f in Firm.objects.filter(id__in=firm_ids)}
-    )
+    """Include every score, resolving subject names without retaining history."""
     return _csv(
-        FIT_SCORE_EXPORT_COLUMNS,
-        (
-            [
-                r.subject_type,
-                names.get((r.subject_type, r.subject_id), str(r.subject_id)),
-                r.composite, _json_cell(r.axes), r.reasoning,
-                r.params_version, _dt(r.computed_at),
-            ]
-            for r in _export_rows(rows)
-        ),
+        FIT_SCORE_EXPORT_COLUMNS, _fit_score_export_rows(user),
         _destination=_destination,
     )
 
@@ -1549,6 +1559,28 @@ def export_zip(user) -> bytes:
     """Bytes convenience API; HTTP downloads use the bounded file API below."""
     with export_zip_file(user) as archive:
         return archive.read()
+
+
+def export_csv_file(user, builder):
+    """Build one UTF-8 CSV with bounded buffers; caller owns its closure.
+
+    Keep the existing string builders available for internal callers while
+    serving individual HTTP downloads through the same file-backed approach
+    as the full archive. The text wrapper is detached before handing the
+    binary file to FileResponse.
+    """
+    output = SpooledTemporaryFile(max_size=1024 * 1024, mode="w+b")
+    try:
+        text = io.TextIOWrapper(output, encoding="utf-8", newline="")
+        try:
+            builder(user, _destination=text)
+        finally:
+            text.detach()
+        output.seek(0)
+        return output
+    except BaseException:
+        output.close()
+        raise
 
 
 def export_zip_file(user):
