@@ -268,6 +268,24 @@ def test_the_digest_cron_spreads_the_roster_across_the_week(blueprint):
 # ---------------------------------------------------------------------------
 # The backup cron — defined now, resumed only after payment
 # ---------------------------------------------------------------------------
+def test_backup_client_supports_the_pinned_database_major(blueprint):
+    """A future server pin must not outrun pg_dump inside the deploy image."""
+    database_section = blueprint.split("\nservices:", 1)[0]
+    databases = re.split(r"(?m)^  - name: ", database_section)[1:]
+    database = next(block for block in databases if block.splitlines()[0] == "coverage-db")
+    pin = re.search(r'(?m)^    postgresMajorVersion: "(\d+)"\s*(?:#.*)?$', database)
+    assert pin, "coverage-db needs an explicit, quoted major matching the verified instance"
+
+    dockerfile = (RENDER_YAML.parent / "Dockerfile").read_text()
+    clients = re.findall(
+        r"(?m)^\s*apt-get install\b[^\n]*\bpostgresql-client-(\d+)\b", dockerfile,
+    )
+    assert len(clients) == 1, "The image must install one explicit PostgreSQL client major"
+    assert int(clients[0]) >= int(pin.group(1)), (
+        f"pg_dump {clients[0]} cannot back up PostgreSQL {pin.group(1)}"
+    )
+
+
 def test_the_backup_cron_cannot_run_without_a_bucket(blueprint):
     """Two locks, because Render's Blueprint schema has no `suspended:` key
     and a cron therefore cannot be declared dormant in this file. The service

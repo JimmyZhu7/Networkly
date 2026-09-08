@@ -15,25 +15,18 @@ databases:
   # because prose documentation pages now show only the new family, which
   # reads like a deprecation and is not one.
   #
-  # `postgresMajorVersion` IS DELIBERATELY ABSENT, and must stay absent until
-  # somebody reads the real number off the dashboard. The key is IMMUTABLE
-  # after the database is created; omitted, Render uses its current default
-  # for a NEW database and leaves an existing one alone. `coverage-db` was
-  # created months ago, so its actual major version is not knowable from this
-  # repository — and a guessed pin that disagrees with the live database is
-  # the one edit here that could turn an apply into a data event. Read
-  # "PostgreSQL version" on the coverage-db page in the Render dashboard, and
-  # only then decide whether pinning it is worth doing at all.
-  #
-  # That number is also what the backup cron below depends on: `pg_dump` must
-  # be at least the server's major version, and the image now installs the
-  # 18 client (see Dockerfile). A server on 17 or below is fine — a newer
-  # client dumps an older server. A server on 19, whenever that exists, is
-  # not, and the Dockerfile would need to move with it.
+  # VERIFIED 2026-09-07 (America/Los_Angeles): the Render dashboard reports
+  # PostgreSQL 18 for the existing coverage-db. This pin records that value;
+  # it requests no upgrade. The field is immutable after database creation.
+  # Pinning also keeps any future new instance off a later platform default
+  # that the image's pg_dump 18 could not back up. Review the Dockerfile's
+  # client version alongside any separately approved database major upgrade.
+  # This repository edit does not apply the Blueprint or resume services.
   - name: coverage-db
     databaseName: coverage
     user: coverage
     plan: basic-256mb # adjust; Render's smallest paid Postgres. Free tier expires.
+    postgresMajorVersion: "18"
 
 services:
   # ---- Web service -------------------------------------------------------

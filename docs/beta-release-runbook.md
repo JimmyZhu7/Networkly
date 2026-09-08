@@ -29,16 +29,16 @@ OAuth, encryption and shared-cache settings across the relevant processes.
 Keep background jobs suspended until web migrations finish. Do not rotate token
 encryption keys during this release. Preserve the ordered key ring securely.
 
-Two Blueprint facts require reading the dashboard rather than this repository.
-Record both before applying.
+Reconcile these Blueprint facts with the dashboard before applying.
 
-- `coverage-db` has no `postgresMajorVersion` in `render.yaml`, deliberately.
-  The key is immutable after creation and the database predates this file, so
-  its real version is not knowable here. Read "PostgreSQL version" on the
-  `coverage-db` page. Do not add a pin to match it without a separate decision;
-  an incorrect pin is the one edit in this file that could turn an apply into a
-  data event. The number also bounds the backup client: the image ships
-  `pg_dump` 18, which dumps any server at 18 or below and refuses one above.
+- `coverage-db` was verified as PostgreSQL **18** in the Render dashboard on
+  2026-09-07 (America/Los_Angeles). `render.yaml` now records the matching
+  `postgresMajorVersion: "18"`. This is an existing-version pin, not an
+  upgrade or an instruction to apply the Blueprint. The field is immutable
+  after creation. Confirm the same instance and version before activation;
+  any later major upgrade requires its own reviewed procedure. The image
+  ships `pg_dump` 18, which supports this server version; CI checks the
+  installed backup tools and the Blueprint test checks client compatibility.
 - Plan names. `plan: basic-256mb` (database) and `plan: starter` (services) are
   current and were verified against Render's own Blueprint JSON Schema at
   `https://render.com/schema/render.yaml.json` on 2026-09-06, where both appear
