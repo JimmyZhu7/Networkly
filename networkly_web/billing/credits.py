@@ -44,7 +44,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from .models import CreditLedger
@@ -236,10 +236,12 @@ def daily_spent(user) -> int:
     start, end = _day_window(user)
     total = (
         CreditLedger.objects.for_user(user)
-        .filter(kind__in=_NET_SPEND_KINDS, created__gte=start, created__lt=end)
+        .filter(kind__in=_NET_SPEND_KINDS)
+        .filter(Q(refund_of__isnull=True, created__gte=start, created__lt=end)
+                | Q(refund_of__created__gte=start, refund_of__created__lt=end))
         .aggregate(s=Sum("delta"))["s"]
     )
-    return -(total or 0)
+    return max(0, -(total or 0))
 
 
 def month_usage(user) -> int:
@@ -255,10 +257,12 @@ def month_usage(user) -> int:
         start = _local_midnight(timezone.localdate().replace(day=1))
     total = (
         CreditLedger.objects.for_user(user)
-        .filter(kind__in=_NET_SPEND_KINDS, created__gte=start)
+        .filter(kind__in=_NET_SPEND_KINDS)
+        .filter(Q(refund_of__isnull=True, created__gte=start)
+                | Q(refund_of__created__gte=start))
         .aggregate(s=Sum("delta"))["s"]
     )
-    return -(total or 0)
+    return max(0, -(total or 0))
 
 
 def ensure_monthly_grant(user) -> None:

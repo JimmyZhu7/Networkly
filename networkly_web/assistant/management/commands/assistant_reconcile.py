@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
 from assistant.recovery import DEFAULT_RECOVERY_MINUTES, reconcile_reservations
+from billing.job_budget import reconcile_job_reservations
 from ops.tracking import track_job_run
 
 
@@ -29,10 +30,16 @@ class Command(BaseCommand):
         if options["apply"]:
             with track_job_run("assistant-reconcile"):
                 stats = reconcile_reservations(**kwargs)
+                jobs = reconcile_job_reservations(user=user, apply=True, limit=options["limit"])
         else:
             stats = reconcile_reservations(**kwargs)
+            jobs = reconcile_job_reservations(user=user, limit=options["limit"])
         mode = "applied" if options["apply"] else "dry run"
         self.stdout.write(
             f"{stats['checked']} checked; {stats['busy']} still running; "
             f"{stats['recoverable']} recoverable; {stats['refunded']} refunded ({mode})."
+        )
+        self.stdout.write(
+            f"AI jobs: {jobs['checked']} checked; {jobs['recoverable']} expired; "
+            f"{jobs['recovered']} recovered ({mode})."
         )

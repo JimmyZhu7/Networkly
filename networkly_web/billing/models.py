@@ -27,6 +27,8 @@ cross-tenant, not a loophole around the guard.
 
 from __future__ import annotations
 
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
@@ -110,6 +112,12 @@ class CreditLedger(PrivateModel):
     # {"threads": 37} on a rescan spend. Never a secret or message content.
     props = models.JSONField(default=dict, blank=True)
     created = models.DateTimeField(auto_now_add=True)
+    # Refunds belong to the original spend's allowance window, even when
+    # recovery happens after midnight or the beginning of another month.
+    refund_of = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.CASCADE,
+        related_name="refunds",
+    )
 
     class Meta(PrivateModel.Meta):
         db_table = "credit_ledger"
@@ -133,6 +141,49 @@ class CreditLedger(PrivateModel):
     def __str__(self) -> str:
         sign = "+" if self.delta >= 0 else ""
         return f"{self.user_id}: {sign}{self.delta} ({self.kind})"
+
+
+class AIJobReservation(PrivateModel):
+    """Durable, tenant-owned allowance for bounded non-chat provider work.
+
+    Only billing.job_budget writes these rows. Counters contain no message
+    content. A started but uncompleted unit is an uncertain provider charge
+    after a crash; recovery keeps that charge and releases unstarted work.
+    """
+
+    PENDING = "pending"
+    SETTLED = "settled"
+    RECOVERED = "recovered"
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=32)
+    job_key = models.CharField(max_length=160)
+    debit = models.OneToOneField(CreditLedger, on_delete=models.CASCADE)
+    allowed_units = models.PositiveIntegerField()
+    units_per_credit = models.PositiveIntegerField()
+    reserved_credits = models.PositiveIntegerField()
+    started_units = models.PositiveIntegerField(default=0)
+    completed_units = models.PositiveIntegerField(default=0)
+    successful_units = models.PositiveIntegerField(default=0)
+    charged_credits = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=16, default=PENDING)
+    created = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    completed_at = models.DateTimeField(null=True, blank=True)
+    reason = models.CharField(max_length=80, blank=True)
+
+    class Meta(PrivateModel.Meta):
+        db_table = "ai_job_reservation"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "kind", "job_key"], name="uniq_ai_job_attempt"),
+            models.CheckConstraint(condition=Q(units_per_credit__gt=0), name="ai_job_positive_rate"),
+            models.CheckConstraint(condition=Q(allowed_units__gt=0), name="ai_job_positive_units"),
+            models.CheckConstraint(condition=Q(started_units__lte=models.F("allowed_units")), name="ai_job_start_bound"),
+            models.CheckConstraint(condition=Q(completed_units__lte=models.F("started_units")), name="ai_job_complete_bound"),
+            models.CheckConstraint(condition=Q(successful_units__lte=models.F("completed_units")), name="ai_job_success_bound"),
+            models.CheckConstraint(condition=Q(charged_credits__lte=models.F("reserved_credits")), name="ai_job_charge_bound"),
+        ]
+        indexes = [models.Index(fields=["status", "expires_at"], name="ai_job_recovery_idx")]
 
 
 class ProWaitlist(PrivateModel):
