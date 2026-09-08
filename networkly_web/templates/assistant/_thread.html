@@ -21,9 +21,9 @@ same shape as every AI chat surface a student has already used.
   rebuilds the log arm client-side and sets the same three attributes, so a
   conversation started without a reload is no less reachable than one that
   was rendered here.{% endcomment %}
-  {% if rows %}
+  {% if rows or has_messages %}
     <div class="as-log" id="as-log" tabindex="0" role="region" aria-label="Conversation">
-      {% for row in rows %}{% include "assistant/_message.html" %}{% endfor %}
+      {% include "assistant/_message_page.html" %}
     </div>
   {% else %}
     <div class="as-empty" tabindex="0" role="region" aria-label="Ways to start">

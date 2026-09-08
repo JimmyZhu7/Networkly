@@ -157,6 +157,19 @@ def test_cross_month_refund_does_not_expand_new_day_allowance(owner):
         assert credits.daily_spent(owner) == 0
 
 
+def test_linked_refunds_cannot_overrefund_or_target_a_grant(owner):
+    credits.balance(owner)
+    credits.spend(owner, 2, "spend_chat")
+    source = CreditLedger.objects.for_user(owner).filter(kind="spend_chat").get()
+    credits.refund(owner, 1, refund_of=source)
+    with pytest.raises(ValueError):
+        credits.refund(owner, 2, refund_of=source)
+    grant = CreditLedger.objects.for_user(owner).filter(kind="grant").get()
+    with pytest.raises(ValueError):
+        credits.refund(owner, 1, refund_of=grant)
+    assert CreditLedger.objects.for_user(owner).filter(refund_of=source).count() == 1
+
+
 @pytest.mark.parametrize("kwargs", [{"requested_units": -1}, {"requested_units": True},
     {"requested_units": 10001}, {"lease_seconds": 1}, {"lease_seconds": 3601},
     {"job_key": ""}, {"job_key": "x"*161}])
@@ -201,3 +214,65 @@ def test_provider_boundary_has_no_open_database_transaction(owner):
     assert job.complete_unit(success=True)
     assert not connections["default"].in_atomic_block
     assert job.finish()
+
+
+def test_refunded_jobs_still_count_toward_account_attempt_limit(owner, monkeypatch):
+    monkeypatch.setattr("billing.job_budget.MAX_RESERVATIONS_PER_HOUR", 2)
+    before = credits.balance(owner)
+    for kind in ("spend_brief", "spend_autopilot"):
+        job = reserve_job(owner, kind=kind, requested_units=1, units_per_credit=1)
+        assert job.start_unit()
+        assert job.complete_unit(success=False)
+        assert job.finish()
+    assert credits.balance(owner) == before
+    assert reserve(owner) is None
+    other = get_user_model().objects.create_user(email="fresh-budget@example.test", password="x")
+    assert reserve(other) is not None
+    future = timezone.now() + timedelta(hours=1, seconds=1)
+    with patch("django.utils.timezone.now", return_value=future):
+        assert reserve(owner) is not None
+
+
+def test_failed_units_and_long_batches_cannot_bypass_provider_attempt_limit(owner, monkeypatch):
+    monkeypatch.setattr("billing.job_budget.MAX_PROVIDER_UNITS_PER_HOUR", 2)
+    job = reserve(owner)
+    AIJobReservation.objects.for_user(owner).filter(pk=job.reservation_id).update(
+        created=timezone.now() - timedelta(hours=2))
+    for _ in range(2):
+        assert job.start_unit()
+        assert job.complete_unit(success=False)
+    assert not job.start_unit()
+    assert job.finish()
+    replacement = reserve_job(owner, kind="spend_brief", requested_units=1, units_per_credit=1)
+    assert replacement is not None
+    assert not replacement.start_unit()
+    assert replacement.finish()
+    future = timezone.now() + timedelta(hours=2)
+    with patch("django.utils.timezone.now", return_value=future):
+        fresh = reserve(owner)
+        assert fresh.start_unit()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_concurrent_job_kinds_share_final_provider_attempt(owner, monkeypatch):
+    monkeypatch.setattr("billing.job_budget.MAX_PROVIDER_UNITS_PER_HOUR", 1)
+    jobs = [reserve_job(owner, kind=kind, requested_units=1, units_per_credit=1)
+            for kind in ("spend_rescan", "spend_autopilot")]
+    barrier = threading.Barrier(2)
+    results, failures = [], []
+    def worker(job):
+        try:
+            barrier.wait(timeout=10)
+            results.append(job.start_unit())
+        except BaseException as exc:
+            failures.append(exc)
+        finally:
+            connections.close_all()
+    threads = [threading.Thread(target=worker, args=(job,)) for job in jobs]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=20)
+        assert not thread.is_alive()
+    assert not failures
+    assert results.count(True) == 1

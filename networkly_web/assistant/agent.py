@@ -858,7 +858,7 @@ def run_turn(user, conversation, text: str, *, client=None, attachment_blocks=No
     for round_no in range(MAX_ROUNDS):
         try:
             charge.ensure_owned()
-            client = client or get_client()
+            client = client or charge.open_client(get_client)
             messages = _api_messages(conversation, user)
             charge.ensure_owned()
             response = client.messages.create(
@@ -1094,7 +1094,7 @@ def stream_turn(user, conversation, text: str, *, client=None, attachment_blocks
         message_id = ""
         try:
             charge.ensure_owned()
-            client = client or get_client()
+            client = client or charge.open_client(get_client)
             messages = _api_messages(conversation, user)
             charge.ensure_owned()
             with client.messages.stream(

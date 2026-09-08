@@ -25,9 +25,11 @@ import json
 import re
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, JSONField, Q
+from django.db.models.expressions import RawSQL
 from django.http import (
     HttpRequest,
+    Http404,
     HttpResponse,
     HttpResponseBadRequest,
     JsonResponse,
@@ -62,6 +64,59 @@ from .models import (
 # ("I have two chats at Goldman and nothing at Morgan Stanley, plus..."),
 # short enough that a paste of their whole CV isn't billed as one message.
 MAX_MESSAGE_CHARS = 4000
+MESSAGE_PAGE_SIZE = 60
+
+
+def _display_messages(user, conversation, before=None):
+    """Bounded chronological history without transferring stored file bodies.
+
+    The cursor names a message in this exact tenant and conversation; its
+    (created, id) pair keeps paging stable across tied timestamps and newer
+    replies. The SQL projection retains display metadata only. Attachments
+    remain stored intact for provider replay, but their base64 source and
+    tool inputs/results are never needed to render a history page.
+    """
+    messages = ChatMessage.objects.for_user(user).filter(conversation=conversation)
+    if before is not None:
+        try:
+            cursor = int(before)
+            if not 0 < cursor < 2**63:
+                raise ValueError
+        except (ValueError, TypeError):
+            raise Http404("Conversation page not found.")
+        anchor = get_object_or_404(messages.only("created", "id"), pk=cursor)
+        messages = messages.filter(Q(created__lt=anchor.created) | Q(created=anchor.created, id__lt=anchor.id))
+    projection = RawSQL("""
+        (SELECT COALESCE(jsonb_agg(jsonb_build_object(
+            'type', block->'type',
+            'text', CASE WHEN block->>'type' = 'text' THEN block->'text' END,
+            'name', CASE WHEN block->>'type' = 'tool_use' THEN block->'name' END,
+            '_filename', block->'_filename'
+        ) ORDER BY position), '[]'::jsonb)
+        FROM jsonb_array_elements(CASE WHEN jsonb_typeof(content) = 'array'
+            THEN content ELSE '[]'::jsonb END) WITH ORDINALITY AS items(block, position))
+        """, (), output_field=JSONField())
+    page = list(messages.only("id", "role", "notice", "created").annotate(
+        display_content=projection).order_by("-created", "-id")[:MESSAGE_PAGE_SIZE + 1])
+    has_older = len(page) > MESSAGE_PAGE_SIZE
+    page = list(reversed(page[:MESSAGE_PAGE_SIZE]))
+    for message in page:
+        message.content = message.display_content
+    # Start at a real question when one exists in the bounded page. This
+    # keeps Retry connected to its edit form and tool evidence with its
+    # answer. Earlier partial turns remain reachable through the cursor.
+    if has_older:
+        start = next((i for i, message in enumerate(page)
+                      if message.role == ChatMessage.ROLE_USER and not message.is_tool_result), 0)
+        page = page[start:]
+    return page, page[0].pk if page and has_older else None
+
+
+def _message_page(user, conversation, before=None):
+    messages, cursor = _display_messages(user, conversation, before)
+    return {"rows": _thread_rows(user, conversation, messages=messages),
+            "before_cursor": cursor, "has_messages": bool(messages),
+            "viewing_older": before is not None}
 
 # Openers on the empty state. Concrete on purpose: a blank box with a blinking
 # cursor is the fastest way to make a student decide this page isn't for them.
@@ -104,7 +159,7 @@ def _current_conversation(user, conversation_id: int | None = None) -> ChatConve
     return conversation
 
 
-def _thread_rows(user, conversation) -> list[dict]:
+def _thread_rows(user, conversation, *, messages=None) -> list[dict]:
     """The thread as the template wants it: the student's messages, the
     advisor's prose, and a quiet line naming the lookups behind each answer.
 
@@ -122,7 +177,9 @@ def _thread_rows(user, conversation) -> list[dict]:
     # uses. None until the first real question, which is also the one case
     # a retry button has nothing to point at.
     last_user_message_id: int | None = None
-    for message in ChatMessage.objects.for_user(user).filter(conversation=conversation):
+    if messages is None:
+        messages, _ = _display_messages(user, conversation)
+    for message in messages:
         if message.role == ChatMessage.ROLE_USER:
             if message.is_tool_result:
                 continue
@@ -304,7 +361,7 @@ def _history_context(user, conversation: ChatConversation) -> dict:
 def _context(request: HttpRequest, conversation: ChatConversation) -> dict:
     return {
         "conversation": conversation,
-        "rows": _thread_rows(request.user, conversation),
+        **_message_page(request.user, conversation, request.GET.get("before")),
         "configured": is_configured(),
         "starters": STARTERS,
         "max_chars": MAX_MESSAGE_CHARS,
@@ -713,6 +770,7 @@ def edit_message(request: HttpRequest) -> HttpResponse:
 
 
 @login_required
+@require_GET
 def history_fragment(request: HttpRequest) -> HttpResponse:
     """The sidebar's own contents, GET-able on their own.
 
@@ -731,6 +789,12 @@ def history_fragment(request: HttpRequest) -> HttpResponse:
         conversation_id = int(raw) if raw else None
     except ValueError:
         conversation_id = None
+    if "before" in request.GET:
+        if conversation_id is None or not 0 < conversation_id < 2**63:
+            raise Http404("Conversation page not found.")
+        conversation = _current_conversation(request.user, conversation_id)
+        page = _message_page(request.user, conversation, request.GET["before"])
+        return render(request, "assistant/_message_page.html", {"conversation": conversation, **page})
     conversation = _current_conversation(request.user, conversation_id)
     return render(request, "assistant/_history.html", _history_context(request.user, conversation))
 
@@ -952,9 +1016,17 @@ def log_draft_touch(request: HttpRequest) -> HttpResponse:
         return HttpResponseBadRequest("That message holds no draft for this contact.")
 
     marker = drafts_mod.marker_for(message.id)
-    already = Touch.objects.for_user(request.user).filter(contact=contact, note__contains=marker).exists()
-    if not already:
-        services.log_touch(request.user.id, contact.id, kind, channel, marker, source="assistant")
+    from django.contrib.auth import get_user_model
+    with services.atomic_pipeline():
+        owner = get_user_model().objects.select_for_update().filter(
+            pk=request.user.pk, is_active=True, deleted_at__isnull=True,
+        ).first()
+        if owner is None:
+            return HttpResponseBadRequest("This account is no longer active.")
+        contact = get_object_or_404(Contact.objects.for_user(owner).select_for_update(), pk=contact.pk)
+        already = Touch.objects.for_user(owner).filter(contact=contact, note__contains=marker).exists()
+        if not already:
+            services.log_touch(owner.id, contact.id, kind, channel, marker, source="assistant")
 
     return render(
         request,

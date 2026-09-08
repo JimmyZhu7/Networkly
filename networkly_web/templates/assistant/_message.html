@@ -21,7 +21,7 @@ the browser submits that form with the words unchanged, which chat.html's
 existing rewind handling (confirm, delete-everything-after, re-ask) already
 knows how to do. No new JS path, just a second door into the same one.
 {% endcomment %}
-<article class="as-msg as-msg--{{ row.role }}{% if row.notice %} as-msg--notice{% endif %} kin-reveal">
+<article class="as-msg as-msg--{{ row.role }}{% if row.notice %} as-msg--notice{% endif %} kin-reveal" data-message-id="{{ row.message_id }}">
   {% if row.role == 'assistant' %}
     <span class="as-avatar" aria-hidden="true">{% include "_logo.html" %}</span>
   {% endif %}

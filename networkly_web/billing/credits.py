@@ -535,7 +535,7 @@ def _spend_clamped(user, cost: int, kind: str, **props) -> int:
     return charge
 
 
-def refund(user, cost: int, **props) -> None:
+def refund(user, cost: int, *, refund_of=None, **props) -> None:
     """One positive ledger row reversing an earlier `spend()` that turned
     out not to correspond to work the student actually got anything for.
 
@@ -588,7 +588,17 @@ def refund(user, cost: int, **props) -> None:
     """
     if cost <= 0:
         return
-    CreditLedger.all_objects.create(user=user, delta=int(cost), kind=CreditLedger.KIND_REFUND, props=props or {})
+    with transaction.atomic():
+        get_user_model().objects.select_for_update().get(pk=user.pk)
+        if refund_of is not None:
+            source = CreditLedger.objects.for_user(user).select_for_update().get(pk=refund_of.pk)
+            if source.kind not in _SPEND_KINDS or source.delta >= 0:
+                raise ValueError("A refund must refer to this user's credit spend.")
+            prior = CreditLedger.objects.for_user(user).filter(refund_of=source).aggregate(s=Sum("delta"))["s"] or 0
+            if cost > -source.delta - prior:
+                raise ValueError("A refund cannot exceed its original spend.")
+        CreditLedger.all_objects.create(user=user, delta=int(cost), kind=CreditLedger.KIND_REFUND,
+                                        refund_of=refund_of, props=props or {})
 
 
 # ---------------------------------------------------------------------------

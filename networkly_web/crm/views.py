@@ -3260,16 +3260,21 @@ def contact_ai_brief(request: HttpRequest, pk: int) -> HttpResponse:
     AI-drafted and unconfigured/failed cases show a plain unavailable
     message rather than an error.
 
-    CREDIT METERING (docs/founder-decisions-2026-08-20.md §2b), same shape
-    as `assistant/agent.py::run_turn`'s chat-turn metering: `can_spend`
-    checked once, before the model call, a hard stop rather than a mid-call
-    one; the debit fires only after `generate_coffee_chat_brief` actually
-    returns a brief, never on an unconfigured/failed call (that call is
-    free — nothing metered ran) and never twice for the same click. At
+    CREDIT METERING reserves the allowance before any provider work, under
+    the shared ledger's user lock. Unavailable or failed generation releases
+    the reservation; successful generation settles it exactly once. At
     zero credits the panel renders the same honest notice the chat uses
     (`ai_brief.credit_block_notice`), not a 500 and not a silent brief."""
+    from billing.job_budget import reserve_job
+
     contact = get_object_or_404(Contact.objects.for_user(request.user), pk=pk)
-    if not billing_credits.can_spend(request.user, ai_brief.BRIEF_COST):
+    if not ai_brief.is_configured():
+        return render(request, "crm/_contact_ai_brief.html", {
+            "contact": contact, "brief": None, "requested": True, "blocked": False,
+        })
+    budget = reserve_job(request.user, kind=CreditLedger.KIND_SPEND_BRIEF,
+                         requested_units=1, units_per_credit=1)
+    if budget is None:
         return render(request, "crm/_contact_ai_brief.html", {
             "contact": contact,
             "brief": None,
@@ -3277,13 +3282,20 @@ def contact_ai_brief(request: HttpRequest, pk: int) -> HttpResponse:
             "blocked": True,
             "credit_notice": ai_brief.credit_block_notice(request.user),
         })
-    brief = ai_brief.generate_coffee_chat_brief(contact)
-    if brief is not None:
-        record_event("ai_brief_generated", user=request.user)
-        billing_credits.spend(
-            request.user, ai_brief.BRIEF_COST, CreditLedger.KIND_SPEND_BRIEF,
-            contact_id=contact.pk,
-        )
+    brief = None
+    try:
+        if budget.start_unit():
+            try:
+                brief = ai_brief.generate_coffee_chat_brief(contact)
+            except Exception:
+                brief = None
+            accepted = budget.complete_unit(success=bool(brief))
+            if not accepted:
+                brief = None
+            if brief:
+                record_event("ai_brief_generated", user=request.user)
+    finally:
+        budget.finish()
     return render(request, "crm/_contact_ai_brief.html",
                   {"contact": contact, "brief": brief, "requested": True, "blocked": False})
 

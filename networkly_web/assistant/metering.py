@@ -10,6 +10,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from billing import credits
+from billing.models import CreditLedger
+from .client import close_client
 from .locks import BUSY_TEXT, ConversationLock
 from .lifecycle import INACTIVE_TEXT, InactiveAccountError, require_active_user
 from .models import ChatConversation, ChatMessage, ChatTurnReservation
@@ -31,7 +33,11 @@ def finish_reservation(user, reservation_id, *, status, reason="", reply=None):
         if row.status != ChatTurnReservation.PENDING:
             return False
         if status == ChatTurnReservation.REFUNDED:
-            credits.refund(user, row.cost, reason=reason, model=row.model, reservation_id=str(row.id))
+            debit = CreditLedger.objects.for_user(user).filter(
+                kind=CreditLedger.KIND_SPEND_CHAT, props__reservation_id=str(row.id),
+            ).first()
+            credits.refund(user, row.cost, refund_of=debit,
+                           reason=reason, model=row.model, reservation_id=str(row.id))
         elif status == ChatTurnReservation.SETTLED:
             if reply is None or reply.user_id != user.pk or reply.conversation_id != row.conversation_key:
                 raise ValueError("Settlement requires this conversation's saved answer.")
@@ -54,6 +60,12 @@ class TurnCharge(AbstractContextManager):
         self.user, self.conversation, self.ownership = user, conversation, ownership
         self.pending = False
         self.reservation_id = uuid4()
+        self._clients = []
+
+    def open_client(self, factory):
+        client = factory()
+        self._clients.append(client)
+        return client
 
     def ensure_owned(self):
         self.ownership.ensure_owned()
@@ -62,8 +74,10 @@ class TurnCharge(AbstractContextManager):
     def reserve(self, limits):
         self.ensure_owned()
         with transaction.atomic():
-            get_user_model().objects.select_for_update().get(pk=self.user.pk)
-            if not credits.can_spend(self.user, limits.message_cost):
+            owner = get_user_model().objects.select_for_update().filter(pk=self.user.pk).first()
+            if owner is None or not owner.is_active or owner.deleted_at is not None:
+                raise InactiveAccountError(INACTIVE_TEXT)
+            if not credits.can_spend(owner, limits.message_cost):
                 return False
             row = ChatTurnReservation(
                 id=self.reservation_id, user=self.user, conversation=self.conversation,
@@ -89,7 +103,12 @@ class TurnCharge(AbstractContextManager):
             self.pending = False
 
     def __exit__(self, *exc):
-        self.refund(reason="turn_interrupted")
+        try:
+            self.refund(reason="turn_interrupted")
+        finally:
+            for client in self._clients:
+                close_client(client)
+            self._clients.clear()
         return False
 
 

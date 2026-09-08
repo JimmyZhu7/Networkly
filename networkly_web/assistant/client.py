@@ -26,11 +26,22 @@ dead page instead of a message.
 
 from __future__ import annotations
 
+import logging
+
 from django.conf import settings
 
 # Deliberately under gunicorn's 60s worker timeout, with room left for the
 # tool round-trips and the template render on either side of the call.
 REQUEST_TIMEOUT_SECONDS = 45.0
+logger = logging.getLogger(__name__)
+
+
+def close_client(client):
+    """Release owned sockets without replacing a saved answer with an error."""
+    try:
+        client.close()
+    except Exception:
+        logger.warning("Could not close assistant transport: %s", type(client).__name__)
 
 
 def is_configured() -> bool:
@@ -69,11 +80,14 @@ def get_client():
         or os.environ.get("http_proxy")
     )
 
-    return anthropic.Anthropic(
-        api_key=getattr(settings, "ANTHROPIC_API_KEY", ""),
-        timeout=REQUEST_TIMEOUT_SECONDS,
-        max_retries=1,
-        http_client=httpx.Client(
-            proxy=proxy, trust_env=False, timeout=REQUEST_TIMEOUT_SECONDS
-        ),
-    )
+    transport = httpx.Client(proxy=proxy, trust_env=False, timeout=REQUEST_TIMEOUT_SECONDS)
+    try:
+        return anthropic.Anthropic(
+            api_key=getattr(settings, "ANTHROPIC_API_KEY", ""),
+            timeout=REQUEST_TIMEOUT_SECONDS,
+            max_retries=1,
+            http_client=transport,
+        )
+    except BaseException:
+        close_client(transport)
+        raise

@@ -357,6 +357,9 @@ materials.
   /* ---- The thread itself: log/empty-state flexes, composer stays put ---- */
   .as-thread { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: var(--s3); }
 
+  .as-history-page { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .5rem; padding: .25rem 0 1rem; }
+  .as-history-status { color: var(--muted); font-size: .8rem; }
+  .as-load-older[aria-disabled="true"] { opacity: .6; cursor: wait; }
   .as-log { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable;
     display: flex; flex-direction: column; gap: var(--s4);
     padding: var(--s2) var(--s1) var(--s2) 2px; }
@@ -1369,6 +1372,64 @@ element by the next turn.
       if (e.target && e.target.id === "as-thread") settle(e.target);
     });
     settle(shell);
+
+    // Prepending history keeps the previously visible message anchored.
+    // The href remains a complete, navigable page when enhancement is absent.
+    document.addEventListener("click", function (event) {
+      var link = event.target.closest(".as-load-older");
+      if (!link || !window.fetch || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      if (link.getAttribute("aria-disabled") === "true") return;
+      var log = link.closest("#as-log");
+      var controls = link.closest(".as-history-page");
+      if (!log || !controls) return;
+      var status = controls.querySelector(".as-history-status");
+      function setHistoryStatus(text) {
+        if (!status) return;
+        var first = log.querySelector(".as-msg");
+        var previousTop = first ? first.getBoundingClientRect().top : 0;
+        status.textContent = text;
+        if (first) log.scrollTop += first.getBoundingClientRect().top - previousTop;
+      }
+      link.setAttribute("aria-disabled", "true");
+      setHistoryStatus("Loading older messages…");
+      fetch(link.dataset.pageUrl, {credentials: "same-origin", headers: {"X-Requested-With": "XMLHttpRequest"}})
+        .then(function (response) {
+          if (!response.ok || response.redirected) throw new Error("history unavailable");
+          return response.text();
+        })
+        .then(function (html) {
+          if (!log.isConnected || !controls.isConnected) return;
+          var template = document.createElement("template");
+          template.innerHTML = html;
+          // The initial history already contains the latest messages.
+          var latest = template.content.querySelector(".as-latest-messages");
+          if (latest) latest.remove();
+          var anchor = Array.from(log.querySelectorAll(".as-msg")).find(function (node) {
+            return node.getBoundingClientRect().bottom >= log.getBoundingClientRect().top;
+          });
+          var top = anchor ? anchor.getBoundingClientRect().top : 0;
+          var previousHeight = log.scrollHeight;
+          var previousScroll = log.scrollTop;
+          controls.remove();
+          log.prepend(template.content);
+          if (window.htmx) window.htmx.process(log);
+          if (anchor) {
+            log.scrollTop += anchor.getBoundingClientRect().top - top;
+            anchor.setAttribute("tabindex", "-1");
+            anchor.focus({preventScroll: true});
+          } else {
+            log.scrollTop = previousScroll + log.scrollHeight - previousHeight;
+            log.focus({preventScroll: true});
+          }
+          var live = document.getElementById("as-live");
+          if (live) live.textContent = "Older messages loaded.";
+        })
+        .catch(function () {
+          setHistoryStatus("Could not load messages. Try again.");
+          link.removeAttribute("aria-disabled");
+        });
+    });
 
     // 6b. Copy — one extraction, two buttons. The draft card's own Copy
     // (assistant/_draft_card.html) takes just the email; the one under an

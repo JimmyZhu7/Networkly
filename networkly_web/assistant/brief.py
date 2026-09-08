@@ -76,8 +76,10 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from core.templatetags.textstyle import smart_person_name, smart_title
+from core.ratelimits import window_exceeded
 
-from .client import get_client, is_configured
+from .client import close_client, get_client, is_configured
+from .locks import AccountGenerationLock
 from .lifecycle import require_active_user
 from .models import DailyBrief
 
@@ -848,7 +850,7 @@ def _summarize_gaps(gaps: list[dict] | None) -> str:
     return "\n".join(lines)
 
 
-def get_or_build(
+def _build_owned(
     user,
     actions: list[dict],
     situation: list[dict] | None = None,
@@ -856,6 +858,7 @@ def get_or_build(
     *,
     silenced_ids: set[int] | None = None,
     client=None,
+    _ownership=None,
 ) -> str | None:
     """Today's brief. A quiet day (nothing in the queue, nothing in the
     situation feed) still gets a real, cached sentence — see
@@ -959,9 +962,17 @@ def get_or_build(
     # thing in the context window is the thing a small model weights most.
     prompt += "\n" + _END_DATA + "\n\n" + _CLOSING_RULES
 
+    owned_client = None
     try:
         require_active_user(user)
-        client = client or get_client()
+        if _ownership is not None:
+            _ownership.ensure_owned()
+        # Failed generations still reach the provider. Bound actual attempts
+        # without charging credits or slowing cached/deterministic briefs.
+        if window_exceeded(f"as:brief:attempts:{user.pk}", limit=10, seconds=3600):
+            return None
+        if client is None:
+            owned_client = client = get_client()
         response = client.messages.create(
             model=BRIEF_MODEL,
             max_tokens=MAX_TOKENS,
@@ -973,8 +984,13 @@ def get_or_build(
             for b in response.content
         ).strip()
         require_active_user(user)
+        if _ownership is not None:
+            _ownership.ensure_owned()
     except Exception:  # noqa: BLE001 — never break the Today page over this
         return None
+    finally:
+        if owned_client is not None:
+            close_client(owned_client)
 
     if not text:
         return None
@@ -1015,3 +1031,17 @@ def get_or_build(
     # irrelevant to `_is_stale`, which compares sets.
     contact_ids = _ordered_contact_ids(actions[:MAX_ACTIONS_SUMMARIZED])
     return _cache_text(user, today, text, contact_ids, stale=stale)
+
+
+def get_or_build(user, actions, situation=None, gaps=None, *, silenced_ids=None, client=None):
+    """Generate once per account at a time; a busy request never calls AI."""
+    try:
+        if not get_user_model().objects.filter(pk=user.pk, is_active=True, deleted_at__isnull=True).exists():
+            return None
+        with AccountGenerationLock(user.pk) as ownership:
+            if not ownership.acquired:
+                return get_cached(user, actions, silenced_ids=silenced_ids)
+            return _build_owned(user, actions, situation, gaps, silenced_ids=silenced_ids,
+                                client=client, _ownership=ownership)
+    except Exception:
+        return None

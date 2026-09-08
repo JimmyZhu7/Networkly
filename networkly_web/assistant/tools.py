@@ -71,10 +71,12 @@ not a reversible-feeling mistake to a student, even though the row itself is.
 from __future__ import annotations
 
 import json
+from contextlib import nullcontext
 from datetime import date, datetime, timedelta
 from datetime import time as dt_time
 
-from django.db import IntegrityError
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from accounts.forms import (
@@ -109,7 +111,7 @@ from directory.views import (
 )
 
 from .models import AdvisorMemory
-from .lifecycle import require_active_user
+from .lifecycle import InactiveAccountError, require_active_user
 from .situation import build_situation
 
 # Every untrusted string is cut to this before it reaches the model. Notes and
@@ -1872,16 +1874,22 @@ def _track_opportunity(user, args) -> dict:
     if existing is None:
         try:
             existing = UserOpportunity(user=user, opportunity=opp)
-            existing.save()
+            with transaction.atomic():
+                existing.save()
         except IntegrityError:
             # Two saves of the same role racing each other; the constraint did
             # its job, so just adopt the row that won.
             existing = UserOpportunity.objects.for_user(user).filter(opportunity_id=opp.id).first()
             if existing is None:
                 raise ToolError("Could not save that role.")
-    existing.applied_status = ""
-    existing.dismissed = False
-    existing.save(update_fields=["applied_status", "dismissed"])
+    # A status set on My Applications since the read above outranks this
+    # Save request. The condition is checked by PostgreSQL at write time.
+    updated = UserOpportunity.objects.for_user(user).filter(
+        pk=existing.pk, applied_status="",
+    ).update(dismissed=False)
+    if not updated:
+        return {"saved": False, "already_tracked": True, "opportunity_id": opp.id,
+                "instruction": "The application changed while saving. Check My Applications for its current status."}
     result = {
         "saved": True,
         "opportunity_id": opp.id,
@@ -1920,6 +1928,7 @@ class MemoryFull(Exception):
     sentence in the memory dialog the student can act on."""
 
 
+@transaction.atomic
 def save_memory(user, text: str) -> AdvisorMemory:
     """THE one writer for AdvisorMemory. Two callers: the `remember` tool
     below, and the "Remember this" input on the Talk page
@@ -1945,6 +1954,8 @@ def save_memory(user, text: str) -> AdvisorMemory:
     text = _s(text, 200)
     if not text:
         raise ValueError("a memory needs text")
+    get_user_model().objects.select_for_update().get(pk=user.pk)
+    require_active_user(user)
     if AdvisorMemory.objects.for_user(user).count() >= MAX_MEMORIES:
         raise MemoryFull(MAX_MEMORIES)
     memory = AdvisorMemory(user=user, text=text)
@@ -2577,16 +2588,24 @@ def execute(
     require_active_user(user)
     args = tool_input if isinstance(tool_input, dict) else {}
     try:
-        stamped = _MESSAGE_ID_HANDLERS.get(name)
-        if name == "update_settings":
-            payload = _update_settings(user, args, approved_settings=approved_settings)
-        elif stamped is not None:
-            payload = stamped(user, args, message_id=message_id)
-        else:
-            handler = _HANDLERS.get(name)
-            if handler is None:
-                raise ToolError(f"Unknown tool {name!r}.")
-            payload = handler(user, args)
+        # All mutations share the account lock with deletion and the domain
+        # write transaction. No provider request takes place inside a tool.
+        with services.atomic_pipeline() if name in WRITE_TOOLS else nullcontext():
+            if name in WRITE_TOOLS:
+                user = get_user_model().objects.select_for_update().get(pk=user.pk)
+                require_active_user(user)
+            stamped = _MESSAGE_ID_HANDLERS.get(name)
+            if name == "update_settings":
+                payload = _update_settings(user, args, approved_settings=approved_settings)
+            elif stamped is not None:
+                payload = stamped(user, args, message_id=message_id)
+            else:
+                handler = _HANDLERS.get(name)
+                if handler is None:
+                    raise ToolError(f"Unknown tool {name!r}.")
+                payload = handler(user, args)
+    except InactiveAccountError:
+        raise
     except SettingsConfirmationRequired as e:
         return json.dumps({"error": str(e), "settings_proposal": e.proposal}), True
     except ToolError as e:

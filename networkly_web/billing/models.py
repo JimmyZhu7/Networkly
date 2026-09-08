@@ -183,7 +183,11 @@ class AIJobReservation(PrivateModel):
             models.CheckConstraint(condition=Q(successful_units__lte=models.F("completed_units")), name="ai_job_success_bound"),
             models.CheckConstraint(condition=Q(charged_credits__lte=models.F("reserved_credits")), name="ai_job_charge_bound"),
         ]
-        indexes = [models.Index(fields=["status", "expires_at"], name="ai_job_recovery_idx")]
+        indexes = [
+            models.Index(fields=["status", "expires_at"], name="ai_job_recovery_idx"),
+            models.Index(fields=["user", "created"], name="ai_job_admission_idx"),
+            models.Index(fields=["user", "expires_at"], name="ai_job_attempt_window_idx"),
+        ]
 
 
 class ProWaitlist(PrivateModel):

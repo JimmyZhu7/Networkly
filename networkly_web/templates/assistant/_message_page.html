@@ -1,0 +1,13 @@
+{% if before_cursor or viewing_older %}
+  <nav class="as-history-page" aria-label="Conversation history">
+    {% if before_cursor %}
+      <a class="btn btn--ghost as-load-older"
+         href="{% url 'assistant:chat_conversation' conversation_id=conversation.pk %}?before={{ before_cursor }}"
+         data-page-url="{% url 'assistant:history' %}?conversation={{ conversation.pk }}&amp;before={{ before_cursor }}"
+         aria-controls="as-log">Load Older Messages</a>
+    {% endif %}
+    {% if viewing_older %}<a class="btn btn--ghost as-latest-messages" href="{% url 'assistant:chat_conversation' conversation_id=conversation.pk %}">Latest Messages</a>{% endif %}
+    <span class="as-history-status" role="status" aria-live="polite"></span>
+  </nav>
+{% endif %}
+{% for row in rows %}{% include "assistant/_message.html" %}{% endfor %}

@@ -18,6 +18,7 @@ from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
 
 from . import credits
@@ -26,6 +27,10 @@ from .models import AIJobReservation, CreditLedger
 JOB_KINDS = frozenset({CreditLedger.KIND_SPEND_RESCAN, CreditLedger.KIND_SPEND_AUTOPILOT,
                        CreditLedger.KIND_SPEND_BRIEF})
 DEFAULT_LEASE_SECONDS = 600
+# Credit refunds do not erase provider attempts. These account-wide limits
+# cover all non-chat jobs, including known failures and empty model answers.
+MAX_RESERVATIONS_PER_HOUR = 60
+MAX_PROVIDER_UNITS_PER_HOUR = 600
 
 
 def _positive_integer(value, name, maximum):
@@ -37,7 +42,7 @@ def _positive_integer(value, name, maximum):
 def _owner(user, *, active=False):
     rows = get_user_model().objects.select_for_update().filter(pk=user.pk)
     if active:
-        rows = rows.filter(is_active=True)
+        rows = rows.filter(is_active=True, deleted_at__isnull=True)
     return rows.first()
 
 
@@ -67,6 +72,10 @@ def reserve_job(user, *, kind, requested_units, units_per_credit, job_key=None,
         if owner is None:
             return None
         if AIJobReservation.objects.for_user(owner).filter(kind=kind, job_key=job_key).exists():
+            return None
+        recent = AIJobReservation.objects.for_user(owner).filter(
+            created__gte=timezone.now() - timedelta(hours=1))
+        if recent.count() >= MAX_RESERVATIONS_PER_HOUR:
             return None
         credits.ensure_monthly_grant(owner)
         credits.reconcile_plan_grant(owner)
@@ -126,6 +135,15 @@ class JobBudget:
             if row is None or row.status != AIJobReservation.PENDING or row.expires_at <= timezone.now():
                 return False
             if row.started_units != row.completed_units or row.started_units >= row.allowed_units:
+                return False
+            # Every started unit renews expires_at. This conservative window
+            # includes all calls begun in the last hour, even in a job that
+            # began earlier; old calls in a still-active batch also count.
+            # The shared user lock serializes admission across job kinds.
+            attempted = AIJobReservation.objects.for_user(self.user).filter(
+                expires_at__gte=timezone.now() - timedelta(hours=1),
+            ).aggregate(total=Sum("started_units"))["total"] or 0
+            if attempted >= MAX_PROVIDER_UNITS_PER_HOUR:
                 return False
             row.started_units += 1
             row.expires_at = timezone.now() + timedelta(seconds=self.lease_seconds)
